@@ -23,3 +23,21 @@ Start with:
 This is an independent community project. Electronic Arts has not endorsed and
 does not support it. OpenRA project notices and licensing remain in the source
 tree.
+-------------------------------------------------------------------------------------
+A note on authenticity
+
+While I was developing and sharing this project, some people claimed that the videos were AI-generated, fake, or that the project did not actually exist.
+
+I was genuinely disappointed by that.
+
+Being skeptical of a project before its source is available is completely reasonable. But calling real development work "AI-generated" or "fake" without evidence is something very different.
+
+I don't want to prove this project is real by arguing about it.
+
+The historical source corresponding to iOS Build 4 is now public. It has been checked against the original PDB source records, rebuilt as an iOS Release build, and its AOT factory registry was regenerated from the recovered source. The regenerated registry matches the original Build 4 version byte-for-byte.
+
+If you're interested in whether the project is real, how it works, or what was actually changed, you can now inspect the source, read the build documentation, and try building it yourself.
+
+Technical criticism, code review, and disagreement are always welcome.
+
+From this point on, I'd rather let the source code and reproducible engineering evidence answer those questions.
