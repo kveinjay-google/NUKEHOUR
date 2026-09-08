@@ -1,0 +1,180 @@
+Metadata:
+	Title: mod-title
+	Version: {DEV_VERSION}
+	WindowTitle: mod-windowtitle
+ModCredits:
+	ModTabTitle: NUKE HOUR
+	ModCreditsFile: ra2|AUTHORS
+Cursors:
+	ra2|cursors.yaml
+Chrome:
+	ra2|chrome.yaml
+Assemblies: OpenRA.Mods.Common.dll, OpenRA.Mods.Cnc.dll, OpenRA.Mods.RA2.dll
+ChromeLayout:
+	ts|chrome/assetbrowser.yaml
+	ra2|chrome/ingame-player.yaml
+	ra2|chrome/mainmenu.yaml
+	common|chrome/mainmenu-prompts.yaml
+	ra2|chrome/mainmenu-prerelease-notification.yaml
+	common|chrome/ingame-infoobjectives.yaml
+	common|chrome/ingame-infostats.yaml
+	common|chrome/musicplayer.yaml
+	common|chrome/tooltips.yaml
+	ra2|chrome/ingame.yaml
+	ra2|chrome/ingame-observer.yaml
+	common|chrome/ingame-chat.yaml
+	common|chrome/ingame-transients.yaml
+	common|chrome/ingame-fmvplayer.yaml
+	ra2|chrome/ingame-menu.yaml
+	ra2|chrome/ingame-info.yaml
+	common|chrome/ingame-info-lobby-options.yaml
+	common|chrome/ingame-infoscripterror.yaml
+	common|chrome/ingame-infobriefing.yaml
+	ra2|chrome/ingame-debug.yaml
+	common|chrome/ingame-perf.yaml
+	common|chrome/ingame-infochat.yaml
+	ra2|chrome/settings.yaml
+	common|chrome/settings-display.yaml
+	common|chrome/settings-audio.yaml
+	common|chrome/settings-input.yaml
+	common|chrome/settings-hotkeys.yaml
+	common|chrome/settings-advanced.yaml
+	common|chrome/credits.yaml
+	common|chrome/lobby.yaml
+	common|chrome/lobby-players.yaml
+	common|chrome/lobby-options.yaml
+	common|chrome/lobby-music.yaml
+	common|chrome/lobby-mappreview.yaml
+	common|chrome/lobby-servers.yaml
+	common|chrome/lobby-kickdialogs.yaml
+	common|chrome/multiplayer-browser.yaml
+	common|chrome/multiplayer-browserpanels.yaml
+	common|chrome/multiplayer-createserver.yaml
+	common|chrome/multiplayer-directconnect.yaml
+	common|chrome/map-chooser.yaml
+	common|chrome/connection.yaml
+	common|chrome/replaybrowser.yaml
+	common|chrome/missionbrowser.yaml
+	common|chrome/confirmation-dialogs.yaml
+	common|chrome/color-picker.yaml
+	common|chrome/dropdowns.yaml
+	common|chrome/editor.yaml
+	common|chrome/playerprofile.yaml
+	common|chrome/gamesave-browser.yaml
+	ra2|chrome/gamesave-loading.yaml
+	common|chrome/ingame-debuginfo.yaml
+	common|chrome/text-notifications.yaml
+AllowUnusedFluentMessagesInExternalPackages: false
+LoadScreen: BrandSplashLoadScreen
+	Image: ra2|uibits/NUCLEAR-CRISIS-BG-06.png
+ServerTraits:
+	LobbyCommands
+	SkirmishLogic
+	PlayerPinger
+	MasterServerPinger
+	LobbySettingsNotification
+ChromeMetrics:
+	common|metrics.yaml
+	ra2|metrics.yaml
+Fonts:
+	Regular:
+		Font: ra2|fonts/NotoSansCJKsc-Regular.otf
+		Size: 14
+		Ascender: 11
+	Bold:
+		Font: ra2|fonts/NotoSansCJKsc-Bold.otf
+		Size: 14
+		Ascender: 11
+	Title:
+		Font: ra2|fonts/NotoSansCJKsc-Bold.otf
+		Size: 32
+		Ascender: 24
+	BigBold:
+		Font: ra2|fonts/NotoSansCJKsc-Bold.otf
+		Size: 24
+		Ascender: 18
+	MediumBold:
+		Font: ra2|fonts/NotoSansCJKsc-Bold.otf
+		Size: 18
+		Ascender: 14
+	Small:
+		Font: ra2|fonts/NotoSansCJKsc-Regular.otf
+		Size: 12
+		Ascender: 9
+	Tiny:
+		Font: ra2|fonts/NotoSansCJKsc-Regular.otf
+		Size: 10
+		Ascender: 8
+	TinyBold:
+		Font: ra2|fonts/NotoSansCJKsc-Bold.otf
+		Size: 10
+		Ascender: 8
+	IosTouchLabel:
+		Font: ra2|fonts/NotoSansCJKsc-Bold.otf
+		Size: 20
+		Ascender: 16
+	IosRegular:
+		Font: ra2|fonts/NotoSansCJKsc-Regular.otf
+		Size: 24
+		Ascender: 19
+	IosBold:
+		Font: ra2|fonts/NotoSansCJKsc-Bold.otf
+		Size: 26
+		Ascender: 20
+	IosTitle:
+		Font: ra2|fonts/NotoSansCJKsc-Bold.otf
+		Size: 34
+		Ascender: 26
+DefaultOrderGenerator: UnitOrderGenerator
+SupportsMapsFrom: ra2
+SoundFormats: Aud, Wav
+SpriteFormats: ShpTS, TmpTS, ShpTD, PngSheet
+VideoFormats: Vqa
+TerrainFormat: DefaultTerrain
+SpriteSequenceFormat: TilesetSpecificSpriteSequence
+	TilesetExtensions:
+		TEMPERATE: .tem
+		SNOW: .sno
+		URBAN: .urb
+	TilesetCodes:
+		GENERIC: g
+		SNOW: a
+		TEMPERATE: t
+		URBAN: u
+	TilesetSuffixes:
+		SNOW: a
+AssetBrowser:
+	SpriteExtensions: .shp, .tem, .urb, .sno
+	ModelExtensions: .vxl
+	AudioExtensions: .aud, .wav
+	VideoExtensions: .vqa
+GameSpeeds:
+	DefaultSpeed: default
+	Speeds:
+		slowest:
+			Name: options-game-speed.slowest
+			Timestep: 80
+			OrderLatency: 2
+		slower:
+			Name: options-game-speed.slower
+			Timestep: 50
+			OrderLatency: 3
+		default:
+			Name: options-game-speed.normal
+			Timestep: 40
+			OrderLatency: 3
+		fast:
+			Name: options-game-speed.fast
+			Timestep: 35
+			OrderLatency: 4
+		faster:
+			Name: options-game-speed.faster
+			Timestep: 30
+			OrderLatency: 4
+		fastest:
+			Name: options-game-speed.fastest
+			Timestep: 20
+			OrderLatency: 6
+
+RuntimeContractCultures:
+	zh-CN:

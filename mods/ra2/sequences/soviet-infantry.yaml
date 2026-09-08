@@ -1,0 +1,190 @@
+dog:
+	Inherits: adog
+	Defaults:
+		Filename: dog.shp
+	jump:
+		Filename: dogp.shp
+		Length: 1
+		Facings: 64
+	icon:
+		Filename: dogicon.shp
+
+sqd:
+	Defaults:
+		Filename: sqd.shp
+	stand:
+		Start: 160
+		Facings: -8
+	idle:
+		Start: 0
+		Length: 20
+		Facings: -8
+		Tick: 160
+	run:
+		Start: 0
+		Length: 20
+		Facings: -8
+		Tick: 80
+	punch:
+		Start: 168
+		Length: 14
+		Facings: -8
+		Tick: 120
+	icon:
+		Filename: sqdicon.shp
+
+e2:
+	Inherits: ^ArmedInfantry
+	Inherits@MC: ^MindControllable
+	Defaults:
+		Filename: cons.shp
+	run:
+		Tick: 120
+	paradrop:
+		Start: 292
+	icon:
+		Filename: e2icon.shp
+
+flakt:
+	Inherits: ^ArmedInfantry
+	Inherits@MC: ^MindControllable
+	Inherits@Muzzle: ^WithFlakMuzzle
+	Defaults:
+		Filename: flakt.shp
+	run:
+		Tick: 120
+	die1:
+		Start: 86
+	die2:
+		Start: 101
+	shoot:
+		Start: 116
+	liedown:
+		Start: 213
+	standup:
+		Start: 229
+	prone-stand:
+		Frames: 165, 171, 177, 183, 189, 195, 201, 207
+	prone-run:
+		Start: 165
+	prone-shoot:
+		Start: 245
+	icon:
+		Filename: flkticon.shp
+
+shk:
+	Inherits: ^ArmedInfantry
+	Inherits@MC: ^MindControllable
+	Defaults:
+		Filename: shk.shp
+	run:
+		Tick: 120
+	paradrop:
+		Start: 292
+	icon:
+		Filename: shkicon.shp
+
+terror:
+	Inherits: ^BasicInfantry
+	Inherits@MC: ^MindControllable
+	Defaults:
+		Filename: trst.shp
+	run:
+		Tick: 120
+	die1:
+		Start: 86
+	die2:
+		Start: 101
+	shoot:
+		Start: 116
+		Length: 6
+		Facings: 8
+		Tick: 80
+	deploy:
+		Start: 164
+		Length: 15
+		Tick: 80
+	paradrop:
+		Start: 179
+	cheer:
+		Start: 180
+	icon:
+		Filename: trsticon.shp
+
+deso:
+	Inherits: ^ArmedInfantry
+	Inherits@MC: ^MindControllable
+	Defaults:
+		Filename: deso.shp
+	run:
+		Tick: 120
+	deploy:
+		Start: 299
+		Length: 15
+		Tick: 80
+	deployed:
+		Start: 292
+	deployed-shoot:
+		Start: 292
+		Length: 7
+		Tick: 80
+	cheer:
+		Start: 314
+	icon:
+		Filename: desoicon.shp
+
+ivan:
+	Inherits: ^ArmedInfantry
+	Inherits@MC: ^MindControllable
+	Defaults:
+		Filename: ivan.shp
+	run:
+		Tick: 120
+	liedown:
+		Start: 212
+	standup:
+		Start: 228
+	prone-shoot:
+		Start: 164
+	deploy:
+		Start: 244
+		Length: 15
+	cheer:
+		Start: 259
+	icon:
+		Filename: ivanicon.shp
+
+civan:
+	Inherits: ivan
+	Defaults:
+		Filename: civan.shp
+	icon:
+		Filename: ivncicon.shp
+
+yuri:
+	Inherits: ^ArmedInfantry
+	Defaults:
+		Filename: yuri.shp
+	deploy:
+		Start: 292
+		Length: 7
+	deployed:
+		Start: 299
+		Length: 2
+	undeploy:
+		Start: 301
+		Length: 6
+	cheer:
+		Start: 308
+	muzzle:
+		Filename: yuricntl.shp
+		Length: *
+	icon:
+		Filename: yuriicon.shp
+
+yuripr:
+	Inherits: yuri
+	Defaults:
+		Filename: yuripr.shp
+	icon:
+		Filename: yurpicon.shp

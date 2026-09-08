@@ -1,0 +1,554 @@
+{
+  "schemaVersion": 1,
+  "boundaries": [
+    {
+      "task": 3,
+      "phase": "implementation",
+      "requiredPaths": [
+        "OpenRA.Mods.RA2/Content/IosRuntimeResourcePreflight.cs",
+        "OpenRA.Mods.RA2/Content/IosRuntimeResourceRoot.cs",
+        "OpenRA.Mods.RA2/Content/Maps/Ra2MapImportContext.cs",
+        "OpenRA.Mods.RA2/Content/Maps/Ra2MapImportModels.cs",
+        "OpenRA.Mods.RA2/Content/Ra2RetailMountContract.cs",
+        "OpenRA.Mods.RA2/Content/Ra2RuntimeProfile.cs",
+        "OpenRA.Mods.RA2/Content/RetailArchiveGraphValidator.cs",
+        "OpenRA.Mods.RA2/Content/RetailImportSource.cs",
+        "OpenRA.Mods.RA2/Content/RetailProfileValidator.cs",
+        "build/OpenRA.AotRegistry.Generator/Program.cs",
+        "docs/legal/public-asset-sbom.json",
+        "engine/OpenRA.Game/FileSystem/FileSystem.cs",
+        "engine/OpenRA.Game/Game.cs",
+        "engine/OpenRA.Game/InstalledMods.cs",
+        "engine/OpenRA.Game/Manifest.cs",
+        "engine/OpenRA.Game/Map/MapCache.cs",
+        "engine/OpenRA.Game/ModData.cs",
+        "engine/OpenRA.Game/ModDataConstructionOptions.cs",
+        "engine/OpenRA.Game/Platform.cs",
+        "engine/OpenRA.Game/PreGameEngineContext.cs",
+        "engine/OpenRA.Game/RuntimeContractIdentity.cs",
+        "engine/OpenRA.Game/Support/Arguments.cs",
+        "engine/OpenRA.Game/TrustedManifestSelection.cs",
+        "engine/OpenRA.Test/ArgumentsSnapshotTest.cs",
+        "engine/OpenRA.Test/PreGameEngineContextTest.cs",
+        "engine/OpenRA.Test/Ra2RuntimeProfileManifestTest.cs",
+        "engine/OpenRA.Test/RetailCandidateProfileValidationTest.cs",
+        "engine/OpenRA.Test/RetailContentImporterTest.cs",
+        "engine/OpenRA.Test/TrustedManifestEntryTest.cs",
+        "ios/OpenRA.iOS/GeneratedAotObjectRegistry.g.cs",
+        "ios/OpenRA.iOS/OpenRA.iOS.csproj",
+        "mods/ra2/audio/voices-base.yaml",
+        "mods/ra2/manifest/common.yaml",
+        "mods/ra2/manifest/filesystem-desktop.yaml",
+        "mods/ra2/manifest/filesystem-ios-base.yaml",
+        "mods/ra2/manifest/filesystem-ios-yuri.yaml",
+        "mods/ra2/manifest/gameplay-base.yaml",
+        "mods/ra2/manifest/gameplay-yuri.yaml",
+        "mods/ra2/mod.ios-base.yaml",
+        "mods/ra2/mod.ios-yuri.yaml",
+        "mods/ra2/rules/allied-infantry-base.yaml",
+        "mods/ra2/rules/defaults-base.yaml",
+        "mods/ra2/rules/proxy-actors-base.yaml",
+        "mods/ra2/rules/soviet-infantry-base.yaml",
+        "mods/ra2/rules/soviet-vehicles-base.yaml",
+        "mods/ra2/rules/world-base.yaml",
+        "mods/ra2/sequences/vehicles-base.yaml",
+        "mods/ra2/sequences/voxels-base.yaml",
+        "packaging/exact_git_stage.py",
+        "packaging/ios-retail-task-paths.json",
+        "packaging/public-content-manifest.json",
+        "packaging/public_brand_delta_audit.py",
+        "packaging/tests/test_exact_git_stage.py",
+        "packaging/tests/test_public_brand_delta.py"
+      ],
+      "optionalDirtyPaths": [],
+      "allowedUnstagedPaths": [],
+      "minimumStagedCount": 54,
+      "maximumStagedCount": 54
+    },
+    {
+      "task": 3,
+      "phase": "delivery",
+      "requiredPaths": [
+        "engine-patches/0021-ios-retail-runtime-profiles.patch",
+        "engine-patches/README.md",
+        "packaging/engine_workspace.py",
+        "packaging/tests/test_engine_workspace.py",
+        "packaging/tests/test_verify_engine_patch_delivery.py"
+      ],
+      "optionalDirtyPaths": [],
+      "allowedUnstagedPaths": [],
+      "minimumStagedCount": 5,
+      "maximumStagedCount": 5
+    },
+    {
+      "task": 4,
+      "phase": "implementation",
+      "requiredPaths": [
+        "OpenRA.Mods.RA2/Content/IosRuntimeManagedImageSource.cs",
+        "OpenRA.Mods.RA2/Content/IosRuntimeResourcePreflight.cs",
+        "OpenRA.Mods.RA2/Content/IosRuntimeResourceRoot.cs",
+        "OpenRA.Mods.RA2/Content/Ra2RuntimeContract.cs",
+        "OpenRA.Mods.RA2/Content/Ra2RuntimeContractBuilder.cs",
+        "OpenRA.Mods.RA2/Content/RuntimeBuildIdentity.cs",
+        "OpenRA.Mods.RA2/Content/RuntimeBuildIdentityReader.cs",
+        "engine/OpenRA.Game/Manifest.cs",
+        "engine/OpenRA.Game/Network/GameServer.cs",
+        "engine/OpenRA.Game/Network/Handshake.cs",
+        "engine/OpenRA.Game/Network/Session.cs",
+        "engine/OpenRA.Game/Network/UnitOrders.cs",
+        "engine/OpenRA.Game/Server/Server.cs",
+        "engine/OpenRA.Mods.Common/Widgets/Logic/ServerListLogic.cs",
+        "engine/OpenRA.Test/RuntimeContractBuilderTest.cs",
+        "engine/OpenRA.Test/RuntimeContractHandshakeTest.cs",
+        "ios/OpenRA.iOS/IosRuntimeBuildIdentityProvider.cs"
+      ],
+      "optionalDirtyPaths": [],
+      "allowedUnstagedPaths": [],
+      "minimumStagedCount": 17,
+      "maximumStagedCount": 17
+    },
+    {
+      "task": 5,
+      "phase": "implementation",
+      "requiredPaths": [
+        "engine/OpenRA.Game/Game.cs",
+        "engine/OpenRA.Game/GameInformation.cs",
+        "engine/OpenRA.Game/Network/GameSave.cs",
+        "engine/OpenRA.Game/Network/ReplayRecorder.cs",
+        "engine/OpenRA.Game/RuntimeContractStorage.cs",
+        "engine/OpenRA.Game/Server/Server.cs",
+        "engine/OpenRA.Game/Settings.cs",
+        "engine/OpenRA.Mods.Common/ServerTraits/SkirmishLogic.cs",
+        "engine/OpenRA.Mods.Common/Widgets/Logic/GameSaveBrowserLogic.cs",
+        "engine/OpenRA.Mods.Common/Widgets/Logic/MainMenuLogic.cs",
+        "engine/OpenRA.Mods.Common/Widgets/Logic/ReplayBrowserLogic.cs",
+        "engine/OpenRA.Test/RuntimeContractPersistenceTest.cs",
+        "engine/mods/common/fluent/chrome.ftl",
+        "engine/mods/common/fluent/zh-CN/chrome.ftl",
+        "ios/OpenRA.iOS/GeneratedAotObjectRegistry.g.cs"
+      ],
+      "optionalDirtyPaths": [],
+      "allowedUnstagedPaths": [],
+      "minimumStagedCount": 15,
+      "maximumStagedCount": 15
+    },
+    {
+      "task": 5,
+      "phase": "delivery",
+      "requiredPaths": [
+        "engine-patches/0022-ios-retail-runtime-contract.patch",
+        "engine-patches/README.md",
+        "packaging/tests/test_verify_engine_patch_delivery.py"
+      ],
+      "optionalDirtyPaths": [],
+      "allowedUnstagedPaths": [],
+      "minimumStagedCount": 3,
+      "maximumStagedCount": 3
+    },
+    {
+      "task": 6,
+      "phase": "implementation",
+      "requiredPaths": [
+        "OpenRA.Mods.RA2/Content/RetailImportDurableFileSystem.cs",
+        "OpenRA.Mods.RA2/Content/RetailImportMetadata.cs",
+        "OpenRA.Mods.RA2/Content/RetailImportMetadataCodec.cs",
+        "OpenRA.Mods.RA2/Content/RetailImportPaths.cs",
+        "packaging/ios-retail-task6-deferred-engine-tests.sha256"
+      ],
+      "optionalDirtyPaths": [],
+      "allowedUnstagedPaths": [
+        "engine/OpenRA.Test/RetailImportDurabilityTest.cs",
+        "engine/OpenRA.Test/RetailImportMetadataTest.cs"
+      ],
+      "minimumStagedCount": 5,
+      "maximumStagedCount": 5
+    },
+    {
+      "task": 7,
+      "phase": "implementation",
+      "requiredPaths": [
+        "OpenRA.Mods.RA2/Content/RetailGenerationStore.cs",
+        "OpenRA.Mods.RA2/Content/RetailImportDurableFileSystem.cs",
+        "OpenRA.Mods.RA2/Content/RetailImportFaultInjection.cs",
+        "OpenRA.Mods.RA2/Content/RetailImportPaths.cs",
+        "OpenRA.Mods.RA2/Content/RetailImportProcessLock.cs",
+        "OpenRA.Mods.RA2/Content/RetailImportRecovery.cs",
+        "build/OpenRA.RetailImport.CrashHarness/OpenRA.RetailImport.CrashHarness.csproj",
+        "build/OpenRA.RetailImport.CrashHarness/Program.cs",
+        "packaging/ios-retail-task7-deferred-engine-tests.sha256"
+      ],
+      "optionalDirtyPaths": [],
+      "allowedUnstagedPaths": [
+        "engine/OpenRA.Test/RetailGenerationStoreTest.cs",
+        "engine/OpenRA.Test/RetailImportDurabilityTest.cs",
+        "engine/OpenRA.Test/RetailImportMetadataTest.cs",
+        "engine/OpenRA.Test/RetailImportRecoveryProcessTest.cs"
+      ],
+      "minimumStagedCount": 9,
+      "maximumStagedCount": 9
+    },
+    {
+      "task": 8,
+      "phase": "implementation",
+      "requiredPaths": [
+        "OpenRA.Mods.RA2/Content/RetailContentImporter.cs",
+        "OpenRA.Mods.RA2/Content/RetailImportCoordinatorCore.cs",
+        "OpenRA.Mods.RA2/Content/RetailImportSpacePlanner.cs",
+        "OpenRA.Mods.RA2/Content/RetailLegacyMigration.cs",
+        "OpenRA.Mods.RA2/Content/RetailPendingSnapshotStore.cs",
+        "build/OpenRA.RetailImport.CrashHarness/Program.cs",
+        "packaging/ios-retail-task8-deferred-engine-tests.sha256"
+      ],
+      "optionalDirtyPaths": [],
+      "allowedUnstagedPaths": [
+        "engine/OpenRA.Test/RetailContentImporterTransactionTest.cs",
+        "engine/OpenRA.Test/RetailGenerationStoreTest.cs",
+        "engine/OpenRA.Test/RetailImportDurabilityTest.cs",
+        "engine/OpenRA.Test/RetailImportMetadataTest.cs",
+        "engine/OpenRA.Test/RetailImportRecoveryProcessTest.cs",
+        "engine/OpenRA.Test/RetailLegacyMigrationTest.cs",
+        "engine/OpenRA.Test/RetailPendingSnapshotStoreTest.cs"
+      ],
+      "minimumStagedCount": 7,
+      "maximumStagedCount": 7
+    },
+    {
+      "task": 9,
+      "phase": "implementation",
+      "requiredPaths": [
+        "OpenRA.Mods.RA2/Content/Maps/Ra2Gen2Dialect.cs",
+        "OpenRA.Mods.RA2/Content/Maps/Ra2MapConversionService.cs",
+        "OpenRA.Mods.RA2/Content/Maps/Ra2MapImportModels.cs",
+        "OpenRA.Mods.RA2/UtilityCommands/ImportRA2MapCommand.cs",
+        "engine/OpenRA.Game/Map/Map.cs",
+        "engine/OpenRA.Game/Map/MapPlayers.cs",
+        "engine/OpenRA.Game/Map/PlayerReference.cs",
+        "engine/OpenRA.Mods.Cnc/MapImport/Gen2MapImportModels.cs",
+        "engine/OpenRA.Mods.Cnc/MapImport/Gen2MapImporter.cs",
+        "engine/OpenRA.Mods.Cnc/UtilityCommands/ImportGen2MapCommand.cs",
+        "engine/OpenRA.Mods.Cnc/UtilityCommands/ImportTiberianSunMapCommand.cs",
+        "engine/OpenRA.Test/Gen2MapImporterTest.cs",
+        "engine/OpenRA.Test/Ra2MapConversionServiceTest.cs"
+      ],
+      "optionalDirtyPaths": [],
+      "allowedUnstagedPaths": [
+        "engine/OpenRA.Test/RetailContentImporterTransactionTest.cs",
+        "engine/OpenRA.Test/RetailGenerationStoreTest.cs",
+        "engine/OpenRA.Test/RetailImportDurabilityTest.cs",
+        "engine/OpenRA.Test/RetailImportMetadataTest.cs",
+        "engine/OpenRA.Test/RetailImportRecoveryProcessTest.cs",
+        "engine/OpenRA.Test/RetailLegacyMigrationTest.cs",
+        "engine/OpenRA.Test/RetailPendingSnapshotStoreTest.cs"
+      ],
+      "minimumStagedCount": 13,
+      "maximumStagedCount": 13
+    },
+    {
+      "task": 9,
+      "phase": "delivery",
+      "requiredPaths": [
+        "engine-patches/0023-ra2-map-conversion-service.patch",
+        "engine-patches/README.md",
+        "packaging/tests/test_verify_engine_patch_delivery.py"
+      ],
+      "optionalDirtyPaths": [],
+      "allowedUnstagedPaths": [
+        "engine/OpenRA.Test/RetailContentImporterTransactionTest.cs",
+        "engine/OpenRA.Test/RetailGenerationStoreTest.cs",
+        "engine/OpenRA.Test/RetailImportDurabilityTest.cs",
+        "engine/OpenRA.Test/RetailImportMetadataTest.cs",
+        "engine/OpenRA.Test/RetailImportRecoveryProcessTest.cs",
+        "engine/OpenRA.Test/RetailLegacyMigrationTest.cs",
+        "engine/OpenRA.Test/RetailPendingSnapshotStoreTest.cs"
+      ],
+      "minimumStagedCount": 3,
+      "maximumStagedCount": 3
+    },
+    {
+      "task": 10,
+      "phase": "implementation",
+      "requiredPaths": [
+        "OpenRA.Mods.RA2/Content/Maps/BoundedMapStringInterner.cs",
+        "OpenRA.Mods.RA2/Content/Maps/Ra2MapValidationService.cs",
+        "OpenRA.Mods.RA2/Content/Maps/Ra2OramapEnvelope.cs",
+        "OpenRA.Mods.RA2/Content/RetailCandidateValidator.cs",
+        "engine/OpenRA.Game/FileFormats/Png.cs",
+        "engine/OpenRA.Game/FileSystem/ZipFile.cs",
+        "engine/OpenRA.Game/Graphics/PlatformInterfaces.cs",
+        "engine/OpenRA.Game/Graphics/SheetBuilder.cs",
+        "engine/OpenRA.Game/Map/ActorReference.cs",
+        "engine/OpenRA.Game/Map/MapCache.cs",
+        "engine/OpenRA.Game/Map/MapPreview.cs",
+        "engine/OpenRA.Game/Map/MapPreviewImageCache.cs",
+        "engine/OpenRA.Game/Map/MapUid.cs",
+        "engine/OpenRA.Game/Map/VerifiedMapSnapshot.cs",
+        "engine/OpenRA.Game/Renderer.cs",
+        "engine/OpenRA.Mods.Common/Widgets/Logic/MapChooserLogic.cs",
+        "engine/OpenRA.Mods.Common/Widgets/MapPreviewWidget.cs",
+        "engine/OpenRA.Platforms.Default/OpenGL.cs",
+        "engine/OpenRA.Platforms.Default/Sdl2GraphicsContext.cs",
+        "engine/OpenRA.Platforms.Default/ThreadedGraphicsContext.cs",
+        "engine/OpenRA.Test/BoundedOramapEnvelopeTest.cs",
+        "engine/OpenRA.Test/MapPreviewImageCacheTest.cs",
+        "engine/OpenRA.Test/OpenRA.Game/PngTest.cs",
+        "engine/OpenRA.Test/Ra2MapValidationServiceTest.cs",
+        "engine/OpenRA.Test/SheetBuilderBoundsTest.cs"
+      ],
+      "optionalDirtyPaths": [],
+      "allowedUnstagedPaths": [
+        "engine/OpenRA.Test/RetailContentImporterTransactionTest.cs",
+        "engine/OpenRA.Test/RetailGenerationStoreTest.cs",
+        "engine/OpenRA.Test/RetailImportDurabilityTest.cs",
+        "engine/OpenRA.Test/RetailImportMetadataTest.cs",
+        "engine/OpenRA.Test/RetailImportRecoveryProcessTest.cs",
+        "engine/OpenRA.Test/RetailLegacyMigrationTest.cs",
+        "engine/OpenRA.Test/RetailPendingSnapshotStoreTest.cs"
+      ],
+      "minimumStagedCount": 25,
+      "maximumStagedCount": 25
+    },
+    {
+      "task": 10,
+      "phase": "delivery",
+      "requiredPaths": [
+        "engine-patches/0024-verified-oramap-map-cache.patch",
+        "engine-patches/README.md",
+        "packaging/tests/test_verify_engine_patch_delivery.py"
+      ],
+      "optionalDirtyPaths": [],
+      "allowedUnstagedPaths": [
+        "engine/OpenRA.Test/RetailContentImporterTransactionTest.cs",
+        "engine/OpenRA.Test/RetailGenerationStoreTest.cs",
+        "engine/OpenRA.Test/RetailImportDurabilityTest.cs",
+        "engine/OpenRA.Test/RetailImportMetadataTest.cs",
+        "engine/OpenRA.Test/RetailImportRecoveryProcessTest.cs",
+        "engine/OpenRA.Test/RetailLegacyMigrationTest.cs",
+        "engine/OpenRA.Test/RetailPendingSnapshotStoreTest.cs"
+      ],
+      "minimumStagedCount": 3,
+      "maximumStagedCount": 3
+    },
+    {
+      "task": 11,
+      "phase": "implementation",
+      "requiredPaths": [
+        "engine/OpenRA.Game/Map/MapCache.cs",
+        "engine/OpenRA.Game/Map/MapPreview.cs",
+        "engine/OpenRA.Game/Map/RemoteMapMetadata.cs",
+        "engine/OpenRA.Game/Map/VerifiedRemoteMapMetadataClient.cs",
+        "engine/OpenRA.Test/MapCacheRemoteMetadataTest.cs",
+        "engine/OpenRA.Test/VerifiedRemoteMapMetadataClientTest.cs"
+      ],
+      "optionalDirtyPaths": [],
+      "allowedUnstagedPaths": [
+        "engine/OpenRA.Test/RetailContentImporterTransactionTest.cs",
+        "engine/OpenRA.Test/RetailGenerationStoreTest.cs",
+        "engine/OpenRA.Test/RetailImportDurabilityTest.cs",
+        "engine/OpenRA.Test/RetailImportMetadataTest.cs",
+        "engine/OpenRA.Test/RetailImportRecoveryProcessTest.cs",
+        "engine/OpenRA.Test/RetailLegacyMigrationTest.cs",
+        "engine/OpenRA.Test/RetailPendingSnapshotStoreTest.cs"
+      ],
+      "minimumStagedCount": 6,
+      "maximumStagedCount": 6
+    },
+    {
+      "task": 11,
+      "phase": "delivery",
+      "requiredPaths": [
+        "engine-patches/0025-verified-remote-map-metadata.patch",
+        "engine-patches/README.md",
+        "packaging/tests/test_verify_engine_patch_delivery.py"
+      ],
+      "optionalDirtyPaths": [],
+      "allowedUnstagedPaths": [
+        "engine/OpenRA.Test/RetailContentImporterTransactionTest.cs",
+        "engine/OpenRA.Test/RetailGenerationStoreTest.cs",
+        "engine/OpenRA.Test/RetailImportDurabilityTest.cs",
+        "engine/OpenRA.Test/RetailImportMetadataTest.cs",
+        "engine/OpenRA.Test/RetailImportRecoveryProcessTest.cs",
+        "engine/OpenRA.Test/RetailLegacyMigrationTest.cs",
+        "engine/OpenRA.Test/RetailPendingSnapshotStoreTest.cs"
+      ],
+      "minimumStagedCount": 3,
+      "maximumStagedCount": 3
+    },
+    {
+      "task": 12,
+      "phase": "implementation",
+      "requiredPaths": [
+        "OpenRA.Mods.RA2/Content/Maps/RuntimeMapGenerationStore.cs",
+        "OpenRA.Mods.RA2/Content/Maps/RuntimeMapReceipt.cs",
+        "OpenRA.Mods.RA2/Content/Maps/VerifiedRuntimeMapStore.cs",
+        "engine/OpenRA.Game/Map/MapCache.cs",
+        "engine/OpenRA.Game/Map/MapPreview.cs",
+        "engine/OpenRA.Game/Map/RuntimeMapDownload.cs",
+        "engine/OpenRA.Game/Map/VerifiedMapSnapshot.cs",
+        "engine/OpenRA.Test/MapPreviewRuntimeInstallTest.cs",
+        "engine/OpenRA.Test/RuntimeMapStoreRecoveryTest.cs",
+        "engine/OpenRA.Test/VerifiedRuntimeMapStoreTest.cs"
+      ],
+      "optionalDirtyPaths": [],
+      "allowedUnstagedPaths": [
+        "engine/OpenRA.Test/RetailContentImporterTransactionTest.cs",
+        "engine/OpenRA.Test/RetailGenerationStoreTest.cs",
+        "engine/OpenRA.Test/RetailImportDurabilityTest.cs",
+        "engine/OpenRA.Test/RetailImportMetadataTest.cs",
+        "engine/OpenRA.Test/RetailImportRecoveryProcessTest.cs",
+        "engine/OpenRA.Test/RetailLegacyMigrationTest.cs",
+        "engine/OpenRA.Test/RetailPendingSnapshotStoreTest.cs"
+      ],
+      "minimumStagedCount": 10,
+      "maximumStagedCount": 10
+    },
+    {
+      "task": 12,
+      "phase": "delivery",
+      "requiredPaths": [
+        "engine-patches/0026-verified-runtime-map-store.patch",
+        "engine-patches/README.md",
+        "packaging/tests/test_verify_engine_patch_delivery.py"
+      ],
+      "optionalDirtyPaths": [],
+      "allowedUnstagedPaths": [
+        "engine/OpenRA.Test/RetailContentImporterTransactionTest.cs",
+        "engine/OpenRA.Test/RetailGenerationStoreTest.cs",
+        "engine/OpenRA.Test/RetailImportDurabilityTest.cs",
+        "engine/OpenRA.Test/RetailImportMetadataTest.cs",
+        "engine/OpenRA.Test/RetailImportRecoveryProcessTest.cs",
+        "engine/OpenRA.Test/RetailLegacyMigrationTest.cs",
+        "engine/OpenRA.Test/RetailPendingSnapshotStoreTest.cs"
+      ],
+      "minimumStagedCount": 3,
+      "maximumStagedCount": 3
+    },
+    {
+      "task": 13,
+      "phase": "implementation",
+      "requiredPaths": [
+        "OpenRA.Mods.RA2/Content/Maps/LifecycleGameThreadDispatcherCore.cs",
+        "OpenRA.Mods.RA2/Content/RetailCoordinatedSourceSessionCore.cs",
+        "engine/OpenRA.Test/IosContentImportContractTest.cs",
+        "engine/OpenRA.Test/RetailImportSourceSessionContractTest.cs",
+        "ios/OpenRA.iOS/IosCoordinatedSourceSession.cs",
+        "ios/OpenRA.iOS/IosRetailContentPicker.cs",
+        "ios/OpenRA.iOS/IosRetailDirectoryDurability.cs",
+        "ios/OpenRA.iOS/IosRetailImportRoots.cs",
+        "ios/OpenRA.iOS/IosRetailStoragePolicy.cs",
+        "ios/OpenRA.iOS/IosRuntimeMapServices.cs"
+      ],
+      "optionalDirtyPaths": [],
+      "allowedUnstagedPaths": [
+        "engine/OpenRA.Test/RetailContentImporterTransactionTest.cs",
+        "engine/OpenRA.Test/RetailGenerationStoreTest.cs",
+        "engine/OpenRA.Test/RetailImportDurabilityTest.cs",
+        "engine/OpenRA.Test/RetailImportMetadataTest.cs",
+        "engine/OpenRA.Test/RetailImportRecoveryProcessTest.cs",
+        "engine/OpenRA.Test/RetailLegacyMigrationTest.cs",
+        "engine/OpenRA.Test/RetailPendingSnapshotStoreTest.cs",
+        "ios/OpenRA.iOS/GeneratedAotObjectRegistry.g.cs"
+      ],
+      "minimumStagedCount": 10,
+      "maximumStagedCount": 10
+    },
+    {
+      "task": 14,
+      "phase": "implementation",
+      "requiredPaths": [
+        "OpenRA.Mods.RA2/Content/IosContentWizardLayoutPolicy.cs",
+        "OpenRA.Mods.RA2/Content/IosRuntimeResourcePreflight.cs",
+        "OpenRA.Mods.RA2/Content/Ra2RuntimeContract.cs",
+        "OpenRA.Mods.RA2/Content/RetailActiveCatalog.cs",
+        "OpenRA.Mods.RA2/Content/RetailContentImporter.cs",
+        "OpenRA.Mods.RA2/Content/RetailContentWizardStateMachine.cs",
+        "OpenRA.Mods.RA2/Content/RetailImportModels.cs",
+        "OpenRA.Mods.RA2/Content/RetailPendingSnapshotStore.cs",
+        "OpenRA.Mods.RA2/Content/VerifiedContentHandle.cs",
+        "OpenRA.Mods.RA2/FileSystem/VerifiedCatalogPackage.cs",
+        "engine/OpenRA.Game/Map/MapCache.cs",
+        "engine/OpenRA.Game/Map/VerifiedMapSnapshot.cs",
+        "engine/OpenRA.Game/Support/IosGameContentManagement.cs",
+        "engine/OpenRA.Mods.Common/Widgets/Logic/MainMenuLogic.cs",
+        "engine/OpenRA.Test/IosContentImportContractTest.cs",
+        "engine/OpenRA.Test/IosContentWizardLayoutPolicyTest.cs",
+        "engine/OpenRA.Test/IosGameContentManagementTest.cs",
+        "engine/OpenRA.Test/RetailActiveCatalogTest.cs",
+        "engine/OpenRA.Test/RetailContentImporterTest.cs",
+        "engine/OpenRA.Test/RetailContentImporterTransactionTest.cs",
+        "engine/OpenRA.Test/RetailContentWizardStateMachineTest.cs",
+        "engine/OpenRA.Test/RetailGenerationStoreTest.cs",
+        "engine/OpenRA.Test/RetailImportDurabilityTest.cs",
+        "engine/OpenRA.Test/RetailImportMetadataTest.cs",
+        "engine/OpenRA.Test/RetailImportRecoveryProcessTest.cs",
+        "engine/OpenRA.Test/RetailLegacyMigrationTest.cs",
+        "engine/OpenRA.Test/RetailPendingSnapshotStoreTest.cs",
+        "engine/OpenRA.Test/VerifiedCatalogPackageTest.cs",
+        "ios/OpenRA.iOS/AppDelegate.cs",
+        "ios/OpenRA.iOS/IosActiveCatalogMountRegistry.cs",
+        "ios/OpenRA.iOS/IosContentFileSystemLoader.cs",
+        "ios/OpenRA.iOS/IosContentImportCoordinator.cs",
+        "ios/OpenRA.iOS/IosContentWizardViewController.cs",
+        "ios/OpenRA.iOS/IosRuntimeMapServices.cs",
+        "ios/OpenRA.iOS/IosVerifiedContentHandleFactory.cs",
+        "ios/OpenRA.iOS/ViewController.cs",
+        "mods/ra2/fluent/chrome.ftl",
+        "mods/ra2/fluent/zh-CN/chrome.ftl"
+      ],
+      "optionalDirtyPaths": [],
+      "allowedUnstagedPaths": [
+        "ios/OpenRA.iOS/GeneratedAotObjectRegistry.g.cs"
+      ],
+      "minimumStagedCount": 38,
+      "maximumStagedCount": 38
+    },
+    {
+      "task": 15,
+      "phase": "implementation",
+      "requiredPaths": [
+        "engine/OpenRA.Test/AotObjectRegistryCoverageTest.cs",
+        "ios/OpenRA.iOS/OpenRA.iOS.csproj",
+        "ios/scripts/run-retail-import-artifact-gates.sh",
+        "packaging/audit_ios_retail_import_bundle.py",
+        "packaging/audit_ios_touch_runtime_bundle.py",
+        "packaging/ios-personal-official-engine-assets.json",
+        "packaging/tests/test_ios_retail_import_bundle.py",
+        "packaging/tests/test_ios_touch_runtime_bundle.py",
+        "packaging/tests/test_public_bundle_audit.py"
+      ],
+      "optionalDirtyPaths": [
+        "ios/OpenRA.iOS/GeneratedAotObjectRegistry.g.cs"
+      ],
+      "allowedUnstagedPaths": [],
+      "minimumStagedCount": 9,
+      "maximumStagedCount": 10
+    },
+    {
+      "task": 15,
+      "phase": "delivery",
+      "requiredPaths": [
+        "engine-patches/0027-ios-retail-active-catalog-lifecycle.patch",
+        "engine-patches/README.md",
+        "packaging/tests/test_verify_engine_patch_delivery.py"
+      ],
+      "optionalDirtyPaths": [],
+      "allowedUnstagedPaths": [],
+      "minimumStagedCount": 3,
+      "maximumStagedCount": 3
+    },
+    {
+      "task": 16,
+      "phase": "implementation",
+      "requiredPaths": [
+        "docs/testing/IOS_RELEASE_REGRESSION_GATES.md",
+        "docs/testing/IOS_RETAIL_IMPORT_ACCEPTANCE.md",
+        "ios/scripts/run-retail-import-acceptance.sh",
+        "packaging/tests/test_ios_retail_acceptance_evidence.py",
+        "packaging/verify_ios_retail_acceptance_evidence.py"
+      ],
+      "optionalDirtyPaths": [],
+      "allowedUnstagedPaths": [],
+      "minimumStagedCount": 5,
+      "maximumStagedCount": 5
+    }
+  ]
+}

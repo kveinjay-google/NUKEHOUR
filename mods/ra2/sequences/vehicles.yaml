@@ -1,0 +1,359 @@
+amcv:
+	Inherits@MC: ^MindControllable
+	icon:
+		Filename: mcvicon.shp
+
+aegis:
+	Inherits@MC: ^MindControllable
+	icon:
+		Filename: agisicon.shp
+
+bus:
+	Inherits@MC: ^MindControllable
+	icon:
+		Filename: xxicon.shp
+
+car:
+	Inherits@MC: ^MindControllable
+	icon:
+		Filename: xxicon.shp
+
+carrier:
+	Inherits@MC: ^MindControllable
+	icon:
+		Filename: carricon.shp
+
+cdest:
+	Inherits@MC: ^MindControllable
+	Inherits@Muzzle: ^WithCannonMuzzle
+	icon:
+		Filename: xxicon.shp
+
+cona:
+	Inherits@MC: ^MindControllable
+	icon:
+		Filename: xxicon.shp
+
+cop:
+	Inherits@MC: ^MindControllable
+	icon:
+		Filename: xxicon.shp
+
+cmin:
+	harvest:
+		Filename: oregath.shp
+		Length: 15
+		Facings: 8
+	warpin:
+		Filename: warpin.shp
+	warpout:
+		Filename: warpout.shp
+		Length: 20
+	icon:
+		Filename: ahrvicon.shp
+
+cruise:
+	Inherits@MC: ^MindControllable
+	icon:
+		Filename: xxicon.shp
+
+dest:
+	Inherits@MC: ^MindControllable
+	Inherits@Muzzle: ^WithCannonMuzzle
+	icon:
+		Filename: desticon.shp
+
+dred:
+	Inherits@MC: ^MindControllable
+	icon:
+		Filename: dredicon.shp
+
+dron:
+	Defaults:
+		Filename: dron.shp
+		Offset: 0, 0, 15
+	stand:
+		Start: 48
+		ShadowStart: 136
+		Facings: -8
+	run:
+		Start: 0
+		ShadowStart: 88
+		Length: 6
+		Facings: -8
+		Tick: 80
+	jump:
+		Start: 56
+		ShadowStart: 144
+		Length: 4
+		Facings: -8
+	shoot:
+		Filename: dronp.shp
+		Length: 1
+		Facings: 32
+	icon:
+		Filename: dronicon.shp
+
+euroc:
+	Inherits@MC: ^MindControllable
+	icon:
+		Filename: xxicon.shp
+
+flata:
+	Inherits@MC: ^MindControllable
+	icon:
+		Filename: xxicon.shp
+
+fv:
+	Inherits@MC: ^MindControllable
+	icon:
+		Filename: fvicon.shp
+
+mgtk:
+	Inherits@MC: ^MindControllable
+	muzzle:
+		Filename: vtmuzzle.shp
+		Length: *
+	icon:
+		Filename: rtnkicon.shp
+	idle: # this is required because the WithSpriteBody constructor initializes before the Mirage trait is activated
+		Filename: null.shp
+
+gtgcan:
+	icon:
+		Filename: gcanicon.shp
+
+mtnk:
+	Inherits@MC: ^MindControllable
+	Inherits@Muzzle: ^WithCannonMuzzle
+	icon:
+		Filename: gtnkicon.shp
+
+harv:
+	Inherits@Muzzle: ^WithFlakMuzzle
+	harvest:
+		Filename: oregath.shp
+		Length: 15
+		Facings: 8
+	icon:
+		Filename: harvicon.shp
+
+htk:
+	Inherits@MC: ^MindControllable
+	Inherits@Muzzle: ^WithFlakMuzzle
+	icon:
+		Filename: htkicon.shp
+
+htnk:
+	Inherits@MC: ^MindControllable
+	Inherits@Muzzle: ^WithCannonMuzzle
+	icon:
+		Filename: htnkicon.shp
+
+howi:
+	Inherits@MC: ^MindControllable
+	icon:
+		Filename: xxicon.shp
+
+hyd:
+	Inherits@MC: ^MindControllable
+	Inherits@Muzzle: ^WithFlakMuzzle
+	icon:
+		Filename: hovricon.shp
+
+lcrf:
+	Inherits@MC: ^MindControllable
+	icon:
+		Filename: landicon.shp
+
+limo:
+	Inherits@MC: ^MindControllable
+	icon:
+		Filename: xxicon.shp
+
+ltnk:
+	Inherits@MC: ^MindControllable
+	Inherits@Muzzle: ^WithCannonMuzzle
+	icon:
+		Filename: cameomd|ltnkicon.shp
+
+apoc:
+	Inherits@MC: ^MindControllable
+	Inherits@Muzzle: ^WithCannonMuzzle
+	muzzle:
+		Filename: apmuzzle.shp
+		Length: *
+	icon:
+		Filename: mtnkicon.shp
+
+pick:
+	Inherits@MC: ^MindControllable
+	icon:
+		Filename: xxicon.shp
+
+propa:
+	Inherits@MC: ^MindControllable
+	icon:
+		Filename: xxicon.shp
+
+ptruck:
+	Inherits@MC: ^MindControllable
+	icon:
+		Filename: xxicon.shp
+
+rtnk:
+	Inherits@MC: ^MindControllable
+	icon:
+		Filename: rtnkicon.shp
+
+smcv:
+	Inherits@MC: ^MindControllable
+	icon:
+		Filename: smcvicon.shp
+
+sref:
+	Inherits@MC: ^MindControllable
+	icon:
+		Filename: sreficon.shp
+
+stang:
+	Inherits@MC: ^MindControllable
+	icon:
+		Filename: xxicon.shp
+
+sub:
+	Inherits@MC: ^MindControllable
+	icon:
+		Filename: subicon.shp
+
+suvb:
+	Inherits@MC: ^MindControllable
+	icon:
+		Filename: xxicon.shp
+
+suvw:
+	Inherits@MC: ^MindControllable
+	icon:
+		Filename: xxicon.shp
+
+taxi:
+	Inherits@MC: ^MindControllable
+	icon:
+		Filename: xxicon.shp
+
+tnkd:
+	Inherits@MC: ^MindControllable
+	Inherits@Muzzle: ^WithCannonMuzzle
+	icon:
+		Filename: tnkdicon.shp
+
+tractor:
+	Inherits@MC: ^MindControllable
+	icon:
+		Filename: xxicon.shp
+
+sapc:
+	Inherits@MC: ^MindControllable
+	icon:
+		Filename: sapcicon.shp
+
+dtruck:
+	Inherits@MC: ^MindControllable
+	icon:
+		Filename: trkaicon.shp
+
+trucka:
+	Inherits@MC: ^MindControllable
+	icon:
+		Filename: xxicon.shp
+
+truckb:
+	Inherits@MC: ^MindControllable
+	icon:
+		Filename: xxicon.shp
+
+ttnk:
+	Inherits@MC: ^MindControllable
+	icon:
+		Filename: ttnkicon.shp
+
+tug:
+	Inherits@MC: ^MindControllable
+	icon:
+		Filename: xxicon.shp
+
+v3:
+	Inherits@MC: ^MindControllable
+	icon:
+		Filename: v3icon.shp
+
+vlad:
+	Inherits@MC: ^MindControllable
+	icon:
+		Filename: xxicon.shp
+
+wini:
+	Inherits@MC: ^MindControllable
+	icon:
+		Filename: xxicon.shp
+
+v3:
+	icon:
+		Filename: v3icon.shp
+
+dred:
+	icon:
+		Filename: dredicon.shp
+
+ytnk:
+	Inherits@MC: ^MindControllable
+	Inherits@Muzzle: ^WithMachineGunMuzzle
+	icon:
+		Filename: bits/cameos/ytnkicon.shp
+
+pcv:
+	Inherits@MC: ^MindControllable
+	icon:
+		Filename: cameomd|ypcvicon.shp
+
+smin:
+	Inherits@MC: ^MindControllable
+	Inherits@Muzzle: ^WithMachineGunMuzzle
+	icon:
+		Filename: cameomd|sminicon.shp
+
+caos:
+	Inherits@MC: ^MindControllable
+	icon:
+		Filename: cameomd|caosicon.shp
+
+tele:
+	Inherits@MC: ^MindControllable
+	icon:
+		Filename: cameomd|teleicon.shp
+
+mind:
+	Inherits@MC: ^MindControllable
+	muzzle:
+		Filename: yuricntl.shp
+		Length: *
+	icon:
+		Filename: cameomd|mindicon.shp
+
+disk:
+	Inherits@MC: ^MindControllable
+	muzzle:
+		Filename: diskray.shp
+		Length: *
+	icon:
+		Filename: bits/cameos/diskicon.shp
+
+yhvr:
+	Inherits@MC: ^MindControllable
+	icon:
+		Filename: bits/cameos/yhvricon.shp
+
+bsub:
+	Inherits@MC: ^MindControllable
+	icon:
+		Filename: cameomd|bsubicon.shp

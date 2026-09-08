@@ -1,0 +1,367 @@
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/IosMapPreviewLayout.cs b/OpenRA.Mods.Common/Widgets/Logic/IosMapPreviewLayout.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/IosMapPreviewLayout.cs	2026-08-27 22:31:33
++++ b/OpenRA.Mods.Common/Widgets/Logic/IosMapPreviewLayout.cs	2026-08-27 22:31:33
+@@ -41,7 +41,7 @@
+ 			var actionHeight = Math.Min(policy.MinimumTarget, height);
+ 			var statusHeight = Math.Min(2 * policy.MinimumReadableTextHeight, height);
+ 
+-			if (policy.IsPhone)
++			if (policy.IsPhone && small)
+ 			{
+ 				var minimumTextWidth = 3 * policy.MinimumTarget + policy.Gap;
+ 				var availableMapWidth = Math.Max(1, width - policy.Gap - minimumTextWidth);
+@@ -78,13 +78,9 @@
+ 			var lowerHeight = small
+ 				? textHeight + statusHeight + textHeight + 2 * actionHeight + 4 * policy.Gap
+ 				: 3 * textHeight + 3 * policy.Gap;
+-			var maximumMapWidth = small
+-				? Math.Max(policy.MinimumTarget, width - textHeight)
+-				: width;
+-			var mapSizeTablet = Math.Min(maximumMapWidth,
+-				Math.Max(policy.MinimumTarget, height - lowerHeight));
+-			mapSizeTablet = Math.Min(mapSizeTablet, Math.Max(1, height - policy.Gap - textHeight));
+-			MapSurface = new WidgetBounds(0, 0, mapSizeTablet, mapSizeTablet);
++			var mapHeight = Math.Max(policy.MinimumTarget, height - lowerHeight);
++			mapHeight = Math.Min(mapHeight, Math.Max(1, height - policy.Gap - textHeight));
++			MapSurface = new WidgetBounds(0, 0, width, mapHeight);
+ 			MapPreview = Inset(MapSurface);
+ 			var textY = Math.Min(height - textHeight, MapSurface.Bottom + policy.Gap);
+ 			TextColumn = new WidgetBounds(0, textY, width, Math.Max(1, height - textY));
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/IosTouchWidgetPolicy.cs b/OpenRA.Mods.Common/Widgets/Logic/IosTouchWidgetPolicy.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/IosTouchWidgetPolicy.cs	2026-08-27 22:31:33
++++ b/OpenRA.Mods.Common/Widgets/Logic/IosTouchWidgetPolicy.cs	2026-08-27 22:31:33
+@@ -118,6 +118,15 @@
+ 			return new TouchScrollGeometry(buttonSize, trackHeight, thumbHeight);
+ 		}
+ 
++		public static int2 CenteredDecorationOrigin(
++			Rectangle bounds, Size decorationSize, int pressedDepth)
++		{
++			var depth = Math.Max(0, pressedDepth);
++			return new int2(
++				bounds.X + Math.Max(0, bounds.Width - decorationSize.Width) / 2 + depth,
++				bounds.Y + Math.Max(0, bounds.Height - decorationSize.Height) / 2 + depth);
++		}
++
+ 		public static int EnsureMinimumTouchHeight(int height, IosScreenSnapshot snapshot)
+ 		{
+ 			return Math.Max(height, LogicalPoints(snapshot.LogicalPerPoint, MinimumTouchTargetPoints));
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/Lobby/IosLobbyLayout.cs b/OpenRA.Mods.Common/Widgets/Logic/Lobby/IosLobbyLayout.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/Lobby/IosLobbyLayout.cs	2026-08-27 22:31:33
++++ b/OpenRA.Mods.Common/Widgets/Logic/Lobby/IosLobbyLayout.cs	2026-08-27 22:31:33
+@@ -63,8 +63,11 @@
+ 			Main = new WidgetBounds(0, mainY, width, mainHeight);
+ 			Servers = Main;
+ 			var minimumChatHeight = policy.MinimumTarget + Gap + policy.MinimumReadableTextHeight;
++			var preferredUtilityHeight = policy.IsPhone
++				? Math.Max(minimumChatHeight, mainHeight / 3)
++				: 3 * policy.MinimumTarget;
+ 			var utilityHeight = Math.Min(mainHeight,
+-				Math.Max(minimumChatHeight, mainHeight / (policy.IsPhone ? 3 : 4)));
++				Math.Max(minimumChatHeight, preferredUtilityHeight));
+ 			var upperHeight = Math.Max(0, mainHeight - utilityHeight - (utilityHeight > 0 ? Gap : 0));
+ 
+ 			var minimumPlayerWidth = 7 * policy.MinimumTarget;
+@@ -81,16 +84,18 @@
+ 				Math.Max(0, Players.Height - playerListY));
+ 
+ 			var utilityY = upperHeight > 0 ? Players.Bottom + Gap : mainY;
+-			var utilityWidth = policy.IsPhone ? playersWidth : width;
++			var utilityWidth = playersWidth;
+ 			var positionWidth = Math.Min(utilityWidth, Math.Max(2 * policy.MinimumTarget, width / 5));
+-			Position = new WidgetBounds(0, utilityY, positionWidth, utilityHeight);
+-			Chat = new WidgetBounds(
+-				Math.Min(utilityWidth, Position.Right + Gap), utilityY,
+-				Math.Max(0, utilityWidth - Position.Right - Gap), utilityHeight);
++			Chat = new WidgetBounds(0, utilityY, utilityWidth, utilityHeight);
+ 			var chatInputHeight = Math.Min(policy.MinimumTarget, Chat.Height);
+-			var chatDisplayHeight = Math.Max(0, Chat.Height - chatInputHeight - Gap);
++			var chatInputGap = policy.IsPhone ? Gap : 0;
++			var chatDisplayHeight = Math.Max(0, Chat.Height - chatInputHeight - chatInputGap);
++			var chatInputY = chatDisplayHeight + chatInputGap;
+ 			ChatDisplay = new WidgetBounds(0, 0, Chat.Width, chatDisplayHeight);
+-			ChatInput = new WidgetBounds(0, chatDisplayHeight + Gap, Chat.Width, chatInputHeight);
++			Position = new WidgetBounds(0, utilityY + chatInputY, positionWidth, chatInputHeight);
++			var chatInputX = Math.Min(Chat.Width, Position.Right + Gap);
++			ChatInput = new WidgetBounds(
++				chatInputX, chatInputY, Math.Max(0, Chat.Width - chatInputX), chatInputHeight);
+ 
+ 			if (policy.IsPhone)
+ 			{
+@@ -106,8 +111,8 @@
+ 			}
+ 			else
+ 			{
+-				var changeHeight = Math.Min(policy.MinimumTarget, upperHeight);
+-				var mapHeight = Math.Max(0, upperHeight - changeHeight - (changeHeight > 0 ? Gap : 0));
++				var changeHeight = Math.Min(policy.MinimumTarget, Main.Height);
++				var mapHeight = Math.Max(0, Main.Height - changeHeight - (changeHeight > 0 ? Gap : 0));
+ 				Map = new WidgetBounds(Players.Right + Gap, mainY, mapWidth, mapHeight);
+ 				ChangeMap = new WidgetBounds(
+ 					Map.X, Map.Bottom + (changeHeight > 0 ? Gap : 0), mapWidth, changeHeight);
+@@ -117,7 +122,7 @@
+ 					Math.Max(0, Footer.Right - Start.Right - Gap), Footer.Height);
+ 			}
+ 
+-			var reservedScrollbar = policy.IsPhone ? 0 : policy.MinimumTarget + Gap;
++			var reservedScrollbar = policy.IsPhone ? 0 : policy.MinimumTarget;
+ 			var playerRowWidth = Math.Max(0, Players.Width - reservedScrollbar);
+ 			PlayerRow = new WidgetBounds(0, 0, playerRowWidth, Math.Min(policy.MinimumTarget, Players.Height));
+ 			var columns = PlayerColumns(playerRowWidth, policy.MinimumTarget);
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/Lobby/LobbyLogic.cs b/OpenRA.Mods.Common/Widgets/Logic/Lobby/LobbyLogic.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/Lobby/LobbyLogic.cs	2026-08-27 22:31:33
++++ b/OpenRA.Mods.Common/Widgets/Logic/Lobby/LobbyLogic.cs	2026-08-27 22:31:33
+@@ -795,12 +795,14 @@
+ 			var modeWidth = Math.Min(layout.ChatInput.Width, 2 * policy.MinimumTarget);
+ 			var mode = chatRoot.GetOrNull("CHAT_MODE");
+ 			if (mode != null)
+-				mode.Bounds = new WidgetBounds(0, layout.ChatInput.Y, modeWidth, layout.ChatInput.Height);
+-			var textX = Math.Min(layout.ChatInput.Width, modeWidth + policy.Gap);
++				mode.Bounds = new WidgetBounds(
++					layout.ChatInput.X, layout.ChatInput.Y, modeWidth, layout.ChatInput.Height);
++			var textX = Math.Min(layout.ChatInput.Right,
++				layout.ChatInput.X + modeWidth + policy.Gap);
+ 			var text = chatRoot.GetOrNull("CHAT_TEXTFIELD");
+ 			if (text != null)
+ 				text.Bounds = new WidgetBounds(textX, layout.ChatInput.Y,
+-					Math.Max(0, layout.ChatInput.Width - textX), layout.ChatInput.Height);
++					Math.Max(0, layout.ChatInput.Right - textX), layout.ChatInput.Height);
+ 		}
+ 
+ 		bool disposed;
+diff -ruN a/OpenRA.Mods.Common/Widgets/ScrollPanelWidget.cs b/OpenRA.Mods.Common/Widgets/ScrollPanelWidget.cs
+--- a/OpenRA.Mods.Common/Widgets/ScrollPanelWidget.cs	2026-08-27 22:31:33
++++ b/OpenRA.Mods.Common/Widgets/ScrollPanelWidget.cs	2026-08-27 22:31:33
+@@ -219,16 +219,19 @@
+ 				if (thumbHeight > 0)
+ 					ButtonWidget.DrawBackground(Button, thumbRect, false, HasMouseFocus && thumbHover, thumbHover, false);
+ 
+-				var upOffset = !upPressed || upDisabled ? 4 : 4 + ButtonDepth;
+-				var downOffset = !downPressed || downDisabled ? 4 : 4 + ButtonDepth;
+-
+ 				var upArrowImage = getUpArrowImage.Update((upDisabled, upPressed, upHover, false, false));
++				var upOrigin = IosTouchWidgetPolicy.CenteredDecorationOrigin(
++					upButtonRect, new Size((int)upArrowImage.Size.X, (int)upArrowImage.Size.Y),
++					!upPressed || upDisabled ? 0 : ButtonDepth);
+ 				WidgetUtils.DrawSprite(upArrowImage,
+-					new float2(upButtonRect.Left + upOffset, upButtonRect.Top + upOffset));
++					new float2(upOrigin.X, upOrigin.Y));
+ 
+ 				var downArrowImage = getDownArrowImage.Update((downDisabled, downPressed, downHover, false, false));
++				var downOrigin = IosTouchWidgetPolicy.CenteredDecorationOrigin(
++					downButtonRect, new Size((int)downArrowImage.Size.X, (int)downArrowImage.Size.Y),
++					!downPressed || downDisabled ? 0 : ButtonDepth);
+ 				WidgetUtils.DrawSprite(downArrowImage,
+-					new float2(downButtonRect.Left + downOffset, downButtonRect.Top + downOffset));
++					new float2(downOrigin.X, downOrigin.Y));
+ 			}
+ 
+ 			var horizontalBorder = Math.Min(Math.Max(0, BorderWidth), backgroundRect.Width / 2);
+diff -ruN a/OpenRA.Test/IosLobbyResponsiveLayoutTest.cs b/OpenRA.Test/IosLobbyResponsiveLayoutTest.cs
+--- a/OpenRA.Test/IosLobbyResponsiveLayoutTest.cs	2026-08-27 22:31:33
++++ b/OpenRA.Test/IosLobbyResponsiveLayoutTest.cs	2026-08-27 22:31:33
+@@ -63,8 +63,8 @@
+ 			}
+ 		}
+ 
+-		[TestCaseSource(nameof(SupportedTablets))]
+-		public void TabletPlayableMapUsesTheMaximumLargePreviewSurface(IosScreenSnapshot snapshot)
++		[TestCaseSource(nameof(SupportedDevices))]
++		public void PlayableMapUsesAFullWidthPreviewBandAndSeparatedMetadata(IosScreenSnapshot snapshot)
+ 		{
+ 			var policy = IosMenuLayoutPolicy.Create(true, snapshot);
+ 			var lobby = IosLobbyLayout.Create(policy.ContentBounds.Width, policy.ContentBounds.Height, policy);
+@@ -72,20 +72,108 @@
+ 			foreach (var card in new[] { Local(lobby.Map), Local(createServer.MapPreview) })
+ 			{
+ 				var large = IosMapPreviewLayout.Create(card.Width, card.Height, policy, false);
+-				var small = IosMapPreviewLayout.Create(card.Width, card.Height, policy, true);
+ 				var playableBand = 3 * policy.MinimumReadableTextHeight + 3 * policy.Gap;
+-				var expectedMapSize = Math.Min(card.Width,
+-					Math.Max(policy.MinimumTarget, card.Height - playableBand));
++				var expectedMapHeight = Math.Max(policy.MinimumTarget, card.Height - playableBand);
+ 
+-				Assert.That(large.MapSurface.Height, Is.EqualTo(expectedMapSize),
++				Assert.That(large.MapSurface.X, Is.Zero);
++				Assert.That(large.MapSurface.Width, Is.EqualTo(card.Width),
++					"Playable maps should use the whole preview column instead of a small left-aligned square.");
++				Assert.That(large.MapSurface.Height, Is.EqualTo(expectedMapHeight),
+ 					"Playable map layout must reserve only title/type/author and their necessary gaps.");
+-				Assert.That(large.MapSurface.Height, Is.GreaterThan(small.MapSurface.Height),
+-					"Large and small tablet states must not collapse to identical preview geometry.");
++				Assert.That(large.MapSurface.Height / policy.LogicalPerPoint, Is.GreaterThanOrEqualTo(72),
++					"The preview must be materially larger than a minimum-size touch icon.");
++				Assert.That(large.MapPreview, Is.EqualTo(Inset(large.MapSurface, 1)));
+ 				AssertVisibleRoles(card,
+ 					large.MapSurface, large.Title, large.PrimaryText, large.SecondaryText);
+ 			}
+ 		}
+ 
++		[TestCaseSource(nameof(SupportedTablets))]
++		public void TabletLobbyKeepsTheMapColumnBesideTheUtilityBand(IosScreenSnapshot snapshot)
++		{
++			var policy = IosMenuLayoutPolicy.Create(true, snapshot);
++			var layout = IosLobbyLayout.Create(policy.ContentBounds.Width, policy.ContentBounds.Height, policy);
++
++			Assert.Multiple(() =>
++			{
++				Assert.That(layout.Chat.X, Is.EqualTo(layout.Players.X));
++				Assert.That(layout.Chat.Right, Is.EqualTo(layout.Players.Right),
++					"Chat and position controls belong to the player column, not underneath the map.");
++				Assert.That(layout.Map.Y, Is.EqualTo(layout.Main.Y));
++				Assert.That(layout.Map.Bottom + layout.Gap, Is.EqualTo(layout.ChangeMap.Y));
++				Assert.That(layout.ChangeMap.Bottom, Is.EqualTo(layout.Main.Bottom),
++					"The map column should use the full main height beside the utility band.");
++			});
++		}
++
++		[TestCaseSource(nameof(SupportedDevices))]
++		public void PositionManagerIsOneReadableRowAlignedWithChatInput(IosScreenSnapshot snapshot)
++		{
++			using var fonts = new ActualIosFontRenderer();
++			var policy = IosMenuLayoutPolicy.Create(true, snapshot);
++			var layout = IosLobbyLayout.Create(policy.ContentBounds.Width, policy.ContentBounds.Height, policy);
++			var text = FluentValue("zh-CN", "chrome.ftl", "dropdownbutton-server-lobby-slots");
++			var usableWidth = layout.Position.Width - layout.Position.Height;
++
++			Assert.Multiple(() =>
++			{
++				Assert.That(layout.Position.Height, Is.EqualTo(policy.MinimumTarget));
++				Assert.That(layout.Position.Y, Is.EqualTo(layout.Chat.Y + layout.ChatInput.Y));
++				Assert.That(layout.Position.Bottom, Is.EqualTo(layout.Chat.Bottom));
++				Assert.That(layout.ChatDisplay.X, Is.Zero);
++				Assert.That(layout.ChatDisplay.Width, Is.EqualTo(layout.Chat.Width),
++					"Chat history should use the full player-column width above the input row.");
++				Assert.That(layout.Position.Right + layout.Gap, Is.LessThanOrEqualTo(layout.ChatInput.X));
++				Assert.That(Game.Renderer.Fonts["IosBold"].Measure(text).X, Is.LessThanOrEqualTo(usableWidth),
++					"The dropdown marker reservation must leave enough width for 位置管理.");
++			});
++		}
++
++		[TestCaseSource(nameof(SupportedDevices))]
++		public void LiveChatWidgetsConsumeTheOffsetInputRow(IosScreenSnapshot snapshot)
++		{
++			var policy = IosMenuLayoutPolicy.Create(true, snapshot);
++			var layout = IosLobbyLayout.Create(policy.ContentBounds.Width, policy.ContentBounds.Height, policy);
++			var chat = new ContainerWidget();
++			var mode = new ContainerWidget { Id = "CHAT_MODE", Bounds = new WidgetBounds(7, 9, 11, 13) };
++			var text = new ContainerWidget { Id = "CHAT_TEXTFIELD", Bounds = new WidgetBounds(17, 19, 23, 29) };
++			chat.AddChild(mode);
++			chat.AddChild(text);
++
++			ApplyIosChatLayout(chat, layout, policy);
++
++			Assert.Multiple(() =>
++			{
++				Assert.That(mode.Bounds.X, Is.EqualTo(layout.ChatInput.X));
++				Assert.That(mode.Bounds.Y, Is.EqualTo(layout.ChatInput.Y));
++				Assert.That(mode.Bounds.Height, Is.EqualTo(layout.ChatInput.Height));
++				Assert.That(text.Bounds.X, Is.EqualTo(mode.Bounds.Right + policy.Gap));
++				Assert.That(text.Bounds.Right, Is.EqualTo(layout.ChatInput.Right),
++					"The live text field must consume the remainder of the offset input row.");
++				Assert.That(text.Bounds.Y, Is.EqualTo(layout.ChatInput.Y));
++				Assert.That(text.Bounds.Height, Is.EqualTo(layout.ChatInput.Height));
++			});
++		}
++
++		[TestCaseSource(nameof(SupportedTablets))]
++		public void TabletLobbyScrollButtonsStayFortyEightPointSquaresAndMeetThePlayerRows(
++			IosScreenSnapshot snapshot)
++		{
++			var policy = IosMenuLayoutPolicy.Create(true, snapshot);
++			var layout = IosLobbyLayout.Create(policy.ContentBounds.Width, policy.ContentBounds.Height, policy);
++			var chatScroll = IosTouchWidgetPolicy.ScrollGeometry(
++				layout.ChatDisplay.Width, layout.ChatDisplay.Height, policy.MinimumTarget,
++				3 * layout.ChatDisplay.Height, policy.MinimumTarget);
++
++			Assert.Multiple(() =>
++			{
++				Assert.That(layout.ChatDisplay.Height, Is.GreaterThanOrEqualTo(2 * policy.MinimumTarget));
++				Assert.That(chatScroll.ButtonSize, Is.EqualTo(policy.MinimumTarget));
++				Assert.That(layout.PlayerRow.Right, Is.EqualTo(layout.Players.Width - policy.MinimumTarget),
++					"The player header/rows must meet the scrollbar instead of reserving a second empty gap.");
++			});
++		}
++
+ 		[TestCaseSource(nameof(SupportedPhones))]
+ 		public void PhoneSingleActionsAndDualStateUseFullWidthStateSpecificSlots(
+ 			IosScreenSnapshot snapshot)
+@@ -965,7 +1053,7 @@
+ 					"Progress must never occupy the single-action slot.");
+ 			}
+ 
+-			if (policy.IsPhone)
++			if (policy.IsPhone && small)
+ 				Assert.That(layout.MapSurface.Right, Is.LessThanOrEqualTo(layout.TextColumn.X));
+ 			else
+ 				Assert.That(layout.MapSurface.Bottom, Is.LessThanOrEqualTo(layout.TextColumn.Y));
+@@ -1367,6 +1455,16 @@
+ 			Assert.That(method, Is.Not.Null,
+ 				"Server data rows and group headers need one executable responsive row applicator.");
+ 			method!.Invoke(null, new object[] { row, columns, height, policy });
++		}
++
++		static void ApplyIosChatLayout(
++			Widget chat, IosLobbyLayout layout, IosMenuLayoutPolicy policy)
++		{
++			var method = typeof(LobbyLogic).GetMethod(
++				"LayoutIosChat", BindingFlags.Static | BindingFlags.NonPublic);
++			Assert.That(method, Is.Not.Null,
++				"The live lobby chat tree must share the responsive offset-input layout.");
++			method!.Invoke(null, new object[] { chat, layout, policy });
+ 		}
+ 
+ 		static TestCaseData Device(
+diff -ruN a/OpenRA.Test/IosTouchWidgetPolicyTest.cs b/OpenRA.Test/IosTouchWidgetPolicyTest.cs
+--- a/OpenRA.Test/IosTouchWidgetPolicyTest.cs	2026-08-27 22:31:33
++++ b/OpenRA.Test/IosTouchWidgetPolicyTest.cs	2026-08-27 22:31:33
+@@ -506,6 +506,25 @@
+ 		}
+ 
+ 		[Test]
++		public void ScrollArrowDecorationsAreCenteredInsideEveryButtonSize()
++		{
++			var touch = IosTouchWidgetPolicy.CenteredDecorationOrigin(
++				new Rectangle(100, 200, 48, 48), new Size(16, 16), 0);
++			var pressed = IosTouchWidgetPolicy.CenteredDecorationOrigin(
++				new Rectangle(100, 200, 48, 48), new Size(16, 16), 1);
++			var desktop = IosTouchWidgetPolicy.CenteredDecorationOrigin(
++				new Rectangle(10, 20, 24, 24), new Size(16, 16), 0);
++
++			Assert.Multiple(() =>
++			{
++				Assert.That(touch, Is.EqualTo(new int2(116, 216)));
++				Assert.That(pressed, Is.EqualTo(new int2(117, 217)));
++				Assert.That(desktop, Is.EqualTo(new int2(14, 24)),
++					"Dynamic centering must preserve the existing 24px desktop geometry.");
++			});
++		}
++
++		[Test]
+ 		public void ScrollPanelContentDraggingIsOptInAndSettingsEnableItForHiddenHotkeysToo()
+ 		{
+ 			var root = RepositoryRoot();
+@@ -516,11 +535,23 @@
+ 			Assert.That(scrollPanel, Does.Contain("IosTouchWidgetPolicy.ExceedsDragThreshold"));
+ 			Assert.That(scrollPanel, Does.Contain("IosTouchWidgetPolicy.ClampScrollOffset"));
+ 			Assert.That(scrollPanel, Does.Contain("IosTouchWidgetPolicy.ScrollGeometry"));
++			Assert.That(scrollPanel, Does.Contain("IosTouchWidgetPolicy.CenteredDecorationOrigin"));
+ 			Assert.That(CountOccurrences(scrollPanel, "Math.Max(0, rb.Width - scrollbarWidth + 1)"), Is.EqualTo(2),
+ 				"Left and right scrollbar layouts must reserve the same legal content width.");
+ 			Assert.That(settings, Does.Contain("scrollPanel.EnableContentDragging = true"));
+ 			Assert.That(settings, Does.Contain("IosTouchWidgetPolicy.ContentDragThreshold(layout.LogicalPerPoint)"));
+ 			Assert.That(settings, Does.Contain("ConfigureIosTouchWidgets(child, layout)"));
++		}
++
++		[Test]
++		public void ScrollTrackAndArrowButtonsUseTheSameVisibleChromeEdge()
++		{
++			var root = RepositoryRoot();
++			var chrome = File.ReadAllText(Path.Combine(root, "mods", "ra2", "chrome.yaml"));
++
++			Assert.That(chrome, Does.Match(
++				@"scrollpanel-bg:\s*\n\tImage: menupanel\.png\s*\n\tPanelRegion: 2, 2, 6, 6, 240, 240, 6, 6"),
++				"The track must crop the panel's 2px outer dark rim so its red edge aligns with the arrow buttons.");
+ 		}
+ 
+ 		[TestCase(1558, 720, 844, 390, 47, 0, 47, 21)]

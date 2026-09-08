@@ -1,0 +1,464 @@
+^BaseWorld:
+	Inherits: ^Palettes
+	AlwaysVisible:
+	MusicPlaylist:
+		VictoryMusic: score
+		DefeatMusic: score
+	VoxelCache:
+	ModelRenderer:
+	ActorMap:
+	ScreenMap:
+	TerrainGeometryOverlay:
+	IosHighUnitBenchmark:
+	TerrainRenderer:
+	ResourceRenderer:
+		ResourceTypes:
+			Ore:
+				Sequences: tib01, tib02, tib03, tib04, tib05, tib06, tib07, tib08, tib09, tib10, tib11, tib12, tib13, tib14, tib15, tib16, tib17, tib18, tib19, tib20
+				Palette: resource
+				Name: resource-minerals
+			Gems:
+				Sequences: gem01, gem02, gem03, gem04, gem05, gem06, gem07, gem08, gem09, gem10, gem11, gem12
+				Palette: resource
+				Name: resource-minerals
+	TerrainLighting:
+	DebugVisualizations:
+	Locomotor@FOOT:
+		Name: foot
+		Crushes: crate
+		SharesCell: true
+		TerrainSpeeds:
+			Clear: 100
+			Rough: 100
+			Rail: 90
+			Road: 100
+			Bridge: 100
+			DirtRoad: 100
+			Ore: 90
+			Gems: 80
+	Locomotor@SWIMSUIT:
+		Name: swimsuit
+		Crushes: crate
+		SharesCell: true
+		TerrainSpeeds:
+			Clear: 100
+			Rough: 100
+			Rail: 90
+			Road: 100
+			Bridge: 100
+			DirtRoad: 100
+			Ore: 90
+			Gems: 80
+			Water: 70
+	Locomotor@FLAMEGUY:
+		Name: flameguy
+		Crushes: crate
+		SharesCell: true
+		TerrainSpeeds:
+			Clear: 45
+			Road: 50
+			Rail: 45
+			DirtRoad: 50
+			Rough: 40
+			Ore: 45
+			Gems: 45
+	Locomotor@WHEELED:
+		Name: wheeled
+		Crushes: crate
+		TerrainSpeeds:
+			Clear: 100
+			Rough: 100
+			Rail: 50
+			Road: 100
+			Bridge: 100
+			DirtRoad: 100
+			Beach: 100
+			Ore: 70
+			Gems: 70
+	Locomotor@TRACKED:
+		Name: tracked
+		Crushes: crate, infantry
+		TerrainSpeeds:
+			Clear: 100
+			Rough: 100
+			Rail: 50
+			Road: 100
+			Bridge: 100
+			DirtRoad: 100
+			Beach: 100
+			Ore: 70
+			Gems: 70
+	Locomotor@HEAVYTRACKED:
+		Name: heavytracked
+		Crushes: wall, crate, infantry
+		TerrainSpeeds:
+			Clear: 100
+			Rough: 100
+			Rail: 50
+			Road: 100
+			Bridge: 100
+			DirtRoad: 100
+			Beach: 100
+			Ore: 70
+			Gems: 70
+	Locomotor@AMPHIBIOUS:
+		Name: amphibious
+		Crushes: crate
+		TerrainSpeeds:
+			Clear: 100
+			Rough: 100
+			Rail: 100
+			Road: 100
+			Bridge: 100
+			DirtRoad: 100
+			Beach: 100
+			Ore: 100
+			Gems: 100
+			Water: 100
+	Locomotor@NAVAL:
+		Name: naval
+		Crushes: crate
+		TerrainSpeeds:
+			Water: 100
+	Locomotor@LANDINGCRAFT:
+		Name: lcraft
+		Crushes: crate
+		TerrainSpeeds:
+			Clear: 80
+			Rough: 80
+			Rail: 50
+			Road: 100
+			DirtRoad: 100
+			Beach: 60
+			Ore: 50
+			Gems: 50
+			Water: 100
+	ShroudRenderer:
+		Index: 255, 16, 32, 48, 64, 80, 96, 112, 128, 144, 160, 176, 192, 208, 224, 240, 20, 40, 56, 65, 97, 130, 148, 194, 24, 33, 66, 132, 28, 41, 67, 134, 1, 2, 4, 8, 3, 6, 12, 9, 7, 14, 13, 11, 5, 10, 15, 255
+		UseExtendedIndex: true
+		FogPalette: shroud
+		ShroudPalette: shroud
+	Faction@random:
+		Name: meta-baseworld.faction-random-name
+		InternalName: Random
+		RandomFactionMembers: random-allies, random-soviets, yuri
+		Side: Randoms
+		Description: meta-baseworld.faction-random-description
+	Faction@allies:
+		Name: meta-baseworld.faction-allies-name
+		InternalName: random-allies
+		RandomFactionMembers: america, germany, england, france, korea
+		Side: Randoms
+		Description: meta-baseworld.faction-allies-description
+	Faction@soviets:
+		Name: meta-baseworld.faction-soviets-name
+		InternalName: random-soviets
+		RandomFactionMembers: cuba, libya, iraq, russia
+		Side: Randoms
+		Description: meta-baseworld.faction-soviets-description
+	Faction@yuri:
+		Name: meta-baseworld.faction-yuri-name
+		InternalName: yuri
+		Side: Yuri
+		Description: meta-baseworld.faction-yuri-description
+	Faction@1:
+		Name: meta-baseworld.faction-1-name
+		InternalName: america
+		Side: Allies
+		Description: meta-baseworld.faction-1-description
+	Faction@2:
+		Name: meta-baseworld.faction-2-name
+		InternalName: germany
+		Side: Allies
+		Description: meta-baseworld.faction-2-description
+	Faction@3:
+		Name: meta-baseworld.faction-3-name
+		InternalName: england
+		Side: Allies
+		Description: meta-baseworld.faction-3-description
+	Faction@4:
+		Name: meta-baseworld.faction-4-name
+		InternalName: france
+		Side: Allies
+		Description: meta-baseworld.faction-4-description
+	Faction@5:
+		Name: meta-baseworld.faction-5-name
+		InternalName: korea
+		Side: Allies
+		Description: meta-baseworld.faction-5-description
+	Faction@6:
+		Name: meta-baseworld.faction-6-name
+		InternalName: cuba
+		Side: Soviets
+		Description: meta-baseworld.faction-6-description
+	Faction@7:
+		Name: meta-baseworld.faction-7-name
+		InternalName: libya
+		Side: Soviets
+		Description: meta-baseworld.faction-7-description
+	Faction@8:
+		Name: meta-baseworld.faction-8-name
+		InternalName: iraq
+		Side: Soviets
+		Description: meta-baseworld.faction-8-description
+	Faction@9:
+		Name: meta-baseworld.faction-9-name
+		InternalName: russia
+		Side: Soviets
+		Description: meta-baseworld.faction-9-description
+	CliffBackImpassabilityLayer:
+	Selection:
+	ControlGroups:
+
+World:
+	Inherits: ^BaseWorld
+	ChatCommands:
+	DevCommands:
+	DebugVisualizationCommands:
+	PlayerCommands:
+	HelpCommand:
+	ScreenShaker:
+	BuildingInfluence:
+	ProductionQueueFromSelection:
+		ProductionPaletteWidget: PRODUCTION_PALETTE
+	SmudgeLayer@smallscorch:
+		Type: SmallScorch
+		Sequence: smallscorches
+		SmokeImage: smallfire
+		SmokeChance: 50
+		SmokeSequences: idle
+	SmudgeLayer@mediumscorch:
+		Type: MediumScorch
+		Sequence: mediumscorches
+		SmokeImage: mediumfire
+		SmokeChance: 75
+		SmokeSequences: idle
+	SmudgeLayer@largescorch:
+		Type: LargeScorch
+		Sequence: largescorches
+		SmokeImage: largefire
+		SmokeChance: 100
+		SmokeSequences: idle
+	SmudgeLayer@smallcrater:
+		Type: SmallCrater
+		SmokeImage: smallsmoke
+		Sequence: smallcraters
+		SmokeChance: 25
+		SmokeSequences: idle
+	SmudgeLayer@mediumcrater:
+		Type: MediumCrater
+		SmokeImage: smallsmoke
+		Sequence: mediumcraters
+		SmokeChance: 25
+		SmokeSequences: idle
+	SmudgeLayer@largecrater:
+		Type: LargeCrater
+		SmokeImage: largesmoke
+		Sequence: largecraters
+		SmokeChance: 25
+		SmokeSequences: idle
+	ResourceLayer:
+		RecalculateResourceDensity: true
+		ResourceTypes:
+			Ore:
+				ResourceIndex: 1
+				TerrainType: Ore
+				AllowedTerrainTypes: Clear, Rough, Road
+				MaxDensity: 12
+			Gems:
+				ResourceIndex: 2
+				TerrainType: Gems
+				AllowedTerrainTypes: Clear, Rough, Road
+				MaxDensity: 12
+	ResourceClaimLayer:
+	BridgeLayer:
+	WarheadDebugOverlay:
+	CustomTerrainDebugOverlay:
+	TintedCellsLayer@radiation:
+		Darkest: 32
+		Brightest: 128
+	SpawnMapActors:
+	MapBuildRadius:
+		AllyBuildRadiusCheckboxDisplayOrder: 4
+		BuildRadiusCheckboxVisible: false
+	MapOptions:
+		ShortGameCheckboxDisplayOrder: 2
+		TechLevelDropdownDisplayOrder: 3
+		GameSpeedDropdownDisplayOrder: 4
+	CreateMapPlayers:
+	StartingUnits@amcv:
+		Class: none
+		ClassName: options-starting-units.mcv-only
+		Factions: allies, america, germany, england, france, korea
+		BaseActor: amcv
+		BaseActorFacing: 896
+	StartingUnits@lightallies:
+		Class: light
+		ClassName: options-starting-units.light
+		Factions: allies, america, germany, england, france, korea
+		BaseActor: amcv
+		BaseActorFacing: 896
+		SupportActors: dog,e1,e1
+		SupportActorsFacing: 896
+		InnerSupportRadius: 3
+		OuterSupportRadius: 5
+	StartingUnits@mediumallies:
+		Class: medium
+		ClassName: options-starting-units.medium
+		Factions: allies, america, germany, england, france, korea
+		BaseActor: amcv
+		BaseActorFacing: 896
+		SupportActors: dog,e1,e1,e1,mtnk,engineer
+		SupportActorsFacing: 896
+		InnerSupportRadius: 3
+		OuterSupportRadius: 5
+	StartingUnits@heavyallies:
+		Class: heavy
+		ClassName: options-starting-units.heavy
+		Factions: allies, america, germany, england, france, korea
+		BaseActor: amcv
+		BaseActorFacing: 896
+		SupportActors: dog,e1,e1,e1,e1,mtnk,mtnk,fv,engineer
+		SupportActorsFacing: 896
+		InnerSupportRadius: 3
+		OuterSupportRadius: 5
+	StartingUnits@smcv:
+		Class: none
+		ClassName: options-starting-units.mcv-only
+		Factions: soviets, cuba, libya, iraq, russia
+		BaseActor: smcv
+		BaseActorFacing: 896
+	StartingUnits@lightsoviets:
+		Class: light
+		ClassName: options-starting-units.light
+		Factions: soviets, cuba, libya, iraq, russia
+		BaseActor: smcv
+		BaseActorFacing: 896
+		SupportActors: dog,e2,e2,e2
+		SupportActorsFacing: 896
+		InnerSupportRadius: 3
+		OuterSupportRadius: 5
+	StartingUnits@mediumsoviets:
+		Class: medium
+		ClassName: options-starting-units.medium
+		Factions: soviets, cuba, libya, iraq, russia
+		BaseActor: smcv
+		BaseActorFacing: 896
+		SupportActors: dog,e2,e2,e2,e2,htnk,engineer
+		SupportActorsFacing: 896
+		InnerSupportRadius: 3
+		OuterSupportRadius: 5
+	StartingUnits@heavysoviets:
+		Class: heavy
+		ClassName: options-starting-units.heavy
+		Factions: soviets, cuba, libya, iraq, russia
+		BaseActor: smcv
+		BaseActorFacing: 896
+		SupportActors: dog,e2,e2,e2,e2,e2,htnk,htnk,htk,engineer
+		SupportActorsFacing: 896
+		InnerSupportRadius: 3
+		OuterSupportRadius: 5
+	StartingUnits@pcv:
+		Class: none
+		ClassName: options-starting-units.mcv-only
+		Factions: yuri
+		BaseActor: pcv
+		BaseActorFacing: 896
+	StartingUnits@lightyuri:
+		Class: light
+		ClassName: options-starting-units.light
+		Factions: yuri
+		BaseActor: pcv
+		BaseActorFacing: 896
+		SupportActors: dog,init,init
+		SupportActorsFacing: 896
+		InnerSupportRadius: 3
+		OuterSupportRadius: 5
+	StartingUnits@mediumyuri:
+		Class: medium
+		ClassName: options-starting-units.medium
+		Factions: yuri
+		BaseActor: pcv
+		BaseActorFacing: 896
+		SupportActors: dog,init,init,init,ltnk,engineer
+		SupportActorsFacing: 896
+		InnerSupportRadius: 3
+		OuterSupportRadius: 5
+	StartingUnits@heavyyuri:
+		Class: heavy
+		ClassName: options-starting-units.heavy
+		Factions: yuri
+		BaseActor: pcv
+		BaseActorFacing: 896
+		SupportActors: dog,init,init,init,init,ltnk,ltnk,ytnk,engineer
+		SupportActorsFacing: 896
+		InnerSupportRadius: 3
+		OuterSupportRadius: 5
+	CrateSpawner:
+		Minimum: 1
+		Maximum: 3
+		SpawnInterval: 3000
+		WaterChance: 25
+		InitialSpawnDelay: 1000
+		CheckboxDisplayOrder: 1
+	MapStartingLocations:
+		SeparateTeamSpawnsCheckboxDisplayOrder: 6
+	SpawnStartingUnits:
+		DropdownDisplayOrder: 2
+	PathFinder:
+	ValidateOrder:
+	DebugPauseState:
+	RadarPings:
+	StartGameNotification:
+	ObjectivesPanel:
+		PanelName: SKIRMISH_STATS
+	LoadWidgetAtGameStart:
+		ShellmapRoot: MAINMENU_PRERELEASE_NOTIFICATION
+	TimeLimitManager:
+		TimeLimitDisplayOrder: 1
+		TimeLimitWarnings:
+			1: OneMinuteRemaining
+			2: TwoMinutesRemaining
+			3: ThreeMinutesRemaining
+			4: FourMinutesRemaining
+			5: FiveMinutesRemaining
+			10: TenMinutesRemaining
+			20: TwentyMinutesRemaining
+	PathFinderOverlay:
+	HierarchicalPathFinderOverlay:
+	ColorPickerManager:
+		PreviewActor: amcv.colorpicker
+		PresetColors: F21818, F2BC18, DAF218, 18F26F, 18BEF2, 1821F2, BA18F2, F218BC, F29191, F2DF79, CDF291, 79F2BF, 91DBF2, 7997F2, CD91F2, F279E6
+	OrderEffects:
+		OrderFeedbackImage: order-feedback
+		OrderFeedbackSequences:
+			Move: move
+			Attack: attack
+			ForceAttack: attack
+		OrderFeedbackPalette: mouse
+		TerrainFlashImage: moveflsh
+		TerrainFlashSequence: idle
+		TerrainFlashPalette: moveflash
+
+EditorWorld:
+	Inherits: ^BaseWorld
+	EditorActorLayer:
+	EditorCursorLayer:
+	EditorResourceLayer:
+		RecalculateResourceDensity: true
+		ResourceTypes:
+			Ore:
+				ResourceIndex: 1
+				TerrainType: Ore
+				AllowedTerrainTypes: Clear, Rough, Road
+				MaxDensity: 12
+			Gems:
+				ResourceIndex: 2
+				TerrainType: Gems
+				AllowedTerrainTypes: Clear, Rough, Road
+				MaxDensity: 12
+	MarkerLayerOverlay:
+	LoadWidgetAtGameStart:
+	EditorActionManager:
+	BuildableTerrainOverlay:
+		AllowedTerrainTypes: Clear, Rough, Road

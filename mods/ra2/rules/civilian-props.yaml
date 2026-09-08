@@ -1,0 +1,562 @@
+camisc01:
+	Inherits: ^CivBuilding
+	Tooltip:
+		Name: actor-camisc01-name
+	Health:
+		HP: 5
+	Armor:
+		Type: Concrete
+	SoundOnDamageTransition:
+		DamagedSounds: bmetdama.wav, bmetdamb.wav, bmetdamc.wav
+	MapEditorData:
+		Categories: Decoration
+	FireWarheadsOnDeath:
+		Weapon: LargeBarrelExplode
+
+camisc02:
+	Inherits: ^CivBuilding
+	Tooltip:
+		Name: actor-camisc02-name
+	Health:
+		HP: 5
+	Armor:
+		Type: Concrete
+	SoundOnDamageTransition:
+		DamagedSounds: bmetdama.wav, bmetdamb.wav, bmetdamc.wav
+	MapEditorData:
+		Categories: Decoration
+	FireWarheadsOnDeath:
+		Weapon: SmallBarrelExplode
+
+camisc03:
+	Inherits: ^CivBuilding
+	Tooltip:
+		Name: actor-camisc03-name
+	Health:
+		HP: 100
+	Armor:
+		Type: Concrete
+	SoundOnDamageTransition:
+		DamagedSounds: bmetdama.wav, bmetdamb.wav, bmetdamc.wav
+		DestroyedSounds: bmetdama.wav, bmetdamb.wav, bmetdamc.wav
+	MapEditorData:
+		Categories: Decoration
+
+camisc04:
+	Inherits: ^CivBuilding
+	Tooltip:
+		Name: actor-camisc04-name
+	Health:
+		HP: 10
+	Armor:
+		Type: Concrete
+	SoundOnDamageTransition:
+		DamagedSounds: bmetdama.wav, bmetdamb.wav, bmetdamc.wav
+		DestroyedSounds: bmetdama.wav, bmetdamb.wav, bmetdamc.wav
+	IsometricSelectable:
+		DecorationHeight: 15
+	MapEditorData:
+		Categories: Decoration
+
+camisc05:
+	Inherits: ^CivBuilding
+	Tooltip:
+		Name: actor-camisc05-name
+	Health:
+		HP: 10
+	Armor:
+		Type: Concrete
+	SoundOnDamageTransition:
+		DamagedSounds: bmetdama.wav, bmetdamb.wav, bmetdamc.wav
+		DestroyedSounds: bmetdama.wav, bmetdamb.wav, bmetdamc.wav
+	IsometricSelectable:
+		DecorationHeight: 15
+	MapEditorData:
+		Categories: Decoration
+
+camisc06:
+	Inherits: ^CivBuilding
+	Inherits@shape: ^2x1Shape
+	Building:
+		Footprint: xx
+		Dimensions: 2, 1
+	Tooltip:
+		Name: actor-camisc06-name
+	Health:
+		HP: 10
+	Armor:
+		Type: Concrete
+	FireWarheadsOnDeath:
+		Type: Footprint
+		Weapon: V3AmmunitionExplode
+	SoundOnDamageTransition:
+		DamagedSounds: bmetdama.wav, bmetdamb.wav, bmetdamc.wav
+	MapEditorData:
+		Categories: Decoration
+
+camsc11:
+	Inherits: ^CivBuilding
+	Tooltip:
+		Name: actor-camsc11-name
+	Health:
+		HP: 10
+	Armor:
+		Type: Concrete
+	MapEditorData:
+		Categories: Decoration
+	IsometricSelectable:
+		Height: 15
+
+camsc12:
+	Inherits: ^CivBuilding
+	Tooltip:
+		Name: actor-camsc12-name
+	Health:
+		HP: 10
+	Armor:
+		Type: Concrete
+	MapEditorData:
+		Categories: Decoration
+
+camsc13:
+	Inherits: ^CivBuilding
+	Inherits@shape: ^1x2Shape
+	Building:
+		Footprint: x x
+		Dimensions: 1, 2
+	Tooltip:
+		Name: actor-camsc13-name
+	Health:
+		HP: 800
+	Armor:
+		Type: Concrete
+	MapEditorData:
+		Categories: Decoration
+
+ammocrat:
+	Inherits: ^CivBuilding
+	Tooltip:
+		Name: actor-ammocrat-name
+	Health:
+		HP: 1
+	RenderSprites:
+		Image: ammo01
+	MapEditorData:
+		Categories: Decoration
+
+camsc01:
+	Inherits: ^CivBuilding
+	Tooltip:
+		Name: actor-camsc01-name
+	RevealsShroud:
+		Range: 6c0
+	Health:
+		HP: 400
+	MapEditorData:
+		Categories: Decoration
+		ExcludeTilesets: SNOW
+
+camsc02:
+	Inherits: ^CivBuilding
+	Tooltip:
+		Name: actor-camsc02-name
+	RevealsShroud:
+		Range: 6c0
+	Health:
+		HP: 50
+	MapEditorData:
+		Categories: Decoration
+		ExcludeTilesets: SNOW
+
+camsc03:
+	Inherits: ^CivBuilding
+	Tooltip:
+		Name: actor-camsc03-name
+	RevealsShroud:
+		Range: 6c0
+	Health:
+		HP: 1
+	MapEditorData:
+		Categories: Decoration
+		ExcludeTilesets: SNOW
+
+camsc04:
+	Inherits: ^CivBuilding
+	Tooltip:
+		Name: actor-camsc04-name
+	RevealsShroud:
+		Range: 6c0
+	Health:
+		HP: 1
+	IsometricSelectable:
+		Height: 15
+	MapEditorData:
+		Categories: Decoration
+		ExcludeTilesets: SNOW
+
+camsc05:
+	Inherits: ^CivBuilding
+	Tooltip:
+		Name: actor-camsc05-name
+	RevealsShroud:
+		Range: 6c0
+	Health:
+		HP: 1
+	IsometricSelectable:
+		Height: 15
+	MapEditorData:
+		Categories: Decoration
+		ExcludeTilesets: SNOW
+
+camsc06:
+	Inherits: ^CivBuilding
+	Tooltip:
+		Name: actor-camsc06-name
+	RevealsShroud:
+		Range: 6c0
+	Health:
+		HP: 10
+	WithIdleOverlay@fire:
+		Sequence: idle-fire
+	IsometricSelectable:
+		Height: 15
+	MapEditorData:
+		Categories: Decoration
+
+caeuro05:
+	Inherits: ^CivBuilding
+	Inherits@shape: ^2x2Shape
+	Tooltip:
+		Name: actor-caeuro05-name
+	Armor:
+		Type: concrete
+	RevealsShroud:
+		Range: 6c0
+	Health:
+		HP: 400
+	Building:
+		Dimensions: 2,2
+		Footprint: xx xx
+	IsometricSelectable:
+		Height: 75
+	MapEditorData:
+		Categories: Decoration
+
+capark01:
+	Inherits: ^CivBuilding
+	Tooltip:
+		Name: actor-capark01-name
+	RevealsShroud:
+		Range: 6c0
+	Health:
+		HP: 1
+	IsometricSelectable:
+		DecorationHeight: 15
+	MapEditorData:
+		Categories: Decoration
+
+capark02:
+	Inherits: ^CivBuilding
+	Inherits@shape: ^2x1Shape
+	Tooltip:
+		Name: actor-capark02-name
+	RevealsShroud:
+		Range: 6c0
+	Health:
+		HP: 1
+	Building:
+		Dimensions: 2,1
+		Footprint: xx
+	MapEditorData:
+		Categories: Decoration
+
+capark03:
+	Inherits: ^CivBuilding
+	Inherits@shape: ^2x2Shape
+	Tooltip:
+		Name: actor-capark03-name
+	RevealsShroud:
+		Range: 6c0
+	Health:
+		HP: 1
+	Building:
+		Dimensions: 2,2
+		Footprint: xx xx
+	MapEditorData:
+		Categories: Decoration
+
+castrt01:
+	Inherits: ^CivBuilding
+	Tooltip:
+		Name: actor-castrt01-name
+	Armor:
+		Type: steel
+	RevealsShroud:
+		Range: 6c0
+	Health:
+		HP: 1000
+	MapEditorData:
+		Categories: Decoration
+	IsometricSelectable:
+		Height: 60
+
+castrt02:
+	Inherits: ^CivBuilding
+	Tooltip:
+		Name: actor-castrt02-name
+	Armor:
+		Type: steel
+	RevealsShroud:
+		Range: 6c0
+	Health:
+		HP: 1000
+	MapEditorData:
+		Categories: Decoration
+	IsometricSelectable:
+		Height: 60
+
+castrt03:
+	Inherits: ^CivBuilding
+	Tooltip:
+		Name: actor-castrt03-name
+	Armor:
+		Type: steel
+	RevealsShroud:
+		Range: 6c0
+	Health:
+		HP: 1000
+	MapEditorData:
+		Categories: Decoration
+	IsometricSelectable:
+		Height: 60
+
+castrt04:
+	Inherits: ^CivBuilding
+	Tooltip:
+		Name: actor-castrt04-name
+	Armor:
+		Type: steel
+	RevealsShroud:
+		Range: 6c0
+	Health:
+		HP: 1000
+	MapEditorData:
+		Categories: Decoration
+	IsometricSelectable:
+		Height: 60
+
+castrt05:
+	Inherits: ^CivBuilding
+	Tooltip:
+		Name: actor-castrt05-name
+	Armor:
+		Type: steel
+	RevealsShroud:
+		Range: 6c0
+	Health:
+		HP: 1000
+	MapEditorData:
+		Categories: Decoration
+
+camov01:
+	Inherits: ^CivBuilding
+	Inherits@shape: ^1x4Shape
+	Tooltip:
+		Name: actor-camov01-name
+	Armor:
+		Type: steel
+	RevealsShroud:
+		Range: 6c0
+	Health:
+		HP: 500
+	Building:
+		Dimensions: 1,4
+		Footprint: x x x x
+	WithIdleOverlay:
+	IsometricSelectable:
+		Height: 90
+
+camov02:
+	Inherits: ^GarrisonableBuilding
+	Inherits@shape: ^2x2Shape
+	Tooltip:
+		Name: actor-camov02-name
+	Armor:
+		Type: steel
+	RevealsShroud:
+		Range: 6c0
+	Health:
+		HP: 1000
+	Building:
+		Dimensions: 2,2
+		Footprint: xx xx
+	WithIdleOverlay:
+	IsometricSelectable:
+		Height: 60
+	Garrisonable:
+		MaxWeight: 5
+
+pole01:
+	Inherits: ^TelephonePole
+	Tooltip:
+		Name: actor-pole01-name
+
+pole02:
+	Inherits: ^TelephonePole
+	Tooltip:
+		Name: actor-pole02-name
+
+hdstn01:
+	Inherits: ^Tree
+	Tooltip:
+		Name: actor-hdstn01-name
+	MapEditorData:
+		Categories: Decoration
+	-MirageTarget:
+
+lt_gen01:
+	Inherits: ^StreetLight
+
+lt_gen02:
+	Inherits: ^StreetLight
+
+lt_gen03:
+	Inherits: ^StreetLight
+
+lt_gen04:
+	Inherits: ^StreetLight
+
+lt_sgn01:
+	Inherits: ^StreetLight
+
+lt_sgn02:
+	Inherits: ^StreetLight
+
+lt_sgn03:
+	Inherits: ^StreetLight
+
+lt_sgn04:
+	Inherits: ^StreetLight
+
+lt_eur01:
+	Inherits: ^StreetLight
+
+lt_eur02:
+	Inherits: ^StreetLight
+
+trff01:
+	Inherits: ^TrafficLight
+
+trff02:
+	Inherits: ^TrafficLight
+
+trff03:
+	Inherits: ^TrafficLight
+
+trff04:
+	Inherits: ^TrafficLight
+
+sign01:
+	Inherits: ^StreetSign
+
+sign02:
+	Inherits: ^StreetSign
+
+sign03:
+	Inherits: ^StreetSign
+
+sign04:
+	Inherits: ^StreetSign
+
+sign05:
+	Inherits: ^StreetSign
+
+sign06:
+	Inherits: ^StreetSign
+
+spkr01:
+	Inherits: ^Tree
+	Tooltip:
+		Name: actor-spkr01-name
+	MapEditorData:
+		Categories: Decoration
+	-MirageTarget:
+
+carus02c:
+	Inherits: ^CivBuilding
+	Armor:
+		Type: concrete
+	Health:
+		HP: 1000
+	MapEditorData:
+		Categories: Wall
+	IsometricSelectable:
+		Height: 15
+
+carus02d:
+	Inherits: ^CivBuilding
+	Armor:
+		Type: concrete
+	Health:
+		HP: 1000
+	MapEditorData:
+		Categories: Wall
+
+carus02e:
+	Inherits: ^CivBuilding
+	Armor:
+		Type: concrete
+	Health:
+		HP: 1000
+	MapEditorData:
+		Categories: Wall
+
+carus02f:
+	Inherits: ^CivBuilding
+	Armor:
+		Type: concrete
+	Health:
+		HP: 1000
+	MapEditorData:
+		Categories: Wall
+
+carus07:
+	Inherits: ^CivBuilding
+	Armor:
+		Type: concrete
+	RevealsShroud:
+		Range: 6c0
+	Health:
+		HP: 1000
+	IsometricSelectable:
+		Height: 15
+
+cakrmw:
+	Inherits: ^Wall
+	Tooltip:
+		Name: actor-cakrmw-name
+	Armor:
+		Type: Concrete
+
+gagate_a:
+	Inherits: ^Building
+	Inherits@shape: ^3x1Shape
+	Valued:
+		Cost: 250
+	Health:
+		HP: 100
+	Armor:
+		Type: Wood
+	-Building:
+	-Capturable:
+	-CaptureNotification:
+	-MustBeDestroyed:
+	-WithSpriteBody:
+	WithGateSpriteBody:
+	Tooltip:
+		Name: actor-gagate-a-name
+	Building:
+		Dimensions: 3,1
+		Footprint: xxx
+		TerrainTypes: Clear, Rough, Road, DirtRoad
+	Gate:

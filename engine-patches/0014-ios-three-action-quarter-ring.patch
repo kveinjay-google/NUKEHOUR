@@ -1,0 +1,1603 @@
+diff -ruN a/OpenRA.Mods.Common/Widgets/IosViewportControlsLayout.cs b/OpenRA.Mods.Common/Widgets/IosViewportControlsLayout.cs
+--- a/OpenRA.Mods.Common/Widgets/IosViewportControlsLayout.cs	2026-08-27 22:31:33
++++ b/OpenRA.Mods.Common/Widgets/IosViewportControlsLayout.cs	2026-08-27 22:45:35
+@@ -53,7 +53,7 @@
+ 	public sealed class IosViewportControlsLayout
+ 	{
+ 		// Keep the approved clockwise action order on one circular ring.
+-		static readonly double[] ActionAngles = { -150, -115, -80, -45, -10 };
++		static readonly double[] ActionAngles = { -90, -45, 0 };
+ 
+ 		public const int DefaultJoystickPoints = 128;
+ 
+@@ -97,7 +97,7 @@
+ 			isIos && (!layoutInitialized || previousNormalized != NormalizeJoystickPoints(storedRequested));
+ 
+ 		public static IosViewportControlsLayout Create(
+-			IosScreenSnapshot snapshot, int requestedJoystickPoints, int bottomObstacleTop)
++			IosScreenSnapshot snapshot, int requestedJoystickPoints, Rectangle bottomObstacle)
+ 		{
+ 			var normalized = NormalizeJoystickPoints(requestedJoystickPoints);
+ 			var joystickDiameter = snapshot.LogicalPoints(normalized);
+@@ -105,51 +105,22 @@
+ 			var movementRadius = snapshot.LogicalPoints(normalized * 0.27);
+ 			var buttonDiameter = snapshot.LogicalPoints(56);
+ 			var margin = snapshot.LogicalPoints(12);
++			var obstacleGap = snapshot.LogicalPoints(8);
+ 
+-			// ButtonWidget uses its axis-aligned RenderBounds for input. Start from the selected
+-			// joystick size, then expand only as much as integer rounding requires to keep all
+-			// five real hit rectangles disjoint (most importantly STOP and DEPLOY at 112pt).
+-			var ringRadius = snapshot.LogicalPoints(normalized);
++			var ringRadius = snapshot.LogicalPoints(normalized / 2.0 + 48);
+ 			var offsets = new int2[ActionAngles.Length];
+-			do
+-			{
+-				for (var i = 0; i < ActionAngles.Length; i++)
+-					offsets[i] = RingOffset(ringRadius, ActionAngles[i]);
++			for (var i = 0; i < ActionAngles.Length; i++)
++				offsets[i] = RingOffset(
++					ringRadius, ActionAngles[i], joystickDiameter, buttonDiameter, obstacleGap);
+ 
+-				if (!ActionBoundsOverlap(offsets, buttonDiameter))
+-					break;
+-
+-				ringRadius++;
+-			}
+-			while (true);
+-
+ 			var joystickBeforeCenter = joystickDiameter / 2;
+ 			var joystickAfterCenter = joystickDiameter - joystickBeforeCenter;
+ 			var buttonBeforeCenter = buttonDiameter / 2;
+-			var buttonAfterCenter = buttonDiameter - buttonBeforeCenter;
+-			var minimumX = -joystickBeforeCenter;
+-			var maximumX = joystickAfterCenter;
+-			var minimumY = -joystickBeforeCenter;
+-			var maximumY = joystickAfterCenter;
+ 
+-			foreach (var offset in offsets)
+-			{
+-				minimumX = Math.Min(minimumX, offset.X - buttonBeforeCenter);
+-				maximumX = Math.Max(maximumX, offset.X + buttonAfterCenter);
+-				minimumY = Math.Min(minimumY, offset.Y - buttonBeforeCenter);
+-				maximumY = Math.Max(maximumY, offset.Y + buttonAfterCenter);
+-			}
+-
+ 			var safe = snapshot.SafeBounds;
+-			var minimumCenterX = safe.Left + margin - minimumX;
+-			var maximumCenterX = safe.Right - margin - maximumX;
+-			var centerX = minimumCenterX <= maximumCenterX ? minimumCenterX : safe.Left - minimumX;
++			var centerX = safe.Left + margin + joystickBeforeCenter;
++			var centerY = safe.Bottom - margin - joystickAfterCenter;
+ 
+-			var minimumCenterY = safe.Top + margin - minimumY;
+-			var availableBottom = Math.Min(safe.Bottom, bottomObstacleTop) - margin;
+-			var maximumCenterY = availableBottom - maximumY;
+-			var centerY = maximumCenterY >= minimumCenterY ? maximumCenterY : minimumCenterY;
+-
+ 			var joystickBounds = new Rectangle(
+ 				centerX - joystickBeforeCenter,
+ 				centerY - joystickBeforeCenter,
+@@ -163,6 +134,38 @@
+ 					buttonDiameter,
+ 					buttonDiameter);
+ 
++			var expandedObstacle = Expand(bottomObstacle, obstacleGap);
++			var shift = RequiredUpwardShift(joystickBounds, expandedObstacle);
++			foreach (var action in actions)
++				shift = Math.Max(shift, RequiredUpwardShift(action, expandedObstacle));
++
++			var insetSafe = Inset(safe, margin);
++			var maximumShift = joystickBounds.Top - insetSafe.Top;
++			foreach (var action in actions)
++				maximumShift = Math.Min(maximumShift, action.Top - insetSafe.Top);
++
++			if (shift > maximumShift)
++				throw new InvalidOperationException(
++					"The iOS viewport controls cannot clear the bottom obstacle within the inset Safe Area.");
++
++			if (shift > 0)
++			{
++				joystickBounds = TranslateUp(joystickBounds, shift);
++				for (var i = 0; i < actions.Length; i++)
++					actions[i] = TranslateUp(actions[i], shift);
++			}
++
++			if (!insetSafe.Contains(joystickBounds) || joystickBounds.IntersectsWith(expandedObstacle))
++				throw new InvalidOperationException(
++					"The iOS viewport joystick does not fit within the inset Safe Area.");
++
++			foreach (var action in actions)
++			{
++				if (!insetSafe.Contains(action) || action.IntersectsWith(expandedObstacle))
++					throw new InvalidOperationException(
++						"An iOS viewport action does not fit within the inset Safe Area.");
++			}
++
+ 			var actionsBounds = actions[0];
+ 			for (var i = 1; i < actions.Length; i++)
+ 				actionsBounds = Rectangle.Union(actionsBounds, actions[i]);
+@@ -172,50 +175,79 @@
+ 				thumbDiameter, movementRadius, ringRadius, buttonDiameter, margin);
+ 		}
+ 
+-		static int2 RingOffset(int radius, double angleDegrees)
++		static Rectangle Expand(Rectangle bounds, int amount) => bounds.IsEmpty
++			? Rectangle.Empty
++			: Rectangle.FromLTRB(
++				bounds.Left - amount, bounds.Top - amount,
++				bounds.Right + amount, bounds.Bottom + amount);
++
++		static Rectangle Inset(Rectangle bounds, int amount) => Rectangle.FromLTRB(
++			bounds.Left + amount, bounds.Top + amount,
++			bounds.Right - amount, bounds.Bottom - amount);
++
++		static int RequiredUpwardShift(Rectangle entity, Rectangle obstacle) =>
++			!obstacle.IsEmpty && entity.IntersectsWith(obstacle) ? entity.Bottom - obstacle.Top : 0;
++
++		static Rectangle TranslateUp(Rectangle bounds, int amount) =>
++			new(bounds.X, bounds.Y - amount, bounds.Width, bounds.Height);
++
++		static int2 RingOffset(
++			int radius, double angleDegrees, int joystickDiameter, int buttonDiameter, int minimumGap)
+ 		{
+ 			var radians = angleDegrees * Math.PI / 180;
+ 			var idealX = radius * Math.Cos(radians);
+ 			var idealY = radius * Math.Sin(radians);
+ 			var roundedX = (int)Math.Round(idealX, MidpointRounding.AwayFromZero);
+ 			var roundedY = (int)Math.Round(idealY, MidpointRounding.AwayFromZero);
+-			var best = new int2(roundedX, roundedY);
+-			var bestRadiusError = Math.Abs(Length(best) - radius);
+-			var bestAngleError = AngleError(best, angleDegrees);
++			var best = int2.Zero;
++			var bestRadiusError = double.MaxValue;
++			var bestAngleError = double.MaxValue;
++			var found = false;
+ 
+-			for (var x = roundedX - 1; x <= roundedX + 1; x++)
++			// Integer rounding can pull a diagonal square slightly inside the approved 8pt gap.
++			// Search the immediate pixel neighborhood for the closest point that preserves both
++			// the nominal ring radius tolerance and the real circle-to-square interaction gap.
++			for (var x = roundedX - 2; x <= roundedX + 2; x++)
+ 			{
+-				for (var y = roundedY - 1; y <= roundedY + 1; y++)
++				for (var y = roundedY - 2; y <= roundedY + 2; y++)
+ 				{
+ 					var candidate = new int2(x, y);
+ 					var radiusError = Math.Abs(Length(candidate) - radius);
+ 					var angleError = AngleError(candidate, angleDegrees);
+-					if (radiusError < bestRadiusError - 0.000001 ||
++					if (radiusError > 1.000001 || angleError > 1.000001 ||
++						CircleToSquareGap(candidate, joystickDiameter, buttonDiameter) < minimumGap)
++						continue;
++
++					if (!found || radiusError < bestRadiusError - 0.000001 ||
+ 						(Math.Abs(radiusError - bestRadiusError) <= 0.000001 && angleError < bestAngleError))
+ 					{
+ 						best = candidate;
+ 						bestRadiusError = radiusError;
+ 						bestAngleError = angleError;
++						found = true;
+ 					}
+ 				}
+ 			}
+ 
++			if (!found)
++				throw new InvalidOperationException(
++					"The iOS viewport action ring cannot preserve the minimum interaction gap.");
++
+ 			return best;
+ 		}
+ 
+-		static bool ActionBoundsOverlap(int2[] offsets, int buttonDiameter)
++		static double CircleToSquareGap(int2 squareCenter, int circleDiameter, int squareDiameter)
+ 		{
+-			for (var i = 0; i < offsets.Length; i++)
+-			{
+-				for (var j = 0; j < i; j++)
+-				{
+-					if (Math.Abs(offsets[i].X - offsets[j].X) < buttonDiameter &&
+-						Math.Abs(offsets[i].Y - offsets[j].Y) < buttonDiameter)
+-						return true;
+-				}
+-			}
+-
+-			return false;
++			var squareBeforeCenter = squareDiameter / 2;
++			var squareAfterCenter = squareDiameter - squareBeforeCenter;
++			var left = squareCenter.X - squareBeforeCenter;
++			var right = squareCenter.X + squareAfterCenter;
++			var top = squareCenter.Y - squareBeforeCenter;
++			var bottom = squareCenter.Y + squareAfterCenter;
++			var nearestX = left > 0 ? left : right < 0 ? right : 0;
++			var nearestY = top > 0 ? top : bottom < 0 ? bottom : 0;
++			return Math.Sqrt((double)nearestX * nearestX + (double)nearestY * nearestY) -
++				circleDiameter / 2.0;
+ 		}
+ 
+ 		static double Length(int2 value) =>
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/Ingame/IosViewportActionsLogic.cs b/OpenRA.Mods.Common/Widgets/Logic/Ingame/IosViewportActionsLogic.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/Ingame/IosViewportActionsLogic.cs	2026-08-27 22:31:33
++++ b/OpenRA.Mods.Common/Widgets/Logic/Ingame/IosViewportActionsLogic.cs	2026-08-27 22:45:35
+@@ -10,7 +10,6 @@
+ #endregion
+ 
+ using System;
+-using System.Collections.Generic;
+ using System.Linq;
+ using OpenRA.Graphics;
+ using OpenRA.Mods.Common.Traits;
+@@ -91,7 +90,7 @@
+ 		Size lastNativePointSize;
+ 		Rectangle lastSafeBounds;
+ 		int lastRequestedJoystickPoints;
+-		int lastBottomObstacleTop;
++		Rectangle lastBottomObstacleBounds;
+ 		string lastSkin;
+ 		bool layoutInitialized;
+ 
+@@ -106,11 +105,9 @@
+ 			widget.IsVisible = () => Platform.IsIOS && IosFloatingControlsPreferences.Visible;
+ 			actionButtons = new[]
+ 			{
+-				widget.Get<ButtonWidget>("STOP"),
+ 				widget.Get<ButtonWidget>("DEPLOY"),
+ 				widget.Get<ButtonWidget>("SELECT_TYPE"),
+-				widget.Get<ButtonWidget>("FORCE_ATTACK"),
+-				widget.Get<ButtonWidget>("RETURN_BASE")
++				widget.Get<ButtonWidget>("FORCE_ATTACK")
+ 			};
+ 			actionIcons = actionButtons.Select(button => button.Get<ImageWidget>("ICON")).ToArray();
+ 			actionLabels = actionButtons.Select(button => button.Get<LabelWidget>("LABEL")).ToArray();
+@@ -120,11 +117,6 @@
+ 			selectType.IsDisabled = () => world.IsGameOver || world.Selection.Actors.Count == 0;
+ 			selectType.OnClick = SelectUnitsByType;
+ 
+-			var returnBase = widget.Get<ButtonWidget>("RETURN_BASE");
+-			WidgetUtils.BindButtonIcon(returnBase);
+-			returnBase.IsDisabled = () => world.IsGameOver || !HasOwnedBuilding();
+-			returnBase.OnClick = ReturnToBase;
+-
+ 			var isIos = RefreshCurrentSkin();
+ 			if (isIos)
+ 				ApplyLayout(Game.Settings.Game.IosVirtualJoystickSize);
+@@ -144,10 +136,10 @@
+ 			var snapshot = IosScreenMetrics.SnapshotFor(resolution);
+ 			var requestedJoystickPoints = IosViewportControlsLayout.NormalizeJoystickPoints(
+ 				storedJoystickPoints);
+-			var bottomObstacleTop = BottomObstacleTop(snapshot);
++			var bottomObstacleBounds = BottomObstacleBounds();
+ 			if (refreshForJoystickSize || resolution != lastResolution ||
+ 				snapshot.NativePointSize != lastNativePointSize || snapshot.SafeBounds != lastSafeBounds ||
+-				bottomObstacleTop != lastBottomObstacleTop)
++				bottomObstacleBounds != lastBottomObstacleBounds)
+ 				ApplyLayout(requestedJoystickPoints);
+ 		}
+ 
+@@ -187,12 +179,12 @@
+ 			lastSkin = skin;
+ 		}
+ 
+-		static int BottomObstacleTop(IosScreenSnapshot snapshot)
++		static Rectangle BottomObstacleBounds()
+ 		{
+ 			var commandBar = Ui.Root.GetOrNull("COMMAND_BAR_BACKGROUND");
+ 			return commandBar != null && commandBar.IsVisible()
+-				? commandBar.RenderBounds.Top
+-				: snapshot.SafeBounds.Bottom;
++				? commandBar.RenderBounds
++				: Rectangle.Empty;
+ 		}
+ 
+ 		void ApplyLayout(int requestedJoystickPoints)
+@@ -200,8 +192,8 @@
+ 			var resolution = Game.Renderer.Resolution;
+ 			var snapshot = IosScreenMetrics.SnapshotFor(resolution);
+ 			requestedJoystickPoints = IosViewportControlsLayout.NormalizeJoystickPoints(requestedJoystickPoints);
+-			var bottomObstacleTop = BottomObstacleTop(snapshot);
+-			var layout = IosViewportControlsLayout.Create(snapshot, requestedJoystickPoints, bottomObstacleTop);
++			var bottomObstacleBounds = BottomObstacleBounds();
++			var layout = IosViewportControlsLayout.Create(snapshot, requestedJoystickPoints, bottomObstacleBounds);
+ 			var labelLayout = IosViewportActionLabelLayout.Create(snapshot, layout.ButtonDiameter);
+ 			joystick.ApplyLayout(layout.JoystickBounds, layout.ThumbDiameter, layout.MovementRadius);
+ 
+@@ -227,16 +219,10 @@
+ 			lastNativePointSize = snapshot.NativePointSize;
+ 			lastSafeBounds = snapshot.SafeBounds;
+ 			lastRequestedJoystickPoints = requestedJoystickPoints;
+-			lastBottomObstacleTop = bottomObstacleTop;
++			lastBottomObstacleBounds = bottomObstacleBounds;
+ 			layoutInitialized = true;
+ 		}
+ 
+-		bool HasOwnedBuilding()
+-		{
+-			var player = world.RenderPlayer ?? world.LocalPlayer;
+-			return player != null && world.ActorsHavingTrait<Building>().Any(a => a.Owner == player);
+-		}
+-
+ 		void SelectUnitsByType()
+ 		{
+ 			if (world.IsGameOver || world.Selection.Actors.Count == 0)
+@@ -256,35 +242,6 @@
+ 				actors = SelectionUtils.SelectActorsInWorld(world, selectedClasses, eligiblePlayers).ToList();
+ 
+ 			world.Selection.Combine(world, actors, true, false);
+-		}
+-
+-		void ReturnToBase()
+-		{
+-			var player = world.RenderPlayer ?? world.LocalPlayer;
+-			if (player == null)
+-				return;
+-
+-			var bases = world.ActorsHavingTrait<BaseBuilding>()
+-				.Where(a => a.Owner == player)
+-				.OrderByDescending(a => a.IsPrimaryBuilding())
+-				.ThenBy(a => a.ActorID)
+-				.ToList();
+-
+-			Actor next;
+-			if (bases.Count == 0)
+-				next = world.ActorsHavingTrait<Building>()
+-					.FirstOrDefault(a => a.Owner == player && a.Info.HasTraitInfo<SelectableInfo>());
+-			else
+-			{
+-				next = bases.SkipWhile(b => !world.Selection.Contains(b)).Skip(1).FirstOrDefault();
+-				next ??= bases[0];
+-			}
+-
+-			if (next == null)
+-				return;
+-
+-			world.Selection.Combine(world, new[] { next }, false, true);
+-			worldRenderer.Viewport.Center(world.Selection.Actors);
+ 		}
+ 	}
+ }
+diff -ruN a/OpenRA.Mods.Common/Widgets/VirtualViewportJoystickWidget.cs b/OpenRA.Mods.Common/Widgets/VirtualViewportJoystickWidget.cs
+--- a/OpenRA.Mods.Common/Widgets/VirtualViewportJoystickWidget.cs	2026-08-27 22:31:33
++++ b/OpenRA.Mods.Common/Widgets/VirtualViewportJoystickWidget.cs	2026-08-27 22:45:35
+@@ -80,6 +80,29 @@
+ 		static bool SameBounds(WidgetBounds a, WidgetBounds b) =>
+ 			a.X == b.X && a.Y == b.Y && a.Width == b.Width && a.Height == b.Height;
+ 
++		static bool InscribedCircleContains(Rectangle bounds, int2 location)
++		{
++			if (bounds.Width <= 0 || bounds.Height <= 0)
++				return false;
++
++			var diameter = (double)System.Math.Min(bounds.Width, bounds.Height);
++			var dx = 2.0 * location.X - (2.0 * bounds.X + bounds.Width);
++			var dy = 2.0 * location.Y - (2.0 * bounds.Y + bounds.Height);
++			return dx * dx + dy * dy <= diameter * diameter;
++		}
++
++		public override bool EventBoundsContains(int2 location)
++		{
++			if (InscribedCircleContains(RenderBounds, location))
++				return true;
++
++			foreach (var child in Children)
++				if (child.IsVisible() && child.EventBoundsContains(location))
++					return true;
++
++			return false;
++		}
++
+ 		public override bool HandleMouseInput(MouseInput mi)
+ 		{
+ 			if (!ControlsVisible())
+diff -ruN a/OpenRA.Test/IosProductionBatchToggleTest.cs b/OpenRA.Test/IosProductionBatchToggleTest.cs
+--- a/OpenRA.Test/IosProductionBatchToggleTest.cs	2026-08-27 22:31:33
++++ b/OpenRA.Test/IosProductionBatchToggleTest.cs	2026-08-27 22:45:35
+@@ -9,19 +9,77 @@
+  */
+ #endregion
+ 
++using System;
++using System.Collections.Generic;
+ using System.IO;
+ using System.Linq;
++using System.Reflection;
++using System.Runtime.Serialization;
+ using NUnit.Framework;
+ using OpenRA.Mods.Common;
+ using OpenRA.Mods.Common.Widgets;
+ using OpenRA.Mods.Common.Widgets.Logic;
+ using OpenRA.Mods.RA2.Widgets;
++using OpenRA.Mods.RA2.Widgets.Logic;
++using OpenRA.Primitives;
++using OpenRA.Widgets;
+ 
+ namespace OpenRA.Test
+ {
+ 	[TestFixture]
+ 	public sealed class IosProductionBatchToggleTest
+ 	{
++		static readonly (Size Renderer, Size Native, IosSafeAreaInsets Insets)[] Devices =
++		{
++			(new Size(1558, 720), new Size(844, 390), new IosSafeAreaInsets(47, 0, 47, 21)),
++			(new Size(1560, 720), new Size(932, 430), new IosSafeAreaInsets(59, 0, 59, 21)),
++			(new Size(1558, 720), new Size(844, 390), new IosSafeAreaInsets(55, 0, 39, 21)),
++			(new Size(1558, 720), new Size(844, 390), new IosSafeAreaInsets(39, 0, 55, 21)),
++			(new Size(1133, 744), new Size(1133, 744), new IosSafeAreaInsets(0, 0, 0, 20)),
++			(new Size(1180, 820), new Size(1180, 820), new IosSafeAreaInsets(0, 0, 0, 20)),
++			(new Size(1366, 1024), new Size(1366, 1024), new IosSafeAreaInsets(0, 0, 0, 20)),
++		};
++
++		static bool Calls(MethodInfo caller, MethodInfo callee)
++		{
++			var il = caller.GetMethodBody()?.GetILAsByteArray();
++			if (il == null)
++				return false;
++
++			for (var i = 0; i + sizeof(int) < il.Length; i++)
++				if ((il[i] == 0x28 || il[i] == 0x6F) && BitConverter.ToInt32(il, i + 1) == callee.MetadataToken)
++					return true;
++
++			return false;
++		}
++
++		static T Uninitialized<T>() where T : class =>
++			(T)FormatterServices.GetUninitializedObject(typeof(T));
++
++		static void InitializeWidget(Widget widget, string id)
++		{
++			typeof(Widget).GetField(nameof(Widget.Children))!.SetValue(widget, new List<Widget>());
++			widget.Id = id;
++			widget.IsVisible = () => true;
++		}
++
++		static ButtonWidget CreateSlot(string id, out LabelWidget label, out ImageWidget icon)
++		{
++			var button = Uninitialized<ButtonWidget>();
++			InitializeWidget(button, id);
++			label = Uninitialized<LabelWidget>();
++			InitializeWidget(label, "LABEL");
++			icon = new ImageWidget { Id = "ICON" };
++			button.AddChild(icon);
++			button.AddChild(label);
++			return button;
++		}
++
++		static void SetPrivateField<T>(object target, string name, T value)
++		{
++			target.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(target, value);
++		}
++
+ 		static (int Width, int Height) PngSize(string path)
+ 		{
+ 			using var stream = File.OpenRead(path);
+@@ -83,7 +141,7 @@
+ 		}
+ 
+ 		[Test]
+-		public void TouchCommandBarKeepsFiveGroupsAndRemovesJoystickDuplicates()
++		public void TouchCommandBarKeepsFiveGroupsRequiredCommandsAndRemovesJoystickDuplicates()
+ 		{
+ 			var visible = CommandBarLayoutPolicy.AvailableIds(CommandBarCatalog.AllIds, true).ToArray();
+ 
+@@ -92,7 +150,7 @@
+ 			Assert.That(visible, Does.Not.Contain("GROUP_06"));
+ 			Assert.That(visible, Does.Not.Contain("GROUP_10"));
+ 			Assert.That(visible, Does.Not.Contain("SELECT_BY_TYPE"));
+-			Assert.That(visible, Does.Not.Contain("CYCLE_BASE"));
++			Assert.That(visible, Does.Contain("CYCLE_BASE"));
+ 			Assert.That(visible, Does.Not.Contain("FORCE_ATTACK"));
+ 			Assert.That(visible, Does.Not.Contain("DEPLOY"));
+ 			Assert.That(visible, Does.Not.Contain("FORCE_MOVE"));
+@@ -100,7 +158,7 @@
+ 			Assert.That(visible, Does.Not.Contain("STANCE_ATTACKANYTHING"));
+ 			Assert.That(visible, Does.Not.Contain("STANCE_DEFEND"));
+ 			Assert.That(visible, Does.Not.Contain("STANCE_RETURNFIRE"));
+-			Assert.That(visible, Does.Not.Contain("STOP"));
++			Assert.That(visible, Does.Contain("STOP"));
+ 			Assert.That(visible, Does.Contain("PRODUCTION_X5"));
+ 		}
+ 
+@@ -118,16 +176,428 @@
+ 		}
+ 
+ 		[Test]
+-		public void ExistingTouchPreferencesGainProductionMultiplierOnce()
++		public void DesktopPreferencesAndCompactOrderRemainUnchangedAcrossTouchMigrationVersions()
+ 		{
+-			var upgraded = CommandBarLayoutPolicy.NormalizeVisibleOrder(
+-				new[] { "GROUP_01", "ATTACK_MOVE" }, true, 1).ToArray();
+-			var customized = CommandBarLayoutPolicy.NormalizeVisibleOrder(
+-				new[] { "GROUP_01", "ATTACK_MOVE" }, true, CommandBarLayoutPolicy.CurrentVersion).ToArray();
++			var savedOrder = new[] { "ATTACK_MOVE", "GROUP_01" };
++			foreach (var version in new[] { 1, 2, 3, 4 })
++			{
++				var normalized = CommandBarLayoutPolicy.NormalizeVisibleOrder(
++					savedOrder, false, version).ToArray();
++				Assert.Multiple(() =>
++				{
++					Assert.That(normalized, Is.EqualTo(savedOrder), $"v{version}");
++					Assert.That(normalized, Does.Not.Contain("STOP"), $"v{version}");
++					Assert.That(normalized, Does.Not.Contain("CYCLE_BASE"), $"v{version}");
++					Assert.That(normalized, Does.Not.Contain("PRODUCTION_X5"), $"v{version}");
++				});
++			}
+ 
+-			Assert.That(upgraded, Does.Contain("PRODUCTION_X5"));
+-			Assert.That(upgraded.Count(id => id == "PRODUCTION_X5"), Is.EqualTo(1));
+-			Assert.That(customized, Does.Not.Contain("PRODUCTION_X5"));
++			var desktopCompact = (string[])typeof(CustomCommandBarWidget).GetField(
++				"DesktopCompactIds", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
++			Assert.That(desktopCompact, Is.EqualTo(new[]
++			{
++				"ATTACK_MOVE", "FORCE_MOVE", "FORCE_ATTACK", "GUARD",
++				"DEPLOY", "SCATTER", "STOP", "QUEUE_ORDERS",
++				"STANCE_ATTACKANYTHING", "STANCE_DEFEND", "STANCE_RETURNFIRE", "STANCE_HOLDFIRE",
++			}));
++		}
++
++		[Test]
++		public void TouchPreferenceMigrationKeepsLegacyX5ThresholdAndAppendsRequiredCommandsOnce()
++		{
++			Assert.That(CommandBarLayoutPolicy.CurrentVersion, Is.EqualTo(4));
++			foreach (var version in new[] { 1, 2 })
++			{
++				var upgraded = CommandBarLayoutPolicy.NormalizeVisibleOrder(
++					new[] { "GROUP_01", "STOP", "STOP" }, true, version).ToArray();
++				Assert.Multiple(() =>
++				{
++					Assert.That(upgraded.Count(id => id == "PRODUCTION_X5"), Is.EqualTo(1), $"v{version}");
++					Assert.That(upgraded.Count(id => id == "STOP"), Is.EqualTo(1), $"v{version}");
++					Assert.That(upgraded.Count(id => id == "CYCLE_BASE"), Is.EqualTo(1), $"v{version}");
++				});
++			}
++
++			foreach (var version in new[] { 3, 4 })
++			{
++				var customized = CommandBarLayoutPolicy.NormalizeVisibleOrder(
++					new[] { "GROUP_01", "STOP", "STOP" }, true, version).ToArray();
++				Assert.Multiple(() =>
++				{
++					Assert.That(customized, Does.Not.Contain("PRODUCTION_X5"), $"v{version}");
++					Assert.That(customized.Count(id => id == "STOP"), Is.EqualTo(1), $"v{version}");
++					Assert.That(customized.Count(id => id == "CYCLE_BASE"), Is.EqualTo(1), $"v{version}");
++				});
++			}
++
++			var newInstall = CommandBarLayoutPolicy.NormalizeVisibleOrder(
++				CommandBarCatalog.DefaultVisibleIds(), true, 4).ToArray();
++			Assert.Multiple(() =>
++			{
++				Assert.That(newInstall, Does.Contain("STOP"));
++				Assert.That(newInstall, Does.Contain("CYCLE_BASE"));
++			});
++		}
++
++		[Test]
++		public void TouchCompactOrderEndsWithQueueStopAndCycleBase()
++		{
++			var compact = (string[])typeof(CustomCommandBarWidget).GetField(
++				"TouchCompactIds", BindingFlags.Static | BindingFlags.NonPublic)!.GetValue(null)!;
++
++			Assert.That(compact.TakeLast(3), Is.EqualTo(new[] { "QUEUE_ORDERS", "STOP", "CYCLE_BASE" }));
++		}
++
++		[Test]
++		public void RequiredTouchCommandsCannotBeHiddenByAnyEditPath()
++		{
++			Assert.Multiple(() =>
++			{
++				Assert.That(CommandBarLayoutPolicy.IsRequiredTouchId("STOP", true), Is.True);
++				Assert.That(CommandBarLayoutPolicy.IsRequiredTouchId("CYCLE_BASE", true), Is.True);
++				Assert.That(CommandBarLayoutPolicy.IsRequiredTouchId("STOP", false), Is.False);
++				Assert.That(CommandBarLayoutPolicy.CanHide("STOP", true), Is.False);
++				Assert.That(CommandBarLayoutPolicy.CanHide("CYCLE_BASE", true), Is.False);
++				Assert.That(CommandBarLayoutPolicy.CanHide("STOP", false), Is.True);
++				Assert.That(CommandBarLayoutPolicy.CanHide("SCATTER", true), Is.True);
++			});
++
++			var widget = typeof(CustomCommandBarWidget);
++			var canHide = typeof(CommandBarLayoutPolicy).GetMethod(nameof(CommandBarLayoutPolicy.CanHide))!;
++			var toggle = widget.GetMethod("ToggleSlot", BindingFlags.Instance | BindingFlags.NonPublic)!;
++			var tick = widget.GetMethod(nameof(CustomCommandBarWidget.Tick), BindingFlags.Instance | BindingFlags.Public)!;
++			var context = widget.GetMethod(
++				nameof(CustomCommandBarWidget.HandleMouseInput), BindingFlags.Instance | BindingFlags.Public)!;
++			var leftClick = widget.GetNestedTypes(BindingFlags.NonPublic)
++				.SelectMany(type => type.GetMethods(BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public))
++				.FirstOrDefault(method => method.Name.Contains("EnterEditMode", StringComparison.Ordinal) && Calls(method, toggle));
++			Assert.Multiple(() =>
++			{
++				Assert.That(Calls(toggle, canHide), Is.True, "Click toggles must reject required IDs immediately.");
++				Assert.That(Calls(tick, canHide), Is.True, "Dragging a required ID to the hidden row must snap back.");
++				Assert.That(Calls(context, toggle), Is.True, "The right-click edit path must share ToggleSlot.");
++				Assert.That(leftClick, Is.Not.Null, "The left-click edit path must share ToggleSlot.");
++			});
++		}
++
++		[TestCase(false)]
++		[TestCase(true)]
++		public void RequiredTouchSlotsKeepPhysicalHitSizeAndReadableLabels(bool expanded)
++		{
++			foreach (var device in Devices)
++			{
++				var snapshot = new IosScreenSnapshot(device.Renderer, device.Native, device.Insets);
++				foreach (var id in new[] { "STOP", "CYCLE_BASE" })
++				{
++					var layout = TouchCommandBarSlotPolicy.Create(snapshot, id, expanded);
++					var buttonBounds = new Rectangle(0, 0, layout.ButtonSize.Width, layout.ButtonSize.Height);
++					Assert.Multiple(() =>
++					{
++						Assert.That(layout.ButtonSize.Width, Is.GreaterThanOrEqualTo(snapshot.LogicalPoints(44)), id);
++						Assert.That(layout.ButtonSize.Height, Is.GreaterThanOrEqualTo(snapshot.LogicalPoints(44)), id);
++						Assert.That(layout.ShowLabel, Is.True, id);
++						Assert.That(layout.Font, Is.EqualTo("IosTouchLabel"), id);
++						Assert.That(layout.LabelBounds.IsEmpty, Is.False, id);
++						Assert.That(buttonBounds.Contains(layout.LabelBounds), Is.True, id);
++						Assert.That(buttonBounds.Contains(layout.IconBounds), Is.True, id);
++						Assert.That(layout.IconBounds.Size,
++							Is.EqualTo(new Size(snapshot.LogicalPoints(26), snapshot.LogicalPoints(26))), id);
++					});
++				}
++			}
++		}
++
++		[TestCase(false)]
++		[TestCase(true)]
++		public void TouchCommandBarPlacementIsCenteredBottomInsetAndSafeContained(bool expanded)
++		{
++			foreach (var device in Devices)
++			{
++				var snapshot = new IosScreenSnapshot(device.Renderer, device.Native, device.Insets);
++				var safe = snapshot.SafeBounds;
++				var size = new Size(
++					Math.Min(safe.Width, snapshot.LogicalPoints(640)),
++					snapshot.LogicalPoints(expanded ? 120 : 56));
++				var placed = TouchCommandBarSlotPolicy.PlaceBar(snapshot, size);
++				Assert.Multiple(() =>
++				{
++					Assert.That(safe.Contains(placed), Is.True);
++					Assert.That(Math.Abs(2 * placed.X + placed.Width - (2 * safe.X + safe.Width)), Is.LessThanOrEqualTo(1));
++					Assert.That(safe.Bottom - placed.Bottom, Is.EqualTo(snapshot.LogicalPoints(12)));
++				});
++			}
++		}
++
++		[Test]
++		public void TouchCommandBarRefreshSignatureIncludesRendererNativeAndAsymmetricSafeArea()
++		{
++			var baseline = new IosScreenSnapshot(
++				new Size(1558, 720), new Size(844, 390), new IosSafeAreaInsets(55, 0, 39, 21));
++			var rendererChanged = new IosScreenSnapshot(
++				new Size(1559, 720), new Size(844, 390), new IosSafeAreaInsets(55, 0, 39, 21));
++			var nativeChanged = new IosScreenSnapshot(
++				new Size(1558, 720), new Size(845, 390), new IosSafeAreaInsets(55, 0, 39, 21));
++			var safeAreaSwapped = new IosScreenSnapshot(
++				new Size(1558, 720), new Size(844, 390), new IosSafeAreaInsets(39, 0, 55, 21));
++
++			Assert.Multiple(() =>
++			{
++				Assert.That(CustomCommandBarWidget.ShouldRefreshTouchLayout(
++					true, false, default, default, default, baseline), Is.True);
++				Assert.That(CustomCommandBarWidget.ShouldRefreshTouchLayout(
++					true, true, baseline.EffectiveSize, baseline.NativePointSize, baseline.SafeBounds, baseline), Is.False);
++				Assert.That(CustomCommandBarWidget.ShouldRefreshTouchLayout(
++					true, true, baseline.EffectiveSize, baseline.NativePointSize, baseline.SafeBounds, rendererChanged), Is.True);
++				Assert.That(CustomCommandBarWidget.ShouldRefreshTouchLayout(
++					true, true, baseline.EffectiveSize, baseline.NativePointSize, baseline.SafeBounds, nativeChanged), Is.True);
++				Assert.That(CustomCommandBarWidget.ShouldRefreshTouchLayout(
++					true, true, baseline.EffectiveSize, baseline.NativePointSize, baseline.SafeBounds, safeAreaSwapped), Is.True);
++				Assert.That(CustomCommandBarWidget.ShouldRefreshTouchLayout(
++					false, false, default, default, default, baseline), Is.False);
++			});
++
++			var tick = typeof(CustomCommandBarWidget).GetMethod(
++				nameof(CustomCommandBarWidget.Tick), BindingFlags.Instance | BindingFlags.Public)!;
++			var refresh = typeof(CustomCommandBarWidget).GetMethod(
++				nameof(CustomCommandBarWidget.ShouldRefreshTouchLayout), BindingFlags.Static | BindingFlags.Public)!;
++			Assert.That(Calls(tick, refresh), Is.True, "The live widget must reflow on the complete screen signature.");
++		}
++
++		[TestCase(0, false, false)]
++		[TestCase(0, true, true)]
++		[TestCase(1, false, false)]
++		[TestCase(1, true, true)]
++		[TestCase(2, false, false)]
++		[TestCase(2, true, true)]
++		[TestCase(3, false, false)]
++		[TestCase(3, true, true)]
++		[TestCase(4, false, false)]
++		[TestCase(4, true, true)]
++		[TestCase(5, false, false)]
++		[TestCase(5, true, true)]
++		[TestCase(6, false, false)]
++		[TestCase(6, true, true)]
++		public void LiveTouchLayoutUsesOnePhysicalRowAndKeepsRequiredControlsInsideSafeArea(
++			int deviceIndex, bool expanded, bool editing)
++		{
++			var device = Devices[deviceIndex];
++			var snapshot = new IosScreenSnapshot(device.Renderer, device.Native, device.Insets);
++			var commandBar = new CustomCommandBarWidget();
++			var slots = new ContainerWidget { Id = "COMMAND_SLOTS" };
++			commandBar.AddChild(slots);
++			var buttons = (Dictionary<string, ButtonWidget>)typeof(CustomCommandBarWidget)
++				.GetField("buttons", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(commandBar)!;
++			var labels = (Dictionary<string, LabelWidget>)typeof(CustomCommandBarWidget)
++				.GetField("labels", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(commandBar)!;
++			var icons = (Dictionary<string, ImageWidget>)typeof(CustomCommandBarWidget)
++				.GetField("icons", BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(commandBar)!;
++
++			foreach (var id in new[] { "STOP", "CYCLE_BASE", "SCATTER" })
++			{
++				var button = CreateSlot(id, out var label, out var icon);
++				slots.AddChild(button);
++				buttons.Add(id, button);
++				labels.Add(id, label);
++				icons.Add(id, icon);
++			}
++
++			var edit = CreateSlot("EDIT_TOGGLE", out _, out _);
++			var collapse = CreateSlot("COLLAPSE_TOGGLE", out _, out var collapseIcon);
++			commandBar.AddChild(edit);
++			commandBar.AddChild(collapse);
++			SetPrivateField(commandBar, "editButton", edit);
++			SetPrivateField(commandBar, "collapseButton", collapse);
++			SetPrivateField(commandBar, "collapseIcon", collapseIcon);
++			SetPrivateField(commandBar, "visibleOrder", new List<string> { "STOP", "CYCLE_BASE" });
++			SetPrivateField(commandBar, "expanded", expanded);
++
++			var apply = typeof(CustomCommandBarWidget).GetMethod(
++				"ApplyTouchLayout", BindingFlags.Instance | BindingFlags.NonPublic);
++			Assert.That(apply, Is.Not.Null, "The production widget needs an executable touch-layout seam.");
++			apply!.Invoke(commandBar, new object[] { snapshot, editing, null });
++
++			var rowHeight = snapshot.LogicalPoints(expanded ? 52 : 44);
++			Assert.Multiple(() =>
++			{
++				Assert.That(snapshot.SafeBounds.Contains(commandBar.RenderBounds), Is.True);
++				Assert.That(collapse.Bounds.Height, Is.EqualTo(rowHeight));
++				Assert.That(snapshot.SafeBounds.Contains(collapse.RenderBounds), Is.True);
++				Assert.That(edit.Bounds.Height, Is.EqualTo(rowHeight));
++				Assert.That(edit.IsVisible(), Is.EqualTo(expanded));
++				if (expanded)
++					Assert.That(snapshot.SafeBounds.Contains(edit.RenderBounds), Is.True);
++			});
++
++			foreach (var id in new[] { "STOP", "CYCLE_BASE" })
++			{
++				var button = buttons[id];
++				Assert.Multiple(() =>
++				{
++					Assert.That(button.IsVisible(), Is.True, id);
++					Assert.That(button.Bounds.Height, Is.EqualTo(rowHeight), id);
++					Assert.That(snapshot.SafeBounds.Contains(button.RenderBounds), Is.True, id);
++					Assert.That(labels[id].IsVisible(), Is.True, id);
++					Assert.That(labels[id].Font, Is.EqualTo("IosTouchLabel"), id);
++					Assert.That(button.RenderBounds.Contains(labels[id].RenderBounds), Is.True, id);
++					Assert.That(button.RenderBounds.Contains(icons[id].RenderBounds), Is.True, id);
++					Assert.That(icons[id].StretchToFit, Is.True, id);
++				});
++			}
++
++			if (editing)
++			{
++				Assert.Multiple(() =>
++				{
++					Assert.That(buttons["SCATTER"].IsVisible(), Is.True);
++					Assert.That(buttons["SCATTER"].Bounds.Height, Is.EqualTo(rowHeight));
++					Assert.That(buttons["SCATTER"].Bounds.Y, Is.GreaterThan(buttons["STOP"].Bounds.Y));
++					Assert.That(snapshot.SafeBounds.Contains(buttons["SCATTER"].RenderBounds), Is.True);
++				});
++			}
++		}
++
++		[Test]
++		public void RequiredTouchSlotsKeepTheirExistingLabelsAndIconBindings()
++		{
++			var layout = File.ReadAllText(Path.Combine(
++				RepositoryRoot(), "mods", "ra2", "chrome", "ingame-player.yaml"));
++			foreach (var (id, collection, icon, label) in new[]
++			{
++				("STOP", "commandbar-icons", "stop", "button-command-bar-stop.label"),
++				("CYCLE_BASE", "commandbar-icons", "cycle-base", "button-selection-bar-cycle-base.label"),
++			})
++			{
++				var start = layout.IndexOf($"Button@{id}:", StringComparison.Ordinal);
++				var end = layout.IndexOf("\n\t\t\t\t\t\tButton@", start + 1, StringComparison.Ordinal);
++				var block = layout.Substring(start, end - start);
++				Assert.Multiple(() =>
++				{
++					Assert.That(start, Is.GreaterThanOrEqualTo(0));
++					StringAssert.Contains("ImageCollection: " + collection, block);
++					StringAssert.Contains("ImageName: " + icon, block);
++					StringAssert.Contains("Text: " + label, block);
++				});
++			}
++		}
++
++		[Test]
++		public void CycleBasePolicyIsStatelessPrimaryFirstThenActorIdAndWraps()
++		{
++			var candidates = new[] { (ActorId: 9u, IsPrimary: false), (ActorId: 7u, IsPrimary: true), (ActorId: 3u, IsPrimary: false) };
++			var ordered = BaseCyclePolicy.Order(candidates, candidate => candidate.ActorId, candidate => candidate.IsPrimary);
++
++			Assert.Multiple(() =>
++			{
++				Assert.That(ordered.Select(candidate => candidate.ActorId), Is.EqualTo(new[] { 7u, 3u, 9u }));
++				Assert.That(BaseCyclePolicy.Next(ordered, _ => false).ActorId, Is.EqualTo(7u));
++				Assert.That(BaseCyclePolicy.Next(ordered, candidate => candidate.ActorId == 7u).ActorId, Is.EqualTo(3u));
++				Assert.That(BaseCyclePolicy.Next(ordered, candidate => candidate.ActorId == 9u).ActorId, Is.EqualTo(7u));
++			});
++		}
++
++		[Test]
++		public void CycleBaseResolveUsesOrderedCycleBeforeFallback()
++		{
++			var firstBase = new object();
++			var secondBase = new object();
++			var fallback = new object();
++
++			var resolved = BaseCyclePolicy.Resolve(
++				new[] { firstBase, secondBase }, new[] { fallback }, candidate => candidate == firstBase);
++
++			Assert.That(resolved, Is.SameAs(secondBase));
++		}
++
++		[Test]
++		public void CycleBaseResolveReturnsFirstFallbackWhenNoBases()
++		{
++			var firstFallback = new object();
++			var secondFallback = new object();
++
++			var resolved = BaseCyclePolicy.Resolve(
++				Array.Empty<object>(), new[] { firstFallback, secondFallback }, _ => false);
++
++			Assert.That(resolved, Is.SameAs(firstFallback));
++		}
++
++		[Test]
++		public void CycleBaseResolveReturnsNullWhenNoCandidateExists()
++		{
++			var resolved = BaseCyclePolicy.Resolve(
++				Array.Empty<object>(), Array.Empty<object>(), _ => false);
++
++			Assert.That(resolved, Is.Null);
++		}
++
++		[Test]
++		public void CycleBaseExecuteRunsSelectCenterAndClickOnceInOrder()
++		{
++			var candidate = new object();
++			var calls = new List<string>();
++			var selectCount = 0;
++			var centerCount = 0;
++			var clickCount = 0;
++
++			var executed = BaseCyclePolicy.Execute(
++				candidate,
++				selected =>
++				{
++					Assert.That(selected, Is.SameAs(candidate));
++					selectCount++;
++					calls.Add("select");
++				},
++				() =>
++				{
++					centerCount++;
++					calls.Add("center");
++				},
++				() =>
++				{
++					clickCount++;
++					calls.Add("click");
++				});
++
++			Assert.Multiple(() =>
++			{
++				Assert.That(executed, Is.True);
++				Assert.That(selectCount, Is.EqualTo(1));
++				Assert.That(centerCount, Is.EqualTo(1));
++				Assert.That(clickCount, Is.EqualTo(1));
++				Assert.That(calls, Is.EqualTo(new[] { "select", "center", "click" }));
++			});
++		}
++
++		[Test]
++		public void CycleBaseExecuteHasNoSideEffectsWhenCandidateIsNull()
++		{
++			var selectCount = 0;
++			var centerCount = 0;
++			var clickCount = 0;
++
++			var executed = BaseCyclePolicy.Execute<object>(
++				null, _ => selectCount++, () => centerCount++, () => clickCount++);
++
++			Assert.Multiple(() =>
++			{
++				Assert.That(executed, Is.False);
++				Assert.That(selectCount, Is.Zero);
++				Assert.That(centerCount, Is.Zero);
++				Assert.That(clickCount, Is.Zero);
++			});
++		}
++
++		[Test]
++		public void CycleBaseProductionPathConsumesTheStatelessPolicyAndPrimaryTrait()
++		{
++			var source = File.ReadAllText(Path.Combine(RepositoryRoot(), "OpenRA.Mods.RA2", "Widgets", "Logic",
++				"SelectionCommandBarLogic.cs"));
++
++			StringAssert.Contains("BaseCyclePolicy.Order(", source);
++			StringAssert.Contains("var nextBase = BaseCyclePolicy.Resolve(", source);
++			StringAssert.Contains("BaseCyclePolicy.Execute(nextBase,", source);
++			StringAssert.Contains("a => a.ActorID", source);
++			StringAssert.Contains("TraitOrDefault<PrimaryBuilding>()?.IsPrimary == true", source);
++			StringAssert.DoesNotContain("lastBase", source);
+ 		}
+ 
+ 		[Test]
+diff -ruN a/OpenRA.Test/IosViewportActionLayoutTest.cs b/OpenRA.Test/IosViewportActionLayoutTest.cs
+--- a/OpenRA.Test/IosViewportActionLayoutTest.cs	2026-08-27 22:31:33
++++ b/OpenRA.Test/IosViewportActionLayoutTest.cs	2026-08-27 22:45:35
+@@ -11,10 +11,12 @@
+ 
+ using System;
+ using System.IO;
++using System.Linq;
+ using System.Reflection;
+ using NUnit.Framework;
+ using OpenRA.Mods.Common.Widgets;
+ using OpenRA.Mods.Common.Widgets.Logic.Ingame;
++using OpenRA.Primitives;
+ 
+ namespace OpenRA.Test
+ {
+@@ -65,7 +67,7 @@
+ 		}
+ 
+ 		[Test]
+-		public void IosViewportControlsExposeFiveTouchActions()
++		public void IosViewportControlsExposeExactlyThreeTouchActions()
+ 		{
+ 			var root = RepositoryRoot();
+ 			var yaml = File.ReadAllText(Path.Combine(root, "mods", "ra2", "chrome", "ingame.yaml"));
+@@ -73,11 +75,17 @@
+ 			StringAssert.Contains("ra2|chrome/ingame.yaml", manifest,
+ 				"The RA2 touch layout must replace the common desktop ingame layout.");
+ 			StringAssert.Contains("Container@IOS_VIEWPORT_ACTIONS", yaml);
+-			StringAssert.Contains("Button@DEPLOY", yaml);
+-			StringAssert.Contains("Button@SELECT_TYPE", yaml);
+-			StringAssert.Contains("Button@FORCE_ATTACK", yaml);
+-			StringAssert.Contains("Button@RETURN_BASE", yaml);
+-			StringAssert.Contains("Button@STOP", yaml);
++
++			var start = yaml.IndexOf("Container@IOS_VIEWPORT_ACTIONS:", StringComparison.Ordinal);
++			var end = yaml.IndexOf("\n\t\t\t\tStrategicProgress@", start, StringComparison.Ordinal);
++			Assert.That(start, Is.GreaterThanOrEqualTo(0));
++			Assert.That(end, Is.GreaterThan(start));
++			var ids = yaml.Substring(start, end - start).Split('\n')
++				.Select(line => line.Trim())
++				.Where(line => line.StartsWith("Button@", StringComparison.Ordinal))
++				.Select(line => line["Button@".Length..line.IndexOf(':')])
++				.ToArray();
++			Assert.That(ids, Is.EqualTo(new[] { "DEPLOY", "SELECT_TYPE", "FORCE_ATTACK" }));
+ 		}
+ 
+ 		[Test]
+@@ -93,11 +101,9 @@
+ 			StringAssert.Contains("ios-joystick-command-icons:", chrome);
+ 			foreach (var (button, icon) in new[]
+ 			{
+-				("STOP", "ios-stop"),
+ 				("DEPLOY", "ios-deploy"),
+ 				("SELECT_TYPE", "ios-select-type"),
+ 				("FORCE_ATTACK", "ios-force-attack"),
+-				("RETURN_BASE", "ios-return-base"),
+ 			})
+ 			{
+ 				StringAssert.Contains(icon + ":", chrome);
+@@ -135,6 +141,43 @@
+ 		}
+ 
+ 		[Test]
++		public void IosViewportRuntimeUsesExactlyThreeActionsAndTheFullCommandBarRectangle()
++		{
++			var logicType = typeof(IosViewportActionsLogic);
++			var bottomObstacle = logicType.GetMethod(
++				"BottomObstacleBounds", BindingFlags.Static | BindingFlags.NonPublic);
++			var applyLayout = logicType.GetMethod("ApplyLayout", BindingFlags.Instance | BindingFlags.NonPublic)!;
++			var rectangleCreate = typeof(IosViewportControlsLayout).GetMethod(
++				nameof(IosViewportControlsLayout.Create),
++				BindingFlags.Static | BindingFlags.Public,
++				null,
++				new[] { typeof(IosScreenSnapshot), typeof(int), typeof(Rectangle) },
++				null)!;
++			var source = File.ReadAllText(Path.Combine(
++				RepositoryRoot(), "engine", "OpenRA.Mods.Common", "Widgets", "Logic", "Ingame",
++				"IosViewportActionsLogic.cs"));
++
++			Assert.Multiple(() =>
++			{
++				Assert.That(bottomObstacle, Is.Not.Null);
++				Assert.That(bottomObstacle?.ReturnType, Is.EqualTo(typeof(Rectangle)));
++				Assert.That(logicType.GetField("lastBottomObstacleBounds", BindingFlags.Instance | BindingFlags.NonPublic)?.FieldType,
++					Is.EqualTo(typeof(Rectangle)));
++				Assert.That(Calls(applyLayout, rectangleCreate), Is.True,
++					"The live layout must pass the real command-bar rectangle into the pure geometry policy.");
++				Assert.That(source, Does.Contain("widget.Get<ButtonWidget>(\"DEPLOY\")"));
++				Assert.That(source, Does.Contain("widget.Get<ButtonWidget>(\"SELECT_TYPE\")"));
++				Assert.That(source, Does.Contain("widget.Get<ButtonWidget>(\"FORCE_ATTACK\")"));
++				Assert.That(source, Does.Not.Contain("widget.Get<ButtonWidget>(\"STOP\")"));
++				Assert.That(source, Does.Not.Contain("widget.Get<ButtonWidget>(\"RETURN_BASE\")"));
++				Assert.That(source, Does.Not.Contain("BottomObstacleTop"));
++				Assert.That(source, Does.Not.Contain("lastBottomObstacleTop"));
++				Assert.That(source, Does.Not.Contain("HasOwnedBuilding"));
++				Assert.That(source, Does.Not.Contain("ReturnToBase"));
++			});
++		}
++
++		[Test]
+ 		public void IosViewportActionsCacheLabelsAndConsumeThePureLabelLayoutPolicy()
+ 		{
+ 			var logicType = typeof(IosViewportActionsLogic);
+@@ -147,7 +190,7 @@
+ 
+ 			Assert.Multiple(() =>
+ 			{
+-				Assert.That(labels, Is.Not.Null, "The five live label widgets must be cached once at construction.");
++				Assert.That(labels, Is.Not.Null, "The three live label widgets must be cached once at construction.");
+ 				Assert.That(labels?.FieldType, Is.EqualTo(typeof(LabelWidget[])));
+ 				Assert.That(Calls(applyLayout, createLayout), Is.True,
+ 					"ApplyLayout must consume the tested pure label layout policy on every geometry refresh.");
+@@ -213,7 +256,7 @@
+ 			StringAssert.Contains("ios-force-attack: 168, 256, 56, 56", chrome,
+ 				"Force attack must use a dedicated persistent active sprite.");
+ 			StringAssert.Contains("WidgetUtils.BindButtonIcon(selectType);", logic);
+-			StringAssert.Contains("WidgetUtils.BindButtonIcon(returnBase);", logic);
++			StringAssert.DoesNotContain("var returnBase", logic);
+ 		}
+ 
+ 		[Test]
+@@ -223,7 +266,7 @@
+ 			var layout = File.ReadAllText(Path.Combine(root, "mods", "ra2", "chrome", "ingame.yaml"));
+ 			var logic = File.ReadAllText(Path.Combine(root, "engine", "OpenRA.Mods.Common", "Widgets", "Logic", "Ingame", "IosViewportActionsLogic.cs"));
+ 
+-			foreach (var button in new[] { "STOP", "DEPLOY", "SELECT_TYPE", "FORCE_ATTACK", "RETURN_BASE" })
++			foreach (var button in new[] { "DEPLOY", "SELECT_TYPE", "FORCE_ATTACK" })
+ 			{
+ 				StringAssert.Contains($"Button@{button}:", layout);
+ 				var start = layout.IndexOf($"Button@{button}:", System.StringComparison.Ordinal);
+diff -ruN a/OpenRA.Test/IosViewportControlsLayoutTest.cs b/OpenRA.Test/IosViewportControlsLayoutTest.cs
+--- a/OpenRA.Test/IosViewportControlsLayoutTest.cs	2026-08-27 22:31:33
++++ b/OpenRA.Test/IosViewportControlsLayoutTest.cs	2026-08-27 22:45:35
+@@ -32,7 +32,24 @@
+ 	{
+ 		static readonly FieldInfo ChromeMetricsData = typeof(ChromeMetrics).GetField(
+ 			"data", BindingFlags.NonPublic | BindingFlags.Static)!;
++		static readonly (Size Renderer, Size Native, IosSafeAreaInsets Insets)[] Devices =
++		{
++			(new Size(1558, 720), new Size(844, 390), new IosSafeAreaInsets(47, 0, 47, 21)),
++			(new Size(1560, 720), new Size(932, 430), new IosSafeAreaInsets(59, 0, 59, 21)),
++			(new Size(1558, 720), new Size(844, 390), new IosSafeAreaInsets(55, 0, 39, 21)),
++			(new Size(1558, 720), new Size(844, 390), new IosSafeAreaInsets(39, 0, 55, 21)),
++			(new Size(1133, 744), new Size(1133, 744), new IosSafeAreaInsets(0, 0, 0, 20)),
++			(new Size(1180, 820), new Size(1180, 820), new IosSafeAreaInsets(0, 0, 0, 20)),
++			(new Size(1366, 1024), new Size(1366, 1024), new IosSafeAreaInsets(0, 0, 0, 20)),
++		};
+ 
++		public enum CommandBarState
++		{
++			Hidden,
++			Compact,
++			Expanded,
++		}
++
+ 		Dictionary<string, string> previousMetrics;
+ 
+ 		sealed class RecordingSkinTarget : ITouchFactionSkinTarget, IIosViewportControlsSkinTarget
+@@ -136,6 +153,84 @@
+ 				.Invoke(target, arguments);
+ 		}
+ 
++		static IEnumerable<TestCaseData> ResponsiveControlCases()
++		{
++			for (var device = 0; device < Devices.Length; device++)
++			{
++				foreach (var requestedSize in new[] { 112, 128, 144 })
++				{
++					foreach (var state in Enum.GetValues<CommandBarState>())
++						yield return new TestCaseData(device, requestedSize, state)
++							.SetName($"ResponsiveControls_Device{device}_{requestedSize}pt_{state}");
++				}
++			}
++		}
++
++		static Rectangle Inset(Rectangle bounds, int inset) => Rectangle.FromLTRB(
++			bounds.Left + inset, bounds.Top + inset,
++			bounds.Right - inset, bounds.Bottom - inset);
++
++		static Rectangle Expand(Rectangle bounds, int amount) => bounds.IsEmpty
++			? Rectangle.Empty
++			: Rectangle.FromLTRB(
++				bounds.Left - amount, bounds.Top - amount,
++				bounds.Right + amount, bounds.Bottom + amount);
++
++		static Rectangle CommandBarObstacle(IosScreenSnapshot snapshot, CommandBarState state)
++		{
++			if (state == CommandBarState.Hidden)
++				return Rectangle.Empty;
++
++			var safe = snapshot.SafeBounds;
++			var margin = snapshot.LogicalPoints(12);
++			var slotPoints = state == CommandBarState.Compact ? 44 : 52;
++			var slotCount = state == CommandBarState.Compact ? 6 : 10;
++			var height = snapshot.LogicalPoints(slotPoints);
++			var width = Math.Min(
++				safe.Width - 2 * margin,
++				snapshot.LogicalPoints(slotPoints * slotCount));
++			return new Rectangle(
++				safe.Left + (safe.Width - width) / 2,
++				safe.Bottom - margin - height,
++				width,
++				height);
++		}
++
++		static double CircleToRectangleGap(Rectangle circleBounds, Rectangle rectangle)
++		{
++			var centerX = circleBounds.X + circleBounds.Width / 2;
++			var centerY = circleBounds.Y + circleBounds.Height / 2;
++			var nearestX = Math.Clamp(centerX, rectangle.Left, rectangle.Right);
++			var nearestY = Math.Clamp(centerY, rectangle.Top, rectangle.Bottom);
++			var dx = nearestX - centerX;
++			var dy = nearestY - centerY;
++			return Math.Sqrt((double)dx * dx + (double)dy * dy) -
++				Math.Min(circleBounds.Width, circleBounds.Height) / 2.0;
++		}
++
++		static Rectangle TranslateUp(Rectangle bounds, int amount) =>
++			new(bounds.X, bounds.Y - amount, bounds.Width, bounds.Height);
++
++		static Rectangle FindQuarterRingGap(
++			Rectangle overall, IReadOnlyList<Rectangle> entities, int clearance)
++		{
++			var size = Math.Max(1, clearance);
++			for (var y = overall.Top + clearance; y + size <= overall.Bottom - clearance; y++)
++			{
++				for (var x = overall.Left + clearance; x + size <= overall.Right - clearance; x++)
++				{
++					var candidate = new Rectangle(x, y, size, size);
++					var expanded = Expand(candidate, clearance);
++					if (overall.IntersectsWith(candidate) &&
++						entities.All(entity => !entity.IntersectsWith(expanded)))
++						return candidate;
++				}
++			}
++
++			Assert.Fail("Unable to find empty quarter-ring space with the required obstacle clearance.");
++			return Rectangle.Empty;
++		}
++
+ 		static bool Calls(MethodInfo caller, MethodInfo callee)
+ 		{
+ 			var il = caller.GetMethodBody()!.GetILAsByteArray()!;
+@@ -247,11 +342,11 @@
+ 		}
+ 
+ 		[Test]
+-		public void ViewportSkinLifecycleDrivesTheProductionActionAndJoystickMappings()
++		public void ViewportSkinLifecycleDrivesTheThreeProductionActionsAndJoystickMappings()
+ 		{
+ 			LoadChromeMetrics(ReadRa2Metrics());
+ 			var joystick = new RecordingSkinTarget();
+-			var buttons = new[] { "STOP", "DEPLOY", "SELECT_TYPE", "FORCE_ATTACK", "RETURN_BASE" }
++			var buttons = new[] { "DEPLOY", "SELECT_TYPE", "FORCE_ATTACK" }
+ 				.Select(id => UninitializedButton(id, true)).ToArray();
+ 			var icons = buttons.Select(button => button.Get<ImageWidget>("ICON")).ToArray();
+ 			var previousBindings = icons.Select(icon => icon.GetSprite).ToArray();
+@@ -291,14 +386,19 @@
+ 
+ 			var actions = new ContainerWidget { Id = "IOS_VIEWPORT_ACTIONS" };
+ 			parent.AddChild(actions);
+-			foreach (var id in new[] { "STOP", "DEPLOY", "SELECT_TYPE", "FORCE_ATTACK", "RETURN_BASE" })
++			foreach (var id in new[] { "DEPLOY", "SELECT_TYPE", "FORCE_ATTACK" })
+ 				actions.AddChild(UninitializedButton(id, true));
+ 
+ 			TouchFactionSkin.SetActive("soviets");
+ 			var logic = new IosViewportActionsLogic(
+ 				actions, Uninitialized<World>(), Uninitialized<WorldRenderer>());
++			var activeButtons = (ButtonWidget[])typeof(IosViewportActionsLogic)
++				.GetField("actionButtons", BindingFlags.Instance | BindingFlags.NonPublic)!
++				.GetValue(logic)!;
+ 			Assert.That(TouchFactionSkin.Active, Is.EqualTo("allies"),
+ 				"The constructor must initialize/reset the skin context for a new world.");
++			Assert.That(activeButtons.Select(button => button.Id),
++				Is.EqualTo(new[] { "DEPLOY", "SELECT_TYPE", "FORCE_ATTACK" }));
+ 
+ 			TouchFactionSkin.SetActive("yuri");
+ 			logic.Tick();
+@@ -694,105 +794,308 @@
+ 			Assert.That(logic, Does.Not.Contain("const int RequestedJoystickPoints"));
+ 		}
+ 
+-		[TestCase(1560, 720, 932, 430, 59, 0, 59, 21)]
+-		[TestCase(1558, 720, 844, 390, 47, 0, 47, 21)]
+-		[TestCase(1133, 744, 1133, 744, 0, 0, 0, 20)]
+-		[TestCase(1180, 820, 1180, 820, 0, 0, 0, 20)]
+-		[TestCase(1366, 1024, 1366, 1024, 0, 0, 0, 20)]
+-		public void ResponsiveControlsFitSafeAreaAndKeepFiveButtonsOnAnEqualRadiusRing(
+-			int width, int height, int nativeWidth, int nativeHeight,
+-			double safeLeft, double safeTop, double safeRight, double safeBottom)
++		[Test]
++		public void ViewportGeometryExposesOnlyTheRectangleObstacleContract()
+ 		{
++			var createMethods = typeof(IosViewportControlsLayout)
++				.GetMethods(BindingFlags.Public | BindingFlags.Static)
++				.Where(method => method.Name == nameof(IosViewportControlsLayout.Create) &&
++					method.GetParameters().Length == 3)
++				.ToArray();
++
++			Assert.That(createMethods.Select(method => method.GetParameters()[2].ParameterType),
++				Is.EqualTo(new[] { typeof(Rectangle) }));
++		}
++
++		[TestCaseSource(nameof(ResponsiveControlCases))]
++		public void ResponsiveControlsUseApprovedQuarterRingGeometry(
++			int device, int requestedSize, CommandBarState state)
++		{
++			var (renderer, native, insets) = Devices[device];
+ 			var snapshot = new IosScreenSnapshot(
+-				new Size(width, height), new Size(nativeWidth, nativeHeight),
+-				new IosSafeAreaInsets(safeLeft, safeTop, safeRight, safeBottom));
++				renderer, native, insets);
+ 			var safe = snapshot.SafeBounds;
+-			var bottomObstacleTop = safe.Bottom - snapshot.LogicalPoints(68);
+-			var expectedAngles = new[] { -150.0, -115.0, -80.0, -45.0, -10.0 };
+-			IosViewportControlsLayout previous = null;
++			var margin = snapshot.LogicalPoints(12);
++			var minimumGap = snapshot.LogicalPoints(8);
++			var obstacle = CommandBarObstacle(snapshot, state);
++			var expandedObstacle = Expand(obstacle, minimumGap);
++			var baseline = IosViewportControlsLayout.Create(snapshot, requestedSize, Rectangle.Empty);
++			var baselineEntities = new[] { baseline.JoystickBounds }.Concat(baseline.ActionBounds).ToArray();
++			var expectedShift = baselineEntities
++				.Where(entity => entity.IntersectsWith(expandedObstacle))
++				.Select(entity => entity.Bottom - expandedObstacle.Top)
++				.DefaultIfEmpty(0)
++				.Max();
++			var layout = IosViewportControlsLayout.Create(snapshot, requestedSize, obstacle);
++			var center = new int2(
++				layout.JoystickBounds.X + layout.JoystickBounds.Width / 2,
++				layout.JoystickBounds.Y + layout.JoystickBounds.Height / 2);
++			var expectedAngles = new[] { -90.0, -45.0, 0.0 };
++			var insetSafe = Inset(safe, margin);
++			var entities = new[] { layout.JoystickBounds }.Concat(layout.ActionBounds).ToArray();
+ 
+-			foreach (var requestedSize in new[] { 112, 128, 144 })
++			Assert.Multiple(() =>
+ 			{
+-				var layout = IosViewportControlsLayout.Create(snapshot, requestedSize, bottomObstacleTop);
+-				var center = new int2(
+-					layout.JoystickBounds.X + layout.JoystickBounds.Width / 2,
+-					layout.JoystickBounds.Y + layout.JoystickBounds.Height / 2);
+-				var maximumBottom = Math.Min(safe.Bottom, bottomObstacleTop) - layout.Margin;
++				if (state != CommandBarState.Hidden)
++					Assert.That(obstacle.Left,
++						Is.EqualTo(safe.Left + (safe.Width - obstacle.Width) / 2),
++						$"The {state} command-bar obstacle must be centered in SafeBounds.");
++				Assert.That(layout.NormalizedJoystickPoints, Is.EqualTo(requestedSize));
++				Assert.That(layout.ActionBounds, Has.Count.EqualTo(3));
++				Assert.That(layout.ActionBounds, Is.Not.InstanceOf<Rectangle[]>());
++				Assert.That(layout.JoystickBounds.Size,
++					Is.EqualTo(new Size(snapshot.LogicalPoints(requestedSize), snapshot.LogicalPoints(requestedSize))));
++				Assert.That(layout.ThumbDiameter, Is.EqualTo(snapshot.LogicalPoints(requestedSize * 0.42)));
++				Assert.That(layout.MovementRadius, Is.EqualTo(snapshot.LogicalPoints(requestedSize * 0.27)));
++				Assert.That(layout.RingRadius,
++					Is.EqualTo(snapshot.LogicalPoints(requestedSize / 2.0 + 48)));
++				Assert.That(layout.ButtonDiameter, Is.EqualTo(snapshot.LogicalPoints(56)));
++				Assert.That(layout.Margin, Is.EqualTo(margin));
++				Assert.That(layout.ActionsBounds, Is.EqualTo(layout.ActionBounds.Aggregate(Rectangle.Union)));
++				Assert.That(layout.JoystickBounds, Is.EqualTo(TranslateUp(baseline.JoystickBounds, expectedShift)));
++				for (var i = 0; i < layout.ActionBounds.Count; i++)
++					Assert.That(layout.ActionBounds[i],
++						Is.EqualTo(TranslateUp(baseline.ActionBounds[i], expectedShift)), $"action {i}");
++				Assert.That(entities, Has.All.Matches<Rectangle>(insetSafe.Contains),
++					$"Every hit rectangle must stay within the 12pt-inset Safe Area for {state}.");
++				Assert.That(entities, Has.All.Matches<Rectangle>(entity => !entity.IntersectsWith(expandedObstacle)),
++					$"Every hit rectangle must clear the {state} command bar by 8pt.");
++			});
+ 
++			if (state == CommandBarState.Hidden)
++			{
+ 				Assert.Multiple(() =>
+ 				{
+-					Assert.That(layout.NormalizedJoystickPoints, Is.EqualTo(requestedSize));
+-					Assert.That(layout.ActionBounds, Has.Count.EqualTo(5));
+-					Assert.That(layout.ActionBounds, Is.Not.InstanceOf<Rectangle[]>());
+-					Assert.That(layout.JoystickBounds.Width, Is.EqualTo(snapshot.LogicalPoints(requestedSize)));
+-					Assert.That(layout.JoystickBounds.Height, Is.EqualTo(layout.JoystickBounds.Width));
+-					Assert.That(layout.ThumbDiameter, Is.EqualTo(snapshot.LogicalPoints(requestedSize * 0.42)));
+-					Assert.That(layout.MovementRadius, Is.EqualTo(snapshot.LogicalPoints(requestedSize * 0.27)));
+-					Assert.That(layout.RingRadius, Is.GreaterThanOrEqualTo(snapshot.LogicalPoints(requestedSize)));
+-					Assert.That(layout.ButtonDiameter, Is.EqualTo(snapshot.LogicalPoints(56)));
+-					Assert.That(layout.ButtonDiameter, Is.GreaterThanOrEqualTo(snapshot.LogicalPoints(48)));
+-					Assert.That(layout.Margin, Is.EqualTo(snapshot.LogicalPoints(12)));
+-					Assert.That(safe.Contains(layout.JoystickBounds), Is.True);
+-					Assert.That(safe.Contains(layout.ActionsBounds), Is.True);
+-					Assert.That(layout.JoystickBounds.Bottom, Is.LessThanOrEqualTo(maximumBottom));
+-					Assert.That(layout.ActionsBounds.Bottom, Is.LessThanOrEqualTo(maximumBottom));
+-					Assert.That(layout.ActionsBounds,
+-						Is.EqualTo(layout.ActionBounds.Aggregate(Rectangle.Union)));
++					Assert.That(layout.JoystickBounds.Left, Is.EqualTo(safe.Left + margin));
++					Assert.That(layout.JoystickBounds.Bottom, Is.EqualTo(safe.Bottom - margin));
+ 				});
++			}
+ 
+-				var radii = new double[layout.ActionBounds.Count];
+-				for (var i = 0; i < layout.ActionBounds.Count; i++)
++			var radii = new double[layout.ActionBounds.Count];
++			for (var i = 0; i < layout.ActionBounds.Count; i++)
++			{
++				var action = layout.ActionBounds[i];
++				var actionCenter = new int2(action.X + action.Width / 2, action.Y + action.Height / 2);
++				var dx = actionCenter.X - center.X;
++				var dy = actionCenter.Y - center.Y;
++				radii[i] = Math.Sqrt((double)dx * dx + (double)dy * dy);
++
++				Assert.Multiple(() =>
+ 				{
+-					var action = layout.ActionBounds[i];
+-					var actionCenter = new int2(action.X + action.Width / 2, action.Y + action.Height / 2);
+-					var dx = actionCenter.X - center.X;
+-					var dy = actionCenter.Y - center.Y;
+-					radii[i] = Math.Sqrt((double)dx * dx + (double)dy * dy);
++					Assert.That(action.Size, Is.EqualTo(new Size(layout.ButtonDiameter, layout.ButtonDiameter)));
++					Assert.That(Math.Atan2(dy, dx) * 180 / Math.PI,
++						Is.EqualTo(expectedAngles[i]).Within(1.0), $"action {i} at {requestedSize}pt");
++					Assert.That(radii[i], Is.EqualTo(layout.RingRadius).Within(1.0));
++					Assert.That(CircleToRectangleGap(layout.JoystickBounds, action),
++						Is.GreaterThanOrEqualTo(minimumGap),
++						$"action {i} is too close to the circular joystick interaction area " +
++						$"({CircleToRectangleGap(layout.JoystickBounds, action) / snapshot.LogicalPerPoint:F3}pt)");
++				});
+ 
+-					Assert.Multiple(() =>
+-					{
+-						Assert.That(safe.Contains(action), Is.True, $"action {i} at {requestedSize}pt");
+-						Assert.That(action.Bottom, Is.LessThanOrEqualTo(maximumBottom));
+-						Assert.That(action.Size, Is.EqualTo(new Size(layout.ButtonDiameter, layout.ButtonDiameter)));
+-						Assert.That(Math.Atan2(dy, dx) * 180 / Math.PI,
+-							Is.EqualTo(expectedAngles[i]).Within(1.0), $"action {i} at {requestedSize}pt");
+-					});
++				for (var j = 0; j < i; j++)
++				{
++					var other = layout.ActionBounds[j];
++					var otherCenter = new int2(other.X + other.Width / 2, other.Y + other.Height / 2);
++					var centerDistance = Math.Sqrt(
++						(double)(actionCenter.X - otherCenter.X) * (actionCenter.X - otherCenter.X) +
++						(double)(actionCenter.Y - otherCenter.Y) * (actionCenter.Y - otherCenter.Y));
++					Assert.That(centerDistance - layout.ButtonDiameter,
++						Is.GreaterThanOrEqualTo(minimumGap), $"actions {j} and {i} are too close");
++				}
++			}
+ 
+-					var thumbSweepRadius = layout.MovementRadius + layout.ThumbDiameter / 2.0;
+-					Assert.That(radii[i], Is.GreaterThanOrEqualTo(thumbSweepRadius + layout.ButtonDiameter / 2.0),
+-						$"action {i} intersects the joystick thumb sweep at {requestedSize}pt");
++			Assert.That(radii.Max() - radii.Min(), Is.LessThanOrEqualTo(1.0));
++		}
+ 
+-					for (var j = 0; j < i; j++)
+-					{
+-						var other = layout.ActionBounds[j];
+-						var otherCenter = new int2(other.X + other.Width / 2, other.Y + other.Height / 2);
+-						var buttonDx = actionCenter.X - otherCenter.X;
+-						var buttonDy = actionCenter.Y - otherCenter.Y;
+-						var centerDistance = Math.Sqrt((double)buttonDx * buttonDx + (double)buttonDy * buttonDy);
+-						Assert.That(centerDistance, Is.GreaterThanOrEqualTo(layout.ButtonDiameter),
+-							$"circular actions {j} and {i} intersect at {requestedSize}pt");
++		[Test]
++		public void AsymmetricSafeAreaSwapMovesTheAnchorWithTheLeftInset()
++		{
++			var leftNotch = new IosScreenSnapshot(
++				new Size(1558, 720), new Size(844, 390), new IosSafeAreaInsets(55, 0, 39, 21));
++			var rightNotch = new IosScreenSnapshot(
++				new Size(1558, 720), new Size(844, 390), new IosSafeAreaInsets(39, 0, 55, 21));
++			var leftLayout = IosViewportControlsLayout.Create(leftNotch, 128, Rectangle.Empty);
++			var rightLayout = IosViewportControlsLayout.Create(rightNotch, 128, Rectangle.Empty);
+ 
+-						var overlap = Rectangle.Intersect(action, other);
+-						var overlapArea = overlap.Width * overlap.Height;
+-						Assert.That(overlapArea, Is.Zero,
+-							$"rectangular hit areas for actions {j} and {i} overlap at {requestedSize}pt");
+-					}
+-				}
++			Assert.Multiple(() =>
++			{
++				Assert.That(leftLayout.JoystickBounds.Left,
++					Is.EqualTo(leftNotch.SafeBounds.Left + leftNotch.LogicalPoints(12)));
++				Assert.That(rightLayout.JoystickBounds.Left,
++					Is.EqualTo(rightNotch.SafeBounds.Left + rightNotch.LogicalPoints(12)));
++				Assert.That(leftLayout.JoystickBounds.Left, Is.GreaterThan(rightLayout.JoystickBounds.Left));
++			});
++		}
+ 
+-				Assert.That(radii.Max() - radii.Min(), Is.LessThanOrEqualTo(1.0));
++		[Test]
++		public void EmptyQuarterRingSpaceDoesNotMoveTheControls()
++		{
++			var snapshot = new IosScreenSnapshot(
++				new Size(1558, 720), new Size(844, 390), new IosSafeAreaInsets(47, 0, 47, 21));
++			var withoutObstacle = IosViewportControlsLayout.Create(snapshot, 128, Rectangle.Empty);
++			var entities = new[] { withoutObstacle.JoystickBounds }.Concat(withoutObstacle.ActionBounds).ToArray();
++			var overall = entities.Aggregate(Rectangle.Union);
++			var clearance = snapshot.LogicalPoints(8);
++			var emptySpaceObstacle = FindQuarterRingGap(overall, entities, clearance);
+ 
+-				if (previous != null)
++			Assert.Multiple(() =>
++			{
++				Assert.That(overall.IntersectsWith(emptySpaceObstacle), Is.True);
++				Assert.That(entities, Has.All.Matches<Rectangle>(entity => !entity.IntersectsWith(emptySpaceObstacle)));
++				Assert.That(entities, Has.All.Matches<Rectangle>(
++					entity => !entity.IntersectsWith(Expand(emptySpaceObstacle, clearance))));
++			});
++
++			var unchanged = IosViewportControlsLayout.Create(snapshot, 128, emptySpaceObstacle);
++			Assert.Multiple(() =>
++			{
++				Assert.That(unchanged.JoystickBounds, Is.EqualTo(withoutObstacle.JoystickBounds));
++				Assert.That(unchanged.ActionBounds, Is.EqualTo(withoutObstacle.ActionBounds));
++			});
++		}
++
++		[TestCase(false)]
++		[TestCase(true)]
++		public void IntersectingEntityUsesTheExactMinimalUpwardShift(bool targetAction)
++		{
++			var snapshot = new IosScreenSnapshot(
++				new Size(1558, 720), new Size(844, 390), new IosSafeAreaInsets(47, 0, 47, 21));
++			var withoutObstacle = IosViewportControlsLayout.Create(snapshot, 128, Rectangle.Empty);
++			var entities = new[] { withoutObstacle.JoystickBounds }.Concat(withoutObstacle.ActionBounds).ToArray();
++			var target = targetAction ? withoutObstacle.ActionBounds[2] : withoutObstacle.JoystickBounds;
++			var clearance = snapshot.LogicalPoints(8);
++			var obstacle = new Rectangle(
++				target.Left + target.Width / 3,
++				target.Bottom - Math.Max(1, clearance / 2),
++				Math.Max(1, target.Width / 3),
++				Math.Max(1, clearance));
++			var expandedObstacle = Expand(obstacle, clearance);
++			var expectedShift = entities
++				.Where(entity => entity.IntersectsWith(expandedObstacle))
++				.Max(entity => entity.Bottom - expandedObstacle.Top);
++
++			Assert.That(target.IntersectsWith(expandedObstacle), Is.True);
++			var shifted = IosViewportControlsLayout.Create(snapshot, 128, obstacle);
++			var shiftedEntities = new[] { shifted.JoystickBounds }.Concat(shifted.ActionBounds).ToArray();
++			Assert.Multiple(() =>
++			{
++				Assert.That(shifted.JoystickBounds.Y,
++					Is.EqualTo(withoutObstacle.JoystickBounds.Y - expectedShift));
++				for (var i = 0; i < shifted.ActionBounds.Count; i++)
++					Assert.That(shifted.ActionBounds[i].Y,
++						Is.EqualTo(withoutObstacle.ActionBounds[i].Y - expectedShift), $"action {i}");
++				Assert.That(shiftedEntities,
++					Has.All.Matches<Rectangle>(entity => !entity.IntersectsWith(expandedObstacle)));
++			});
++		}
++
++		[Test]
++		public void ImpossibleObstacleIsRejectedInsteadOfEscapingTheInsetSafeArea()
++		{
++			var snapshot = new IosScreenSnapshot(
++				new Size(1133, 744), new Size(1133, 744), new IosSafeAreaInsets(0, 0, 0, 20));
++			var safe = snapshot.SafeBounds;
++			var obstacle = Rectangle.FromLTRB(safe.Left, safe.Top, safe.Right, safe.Bottom);
++
++			Assert.That(
++				() => IosViewportControlsLayout.Create(snapshot, 144, obstacle),
++				Throws.InvalidOperationException);
++		}
++
++		[Test]
++		public void JoystickInitialHitAreaMatchesTheRenderedInscribedCircle()
++		{
++			var joystick = Uninitialized<VirtualViewportJoystickWidget>();
++			joystick.Bounds = new WidgetBounds(10, 20, 120, 80);
++			var squareJoystick = Uninitialized<VirtualViewportJoystickWidget>();
++			squareJoystick.Bounds = new WidgetBounds(10, 20, 80, 80);
++			var childrenField = typeof(Widget).GetField(nameof(Widget.Children))!;
++			childrenField.SetValue(joystick, new List<Widget>());
++			childrenField.SetValue(squareJoystick, new List<Widget>());
++
++			Assert.Multiple(() =>
++			{
++				Assert.That(typeof(VirtualViewportJoystickWidget)
++					.GetMethod(nameof(Widget.EventBoundsContains))!.DeclaringType,
++					Is.EqualTo(typeof(VirtualViewportJoystickWidget)));
++				Assert.That(joystick.EventBoundsContains(new int2(70, 60)), Is.True, "center");
++				Assert.That(joystick.EventBoundsContains(new int2(70, 20)), Is.True, "circle boundary");
++				Assert.That(joystick.EventBoundsContains(new int2(70, 100)), Is.True, "bottom tangent");
++				Assert.That(squareJoystick.EventBoundsContains(new int2(90, 60)), Is.True, "right tangent");
++				Assert.That(joystick.EventBoundsContains(new int2(10, 20)), Is.False, "square corner");
++				Assert.That(joystick.EventBoundsContains(new int2(111, 60)), Is.False,
++					"The radius must use half of the smaller non-square dimension.");
++			});
++		}
++
++		[Test]
++		public void FocusedJoystickKeepsHandlingDragOutsideTheInitialCircleUntilRelease()
++		{
++			var joystick = Uninitialized<VirtualViewportJoystickWidget>();
++			joystick.Bounds = new WidgetBounds(10, 20, 80, 80);
++			joystick.IsVisible = () => true;
++			typeof(Widget).GetField(nameof(Widget.Children))!.SetValue(joystick, new List<Widget>());
++			var state = new VirtualViewportJoystickState(40, 0.15f);
++			SetPrivateField(joystick, "state", state);
++
++			var platformOverride = typeof(Platform).GetField(
++				"hostPlatformOverride", BindingFlags.Static | BindingFlags.NonPublic)!;
++			var previousPlatformOverride = platformOverride.GetValue(null);
++			var loaded = typeof(IosFloatingControlsPreferences).GetField(
++				"loaded", BindingFlags.Static | BindingFlags.NonPublic)!;
++			var visible = typeof(IosFloatingControlsPreferences).GetField(
++				"visible", BindingFlags.Static | BindingFlags.NonPublic)!;
++			var previousLoaded = loaded.GetValue(null);
++			var previousVisible = visible.GetValue(null);
++			var previousMouseFocus = Ui.MouseFocusWidget;
++			var previousMouseOver = Ui.MouseOverWidget;
++
++			try
++			{
++				Platform.OverrideHostPlatform(PlatformType.iOS);
++				loaded.SetValue(null, true);
++				visible.SetValue(null, true);
++				Ui.MouseFocusWidget = null;
++				Ui.MouseOverWidget = null;
++
++				var down = new MouseInput(MouseInputEvent.Down, MouseButton.Left,
++					new int2(50, 60), int2.Zero, Modifiers.None, 0);
++				var outsideMove = new MouseInput(MouseInputEvent.Move, MouseButton.Left,
++					new int2(180, 180), int2.Zero, Modifiers.None, 0);
++				var outsideUp = new MouseInput(MouseInputEvent.Up, MouseButton.Left,
++					new int2(180, 180), int2.Zero, Modifiers.None, 0);
++
++				Assert.That(joystick.HandleMouseInputOuter(down), Is.True);
++				Assert.Multiple(() =>
+ 				{
+-					Assert.Multiple(() =>
+-					{
+-						Assert.That(layout.JoystickBounds.Width, Is.GreaterThan(previous.JoystickBounds.Width));
+-						Assert.That(layout.ThumbDiameter, Is.GreaterThan(previous.ThumbDiameter));
+-						Assert.That(layout.MovementRadius, Is.GreaterThan(previous.MovementRadius));
+-						Assert.That(layout.RingRadius, Is.GreaterThan(previous.RingRadius));
+-					});
+-				}
++					Assert.That(joystick.HasMouseFocus, Is.True);
++					Assert.That(state.Active, Is.True);
++					Assert.That(joystick.EventBoundsContains(outsideMove.Location), Is.False);
++				});
+ 
+-				previous = layout;
++				Assert.That(joystick.HandleMouseInputOuter(outsideMove), Is.True);
++				Assert.Multiple(() =>
++				{
++					Assert.That(joystick.HasMouseFocus, Is.True);
++					Assert.That(state.Active, Is.True);
++					Assert.That(state.ThumbOffset, Is.Not.EqualTo(int2.Zero));
++				});
++
++				Assert.That(joystick.HandleMouseInputOuter(outsideUp), Is.True);
++				Assert.Multiple(() =>
++				{
++					Assert.That(joystick.HasMouseFocus, Is.False);
++					Assert.That(state.Active, Is.False);
++					Assert.That(state.ThumbOffset, Is.EqualTo(int2.Zero));
++				});
++			}
++			finally
++			{
++				Ui.MouseFocusWidget = previousMouseFocus;
++				Ui.MouseOverWidget = previousMouseOver;
++				loaded.SetValue(null, previousLoaded);
++				visible.SetValue(null, previousVisible);
++				platformOverride.SetValue(null, previousPlatformOverride);
+ 			}
+ 		}
+ 

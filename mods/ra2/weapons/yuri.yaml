@@ -1,0 +1,249 @@
+# Yuri's Revenge weapons (classic-scale damage)
+
+Virusgun:
+	Inherits: awp
+	ReloadDelay: 120
+	Range: 9c0
+	Report: iviratta.wav
+	Warhead@1Dam: SpreadDamage
+		Damage: 200
+		Versus:
+			Plate: 100
+			Light: 100
+			Heavy: 75
+		DamageTypes: BulletDeath
+	Warhead@2Eff: CreateEffect
+		Explosions: piff
+
+VirusgunE:
+	Inherits: Virusgun
+	ReloadDelay: 100
+	Range: 11c0
+
+TowerMindControl:
+	Inherits: MindControl
+	ReloadDelay: 100
+
+MasterMindControl:
+	Inherits: MindControl
+	ReloadDelay: 100
+
+MagneShake:
+	ReloadDelay: 110
+	Range: 10c0
+	Report: vmagat2a.wav
+	ValidTargets: Structure
+	Projectile: LaserZap
+		Duration: 40
+		Width: 384
+		Shape: Flat
+		ZOffset: 2047
+		Color: FF50F545
+		UsePlayerColor: false
+	Warhead@1Dam: SpreadDamage
+		Spread: 128
+		Damage: 80
+		ValidTargets: Structure
+		Versus:
+			Wood: 100
+			Steel: 100
+			Concrete: 75
+		DamageTypes: ExplosionDeath
+	Warhead@2Eff: CreateEffect
+		Explosions: piff
+		ValidTargets: Ground, Water, Air
+
+MagneShakeE:
+	Inherits: MagneShake
+	Warhead@1Dam: SpreadDamage
+		Damage: 120
+
+MagneLift:
+	ReloadDelay: 8
+	Range: 10c0
+	Report: vmagat1a.wav
+	ValidTargets: MagneLiftable
+	InvalidTargets: Infantry, Structure
+	Projectile: LaserZap
+		Duration: 10
+		Width: 256
+		Shape: Flat
+		ZOffset: 2047
+		Color: FF50F545
+		UsePlayerColor: false
+	Warhead@1Dam: TargetDamage
+		Damage: 0
+		ValidTargets: MagneLiftable
+
+ChaosAttack:
+	Range: 3c0
+	ReloadDelay: 30
+	Report: vchaatta.wav
+	ValidTargets: ChaosGasable
+	Projectile: InstantHit
+	Warhead@1Con: GrantExternalCondition
+		ValidTargets: ChaosGasable
+		ValidRelationships: Enemy, Neutral, Ally
+		Condition: chaos
+		Range: 3c0
+		Duration: 200
+	Warhead@2Dam: TargetDamage
+		Damage: 0
+		ValidTargets: ChaosGasable
+		ValidRelationships: Enemy, Neutral, Ally
+	Warhead@3Eff: CreateEffect
+		Explosions: psi_wave
+		ValidTargets: Ground, Water, Air
+
+DiskLaser:
+	ReloadDelay: 80
+	Range: 6c0
+	Report: vfloatta.wav
+	ValidTargets: Ground, Water
+	Projectile: LaserZap
+		Width: 75
+		Duration: 15
+		Color: AA799080
+		SecondaryBeam: true
+		SecondaryBeamWidth: 20
+		SecondaryBeamZOffset: 2047
+		SecondaryBeamColor: FFFFFF80
+		UsePlayerColor: false
+	Warhead@1Dam: SpreadDamage
+		Damage: 75
+		ValidTargets: Ground, Water
+		Versus:
+			None: 100
+			Flak: 100
+			Plate: 100
+			Light: 100
+			Medium: 100
+			Heavy: 100
+			Wood: 100
+			Steel: 100
+			Concrete: 75
+			Drone: 100
+			Rocket: 100
+		DamageTypes: Prone50Percent, TriggerProne, ElectroDeath
+	Warhead@2Eff: CreateEffect
+		Explosions: piff
+
+DiskLaserE:
+	Inherits: DiskLaser
+	Range: 8c0
+	Projectile: LaserZap
+		Color: FF000080
+	Warhead@1Dam: SpreadDamage
+		Damage: 100
+
+DiskLaserAA:
+	Inherits: DiskLaser
+	ValidTargets: Air
+	Warhead@1Dam: SpreadDamage
+		ValidTargets: Air
+
+DiskLaserAAE:
+	Inherits: DiskLaserE
+	ValidTargets: Air
+	Warhead@1Dam: SpreadDamage
+		ValidTargets: Air
+
+BoomerTorpedo:
+	Inherits: SubTorpedo
+	Report: vbooat2a.wav
+	Burst: 2
+	BurstDelays: 15
+	Warhead@1Dam: SpreadDamage
+		Damage: 120
+
+BoomerTorpedoE:
+	Inherits: BoomerTorpedo
+	Burst: 4
+
+BoomerLauncher:
+	ReloadDelay: 30
+	Range: 25c0
+	ValidTargets: Ground, Water
+	Projectile: InstantHit
+	Warhead@1Dam: TargetDamage
+		ValidTargets: Ground, Water
+
+CruiseWeapon:
+	ReloadDelay: 1
+	Range: 1c0
+	Projectile: InstantHit
+	Warhead@1Dam: SpreadDamage
+		Spread: 1c0
+		Damage: 150
+		ValidTargets: Ground, Water, Air
+		Versus:
+			None: 100
+			Flak: 100
+			Plate: 100
+			Light: 100
+			Medium: 100
+			Heavy: 100
+			Wood: 100
+			Steel: 100
+			Concrete: 75
+			Drone: 100
+			Rocket: 100
+		DamageTypes: Prone50Percent, TriggerProne, ExplosionDeath
+	Warhead@2Eff: CreateEffect
+		Explosions: medium_clsn
+		ImpactSounds: gexp14a.wav
+		ValidTargets: Ground, Air
+	Warhead@3EffWater: CreateEffect
+		Explosions: small_watersplash
+		ImpactSounds: gexpwasa.wav
+		ValidTargets: Water
+
+CruiseWeaponE:
+	Inherits: CruiseWeapon
+	Warhead@1Dam: SpreadDamage
+		Damage: 200
+
+PsychicDomination:
+	ReloadDelay: 1
+	Range: 1c0
+	Report: iyurat1a.wav
+	Projectile: InstantHit
+	Warhead@1Own: ChangeOwner
+		Range: 4c0
+		Duration: 0
+	Warhead@2Dam: SpreadDamage
+		Spread: 4c0
+		Damage: 200
+		Falloff: 100, 80, 60, 40, 20, 0
+		ValidTargets: Ground, Water
+		Versus:
+			None: 0
+			Flak: 0
+			Plate: 0
+			Light: 0
+			Medium: 0
+			Heavy: 0
+			Wood: 150
+			Steel: 150
+			Concrete: 40
+			Drone: 0
+			Rocket: 0
+		DamageTypes: PsychicDeath
+	Warhead@3Eff: CreateEffect
+		Explosions: psi_wave
+		ValidTargets: Ground, Water, Air
+
+GeneticMutator:
+	ReloadDelay: 1
+	Range: 1c0
+	Report: sgenopen.wav
+	Projectile: InstantHit
+	Warhead@1Dam: SpreadDamage
+		Spread: 3c0
+		Damage: 1000
+		ValidTargets: Infantry
+		ValidRelationships: Enemy, Neutral, Ally
+		DamageTypes: MutationDeath
+	Warhead@2Eff: CreateEffect
+		Explosions: psi_wave
+		ValidTargets: Ground, Water, Air

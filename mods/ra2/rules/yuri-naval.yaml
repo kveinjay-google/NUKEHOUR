@@ -1,0 +1,214 @@
+yhvr:
+	Inherits: ^Vehicle
+	Inherits@MC: ^MindControllable
+	Buildable:
+		Queue: Ship
+		BuildPaletteOrder: 10
+		Prerequisites: ~ships.yuri
+		Description: actor-yhvr.description
+	Valued:
+		Cost: 500
+	UpdatesPlayerStatistics:
+		AddToArmyValue: true
+	DeliversCash:
+		Payload: 250
+		PlayerExperience: 25
+		Voice: Move
+	Tooltip:
+		Name: actor-yhvr.name
+	Selectable:
+		Bounds: 1544, 2509, 0, -289
+	Health:
+		HP: 400
+	Armor:
+		Type: Light
+	Mobile:
+		Speed: 110
+		TurnSpeed: 24
+		Locomotor: amphibious
+		PauseOnCondition: notmobile || chronodisable
+	Hovers:
+		BobDistance: -48
+	RevealsShroud:
+		Range: 6c0
+	Cargo:
+		Types: Infantry, Vehicle
+		MaxWeight: 12
+		PassengerFacing: 384
+		UnloadTerrainTypes: Clear, Rough, Rail, Road, DirtRoad, Beach, Ore, Gems
+		UnloadVoice: Move
+		LoadingCondition: notmobile
+	FireWarheadsOnDeath:
+		Weapon: UnitExplode
+		EmptyWeapon: UnitExplode
+	RenderSprites:
+		Image: yhvr
+	RenderVoxels:
+		Image: yhvr
+		NormalsPalette: ts-normals
+	WithVoxelBody:
+	Voiced:
+		VoiceSet: SovietVehicleVoice
+	HitShape:
+	WithCargoPipsDecoration:
+		Position: BottomLeft
+		RequiresSelection: true
+		Palette: pips
+		CustomPipSequences:
+			blue: pip-blue
+			yellow: pip-yellow
+			green: pip-green
+			red: pip-red
+
+bsub:
+	Inherits: ^Ship
+	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
+	Inherits@MC: ^MindControllable
+	Buildable:
+		Queue: Ship
+		BuildPaletteOrder: 30
+		Prerequisites: yatech, ~ships.yuri
+		Description: actor-bsub.description
+	UpdatesPlayerStatistics:
+		AddToArmyValue: true
+	Valued:
+		Cost: 2000
+	DeliversCash:
+		Payload: 1000
+		PlayerExperience: 100
+		Voice: Move
+	Tooltip:
+		Name: actor-bsub.name
+	Health:
+		HP: 800
+	Armor:
+		Type: Heavy
+	Mobile:
+		Speed: 60
+		TurnSpeed: 16
+	RevealsShroud:
+		Range: 7c0
+	Selectable:
+		Bounds: 1930, 3861, 0, -289
+	Cloak:
+		DetectionTypes: Underwater
+		InitialDelay: 50
+		CloakDelay: 75
+		CloakSound: vnavupa.wav
+		UncloakSound: vnavupa.wav
+		CloakedCondition: underwater
+		UncloakOn: Damage, Attack
+		IsPlayerPalette: true
+		CloakedPalette: cloak
+		CloakStyle: Palette
+	Targetable:
+		TargetTypes: Ground, Water, Submergeable
+		RequiresCondition: !underwater
+	Targetable@underwater:
+		TargetTypes: Underwater, Submergeable
+		RequiresCondition: underwater
+	DetectCloaked:
+		DetectionTypes: Underwater
+		Range: 4c0
+	Armament@torpedo:
+		Weapon: BoomerTorpedo
+		LocalOffset: 512,0,0
+		RequiresCondition: !rank-elite
+	Armament@torpedo-elite:
+		Weapon: BoomerTorpedoE
+		LocalOffset: 512,0,0
+		RequiresCondition: rank-elite
+	Armament@missile:
+		Name: secondary
+		Weapon: BoomerLauncher
+		LocalOffset: 0,0,256
+	AttackFrontal:
+		Voice: Attack
+		FacingTolerance: 512
+		TargetFrozenActors: True
+		PauseOnCondition: chronodisable
+	MissileSpawnerMaster:
+		Actors: bmisl, bmisl
+		SpawnAllAtOnce: true
+		RespawnTicks: 300
+		LoadedCondition: loaded
+		SpawnOffset: 172,-120,368, -172,-120,368
+	WithSpawnerMasterPipsDecoration:
+		Position: BottomLeft
+		Palette: pips
+	GrantExternalConditionToSpawnedMissile:
+		Condition: rank-elite
+		RequiresCondition: rank-elite
+	RenderSprites:
+		Image: bsub
+	RenderVoxels:
+		Image: bsub
+		NormalsPalette: ts-normals
+	WithVoxelBody@FULL:
+		RequiresCondition: loaded >= 1
+	WithVoxelBody@EMPTY:
+		Sequence: empty
+		RequiresCondition: !loaded
+	Voiced:
+		VoiceSet: SovietNavalVoice
+	HitShape:
+	RenderDetectionCircle:
+
+bmisl:
+	Inherits: ^ExistsInWorld
+	-GivesExperience:
+	Valued:
+		Cost: 50
+	Tooltip:
+		Name: actor-bmisl.name
+	Health:
+		HP: 50
+	Armor:
+		Type: Rocket
+	BallisticMissile:
+		LaunchAngle: 192
+		Speed: 250
+		LaunchAcceleration: 16
+		HitAcceleration: 30
+		LaunchSounds: vdreatta.wav, vdreattb.wav
+		SoundVolume: 0.6
+		AirborneCondition: airborne
+	Targetable@GROUND:
+		TargetTypes: Ground, Ship
+		RequiresCondition: !airborne
+	Targetable@AIRBORNE:
+		TargetTypes: Air
+		RequiresCondition: airborne
+	HitShape:
+	BodyOrientation:
+		QuantizedFacings: 0
+		CameraPitch: 85
+		UseClassicPerspectiveFudge: false
+	Interactable:
+	LeavesTrails:
+		Image: smokey2
+		MovingInterval: 2
+		SpawnAtLastPosition: false
+		Type: CenterPosition
+	MissileSpawnerSlave:
+	HasParent:
+	ExplodesForMaster:
+		Weapon: CruiseWeapon
+		EmptyWeapon: CruiseWeapon
+		RequiresCondition: !airborne && !rank-elite
+	ExplodesForMaster@Elite:
+		Weapon: CruiseWeaponE
+		EmptyWeapon: CruiseWeaponE
+		RequiresCondition: !airborne && rank-elite
+	ExplodesForMaster@Airborne:
+		Weapon: UnitExplode
+		EmptyWeapon: UnitExplode
+		RequiresCondition: airborne
+	ExternalCondition@RANK-ELITE:
+		Condition: rank-elite
+	RenderVoxels:
+		Image: bsubmisl
+		NormalsPalette: ts-normals
+	WithVoxelBody:
+	HiddenUnderFog:
+		Type: GroundPosition

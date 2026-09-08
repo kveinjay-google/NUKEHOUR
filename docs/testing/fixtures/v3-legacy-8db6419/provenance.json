@@ -1,0 +1,39 @@
+{
+  "baseline_commit": "8db64195c8f97423a25f17b998c21f86c2abef15",
+  "captured_utc_date": "2026-08-25",
+  "run_id": "legacy8db6419i",
+  "map": "south-pacific",
+  "scenario": {
+    "actor": "dmisl",
+    "range_cells": 10,
+    "lane_selection": "first passable axis-aligned 10c lane ordered by y then x",
+    "launch_offset_wvec": "0,640,300",
+    "target": "target cell center"
+  },
+  "build": {
+    "engine_release": "release-20250330",
+    "engine_archive_sha256": "ef593816d1a15443c82e865dfd1efa48e9c82e249245b208ce80e6a2900d9d0a",
+    "command": "DOTNET_ROLL_FORWARD=LatestMajor dotnet build OpenRA.Mods.RA2/OpenRA.Mods.RA2.csproj -c Release --no-restore --nologo",
+    "configuration": "Release",
+    "mod_assembly_sha256": "27d50ee6aecd999511ee3017046b60e8a9a6012654e56be3f525174e9ff15b4e"
+  },
+  "baseline_sources": {
+    "OpenRA.Mods.RA2/Activities/BallisticMissileFly.cs_sha256": "18a29cffd68958274f33015b4e345f7d6c095f59ae0e3f1f245e8df5b7882909",
+    "OpenRA.Mods.RA2/Traits/BallisticMissile.cs_sha256": "b9b9af3c54c387219e597f1cf544070c585148cfb958cea0243e24baa36b9444",
+    "mods/ra2/rules/soviet-naval.yaml_sha256": "3ddfef949e070c6715888f9b47e8acf04f261727c65fd90b2b850a650772339b"
+  },
+  "output": {
+    "trajectory_sha256": "20023b6509d90776209a68443ccb3f143fc224de2dc8b9cba4869e9c588ddaf1",
+    "summary_sha256": "69d14a5f4063e0a27b56c6d8c9b48b0e07519da279c6092873519fdaf7ffa539",
+    "sample_count": 82
+  },
+  "audit_instrumentation": [
+    "BallisticMissileFly exposed read-only phase and ticks/speed/lazy state; movement branches and writes were unchanged.",
+    "IosHighUnitBenchmark created the real dmisl actor in a regular World and recorded one row per tick.",
+    "The clean release engine used an environment-gated skirmish entry hook because release-20250330 does not implement the working-tree Game.LaunchInto deep link.",
+    "The official x86_64 macOS SDL2, OpenAL, and freetype dylibs were replaced by local arm64 builds with SHA-256 c4c511601a07ad411a8f65c18d4ebcfa722ad76a44d2223b2a7de5c629368349, c88aae475848560f9ce5090dcee9c9b971b846562c9d5df588d5c8688d4c9b5f, and e9b16f11e5389f36102b477cadeacd3365a87a52248a1d7178dfa8f4bb3cecd5.",
+    "The unrelated 858x104 command-bar atlas (original SHA-256 3f3f6ad0b1a75d5738a37657fb4da29468a1308120137153329e20ab074951cb) was transparently padded to 1024x128 because the clean renderer rejects non-power-of-two sheet textures.",
+    "The clean engine returned disabled quantization for non-sprite actors without a quantization provider so unchanged dmisl could participate in sync hashing; BallisticMissileFly does not reference BodyOrientation."
+  ],
+  "scope_note": "Commit 8db6419 contains dmisl but no bmisl actor or yuri-naval.yaml. Current bmisl may use this fixture only behind an independent structured rule-equality gate proving its legacy BallisticMissile motion fields equal the captured dmisl fields."
+}

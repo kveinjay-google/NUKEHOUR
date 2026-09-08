@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net8.0-ios</TargetFramework>
+    <OutputType>Library</OutputType>
+    <AssemblyName>OpenRA.Platforms.Default</AssemblyName>
+    <RootNamespace>OpenRA.Platforms.Default</RootNamespace>
+    <TargetPlatform>ios</TargetPlatform>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <Nullable>disable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DefineConstants>IOS</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../engine/OpenRA.Platforms.Default/**/*.cs" Exclude="../../engine/OpenRA.Platforms.Default/bin/**;../../engine/OpenRA.Platforms.Default/obj/**;../../engine/OpenRA.Platforms.Default/DefaultPlatform.cs;../../engine/OpenRA.Platforms.Default/OpenAlSoundEngine.cs" />
+    <Compile Include="IosPlatform.cs" />
+	<Compile Include="IosHapticEngine.cs" />
+	<Compile Include="IosNearbyGameService.cs" />
+    <Compile Include="Sdl2SoundEngine.cs" />
+    <ProjectReference Include="../../engine/OpenRA.Game/OpenRA.Game.csproj" />
+    <PackageReference Include="OpenRA-Freetype6" Version="1.0.11" />
+    <ProjectReference Include="../SDL2-CS/SDL2-CS.csproj" />
+  </ItemGroup>
+  <Target Name="RemoveDesktopNativeLibraries" AfterTargets="Build">
+    <Delete Files="$(TargetDir)lua51.dylib;$(TargetDir)freetype6.dylib;$(TargetDir)soft_oal.dylib;$(TargetDir)SDL2.dylib" />
+  </Target>
+</Project>

@@ -1,0 +1,93 @@
+Rules:
+	ra2|rules/proxy-actors-base.yaml
+	ra2|rules/misc.yaml
+	ra2|rules/ai.yaml
+	ra2|rules/ai-profiles.yaml
+	ra2|rules/player.yaml
+	ra2|rules/world-base.yaml
+	ra2|rules/palettes.yaml
+	ra2|rules/defaults-base.yaml
+	ra2|rules/allied-infantry-base.yaml
+	ra2|rules/soviet-infantry-base.yaml
+	ra2|rules/civilians.yaml
+	ra2|rules/bridges.yaml
+	ra2|rules/animals.yaml
+	ra2|rules/allied-structures.yaml
+	ra2|rules/soviet-structures.yaml
+	ra2|rules/civilian-structures.yaml
+	ra2|rules/tech-structures.yaml
+	ra2|rules/allied-vehicles.yaml
+	ra2|rules/soviet-vehicles-base.yaml
+	ra2|rules/civilian-vehicles.yaml
+	ra2|rules/allied-naval.yaml
+	ra2|rules/soviet-naval.yaml
+	ra2|rules/aircraft.yaml
+	ra2|rules/civilian-props.yaml
+	ra2|rules/trees.yaml
+	ra2|rules/civilian-naval.yaml
+Sequences:
+	ra2|sequences/aircraft.yaml
+	ra2|sequences/allied-infantry.yaml
+	ra2|sequences/allied-structures.yaml
+	ra2|sequences/animals.yaml
+	ra2|sequences/bridges.yaml
+	ra2|sequences/civilians.yaml
+	ra2|sequences/civilian-props.yaml
+	ra2|sequences/civilian-structures.yaml
+	ra2|sequences/defaults.yaml
+	ra2|sequences/misc.yaml
+	ra2|sequences/soviet-infantry.yaml
+	ra2|sequences/soviet-structures.yaml
+	ra2|sequences/tech-structures.yaml
+	ra2|sequences/trees.yaml
+	ra2|sequences/vehicles-base.yaml
+ModelSequences:
+	ra2|sequences/voxels-base.yaml
+Weapons:
+	ra2|weapons/bullets.yaml
+	ra2|weapons/defaults.yaml
+	ra2|weapons/explosions.yaml
+	ra2|weapons/flaks.yaml
+	ra2|weapons/melee.yaml
+	ra2|weapons/gatling.yaml
+	ra2|weapons/mgs.yaml
+	ra2|weapons/misc.yaml
+	ra2|weapons/missiles.yaml
+	ra2|weapons/zaps.yaml
+Voices:
+	ra2|audio/voices-base.yaml
+Notifications:
+	ra2|audio/notifications.yaml
+TileSets:
+	ra2|tilesets/temperat.yaml
+	ra2|tilesets/snow.yaml
+	ra2|tilesets/urban.yaml
+MapGrid:
+	Type: RectangularIsometric
+	TileSize: 60,30
+	EnableDepthBuffer: true
+	SubCellsOffsets: 0,0,0, -256,128,0, 0,-128,0, 256,128,0
+	DefaultSubCell: 2
+	MaximumTerrainHeight: 16
+Music:
+	ra2|audio/music.yaml
+FluentMessages:
+	common|fluent/common.ftl
+	common|fluent/chrome.ftl
+	common|fluent/hotkeys.ftl
+	common|fluent/rules.ftl
+	ra2|fluent/assetbrowser.ftl
+	ra2|fluent/chrome.ftl
+	ra2|fluent/hotkeys.ftl
+	ra2|fluent/mod.ftl
+	ra2|fluent/rules.ftl
+Hotkeys:
+	common|hotkeys/game.yaml
+	common|hotkeys/observer.yaml
+	common|hotkeys/production-common.yaml
+	common|hotkeys/supportpowers.yaml
+	common|hotkeys/viewport.yaml
+	common|hotkeys/chat.yaml
+	common|hotkeys/editor.yaml
+	common|hotkeys/control-groups.yaml
+	ra2|hotkeys.yaml

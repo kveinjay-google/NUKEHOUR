@@ -1,0 +1,985 @@
+diff -ruN a/OpenRA.Game/Input/TouchGestureAdapter.cs b/OpenRA.Game/Input/TouchGestureAdapter.cs
+--- a/OpenRA.Game/Input/TouchGestureAdapter.cs	2026-08-26 10:34:22
++++ b/OpenRA.Game/Input/TouchGestureAdapter.cs	2026-08-26 10:34:22
+@@ -185,28 +185,48 @@
+ 
+ 	public sealed class TouchGestureAdapter
+ 	{
++		enum TwoFingerMode
++		{
++			None,
++			Pending,
++			Pan,
++			Pinch
++		}
++
+ 		const int DragThreshold = 8;
+ 		const int PinchThreshold = 12;
+ 		const ulong LongPressDelay = 450;
++		const ulong TwoFingerArbitrationDelay = 32;
++		const double GestureDominanceRatio = 1.6;
+ 
+ 		bool active;
+ 		bool dragging;
+ 		bool longPressReady;
+ 		bool twoFinger;
+-		bool twoFingerPanning;
+ 		bool twoFingerTapEligible;
+ 		bool twoFingerLongPressReady;
++		TwoFingerMode twoFingerMode;
++		bool firstFingerMoved;
++		bool secondFingerMoved;
++		bool arbitrationWindowStarted;
++		bool pinchFirstChanged;
++		bool pinchSecondChanged;
++		bool pinchPairWindowStarted;
+ 		bool threeFinger;
+ 		int2 origin;
+ 		int2 lastPosition;
+ 		int2 secondPosition;
+ 		int2 firstTwoFingerOrigin;
+ 		int2 secondTwoFingerOrigin;
++		int2 settledPinchFirstPosition;
++		int2 settledPinchSecondPosition;
+ 		int2 thirdPosition;
+ 		int2 lastCentroid;
+ 		double lastZoomDistance;
+ 		ulong startTime;
+ 		ulong twoFingerStartTime;
++		ulong arbitrationWindowStart;
++		ulong pinchPairWindowStart;
+ 
+ 		public static int2 MapPosition(float x, float y, Size size)
+ 		{
+@@ -224,9 +244,9 @@
+ 		{
+ 			active = true;
+ 			twoFinger = false;
+-			twoFingerPanning = false;
+ 			twoFingerTapEligible = false;
+ 			twoFingerLongPressReady = false;
++			ResetTwoFingerMode();
+ 			threeFinger = false;
+ 			dragging = false;
+ 			longPressReady = false;
+@@ -284,9 +304,10 @@
+ 			dragging = false;
+ 			longPressReady = false;
+ 			twoFinger = true;
+-			twoFingerPanning = false;
+ 			twoFingerTapEligible = true;
+ 			twoFingerLongPressReady = false;
++			ResetTwoFingerMode();
++			twoFingerMode = TwoFingerMode.Pending;
+ 			secondPosition = position;
+ 			firstTwoFingerOrigin = lastPosition;
+ 			secondTwoFingerOrigin = secondPosition;
+@@ -298,20 +319,32 @@
+ 
+ 		public TouchGestureResult MovePrimary(int2 position)
+ 		{
++			return MovePrimary(position, twoFingerStartTime);
++		}
++
++		public TouchGestureResult MovePrimary(int2 position, ulong timestamp)
++		{
+ 			if (!twoFinger)
+ 				return TouchGestureResult.Empty;
+ 
++			var changed = position != lastPosition;
+ 			lastPosition = position;
+-			return TwoFingerMove();
++			return TwoFingerMove(timestamp, changed, false);
+ 		}
+ 
+ 		public TouchGestureResult MoveSecond(int2 position)
+ 		{
++			return MoveSecond(position, twoFingerStartTime);
++		}
++
++		public TouchGestureResult MoveSecond(int2 position, ulong timestamp)
++		{
+ 			if (!twoFinger)
+ 				return TouchGestureResult.Empty;
+ 
++			var changed = position != secondPosition;
+ 			secondPosition = position;
+-			return TwoFingerMove();
++			return TwoFingerMove(timestamp, false, changed);
+ 		}
+ 
+ 		public TouchGestureResult BeginThird(int2 position)
+@@ -319,13 +352,13 @@
+ 			if (!twoFinger)
+ 				return TouchGestureResult.Empty;
+ 
+-			var wasPanning = twoFingerPanning;
++			var wasPanning = twoFingerMode == TwoFingerMode.Pan;
+ 			thirdPosition = position;
+ 			threeFinger = true;
+ 			twoFinger = false;
+-			twoFingerPanning = false;
+ 			twoFingerTapEligible = false;
+ 			twoFingerLongPressReady = false;
++			ResetTwoFingerMode();
+ 			var oldCentroid = lastCentroid;
+ 			lastCentroid = Centroid(lastPosition, secondPosition, thirdPosition);
+ 			var down = Action(TouchPointerActionType.MiddleDown, lastCentroid, int2.Zero);
+@@ -379,45 +412,134 @@
+ 			return TouchGestureResult.One(Action(TouchPointerActionType.MiddleUp, lastCentroid, int2.Zero));
+ 		}
+ 
+-		TouchGestureResult TwoFingerMove()
++		TouchGestureResult TwoFingerMove(ulong timestamp,
++			bool firstPositionChanged = false, bool secondPositionChanged = false)
+ 		{
+ 			var centroid = Centroid(lastPosition, secondPosition);
+ 			var firstDelta = lastPosition - firstTwoFingerOrigin;
+ 			var secondDelta = secondPosition - secondTwoFingerOrigin;
+ 			var firstDistanceSquared = LengthSquared(firstDelta);
+ 			var secondDistanceSquared = LengthSquared(secondDelta);
+-			if (firstDistanceSquared > DragThreshold * DragThreshold ||
+-				secondDistanceSquared > DragThreshold * DragThreshold)
++			const int thresholdSquared = DragThreshold * DragThreshold;
++			if (firstDistanceSquared > thresholdSquared)
++				firstFingerMoved = true;
++			if (secondDistanceSquared > thresholdSquared)
++				secondFingerMoved = true;
++			if (firstFingerMoved || secondFingerMoved)
+ 				twoFingerTapEligible = false;
+ 
+-			if (twoFingerPanning)
++			if (!arbitrationWindowStarted && firstFingerMoved != secondFingerMoved)
+ 			{
+-				var pan = Action(TouchPointerActionType.MiddleMove, centroid, centroid - lastCentroid);
++				arbitrationWindowStarted = true;
++				arbitrationWindowStart = timestamp;
++			}
++
++			if (twoFingerMode == TwoFingerMode.Pan)
++			{
++				var delta = centroid - lastCentroid;
++				if (delta == int2.Zero)
++					return TouchGestureResult.Empty;
++
+ 				lastCentroid = centroid;
+-				return TouchGestureResult.One(pan);
++				return TouchGestureResult.One(Action(TouchPointerActionType.MiddleMove, centroid, delta));
+ 			}
+ 
+-			if (twoFingerLongPressReady && SameDirection(firstDelta, secondDelta,
+-				firstDistanceSquared, secondDistanceSquared))
++			if (twoFingerMode == TwoFingerMode.Pinch)
++				return LockedPinchMove(
++					centroid, timestamp, firstPositionChanged, secondPositionChanged);
++
++			if (twoFingerMode != TwoFingerMode.Pending)
++				return TouchGestureResult.Empty;
++
++			var initialCentroid = Centroid(firstTwoFingerOrigin, secondTwoFingerOrigin);
++			var panEvidence = Distance(centroid, initialCentroid);
++			var pinchEvidence = Math.Abs(Distance(lastPosition, secondPosition) -
++				Distance(firstTwoFingerOrigin, secondTwoFingerOrigin));
++			if (firstFingerMoved && secondFingerMoved &&
++				SameDirection(firstDelta, secondDelta, firstDistanceSquared, secondDistanceSquared) &&
++				panEvidence >= DragThreshold && panEvidence >= GestureDominanceRatio * pinchEvidence)
+ 			{
+-				twoFingerPanning = true;
++				twoFingerMode = TwoFingerMode.Pan;
+ 				var down = Action(TouchPointerActionType.MiddleDown, lastCentroid, int2.Zero);
+ 				var pan = Action(TouchPointerActionType.MiddleMove, centroid, centroid - lastCentroid);
+ 				lastCentroid = centroid;
+ 				return TouchGestureResult.Two(down, pan);
+ 			}
+ 
++			if (pinchEvidence < PinchThreshold || pinchEvidence < GestureDominanceRatio * panEvidence)
++				return TouchGestureResult.Empty;
++
++			if (firstFingerMoved != secondFingerMoved &&
++				(!arbitrationWindowStarted ||
++					!HasElapsed(timestamp, arbitrationWindowStart, TwoFingerArbitrationDelay)))
++				return TouchGestureResult.Empty;
++
++			twoFingerTapEligible = false;
++			twoFingerMode = TwoFingerMode.Pinch;
++			var pinch = PinchScroll(centroid);
++			SettlePinchPair();
++			return pinch;
++		}
++
++		TouchGestureResult LockedPinchMove(int2 centroid, ulong timestamp,
++			bool firstPositionChanged, bool secondPositionChanged)
++		{
++			if (firstPositionChanged)
++				pinchFirstChanged = true;
++			if (secondPositionChanged)
++				pinchSecondChanged = true;
++			if (!pinchFirstChanged && !pinchSecondChanged)
++				return TouchGestureResult.Empty;
++
++			if (!pinchPairWindowStarted)
++			{
++				pinchPairWindowStarted = true;
++				pinchPairWindowStart = timestamp;
++			}
++
++			if (!(pinchFirstChanged && pinchSecondChanged) &&
++				!HasElapsed(timestamp, pinchPairWindowStart, TwoFingerArbitrationDelay))
++				return TouchGestureResult.Empty;
++
+ 			var distance = Distance(lastPosition, secondPosition);
++			var settledDistance = Distance(settledPinchFirstPosition, settledPinchSecondPosition);
++			var translation = Distance(centroid,
++				Centroid(settledPinchFirstPosition, settledPinchSecondPosition));
++			var separationChange = Math.Abs(distance - settledDistance);
++			var commonTranslation = pinchFirstChanged && pinchSecondChanged &&
++				separationChange < PinchThreshold && translation > 0 &&
++				translation >= GestureDominanceRatio * separationChange;
++			var accumulatedSeparationChange = Math.Abs(distance - lastZoomDistance);
++			var result = TouchGestureResult.Empty;
++			if (!commonTranslation || accumulatedSeparationChange >= PinchThreshold)
++				result = PinchScroll(centroid);
++
++			SettlePinchPair();
++			return result;
++		}
++
++		TouchGestureResult PinchScroll(int2 centroid)
++		{
++			var distance = Distance(lastPosition, secondPosition);
+ 			var zoomDelta = distance - lastZoomDistance;
+ 			if (Math.Abs(zoomDelta) < PinchThreshold)
+ 				return TouchGestureResult.Empty;
+ 
+ 			lastZoomDistance = distance;
+-			var scroll = Action(TouchPointerActionType.Scroll, centroid,
+-				new int2(0, Math.Sign(zoomDelta)));
+-			return TouchGestureResult.One(scroll);
++			return TouchGestureResult.One(Action(TouchPointerActionType.Scroll, centroid,
++				new int2(0, Math.Sign(zoomDelta))));
+ 		}
+ 
++		void SettlePinchPair()
++		{
++			settledPinchFirstPosition = lastPosition;
++			settledPinchSecondPosition = secondPosition;
++			pinchFirstChanged = false;
++			pinchSecondChanged = false;
++			pinchPairWindowStarted = false;
++			pinchPairWindowStart = 0;
++		}
++
+ 		public TouchGestureResult EndTwoFinger()
+ 		{
+ 			if (!twoFinger)
+@@ -425,9 +547,10 @@
+ 
+ 			twoFinger = false;
+ 			active = false;
+-			if (twoFingerPanning)
++			var wasPanning = twoFingerMode == TwoFingerMode.Pan;
++			ResetTwoFingerMode();
++			if (wasPanning)
+ 			{
+-				twoFingerPanning = false;
+ 				return TouchGestureResult.One(Action(TouchPointerActionType.MiddleUp, lastCentroid, int2.Zero));
+ 			}
+ 
+@@ -472,16 +595,22 @@
+ 		{
+ 			if (twoFinger)
+ 			{
+-				if (!twoFingerLongPressReady && timestamp - twoFingerStartTime >= LongPressDelay)
++				if (!twoFingerLongPressReady && HasElapsed(timestamp, twoFingerStartTime, LongPressDelay))
+ 				{
+ 					twoFingerLongPressReady = true;
+ 					twoFingerTapEligible = false;
+ 				}
+ 
++				if (twoFingerMode == TwoFingerMode.Pending)
++					return TwoFingerMove(timestamp);
++				if (twoFingerMode == TwoFingerMode.Pinch)
++					return LockedPinchMove(
++						Centroid(lastPosition, secondPosition), timestamp, false, false);
++
+ 				return TouchGestureResult.Empty;
+ 			}
+ 
+-			if (!active || dragging || longPressReady || timestamp - startTime < LongPressDelay)
++			if (!active || dragging || longPressReady || !HasElapsed(timestamp, startTime, LongPressDelay))
+ 				return TouchGestureResult.Empty;
+ 
+ 			longPressReady = true;
+@@ -497,20 +626,22 @@
+ 				twoFinger = false;
+ 				dragging = false;
+ 				longPressReady = false;
++				ResetTwoFingerMode();
+ 				return TouchGestureResult.One(Action(TouchPointerActionType.MiddleUp, lastCentroid, int2.Zero));
+ 			}
+ 
+ 			if (twoFinger)
+ 			{
++				var wasPanning = twoFingerMode == TwoFingerMode.Pan;
+ 				twoFinger = false;
+ 				active = false;
+ 				dragging = false;
+ 				longPressReady = false;
+ 				twoFingerTapEligible = false;
+ 				twoFingerLongPressReady = false;
+-				if (twoFingerPanning)
++				ResetTwoFingerMode();
++				if (wasPanning)
+ 				{
+-					twoFingerPanning = false;
+ 					return TouchGestureResult.One(Action(TouchPointerActionType.MiddleUp, lastCentroid, int2.Zero));
+ 				}
+ 
+@@ -532,6 +663,21 @@
+ 			return TouchGestureResult.Empty;
+ 		}
+ 
++		void ResetTwoFingerMode()
++		{
++			twoFingerMode = TwoFingerMode.None;
++			firstFingerMoved = false;
++			secondFingerMoved = false;
++			arbitrationWindowStarted = false;
++			pinchFirstChanged = false;
++			pinchSecondChanged = false;
++			pinchPairWindowStarted = false;
++			settledPinchFirstPosition = int2.Zero;
++			settledPinchSecondPosition = int2.Zero;
++			arbitrationWindowStart = 0;
++			pinchPairWindowStart = 0;
++		}
++
+ 		static TouchPointerAction Action(TouchPointerActionType type, int2 position, int2 delta)
+ 		{
+ 			return new TouchPointerAction(type, position, delta);
+@@ -556,6 +702,11 @@
+ 		static long LengthSquared(int2 value)
+ 		{
+ 			return (long)value.X * value.X + (long)value.Y * value.Y;
++		}
++
++		static bool HasElapsed(ulong timestamp, ulong start, ulong delay)
++		{
++			return timestamp >= start && timestamp - start >= delay;
+ 		}
+ 
+ 		static bool SameDirection(int2 first, int2 second, long firstLengthSquared, long secondLengthSquared)
+diff -ruN a/OpenRA.Platforms.Default/Sdl2Input.cs b/OpenRA.Platforms.Default/Sdl2Input.cs
+--- a/OpenRA.Platforms.Default/Sdl2Input.cs	2026-08-26 10:34:22
++++ b/OpenRA.Platforms.Default/Sdl2Input.cs	2026-08-26 10:34:22
+@@ -240,10 +240,11 @@
+ 						else if (touchDown && twoFingerTouch)
+ 						{
+ 							var pos = TouchGestureAdapter.MapPosition(e.tfinger.x, e.tfinger.y, device.EffectiveWindowSize);
++							var timestamp = SDL.SDL_GetTicks64();
+ 							if (e.tfinger.fingerId == touchFingerId)
+-								DispatchTouch(touchGestures.MovePrimary(pos), inputHandler, mods);
++								DispatchTouch(touchGestures.MovePrimary(pos, timestamp), inputHandler, mods);
+ 							else if (e.tfinger.fingerId == secondTouchFingerId)
+-								DispatchTouch(touchGestures.MoveSecond(pos), inputHandler, mods);
++								DispatchTouch(touchGestures.MoveSecond(pos, timestamp), inputHandler, mods);
+ 						}
+ 						else if (touchDown && e.tfinger.fingerId == touchFingerId)
+ 						{
+diff -ruN a/OpenRA.Test/TouchGestureAdapterTest.cs b/OpenRA.Test/TouchGestureAdapterTest.cs
+--- a/OpenRA.Test/TouchGestureAdapterTest.cs	2026-08-26 10:34:22
++++ b/OpenRA.Test/TouchGestureAdapterTest.cs	2026-08-26 10:34:22
+@@ -8,6 +8,7 @@
+  */
+ #endregion
+ 
++using System.IO;
+ using NUnit.Framework;
+ using OpenRA.Primitives;
+ using OpenRA.Widgets;
+@@ -215,23 +216,59 @@
+ 		}
+ 
+ 		[Test]
+-		public void SameDirectionMovementAfterTwoFingerLongPressPansFromCentroid()
++		public void DelayedSecondFingerStartsItsOwnTapTimeout()
+ 		{
+ 			var adapter = new TouchGestureAdapter();
+ 			adapter.Begin(new int2(100, 100), 1000);
+-			adapter.BeginSecond(new int2(200, 100));
+-			adapter.Poll(1450);
++			adapter.BeginSecond(new int2(200, 100), 1400);
+ 
+-			Assert.That(adapter.MovePrimary(new int2(110, 100)).Count, Is.Zero);
+-			var start = adapter.MoveSecond(new int2(210, 100));
++			Assert.That(adapter.Poll(1450).Count, Is.Zero);
++			var end = adapter.EndTwoFinger();
++			Assert.That(end.Count, Is.EqualTo(2));
++			Assert.That(end.First.Type, Is.EqualTo(TouchPointerActionType.RightDown));
++			Assert.That(end.Second.Type, Is.EqualTo(TouchPointerActionType.RightUp));
++		}
++
++		[Test]
++		public void SdlTwoFingerMotionUsesOneTimestampForTimestampAwareMoves()
++		{
++			var source = File.ReadAllText(Path.Combine(RepositoryRoot(),
++				"engine", "OpenRA.Platforms.Default", "Sdl2Input.cs"));
++			var fingerMotion = SourceBetween(source,
++				"case SDL.SDL_EventType.SDL_FINGERMOTION:",
++				"case SDL.SDL_EventType.SDL_FINGERUP:");
++			var twoFingerMotion = SourceBetween(fingerMotion,
++				"else if (touchDown && twoFingerTouch)",
++				"else if (touchDown && e.tfinger.fingerId == touchFingerId)");
++
++			Assert.That(CountOccurrences(twoFingerMotion, "SDL.SDL_GetTicks64()"), Is.EqualTo(1));
++			StringAssert.Contains("var timestamp = SDL.SDL_GetTicks64();", twoFingerMotion);
++			Assert.That(CountOccurrences(twoFingerMotion, "touchGestures.MovePrimary("), Is.EqualTo(1));
++			Assert.That(CountOccurrences(twoFingerMotion, "touchGestures.MoveSecond("), Is.EqualTo(1));
++			StringAssert.Contains("touchGestures.MovePrimary(pos, timestamp)", twoFingerMotion);
++			StringAssert.Contains("touchGestures.MoveSecond(pos, timestamp)", twoFingerMotion);
++			StringAssert.DoesNotContain("touchGestures.MovePrimary(pos)", twoFingerMotion);
++			StringAssert.DoesNotContain("touchGestures.MoveSecond(pos)", twoFingerMotion);
++		}
++
++		[Test]
++		public void SequentialSameDirectionMovementImmediatelyPansFromCentroid()
++		{
++			var adapter = new TouchGestureAdapter();
++			adapter.Begin(new int2(100, 100), 1000);
++			adapter.BeginSecond(new int2(200, 100), 1000);
++
++			var firstMove = MovePrimaryAt(adapter, new int2(120, 100), 1010);
++			Assert.That(firstMove.Count, Is.Zero);
++			var start = MoveSecondAt(adapter, new int2(220, 100), 1020);
+ 			Assert.That(start.Count, Is.EqualTo(2));
+ 			Assert.That(start.First.Type, Is.EqualTo(TouchPointerActionType.MiddleDown));
+ 			Assert.That(start.First.Position, Is.EqualTo(new int2(150, 100)));
+ 			Assert.That(start.Second.Type, Is.EqualTo(TouchPointerActionType.MiddleMove));
+-			Assert.That(start.Second.Position, Is.EqualTo(new int2(160, 100)));
+-			Assert.That(start.Second.Delta, Is.EqualTo(new int2(10, 0)));
++			Assert.That(start.Second.Position, Is.EqualTo(new int2(170, 100)));
++			Assert.That(start.Second.Delta, Is.EqualTo(new int2(20, 0)));
+ 
+-			var move = adapter.MovePrimary(new int2(116, 104));
++			var move = MovePrimaryAt(adapter, new int2(126, 104), 1030);
+ 			Assert.That(move.Count, Is.EqualTo(1));
+ 			Assert.That(move.First.Type, Is.EqualTo(TouchPointerActionType.MiddleMove));
+ 			Assert.That(move.First.Delta, Is.EqualTo(new int2(3, 2)));
+@@ -239,6 +276,8 @@
+ 			var end = adapter.EndTwoFinger();
+ 			Assert.That(end.Count, Is.EqualTo(1));
+ 			Assert.That(end.First.Type, Is.EqualTo(TouchPointerActionType.MiddleUp));
++			Assert.That(adapter.EndTwoFinger().Count, Is.Zero);
++			Assert.That(adapter.Cancel().Count, Is.Zero);
+ 		}
+ 
+ 		[TestCase(true, false, MouseButton.Right)]
+@@ -314,18 +353,64 @@
+ 		}
+ 
+ 		[Test]
+-		public void EarlyTwoFingerTranslationInvalidatesTapWithoutPanning()
++		public void MovementPastDeadzoneInvalidatesTwoFingerTapWhilePending()
+ 		{
+ 			var adapter = new TouchGestureAdapter();
+ 			adapter.Begin(new int2(100, 100), 1000);
+-			adapter.BeginSecond(new int2(200, 100));
++			adapter.BeginSecond(new int2(200, 100), 1000);
+ 
+-			Assert.That(adapter.MovePrimary(new int2(110, 100)).Count, Is.Zero);
+-			Assert.That(adapter.MoveSecond(new int2(210, 100)).Count, Is.Zero);
++			Assert.That(MovePrimaryAt(adapter, new int2(109, 100), 1010).Count, Is.Zero);
+ 			Assert.That(adapter.EndTwoFinger().Count, Is.Zero);
+ 		}
+ 
+ 		[Test]
++		public void TimestampAwareTwoFingerMovesPreserveDeadzoneJitter()
++		{
++			var adapter = new TouchGestureAdapter();
++			adapter.Begin(new int2(100, 100), 1000);
++			adapter.BeginSecond(new int2(200, 100), 1000);
++
++			Assert.That(adapter.MovePrimary(new int2(105, 104), 1010).Count, Is.Zero);
++			Assert.That(adapter.MoveSecond(new int2(204, 105), 1020).Count, Is.Zero);
++			var end = adapter.EndTwoFinger();
++			Assert.That(end.Count, Is.EqualTo(2));
++			Assert.That(end.First.Type, Is.EqualTo(TouchPointerActionType.RightDown));
++			Assert.That(end.Second.Type, Is.EqualTo(TouchPointerActionType.RightUp));
++		}
++
++		[Test]
++		public void AnchoredPinchWaitsForTheArbitrationWindow()
++		{
++			var adapter = new TouchGestureAdapter();
++			adapter.Begin(new int2(100, 100), 1000);
++			adapter.BeginSecond(new int2(200, 100), 1000);
++
++			Assert.That(MoveSecondAt(adapter, new int2(220, 100), 1010).Count, Is.Zero);
++			Assert.That(adapter.Poll(1041).Count, Is.Zero);
++
++			var pinch = adapter.Poll(1042);
++			Assert.That(pinch.Count, Is.EqualTo(1));
++			Assert.That(pinch.First.Type, Is.EqualTo(TouchPointerActionType.Scroll));
++			Assert.That(pinch.First.Position, Is.EqualTo(new int2(160, 100)));
++			Assert.That(pinch.First.Delta.Y, Is.EqualTo(1));
++		}
++
++		[Test]
++		public void PinchFromSubDeadzoneFingerMotionsCancelsTwoFingerTap()
++		{
++			var adapter = new TouchGestureAdapter();
++			adapter.Begin(new int2(100, 100), 1000);
++			adapter.BeginSecond(new int2(200, 100), 1000);
++
++			Assert.That(MovePrimaryAt(adapter, new int2(94, 100), 1010).Count, Is.Zero);
++			var pinch = MoveSecondAt(adapter, new int2(206, 100), 1020);
++			Assert.That(pinch.Count, Is.EqualTo(1));
++			Assert.That(pinch.First.Type, Is.EqualTo(TouchPointerActionType.Scroll));
++			Assert.That(pinch.First.Delta.Y, Is.EqualTo(1));
++			Assert.That(adapter.EndTwoFinger().Count, Is.Zero);
++		}
++
++		[Test]
+ 		public void StationaryTwoFingerLongPressDoesNotBecomeRightClick()
+ 		{
+ 			var adapter = new TouchGestureAdapter();
+@@ -357,9 +442,10 @@
+ 			var adapter = new TouchGestureAdapter();
+ 			adapter.Begin(new int2(100, 100), 1000);
+ 			adapter.BeginSecond(new int2(200, 100), 1000);
+-			adapter.Poll(1450);
+-			adapter.MovePrimary(new int2(110, 100));
+-			adapter.MoveSecond(new int2(210, 100));
++			MovePrimaryAt(adapter, new int2(120, 100), 1010);
++			var start = MoveSecondAt(adapter, new int2(220, 100), 1020);
++			Assert.That(start.Count, Is.EqualTo(2));
++			Assert.That(start.First.Type, Is.EqualTo(TouchPointerActionType.MiddleDown));
+ 
+ 			var cancel = adapter.Cancel();
+ 			Assert.That(cancel.Count, Is.EqualTo(1));
+@@ -368,23 +454,285 @@
+ 		}
+ 
+ 		[Test]
+-		public void PinchEmitsWheelCompatibleZoomDirection()
++		public void SymmetricPinchImmediatelyEmitsWheelCompatibleZoomDirection()
+ 		{
+ 			var adapter = new TouchGestureAdapter();
+ 			adapter.Begin(new int2(100, 100), 1000);
+-			adapter.BeginSecond(new int2(200, 100));
++			adapter.BeginSecond(new int2(200, 100), 1000);
+ 
+-			var pinchOut = adapter.MoveSecond(new int2(220, 100));
++			Assert.That(MovePrimaryAt(adapter, new int2(90, 100), 1010).Count, Is.Zero);
++			var pinchOut = MoveSecondAt(adapter, new int2(210, 100), 1020);
+ 			Assert.That(pinchOut.Count, Is.EqualTo(1));
+ 			Assert.That(pinchOut.First.Type, Is.EqualTo(TouchPointerActionType.Scroll));
+ 			Assert.That(pinchOut.First.Delta.Y, Is.EqualTo(1));
+ 
+-			var pinchIn = adapter.MoveSecond(new int2(180, 100));
++			Assert.That(MovePrimaryAt(adapter, new int2(110, 100), 1030).Count, Is.Zero);
++			var pinchIn = adapter.Poll(1062);
++			Assert.That(pinchIn.Count, Is.EqualTo(1));
+ 			Assert.That(pinchIn.First.Type, Is.EqualTo(TouchPointerActionType.Scroll));
+ 			Assert.That(pinchIn.First.Delta.Y, Is.EqualTo(-1));
+ 		}
+ 
+ 		[Test]
++		public void PanModeRemainsLockedWhenSeparationLaterChanges()
++		{
++			var adapter = new TouchGestureAdapter();
++			adapter.Begin(new int2(100, 100), 1000);
++			adapter.BeginSecond(new int2(200, 100), 1000);
++			MovePrimaryAt(adapter, new int2(120, 100), 1010);
++			MoveSecondAt(adapter, new int2(220, 100), 1020);
++
++			var separationChange = MovePrimaryAt(adapter, new int2(80, 100), 1030);
++			Assert.That(separationChange.Count, Is.EqualTo(1));
++			Assert.That(separationChange.First.Type, Is.EqualTo(TouchPointerActionType.MiddleMove));
++			Assert.That(separationChange.First.Delta, Is.EqualTo(new int2(-20, 0)));
++			Assert.That(separationChange.First.Type, Is.Not.EqualTo(TouchPointerActionType.Scroll));
++		}
++
++		[Test]
++		public void PinchModeRemainsLockedWhenBothFingersLaterTranslate()
++		{
++			var adapter = new TouchGestureAdapter();
++			adapter.Begin(new int2(100, 100), 1000);
++			adapter.BeginSecond(new int2(200, 100), 1000);
++			MovePrimaryAt(adapter, new int2(90, 100), 1010);
++			MoveSecondAt(adapter, new int2(210, 100), 1020);
++
++			var firstTranslation = MovePrimaryAt(adapter, new int2(130, 100), 1030);
++			AssertNoActionType(firstTranslation, TouchPointerActionType.Scroll);
++			AssertNoActionType(firstTranslation, TouchPointerActionType.MiddleDown);
++			AssertNoActionType(firstTranslation, TouchPointerActionType.MiddleMove);
++			var secondTranslation = MoveSecondAt(adapter, new int2(250, 100), 1040);
++			AssertNoActionType(secondTranslation, TouchPointerActionType.Scroll);
++			AssertNoActionType(secondTranslation, TouchPointerActionType.MiddleDown);
++			AssertNoActionType(secondTranslation, TouchPointerActionType.MiddleMove);
++		}
++
++		[Test]
++		public void LockedSymmetricPinchSettlesOnceWhenTheSecondFingerArrives()
++		{
++			var adapter = new TouchGestureAdapter();
++			adapter.Begin(new int2(100, 100), 1000);
++			adapter.BeginSecond(new int2(200, 100), 1000);
++			MovePrimaryAt(adapter, new int2(90, 100), 1010);
++			MoveSecondAt(adapter, new int2(210, 100), 1020);
++
++			var first = MovePrimaryAt(adapter, new int2(70, 100), 1030);
++			Assert.That(first.Count, Is.Zero);
++			var second = MoveSecondAt(adapter, new int2(230, 100), 1040);
++			Assert.That(second.Count, Is.EqualTo(1));
++			Assert.That(second.First.Type, Is.EqualTo(TouchPointerActionType.Scroll));
++			Assert.That(second.First.Delta.Y, Is.EqualTo(1));
++		}
++
++		[Test]
++		public void LockedPinchStillScrollsWhenTranslationIncludesSignificantSeparationChange()
++		{
++			var adapter = new TouchGestureAdapter();
++			adapter.Begin(new int2(100, 100), 1000);
++			adapter.BeginSecond(new int2(200, 100), 1000);
++			MovePrimaryAt(adapter, new int2(90, 100), 1010);
++			MoveSecondAt(adapter, new int2(210, 100), 1020);
++
++			Assert.That(MovePrimaryAt(adapter, new int2(140, 100), 1030).Count, Is.Zero);
++			var settled = MoveSecondAt(adapter, new int2(240, 100), 1040);
++			Assert.That(settled.Count, Is.EqualTo(1));
++			Assert.That(settled.First.Type, Is.EqualTo(TouchPointerActionType.Scroll));
++			Assert.That(settled.First.Delta.Y, Is.EqualTo(-1));
++		}
++
++		[Test]
++		public void LockedAnchoredPinchWaitsForAFreshArbitrationWindow()
++		{
++			var adapter = new TouchGestureAdapter();
++			adapter.Begin(new int2(100, 100), 1000);
++			adapter.BeginSecond(new int2(200, 100), 1000);
++			MovePrimaryAt(adapter, new int2(90, 100), 1010);
++			MoveSecondAt(adapter, new int2(210, 100), 1020);
++
++			Assert.That(MoveSecondAt(adapter, new int2(230, 100), 1050).Count, Is.Zero);
++			Assert.That(adapter.Poll(1040).Count, Is.Zero,
++				"A regressed timestamp must not underflow the arbitration window.");
++			Assert.That(adapter.Poll(1081).Count, Is.Zero);
++			var settled = adapter.Poll(1082);
++			Assert.That(settled.Count, Is.EqualTo(1));
++			Assert.That(settled.First.Type, Is.EqualTo(TouchPointerActionType.Scroll));
++			Assert.That(settled.First.Position, Is.EqualTo(new int2(160, 100)));
++			Assert.That(settled.First.Delta.Y, Is.EqualTo(1));
++		}
++
++		[TestCase(30)]
++		[TestCase(60)]
++		[TestCase(120)]
++		public void LockedPinchCommonTranslationDoesNotScrollAtRepresentativeCadences(int frequency)
++		{
++			var adapter = new TouchGestureAdapter();
++			adapter.Begin(new int2(100, 100), 1000);
++			adapter.BeginSecond(new int2(200, 100), 1000);
++			MovePrimaryAt(adapter, new int2(90, 100), 1010);
++			MoveSecondAt(adapter, new int2(210, 100), 1020);
++			var frameDuration = (1000 + frequency / 2) / frequency;
++			var movementPerFrame = 360 / frequency;
++			var frameCount = frequency / 10;
++
++			for (var frame = 1; frame <= frameCount; frame++)
++			{
++				var offset = frame * movementPerFrame;
++				var timestamp = 1100UL + (ulong)(frame * frameDuration);
++				var primary = MovePrimaryAt(adapter, new int2(90 + offset, 100), timestamp);
++				Assert.That(primary.Count, Is.Zero);
++				AssertNoActionType(primary, TouchPointerActionType.Scroll);
++				AssertNoActionType(primary, TouchPointerActionType.MiddleMove);
++
++				var second = MoveSecondAt(adapter, new int2(210 + offset, 100), timestamp + 1);
++				Assert.That(second.Count, Is.Zero);
++				AssertNoActionType(second, TouchPointerActionType.Scroll);
++				AssertNoActionType(second, TouchPointerActionType.MiddleMove);
++				Assert.That(adapter.Poll(timestamp + (ulong)(frameDuration - 1)).Count, Is.Zero);
++			}
++		}
++
++		[Test]
++		public void PinchAccumulatorSurvivesDominantCommonTranslation()
++		{
++			var adapter = new TouchGestureAdapter();
++			adapter.Begin(new int2(100, 100), 1000);
++			adapter.BeginSecond(new int2(200, 100), 1000);
++			MovePrimaryAt(adapter, new int2(90, 100), 1010);
++			MoveSecondAt(adapter, new int2(210, 100), 1020);
++
++			for (var frame = 1; frame <= 6; frame++)
++			{
++				var timestamp = 1100UL + (ulong)(frame * 20);
++				var primary = MovePrimaryAt(adapter, new int2(90 + frame * 9, 100), timestamp);
++				Assert.That(primary.Count, Is.Zero);
++				AssertNoActionType(primary, TouchPointerActionType.MiddleMove);
++
++				var second = MoveSecondAt(adapter, new int2(210 + frame * 11, 100), timestamp + 1);
++				if (frame < 6)
++					Assert.That(second.Count, Is.Zero);
++				else
++				{
++					Assert.That(second.Count, Is.EqualTo(1));
++					Assert.That(second.First.Type, Is.EqualTo(TouchPointerActionType.Scroll));
++					Assert.That(second.First.Delta.Y, Is.EqualTo(1));
++				}
++
++				AssertNoActionType(second, TouchPointerActionType.MiddleDown);
++				AssertNoActionType(second, TouchPointerActionType.MiddleMove);
++				Assert.That(adapter.Poll(timestamp + 19).Count, Is.Zero);
++			}
++
++			for (var frame = 1; frame <= 6; frame++)
++			{
++				var timestamp = 1300UL + (ulong)(frame * 20);
++				var primary = MovePrimaryAt(adapter, new int2(144 + frame * 11, 100), timestamp);
++				Assert.That(primary.Count, Is.Zero);
++				AssertNoActionType(primary, TouchPointerActionType.MiddleMove);
++
++				var second = MoveSecondAt(adapter, new int2(276 + frame * 9, 100), timestamp + 1);
++				if (frame < 6)
++					Assert.That(second.Count, Is.Zero);
++				else
++				{
++					Assert.That(second.Count, Is.EqualTo(1));
++					Assert.That(second.First.Type, Is.EqualTo(TouchPointerActionType.Scroll));
++					Assert.That(second.First.Delta.Y, Is.EqualTo(-1));
++				}
++
++				AssertNoActionType(second, TouchPointerActionType.MiddleDown);
++				AssertNoActionType(second, TouchPointerActionType.MiddleMove);
++				Assert.That(adapter.Poll(timestamp + 19).Count, Is.Zero);
++			}
++		}
++
++		[TestCase(false)]
++		[TestCase(true)]
++		public void EndingOrCancellingLockedPinchClearsPendingPairArbitration(bool cancel)
++		{
++			var adapter = new TouchGestureAdapter();
++			adapter.Begin(new int2(100, 100), 1000);
++			adapter.BeginSecond(new int2(200, 100), 1000);
++			MovePrimaryAt(adapter, new int2(90, 100), 1010);
++			MoveSecondAt(adapter, new int2(210, 100), 1020);
++			Assert.That(MoveSecondAt(adapter, new int2(230, 100), 1050).Count, Is.Zero);
++
++			var interrupted = cancel ? adapter.Cancel() : adapter.EndTwoFinger();
++			Assert.That(interrupted.Count, Is.Zero);
++			Assert.That(adapter.Poll(2000).Count, Is.Zero);
++			adapter.Begin(new int2(50, 50), 3000);
++			adapter.BeginSecond(new int2(150, 50), 3000);
++			var tap = adapter.EndTwoFinger();
++			Assert.That(tap.Count, Is.EqualTo(2));
++			Assert.That(tap.First.Type, Is.EqualTo(TouchPointerActionType.RightDown));
++			Assert.That(tap.Second.Type, Is.EqualTo(TouchPointerActionType.RightUp));
++		}
++
++		[Test]
++		public void PureRotationEmitsNeitherPanNorPinch()
++		{
++			var adapter = new TouchGestureAdapter();
++			adapter.Begin(new int2(100, 100), 1000);
++			adapter.BeginSecond(new int2(200, 100), 1000);
++
++			Assert.That(MovePrimaryAt(adapter, new int2(150, 50), 1010).Count, Is.Zero);
++			Assert.That(MoveSecondAt(adapter, new int2(150, 150), 1020).Count, Is.Zero);
++			Assert.That(adapter.Poll(1100).Count, Is.Zero);
++			Assert.That(adapter.EndTwoFinger().Count, Is.Zero);
++		}
++
++		[Test]
++		public void BalancedPanAndPinchEvidenceRemainsPending()
++		{
++			var adapter = new TouchGestureAdapter();
++			adapter.Begin(new int2(100, 100), 1000);
++			adapter.BeginSecond(new int2(200, 100), 1000);
++
++			Assert.That(MovePrimaryAt(adapter, new int2(110, 100), 1010).Count, Is.Zero);
++			Assert.That(MoveSecondAt(adapter, new int2(230, 100), 1020).Count, Is.Zero);
++			Assert.That(adapter.Poll(1100).Count, Is.Zero);
++			Assert.That(adapter.EndTwoFinger().Count, Is.Zero);
++		}
++
++		[TestCase(30)]
++		[TestCase(60)]
++		[TestCase(120)]
++		public void MultiFrameSameDirectionMotionPansAtRepresentativeCadences(int frequency)
++		{
++			var adapter = new TouchGestureAdapter();
++			adapter.Begin(new int2(100, 100), 1000);
++			adapter.BeginSecond(new int2(200, 100), 1000);
++			var frameDuration = (1000 + frequency / 2) / frequency;
++			var movementPerFrame = 120 / frequency;
++			var frameCount = 8 / movementPerFrame + 1;
++
++			for (var frame = 1; frame <= frameCount; frame++)
++			{
++				var offset = frame * movementPerFrame;
++				var timestamp = 1000UL + (ulong)(frame * frameDuration);
++				var primary = MovePrimaryAt(adapter, new int2(100 + offset, 100), timestamp);
++				Assert.That(primary.Count, Is.Zero);
++				AssertNoActionType(primary, TouchPointerActionType.Scroll);
++
++				var second = MoveSecondAt(adapter, new int2(200 + offset, 100), timestamp + 1);
++				AssertNoActionType(second, TouchPointerActionType.Scroll);
++				if (frame < frameCount)
++					Assert.That(second.Count, Is.Zero);
++				else
++				{
++					Assert.That(second.Count, Is.EqualTo(2));
++					Assert.That(second.First.Type, Is.EqualTo(TouchPointerActionType.MiddleDown));
++					Assert.That(second.Second.Type, Is.EqualTo(TouchPointerActionType.MiddleMove));
++					Assert.That(second.Second.Delta, Is.EqualTo(new int2(offset, 0)));
++				}
++
++				var poll = adapter.Poll(timestamp + (ulong)(frameDuration - 1));
++				Assert.That(poll.Count, Is.Zero);
++				AssertNoActionType(poll, TouchPointerActionType.Scroll);
++			}
++		}
++
++		[Test]
+ 		public void CancellationReleasesTwoFingerGestureAndAllowsNewTap()
+ 		{
+ 			var adapter = new TouchGestureAdapter();
+@@ -411,6 +759,23 @@
+ 			Assert.That(adapter.Cancel().Count, Is.Zero);
+ 		}
+ 
++		[TestCase(false)]
++		[TestCase(true)]
++		public void ActivePanReleasesOnceForFingerLiftOrCancellation(bool cancel)
++		{
++			var adapter = new TouchGestureAdapter();
++			adapter.Begin(new int2(100, 100), 1000);
++			adapter.BeginSecond(new int2(200, 100), 1000);
++			MovePrimaryAt(adapter, new int2(120, 100), 1010);
++			MoveSecondAt(adapter, new int2(220, 100), 1020);
++
++			var release = cancel ? adapter.Cancel() : adapter.EndTwoFinger();
++			Assert.That(release.Count, Is.EqualTo(1));
++			Assert.That(release.First.Type, Is.EqualTo(TouchPointerActionType.MiddleUp));
++			Assert.That(adapter.EndTwoFinger().Count, Is.Zero);
++			Assert.That(adapter.Cancel().Count, Is.Zero);
++		}
++
+ 		[Test]
+ 		public void ThirdFingerRestartsViewportPanAtThreeFingerCentroid()
+ 		{
+@@ -429,6 +794,51 @@
+ 		}
+ 
+ 		[Test]
++		public void CancellingActiveThreeFingerPanReleasesMiddleButtonExactlyOnce()
++		{
++			var adapter = new TouchGestureAdapter();
++			adapter.Begin(new int2(90, 90), 1000);
++			adapter.BeginSecond(new int2(180, 90), 1010);
++			var start = adapter.BeginThird(new int2(270, 90));
++			Assert.That(start.Count, Is.EqualTo(1));
++			Assert.That(start.First.Type, Is.EqualTo(TouchPointerActionType.MiddleDown));
++
++			var cancel = adapter.Cancel();
++			Assert.That(cancel.Count, Is.EqualTo(1));
++			Assert.That(cancel.First.Type, Is.EqualTo(TouchPointerActionType.MiddleUp));
++			Assert.That(cancel.First.Position, Is.EqualTo(new int2(180, 90)));
++			Assert.That(adapter.Cancel().Count, Is.Zero);
++			Assert.That(adapter.EndThreeFinger().Count, Is.Zero);
++			Assert.That(adapter.EndTwoFinger().Count, Is.Zero);
++			Assert.That(adapter.End(new int2(90, 90)).Count, Is.Zero);
++		}
++
++		[Test]
++		public void ThirdFingerHandoffBalancesAnActiveTwoFingerPan()
++		{
++			var adapter = new TouchGestureAdapter();
++			adapter.Begin(new int2(100, 100), 1000);
++			adapter.BeginSecond(new int2(200, 100), 1000);
++			MovePrimaryAt(adapter, new int2(120, 100), 1010);
++			MoveSecondAt(adapter, new int2(220, 100), 1020);
++
++			var handoff = adapter.BeginThird(new int2(300, 100));
++			Assert.That(handoff.Count, Is.EqualTo(2));
++			Assert.That(handoff.First.Type, Is.EqualTo(TouchPointerActionType.MiddleUp));
++			Assert.That(handoff.First.Position, Is.EqualTo(new int2(170, 100)));
++			Assert.That(handoff.Second.Type, Is.EqualTo(TouchPointerActionType.MiddleDown));
++			Assert.That(handoff.Second.Position, Is.EqualTo(new int2(213, 100)));
++
++			var move = adapter.MoveThird(new int2(330, 100));
++			Assert.That(move.Count, Is.EqualTo(1));
++			Assert.That(move.First.Type, Is.EqualTo(TouchPointerActionType.MiddleMove));
++			var end = adapter.EndThreeFinger();
++			Assert.That(end.Count, Is.EqualTo(1));
++			Assert.That(end.First.Type, Is.EqualTo(TouchPointerActionType.MiddleUp));
++			Assert.That(adapter.Cancel().Count, Is.Zero);
++		}
++
++		[Test]
+ 		public void EndingThreeFingerPanSuppressesRemainingTouches()
+ 		{
+ 			var adapter = new TouchGestureAdapter();
+@@ -441,6 +851,59 @@
+ 			Assert.That(end.First.Type, Is.EqualTo(TouchPointerActionType.MiddleUp));
+ 			Assert.That(adapter.End(new int2(90, 90)).Count, Is.Zero);
+ 			Assert.That(adapter.Cancel().Count, Is.Zero);
++		}
++
++		static TouchGestureResult MovePrimaryAt(TouchGestureAdapter adapter, int2 position, ulong timestamp)
++		{
++			return adapter.MovePrimary(position, timestamp);
++		}
++
++		static TouchGestureResult MoveSecondAt(TouchGestureAdapter adapter, int2 position, ulong timestamp)
++		{
++			return adapter.MoveSecond(position, timestamp);
++		}
++
++		static string RepositoryRoot()
++		{
++			var directory = new DirectoryInfo(TestContext.CurrentContext.TestDirectory);
++			while (directory != null && !File.Exists(Path.Combine(
++				directory.FullName, "engine", "OpenRA.Platforms.Default", "Sdl2Input.cs")))
++				directory = directory.Parent;
++
++			Assert.That(directory, Is.Not.Null, "Unable to locate the repository root.");
++			return directory!.FullName;
++		}
++
++		static string SourceBetween(string source, string startMarker, string endMarker)
++		{
++			var start = source.IndexOf(startMarker, System.StringComparison.Ordinal);
++			Assert.That(start, Is.GreaterThanOrEqualTo(0), $"Missing source marker: {startMarker}");
++			var end = source.IndexOf(endMarker, start + startMarker.Length, System.StringComparison.Ordinal);
++			Assert.That(end, Is.GreaterThan(start), $"Missing source marker: {endMarker}");
++			return source.Substring(start, end - start);
++		}
++
++		static int CountOccurrences(string source, string value)
++		{
++			var count = 0;
++			var index = 0;
++			while ((index = source.IndexOf(value, index, System.StringComparison.Ordinal)) >= 0)
++			{
++				count++;
++				index += value.Length;
++			}
++
++			return count;
++		}
++
++		static void AssertNoActionType(TouchGestureResult result, TouchPointerActionType type)
++		{
++			if (result.Count > 0)
++				Assert.That(result.First.Type, Is.Not.EqualTo(type));
++			if (result.Count > 1)
++				Assert.That(result.Second.Type, Is.Not.EqualTo(type));
++			if (result.Count > 2)
++				Assert.That(result.Third.Type, Is.Not.EqualTo(type));
+ 		}
+ 	}
+ }

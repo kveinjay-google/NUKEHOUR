@@ -1,0 +1,336 @@
+diff -ruN a/OpenRA.Mods.Common/Widgets/IosViewportControlsLayout.cs b/OpenRA.Mods.Common/Widgets/IosViewportControlsLayout.cs
+--- a/OpenRA.Mods.Common/Widgets/IosViewportControlsLayout.cs	2026-08-26 23:40:43
++++ b/OpenRA.Mods.Common/Widgets/IosViewportControlsLayout.cs	2026-08-26 23:40:43
+@@ -12,9 +12,44 @@
+ using System;
+ using System.Collections.Generic;
+ using OpenRA.Primitives;
++using OpenRA.Widgets;
+ 
+ namespace OpenRA.Mods.Common.Widgets
+ {
++	public sealed class IosViewportActionLabelLayout
++	{
++		public Rectangle Bounds { get; }
++		public string Font { get; }
++
++		IosViewportActionLabelLayout(Rectangle bounds, string font)
++		{
++			Bounds = bounds;
++			Font = font;
++		}
++
++		public static IosViewportActionLabelLayout Create(
++			IosScreenSnapshot snapshot, int buttonDiameter)
++		{
++			var horizontalInset = snapshot.LogicalPoints(6);
++			var height = snapshot.LogicalPoints(14);
++			var bottomInset = snapshot.LogicalPoints(6);
++			return new IosViewportActionLabelLayout(
++				new Rectangle(
++					horizontalInset,
++					buttonDiameter - bottomInset - height,
++					buttonDiameter - 2 * horizontalInset,
++					height),
++				snapshot.IsCompactPhone ? "IosTouchLabel" : "TinyBold");
++		}
++
++		public void ApplyTo(LabelWidget label)
++		{
++			label.Bounds = new WidgetBounds(
++				Bounds.X, Bounds.Y, Bounds.Width, Bounds.Height);
++			label.Font = Font;
++		}
++	}
++
+ 	public sealed class IosViewportControlsLayout
+ 	{
+ 		// Keep the approved clockwise action order on one circular ring.
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/Ingame/IosViewportActionsLogic.cs b/OpenRA.Mods.Common/Widgets/Logic/Ingame/IosViewportActionsLogic.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/Ingame/IosViewportActionsLogic.cs	2026-08-26 23:40:43
++++ b/OpenRA.Mods.Common/Widgets/Logic/Ingame/IosViewportActionsLogic.cs	2026-08-26 23:40:43
+@@ -86,6 +86,7 @@
+ 		readonly ITouchFactionSkinTarget joystickSkinTarget;
+ 		readonly ButtonWidget[] actionButtons;
+ 		readonly ImageWidget[] actionIcons;
++		readonly LabelWidget[] actionLabels;
+ 		Size lastResolution;
+ 		Size lastNativePointSize;
+ 		Rectangle lastSafeBounds;
+@@ -112,6 +113,7 @@
+ 				widget.Get<ButtonWidget>("RETURN_BASE")
+ 			};
+ 			actionIcons = actionButtons.Select(button => button.Get<ImageWidget>("ICON")).ToArray();
++			actionLabels = actionButtons.Select(button => button.Get<LabelWidget>("LABEL")).ToArray();
+ 
+ 			var selectType = widget.Get<ButtonWidget>("SELECT_TYPE");
+ 			WidgetUtils.BindButtonIcon(selectType);
+@@ -200,6 +202,7 @@
+ 			requestedJoystickPoints = IosViewportControlsLayout.NormalizeJoystickPoints(requestedJoystickPoints);
+ 			var bottomObstacleTop = BottomObstacleTop(snapshot);
+ 			var layout = IosViewportControlsLayout.Create(snapshot, requestedJoystickPoints, bottomObstacleTop);
++			var labelLayout = IosViewportActionLabelLayout.Create(snapshot, layout.ButtonDiameter);
+ 			joystick.ApplyLayout(layout.JoystickBounds, layout.ThumbDiameter, layout.MovementRadius);
+ 
+ 			var parentOrigin = widget.Parent == null ? int2.Zero : widget.Parent.ChildOrigin;
+@@ -217,6 +220,7 @@
+ 					bounds.Width,
+ 					bounds.Height);
+ 				actionIcons[i].Bounds = new WidgetBounds(0, 0, bounds.Width, bounds.Height);
++				labelLayout.ApplyTo(actionLabels[i]);
+ 			}
+ 
+ 			lastResolution = resolution;
+diff -ruN a/OpenRA.Test/IosViewportActionLayoutTest.cs b/OpenRA.Test/IosViewportActionLayoutTest.cs
+--- a/OpenRA.Test/IosViewportActionLayoutTest.cs	2026-08-26 23:40:43
++++ b/OpenRA.Test/IosViewportActionLayoutTest.cs	2026-08-26 23:40:43
+@@ -9,8 +9,12 @@
+  */
+ #endregion
+ 
++using System;
+ using System.IO;
++using System.Reflection;
+ using NUnit.Framework;
++using OpenRA.Mods.Common.Widgets;
++using OpenRA.Mods.Common.Widgets.Logic.Ingame;
+ 
+ namespace OpenRA.Test
+ {
+@@ -40,6 +44,16 @@
+ 				(height[0] << 24) | (height[1] << 16) | (height[2] << 8) | height[3]);
+ 		}
+ 
++		static bool Calls(MethodInfo caller, MethodInfo callee)
++		{
++			var il = caller.GetMethodBody()!.GetILAsByteArray()!;
++			for (var i = 0; i + sizeof(int) < il.Length; i++)
++				if ((il[i] == 0x28 || il[i] == 0x6F) && BitConverter.ToInt32(il, i + 1) == callee.MetadataToken)
++					return true;
++
++			return false;
++		}
++
+ 		[Test]
+ 		public void IngameLayoutDoesNotExposeManualDiagnosticsButton()
+ 		{
+@@ -118,6 +132,32 @@
+ 			StringAssert.DoesNotContain("center.X - 24", joystick);
+ 			StringAssert.Contains("StretchToFit", image);
+ 			StringAssert.Contains("RenderBounds.Size", image);
++		}
++
++		[Test]
++		public void IosViewportActionsCacheLabelsAndConsumeThePureLabelLayoutPolicy()
++		{
++			var logicType = typeof(IosViewportActionsLogic);
++			var labels = logicType.GetField("actionLabels", BindingFlags.Instance | BindingFlags.NonPublic);
++			var applyLayout = logicType.GetMethod("ApplyLayout", BindingFlags.Instance | BindingFlags.NonPublic)!;
++			var createLayout = typeof(IosViewportActionLabelLayout).GetMethod(
++				nameof(IosViewportActionLabelLayout.Create), BindingFlags.Static | BindingFlags.Public)!;
++			var applyLabel = typeof(IosViewportActionLabelLayout).GetMethod(
++				"ApplyTo", BindingFlags.Instance | BindingFlags.Public);
++
++			Assert.Multiple(() =>
++			{
++				Assert.That(labels, Is.Not.Null, "The five live label widgets must be cached once at construction.");
++				Assert.That(labels?.FieldType, Is.EqualTo(typeof(LabelWidget[])));
++				Assert.That(Calls(applyLayout, createLayout), Is.True,
++					"ApplyLayout must consume the tested pure label layout policy on every geometry refresh.");
++				Assert.That(applyLabel, Is.Not.Null,
++					"The label policy needs a directly behavior-tested runtime application seam.");
++				Assert.That(applyLabel != null && Calls(applyLayout, applyLabel), Is.True,
++					"ApplyLayout must apply the tested bounds and font behavior to every live label.");
++				Assert.That(logicType.GetField("actionLabelPlates", BindingFlags.Instance | BindingFlags.NonPublic),
++					Is.Null, "The raster atlas is the only label plate; ColorBlockWidget can intercept input.");
++			});
+ 		}
+ 
+ 		[Test]
+diff -ruN a/OpenRA.Test/IosViewportControlsLayoutTest.cs b/OpenRA.Test/IosViewportControlsLayoutTest.cs
+--- a/OpenRA.Test/IosViewportControlsLayoutTest.cs	2026-08-26 23:40:43
++++ b/OpenRA.Test/IosViewportControlsLayoutTest.cs	2026-08-26 23:40:43
+@@ -115,6 +115,10 @@
+ 					ImageCollection = "ios-joystick-command-icons",
+ 					ImageName = "ios-" + id.ToLowerInvariant().Replace('_', '-')
+ 				});
++				var label = Uninitialized<LabelWidget>();
++				label.Id = "LABEL";
++				typeof(Widget).GetField(nameof(Widget.Children))!.SetValue(label, new List<Widget>());
++				button.AddChild(label);
+ 			}
+ 
+ 			return button;
+@@ -529,6 +533,61 @@
+ 				Assert.That(phone.SafeBounds, Is.EqualTo(new Rectangle(99, 0, 1362, 684)));
+ 				Assert.That(phone.IsCompactPhone, Is.True);
+ 				Assert.That(tablet.IsCompactPhone, Is.False);
++			});
++		}
++
++		[TestCase(1560, 720, 932, 430, true, "IosTouchLabel")]
++		[TestCase(1558, 720, 844, 390, true, "IosTouchLabel")]
++		[TestCase(1133, 744, 1133, 744, false, "TinyBold")]
++		[TestCase(1180, 820, 1180, 820, false, "TinyBold")]
++		[TestCase(1366, 1024, 1366, 1024, false, "TinyBold")]
++		public void ViewportActionLabelLayoutPreservesTheApprovedPhysicalInsets(
++			int width, int height, int nativeWidth, int nativeHeight,
++			bool compactPhone, string expectedFont)
++		{
++			var snapshot = new IosScreenSnapshot(
++				new Size(width, height), new Size(nativeWidth, nativeHeight),
++				new IosSafeAreaInsets(0, 0, 0, 0));
++			var buttonDiameter = snapshot.LogicalPoints(56);
++			var layout = IosViewportActionLabelLayout.Create(snapshot, buttonDiameter);
++			var horizontalInset = snapshot.LogicalPoints(6);
++			var labelHeight = snapshot.LogicalPoints(14);
++			var bottomInset = snapshot.LogicalPoints(6);
++			var expectedBounds = new Rectangle(
++				horizontalInset,
++				buttonDiameter - bottomInset - labelHeight,
++				buttonDiameter - 2 * horizontalInset,
++				labelHeight);
++
++			Assert.Multiple(() =>
++			{
++				Assert.That(snapshot.IsCompactPhone, Is.EqualTo(compactPhone));
++				Assert.That(layout.Bounds, Is.EqualTo(expectedBounds));
++				Assert.That(layout.Font, Is.EqualTo(expectedFont));
++				Assert.That(new Rectangle(0, 0, buttonDiameter, buttonDiameter).Contains(layout.Bounds), Is.True);
++				Assert.That(layout.Bounds.Bottom, Is.EqualTo(buttonDiameter - bottomInset));
++				Assert.That(layout.Bounds.Height, Is.EqualTo(labelHeight));
++			});
++		}
++
++		[Test]
++		public void ViewportActionLabelLayoutAppliesBoundsAndFontToTheLiveLabel()
++		{
++			var snapshot = new IosScreenSnapshot(
++				new Size(1560, 720), new Size(932, 430),
++				new IosSafeAreaInsets(0, 0, 0, 0));
++			var layout = IosViewportActionLabelLayout.Create(
++				snapshot, snapshot.LogicalPoints(56));
++			var label = Uninitialized<LabelWidget>();
++
++			layout.ApplyTo(label);
++
++			Assert.Multiple(() =>
++			{
++				Assert.That(label.Bounds, Is.EqualTo(new WidgetBounds(
++					layout.Bounds.X, layout.Bounds.Y,
++					layout.Bounds.Width, layout.Bounds.Height)));
++				Assert.That(label.Font, Is.EqualTo(layout.Font));
+ 			});
+ 		}
+ 
+diff -ruN a/OpenRA.Test/V3RenderingRulesTest.cs b/OpenRA.Test/V3RenderingRulesTest.cs
+--- a/OpenRA.Test/V3RenderingRulesTest.cs	2026-08-26 23:40:43
++++ b/OpenRA.Test/V3RenderingRulesTest.cs	2026-08-26 23:40:43
+@@ -6,7 +6,9 @@
+ 
+ using System;
+ using System.IO;
++using System.Linq;
+ using NUnit.Framework;
++using OpenRA.Mods.Common.Traits;
+ 
+ namespace OpenRA.Test
+ {
+@@ -53,6 +55,22 @@
+ 			StringAssert.Contains("\n\t\tImage: v3rocket\n", rocket);
+ 			StringAssert.Contains("\n\tWithVoxelBody:\n", rocket);
+ 			StringAssert.DoesNotContain("NormalsPalette: ts-normals", rocket);
++		}
++
++		[TestCase(160, 651)]
++		[TestCase(922, 649)]
++		public void SpawnedRocketVoxelRotationPreservesFlightPitchAndYaw(int pitch, int yaw)
++		{
++			var actor = MiniYaml.FromFile(Path.Combine(
++				RepositoryRoot(), "mods", "ra2", "rules", "soviet-vehicles.yaml"))
++				.Single(node => node.Key == "v3rocket");
++			var trait = actor.Value.Nodes.Single(node => node.Key == "BodyOrientation");
++			var info = new BodyOrientationInfo();
++			FieldLoader.Load(info, trait.Value);
++			var flightOrientation = new WRot(WAngle.Zero, new WAngle(pitch), new WAngle(yaw));
++			var renderedOrientation = info.QuantizeOrientation(flightOrientation, info.QuantizedFacings);
++
++			Assert.That(renderedOrientation, Is.EqualTo(flightOrientation));
+ 		}
+ 	}
+ }
+diff -ruN a/OpenRA.Test/YuriProductionCameoTest.cs b/OpenRA.Test/YuriProductionCameoTest.cs
+--- a/OpenRA.Test/YuriProductionCameoTest.cs	2026-08-26 23:40:43
++++ b/OpenRA.Test/YuriProductionCameoTest.cs	2026-08-26 23:40:43
+@@ -24,6 +24,21 @@
+ 			return directory?.FullName ?? throw new InvalidOperationException("Could not locate the repository root.");
+ 		}
+ 
++		static string ChildSequenceBlock(string actor, string sequence, string nextSequence)
++		{
++			var start = actor.IndexOf($"\n\t{sequence}:\n", StringComparison.Ordinal);
++			Assert.That(start, Is.GreaterThanOrEqualTo(0), $"Missing {sequence} sequence.");
++
++			var end = actor.IndexOf($"\n\t{nextSequence}:\n", start, StringComparison.Ordinal);
++			Assert.That(end, Is.GreaterThan(start), $"Missing sequence after {sequence}.");
++			return actor.Substring(start, end - start);
++		}
++
++		static void AssertContainsLine(string block, string expected)
++		{
++			CollectionAssert.Contains(block.Split('\n'), expected);
++		}
++
+ 		[TestCase("ydomicon-cn.png", "actor-yadome =", ".name = 心灵感应器")]
+ 		[TestCase("yfixicon-cn.png", "actor-yadept =", ".name = 服务站")]
+ 		public void YuriUtilityBuildingsUseLocalizedPngCameos(string filename, string actorKey, string localizedName)
+@@ -44,6 +59,49 @@
+ 		{
+ 			Assert.That(ProductionCameoScalePolicy.Resolve(240, 192, 64, 48), Is.EqualTo(0.25f));
+ 			Assert.That(ProductionCameoScalePolicy.Resolve(60, 48, 64, 48), Is.EqualTo(1f));
++		}
++
++		[Test]
++		public void GrinderUsesTheFullBuildingSpriteForItsIdleBody()
++		{
++			var sequences = File.ReadAllText(Path.Combine(RepositoryRoot(), "mods", "ra2", "sequences", "yuri-structures.yaml"));
++			var grinderStart = sequences.IndexOf("\nyagrnd:\n", StringComparison.Ordinal);
++			var grinderEnd = sequences.IndexOf("\nyadept:\n", grinderStart, StringComparison.Ordinal);
++
++			Assert.That(grinderStart, Is.GreaterThanOrEqualTo(0));
++			Assert.That(grinderEnd, Is.GreaterThan(grinderStart));
++
++			var grinder = sequences.Substring(grinderStart, grinderEnd - grinderStart);
++			var defaults = ChildSequenceBlock(grinder, "Defaults", "idle");
++			var idle = ChildSequenceBlock(grinder, "idle", "damaged-idle");
++			var damagedIdle = ChildSequenceBlock(grinder, "damaged-idle", "grind");
++			var grind = ChildSequenceBlock(grinder, "grind", "damaged-grind");
++			var damagedGrind = ChildSequenceBlock(grinder, "damaged-grind", "make");
++
++			AssertContainsLine(defaults, "\t\tFilename: yggrnd.shp");
++			AssertContainsLine(idle, "\t\tFilename: yggrnd.shp");
++			AssertContainsLine(idle, "\t\t\tSNOW: yagrnd.shp");
++			AssertContainsLine(idle, "\t\tShadowStart: 3");
++			StringAssert.DoesNotContain("Length:", idle);
++			StringAssert.DoesNotContain("Tick:", idle);
++
++			AssertContainsLine(damagedIdle, "\t\tFilename: yggrnd.shp");
++			AssertContainsLine(damagedIdle, "\t\t\tSNOW: yagrnd.shp");
++			AssertContainsLine(damagedIdle, "\t\tStart: 1");
++			AssertContainsLine(damagedIdle, "\t\tShadowStart: 4");
++			StringAssert.DoesNotContain("Length:", damagedIdle);
++			StringAssert.DoesNotContain("Tick:", damagedIdle);
++
++			AssertContainsLine(grind, "\t\tFilename: yggrnd_b.shp");
++			AssertContainsLine(grind, "\t\t\tSNOW: yagrnd_b.shp");
++			AssertContainsLine(grind, "\t\tLength: 48");
++			AssertContainsLine(grind, "\t\tShadowStart: 96");
++
++			AssertContainsLine(damagedGrind, "\t\tFilename: yggrnd_b.shp");
++			AssertContainsLine(damagedGrind, "\t\t\tSNOW: yagrnd_b.shp");
++			AssertContainsLine(damagedGrind, "\t\tStart: 48");
++			AssertContainsLine(damagedGrind, "\t\tLength: 48");
++			AssertContainsLine(damagedGrind, "\t\tShadowStart: 144");
+ 		}
+ 
+ 		[TestCase("mods/ra2/fluent/zh-CN/rules.ftl")]

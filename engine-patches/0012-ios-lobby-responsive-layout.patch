@@ -1,0 +1,2996 @@
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/IosMapPreviewLayout.cs b/OpenRA.Mods.Common/Widgets/Logic/IosMapPreviewLayout.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/IosMapPreviewLayout.cs	1969-12-31 16:00:00
++++ b/OpenRA.Mods.Common/Widgets/Logic/IosMapPreviewLayout.cs	2026-08-26 15:43:11
+@@ -0,0 +1,380 @@
++#region Copyright & License Information
++/*
++ * Copyright (c) The OpenRA Developers and Contributors
++ * This file is part of OpenRA, which is free software. It is
++ * made available under the terms of the GNU General Public License
++ * as published by the Free Software Foundation, either version 3 of
++ * the License, or (at your option) any later version.
++ */
++#endregion
++
++using System;
++using System.Runtime.CompilerServices;
++using OpenRA.Graphics;
++using OpenRA.Primitives;
++using OpenRA.Widgets;
++
++namespace OpenRA.Mods.Common.Widgets.Logic
++{
++	public sealed class IosMapPreviewLayout
++	{
++		public WidgetBounds Window { get; }
++		public WidgetBounds MapSurface { get; }
++		public WidgetBounds MapPreview { get; }
++		public WidgetBounds TextColumn { get; }
++		public WidgetBounds Title { get; }
++		public WidgetBounds PrimaryText { get; }
++		public WidgetBounds SecondaryText { get; }
++		public WidgetBounds StatusText { get; }
++		public WidgetBounds SecondaryStatusText { get; }
++		public WidgetBounds Progress { get; }
++		public WidgetBounds SingleAction { get; }
++		public WidgetBounds DualPrimaryAction { get; }
++		public WidgetBounds DualSecondaryAction { get; }
++
++		IosMapPreviewLayout(int width, int height, IosMenuLayoutPolicy policy, bool small)
++		{
++			width = Math.Max(1, width);
++			height = Math.Max(1, height);
++			Window = new WidgetBounds(0, 0, width, height);
++			var textHeight = Math.Min(policy.MinimumReadableTextHeight, height);
++			var actionHeight = Math.Min(policy.MinimumTarget, height);
++			var statusHeight = Math.Min(2 * policy.MinimumReadableTextHeight, height);
++
++			if (policy.IsPhone)
++			{
++				var minimumTextWidth = 3 * policy.MinimumTarget + policy.Gap;
++				var availableMapWidth = Math.Max(1, width - policy.Gap - minimumTextWidth);
++				var mapSize = Math.Min(height, Math.Max(policy.MinimumTarget, availableMapWidth));
++				mapSize = Math.Min(mapSize, Math.Max(1, width - policy.Gap - 1));
++				MapSurface = new WidgetBounds(0, 0, mapSize, mapSize);
++				MapPreview = Inset(MapSurface);
++				var textX = Math.Min(width, MapSurface.Right + policy.Gap);
++				TextColumn = new WidgetBounds(textX, 0, Math.Max(1, width - textX), height);
++
++				Title = new WidgetBounds(textX, 0, TextColumn.Width, textHeight);
++				var primaryY = Math.Min(height - textHeight, Title.Bottom + policy.Gap);
++				PrimaryText = new WidgetBounds(textX, Math.Max(0, primaryY), TextColumn.Width, textHeight);
++				var secondaryY = Math.Min(height - textHeight, PrimaryText.Bottom + policy.Gap);
++				SecondaryText = new WidgetBounds(textX, Math.Max(0, secondaryY), TextColumn.Width, textHeight);
++				StatusText = new WidgetBounds(
++					textX, Math.Min(height - statusHeight, Title.Bottom), TextColumn.Width, statusHeight);
++				var primaryActionY = Math.Max(0, height - actionHeight);
++				SingleAction = new WidgetBounds(
++					textX, primaryActionY, TextColumn.Width, actionHeight);
++				DualPrimaryAction = SingleAction;
++				var secondaryActionY = Math.Max(0,
++					primaryActionY - policy.Gap - actionHeight);
++				DualSecondaryAction = new WidgetBounds(
++					textX, secondaryActionY, TextColumn.Width, actionHeight);
++				var progressY = Math.Max(0, primaryActionY - policy.Gap - textHeight);
++				Progress = new WidgetBounds(textX, progressY, TextColumn.Width, textHeight);
++				SecondaryStatusText = new WidgetBounds(
++					textX, Math.Min(height - statusHeight, StatusText.Bottom),
++					TextColumn.Width, statusHeight);
++				return;
++			}
++
++			var lowerHeight = small
++				? textHeight + statusHeight + textHeight + 2 * actionHeight + 4 * policy.Gap
++				: 3 * textHeight + 3 * policy.Gap;
++			var maximumMapWidth = small
++				? Math.Max(policy.MinimumTarget, width - textHeight)
++				: width;
++			var mapSizeTablet = Math.Min(maximumMapWidth,
++				Math.Max(policy.MinimumTarget, height - lowerHeight));
++			mapSizeTablet = Math.Min(mapSizeTablet, Math.Max(1, height - policy.Gap - textHeight));
++			MapSurface = new WidgetBounds(0, 0, mapSizeTablet, mapSizeTablet);
++			MapPreview = Inset(MapSurface);
++			var textY = Math.Min(height - textHeight, MapSurface.Bottom + policy.Gap);
++			TextColumn = new WidgetBounds(0, textY, width, Math.Max(1, height - textY));
++			Title = new WidgetBounds(0, textY, width, textHeight);
++			var tabletPrimaryY = Math.Min(height - textHeight, Title.Bottom + policy.Gap);
++			PrimaryText = new WidgetBounds(0, Math.Max(0, tabletPrimaryY), width, textHeight);
++			var tabletSecondaryY = Math.Min(height - textHeight, PrimaryText.Bottom + policy.Gap);
++			SecondaryText = new WidgetBounds(0, Math.Max(0, tabletSecondaryY), width, textHeight);
++			StatusText = new WidgetBounds(0, Math.Max(0, tabletPrimaryY), width, statusHeight);
++			SecondaryStatusText = new WidgetBounds(
++				0, Math.Min(height - statusHeight, StatusText.Bottom + policy.Gap), width, statusHeight);
++			var tabletPrimaryActionY = Math.Max(0, height - actionHeight);
++			SingleAction = new WidgetBounds(0, tabletPrimaryActionY, width, actionHeight);
++			DualPrimaryAction = SingleAction;
++			var tabletSecondaryActionY = Math.Max(0,
++				tabletPrimaryActionY - policy.Gap - actionHeight);
++			DualSecondaryAction = new WidgetBounds(0, tabletSecondaryActionY, width, actionHeight);
++			var tabletProgressY = Math.Max(0,
++				tabletSecondaryActionY - policy.Gap - textHeight);
++			Progress = new WidgetBounds(0, tabletProgressY, width, textHeight);
++		}
++
++		public static IosMapPreviewLayout Create(
++			int width, int height, IosMenuLayoutPolicy policy, bool small)
++		{
++			return new IosMapPreviewLayout(width, height, policy, small);
++		}
++
++		public static void Apply(Widget host, IosMenuLayoutPolicy policy)
++		{
++			if (host == null || !policy.Enabled ||
++				host.Bounds.Width <= 0 || host.Bounds.Height <= 0)
++				return;
++
++			var preview = Direct(host, "MAP_PREVIEW");
++			if (preview == null)
++				return;
++
++			var card = new WidgetBounds(0, 0, host.Bounds.Width, host.Bounds.Height);
++			preview.Bounds = card;
++			var large = Create(card.Width, card.Height, policy, false);
++			var small = Create(card.Width, card.Height, policy, true);
++
++			foreach (var id in new[]
++			{
++				"MAP_LARGE", "MAP_SMALL", "MAP_AVAILABLE", "MAP_INCOMPATIBLE", "MAP_VALIDATING",
++				"MAP_DOWNLOAD_AVAILABLE", "MAP_UPDATE_DOWNLOAD_AVAILABLE", "MAP_UNAVAILABLE",
++				"MAP_DOWNLOADING", "MAP_UPDATE_AVAILABLE"
++			})
++				SetBounds(preview, id, card);
++
++			ApplyPreviewSection(Direct(preview, "MAP_LARGE"), large);
++			ApplyPreviewSection(Direct(preview, "MAP_SMALL"), small);
++
++			ApplyLabel(Direct(Direct(preview, "MAP_AVAILABLE"), "MAP_TYPE"), large.PrimaryText, false);
++			ApplyLabel(Direct(Direct(preview, "MAP_AVAILABLE"), "MAP_AUTHOR"), large.SecondaryText, false);
++			ApplyLabel(Direct(Direct(preview, "MAP_INCOMPATIBLE"), "MAP_STATUS_A"), large.PrimaryText, false);
++			ApplyLabel(Direct(Direct(preview, "MAP_INCOMPATIBLE"), "MAP_STATUS_B"), large.SecondaryText, false);
++
++			var validating = Direct(preview, "MAP_VALIDATING");
++			ApplyLabel(Direct(validating, "MAP_STATUS_VALIDATING"), small.StatusText, true);
++			SetBounds(validating, "MAP_VALIDATING_BAR", small.Progress);
++			var downloading = Direct(preview, "MAP_DOWNLOADING");
++			ApplyLabel(Direct(downloading, "MAP_STATUS_DOWNLOADING"), small.StatusText, true);
++			SetBounds(downloading, "MAP_PROGRESSBAR", small.Progress);
++
++			var download = Direct(preview, "MAP_DOWNLOAD_AVAILABLE");
++			ApplyLabel(Direct(download, "MAP_TYPE"), small.PrimaryText, false);
++			ApplyLabel(Direct(download, "MAP_AUTHOR"), small.SecondaryText, false);
++			ApplyButton(Direct(download, "MAP_INSTALL"), small.SingleAction);
++			ApplyButton(Direct(preview, "MAP_UPDATE"), small.SingleAction);
++			ApplyButton(Direct(Direct(preview, "MAP_UPDATE_DOWNLOAD_AVAILABLE"), "MAP_INSTALL"),
++				small.DualSecondaryAction);
++
++			ApplyLabel(Direct(preview, "MAP_SEARCHING"), small.StatusText, true);
++			ApplyLabel(Direct(preview, "MAP_ERROR"), small.StatusText, true);
++			ApplyButton(Direct(preview, "MAP_RETRY"), small.SingleAction);
++
++			var unavailable = Direct(preview, "MAP_UNAVAILABLE");
++			ApplyLabel(Direct(unavailable, "a"), small.StatusText, true);
++			ApplyLabel(Direct(unavailable, "b"), small.SecondaryStatusText, true);
++			var updateAvailable = Direct(preview, "MAP_UPDATE_AVAILABLE");
++			ApplyLabel(Direct(updateAvailable, "a"), small.StatusText, true);
++			ApplyLabel(Direct(updateAvailable, "b"), small.SecondaryStatusText, true);
++		}
++
++		public static void ApplyActionState(
++			Widget host, IosMenuLayoutPolicy policy, bool dualActions)
++		{
++			if (host == null || !policy.Enabled ||
++				host.Bounds.Width <= 0 || host.Bounds.Height <= 0)
++				return;
++
++			var preview = Direct(host, "MAP_PREVIEW");
++			if (preview == null)
++				return;
++
++			var layout = Create(host.Bounds.Width, host.Bounds.Height, policy, true);
++			ApplyButton(Direct(preview, "MAP_UPDATE"),
++				dualActions ? layout.DualPrimaryAction : layout.SingleAction);
++			ApplyButton(Direct(Direct(preview, "MAP_UPDATE_DOWNLOAD_AVAILABLE"), "MAP_INSTALL"),
++				layout.DualSecondaryAction);
++		}
++
++		static void ApplyPreviewSection(Widget section, IosMapPreviewLayout layout)
++		{
++			if (section == null)
++				return;
++
++			var background = Direct(section, "MAP_BG");
++			if (background != null)
++			{
++				background.Bounds = layout.MapSurface;
++				var nestedPreview = Direct(background, "MAP_PREVIEW");
++				if (nestedPreview != null)
++					nestedPreview.Bounds = layout.MapPreview;
++			}
++
++			ApplyLabel(Direct(section, "MAP_TITLE"), layout.Title, false);
++		}
++
++		static void ApplyLabel(Widget widget, WidgetBounds bounds, bool wordWrap)
++		{
++			if (widget == null)
++				return;
++
++			widget.Bounds = bounds;
++			if (widget is LabelWidget label)
++			{
++				if (wordWrap)
++					label.Font = "IosTouchLabel";
++
++				label.WordWrap = wordWrap;
++				label.VAlign = TextVAlign.Middle;
++				IosResponsiveText.Configure(label, wordWrap);
++			}
++		}
++
++		static void ApplyButton(Widget widget, WidgetBounds bounds)
++		{
++			if (widget == null)
++				return;
++
++			widget.Bounds = bounds;
++			if (widget is ButtonWidget button)
++				IosResponsiveText.Configure(button);
++		}
++
++		static Widget Direct(Widget parent, string id)
++		{
++			return parent?.Children.FirstOrDefault(child => child.Id == id);
++		}
++
++		static void SetBounds(Widget parent, string id, WidgetBounds bounds)
++		{
++			var child = Direct(parent, id);
++			if (child != null)
++				child.Bounds = bounds;
++		}
++
++		static WidgetBounds Inset(WidgetBounds bounds)
++		{
++			return new WidgetBounds(bounds.X + 1, bounds.Y + 1,
++				Math.Max(1, bounds.Width - 2), Math.Max(1, bounds.Height - 2));
++		}
++	}
++
++	public sealed class ResponsiveTextCache
++	{
++		readonly CachedTransform<(string Text, int Width, SpriteFont Font), string> cache;
++
++		public ResponsiveTextCache(Action<string, string> onMeasured = null)
++		{
++			cache = new CachedTransform<(string Text, int Width, SpriteFont Font), string>(state =>
++			{
++				var text = state.Text ?? "";
++				var output = WidgetUtils.TruncateText(text, Math.Max(1, state.Width), state.Font);
++				onMeasured?.Invoke(text, output);
++				return output;
++			});
++		}
++
++		public static ResponsiveTextCache WithTooltip(LabelWithTooltipWidget label)
++		{
++			ArgumentNullException.ThrowIfNull(label);
++			return new ResponsiveTextCache((text, output) =>
++				label.GetTooltipText = text == output ? null : () => text);
++		}
++
++		public string Update(string text, int width, SpriteFont font)
++		{
++			return cache.Update((text ?? "", width, font));
++		}
++	}
++
++	public static class IosResponsiveText
++	{
++		sealed class LabelState
++		{
++			public Func<string> Original;
++			public Func<string> Wrapper;
++			public bool TwoLines;
++			readonly CachedTransform<(string Text, int Width, SpriteFont Font, bool TwoLines), string> cache;
++
++			public LabelState(LabelWidget label, bool twoLines)
++			{
++				Original = label.GetText;
++				TwoLines = twoLines;
++				cache = new CachedTransform<
++					(string Text, int Width, SpriteFont Font, bool TwoLines), string>(state =>
++					Fit(state.Text, state.Width, state.Font, state.TwoLines));
++				Wrapper = () => cache.Update((
++					Original?.Invoke() ?? "", label.Bounds.Width, Game.Renderer.Fonts[label.Font], TwoLines));
++			}
++		}
++
++		sealed class ButtonState
++		{
++			public Func<string> Original;
++			public Func<string> Wrapper;
++			readonly CachedTransform<(string Text, int Width, SpriteFont Font), string> cache;
++
++			public ButtonState(ButtonWidget button)
++			{
++				Original = button.GetText;
++				cache = new CachedTransform<(string Text, int Width, SpriteFont Font), string>(state =>
++					WidgetUtils.TruncateText(state.Text, Math.Max(1, state.Width), state.Font));
++				Wrapper = () => cache.Update((Original?.Invoke() ?? "",
++					button.Bounds.Width - button.LeftMargin - button.RightMargin,
++					Game.Renderer.Fonts[button.Font]));
++			}
++		}
++
++		static readonly ConditionalWeakTable<LabelWidget, LabelState> LabelStates = new();
++		static readonly ConditionalWeakTable<ButtonWidget, ButtonState> ButtonStates = new();
++
++		public static void Configure(LabelWidget label, bool twoLines)
++		{
++			if (!LabelStates.TryGetValue(label, out var state))
++			{
++				state = new LabelState(label, twoLines);
++				LabelStates.Add(label, state);
++			}
++			else if (label.GetText != state.Wrapper)
++				state.Original = label.GetText;
++
++			state.TwoLines = twoLines;
++			label.GetText = state.Wrapper;
++		}
++
++		public static void Configure(ButtonWidget button)
++		{
++			if (!ButtonStates.TryGetValue(button, out var state))
++			{
++				state = new ButtonState(button);
++				ButtonStates.Add(button, state);
++			}
++			else if (button.GetText != state.Wrapper)
++				state.Original = button.GetText;
++
++			button.GetText = state.Wrapper;
++		}
++
++		static string Fit(string text, int width, SpriteFont font, bool twoLines)
++		{
++			width = Math.Max(1, width);
++			if (!twoLines)
++				return WidgetUtils.TruncateText(text, width, font);
++
++			if (font.Measure(text).X <= width)
++				return text;
++
++			var fallback = -1;
++			for (var i = 1; i < text.Length; i++)
++			{
++				var first = text[..i].TrimEnd();
++				var second = text[i..].TrimStart();
++				if (first.Length == 0 || second.Length == 0 ||
++					font.Measure(first).X > width || font.Measure(second).X > width)
++					continue;
++
++				fallback = i;
++				if (char.IsWhiteSpace(text[i - 1]) || char.IsWhiteSpace(text[i]))
++					return first + "\n" + second;
++			}
++
++			if (fallback > 0)
++				return text[..fallback].TrimEnd() + "\n" + text[fallback..].TrimStart();
++
++			return WidgetUtils.TruncateText(text, width, font);
++		}
++	}
++}
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/IosMultiplayerBrowserLayout.cs b/OpenRA.Mods.Common/Widgets/Logic/IosMultiplayerBrowserLayout.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/IosMultiplayerBrowserLayout.cs	2026-08-26 15:43:11
++++ b/OpenRA.Mods.Common/Widgets/Logic/IosMultiplayerBrowserLayout.cs	2026-08-26 15:43:11
+@@ -9,6 +9,7 @@
+ #endregion
+ 
+ using System;
++using System.Linq;
+ using OpenRA.Widgets;
+ 
+ namespace OpenRA.Mods.Common.Widgets.Logic
+@@ -24,10 +25,14 @@
+ 		public WidgetBounds Footer { get; }
+ 		public WidgetBounds Filters { get; }
+ 		public WidgetBounds Reload { get; }
++		public WidgetBounds PlayerCount { get; }
+ 		public WidgetBounds DirectConnect { get; }
+ 		public WidgetBounds CreateButton { get; }
+ 		public WidgetBounds Back { get; }
+ 		public WidgetBounds[] ServerColumns { get; }
++		public WidgetBounds ServerTitle { get; }
++		public WidgetBounds PasswordIcon { get; }
++		public WidgetBounds AuthenticationIcon { get; }
+ 
+ 		IosMultiplayerBrowserLayout(int width, int height, IosMenuLayoutPolicy policy)
+ 		{
+@@ -49,16 +54,18 @@
+ 			var listY = Math.Min(Table.Height, TableHeader.Bottom + policy.Gap);
+ 			ServerList = new WidgetBounds(0, listY, Table.Width, Math.Max(0, Table.Height - listY));
+ 			ServerColumns = ServerColumnBounds(ServerList.Width, policy.MinimumTarget);
++			var titleParts = ServerTitleAndIconBounds(ServerColumns[0], policy);
++			ServerTitle = titleParts[0];
++			AuthenticationIcon = titleParts[1];
++			PasswordIcon = titleParts[2];
+ 
+-			var gaps = 4 * policy.Gap;
+-			var available = Math.Max(0, Footer.Width - gaps);
+-			const int Units = 9;
+-			var x = 0;
+-			Filters = FooterCell(ref x, 2, Units, available, Footer.Height, policy.Gap);
+-			Reload = FooterCell(ref x, 1, Units, available, Footer.Height, policy.Gap);
+-			DirectConnect = FooterCell(ref x, 2, Units, available, Footer.Height, policy.Gap);
+-			CreateButton = FooterCell(ref x, 2, Units, available, Footer.Height, policy.Gap);
+-			Back = new WidgetBounds(x, 0, Math.Max(0, Footer.Width - x), Footer.Height);
++			var footerCells = WeightedCells(Footer.Width, Footer.Height, policy.Gap, 2, 1, 2, 2, 2, 2);
++			Filters = footerCells[0];
++			Reload = footerCells[1];
++			PlayerCount = footerCells[2];
++			DirectConnect = footerCells[3];
++			CreateButton = footerCells[4];
++			Back = footerCells[5];
+ 		}
+ 
+ 		public static IosMultiplayerBrowserLayout Create(IosMenuLayoutPolicy policy)
+@@ -72,15 +79,99 @@
+ 			return new IosMultiplayerBrowserLayout(width, height, policy);
+ 		}
+ 
+-		static WidgetBounds FooterCell(ref int x, int weight, int totalWeight, int available, int height, int gap)
++		static WidgetBounds[] WeightedCells(int width, int height, int gap, params int[] weights)
+ 		{
+-			var remainingWeight = Math.Max(1, totalWeight);
+-			var width = Math.Max(0, available * weight / remainingWeight);
+-			var result = new WidgetBounds(x, 0, width, height);
+-			x += width + gap;
+-			return result;
++			var cells = new WidgetBounds[weights.Length];
++			var available = Math.Max(0, width - Math.Max(0, weights.Length - 1) * gap);
++			var totalWeight = Math.Max(1, weights.Sum());
++			var x = 0;
++			var cumulative = 0;
++			for (var i = 0; i < weights.Length; i++)
++			{
++				cumulative += weights[i];
++				var right = i == weights.Length - 1 ? width :
++					(int)((long)available * cumulative / totalWeight) + i * gap;
++				cells[i] = new WidgetBounds(x, 0, Math.Max(0, right - x), height);
++				x = right + gap;
++			}
++
++			return cells;
+ 		}
+ 
++		public static WidgetBounds[] ServerTitleAndIconBounds(
++			WidgetBounds titleColumn, IosMenuLayoutPolicy policy)
++		{
++			var maximumIconSize = Math.Max(1,
++				(titleColumn.Width - 2 * policy.Gap - 1) / 2);
++			var iconSize = Math.Min(policy.MinimumReadableTextHeight,
++				Math.Min(titleColumn.Height, maximumIconSize));
++			var iconY = titleColumn.Y + Math.Max(0, (titleColumn.Height - iconSize) / 2);
++			var password = new WidgetBounds(
++				Math.Max(titleColumn.X, titleColumn.Right - iconSize), iconY, iconSize, iconSize);
++			var authentication = new WidgetBounds(
++				Math.Max(titleColumn.X, password.X - policy.Gap - iconSize), iconY, iconSize, iconSize);
++			var titleWidth = Math.Max(1, authentication.X - policy.Gap - titleColumn.X);
++			var title = new WidgetBounds(
++				titleColumn.X, titleColumn.Y, titleWidth, titleColumn.Height);
++			return new[] { title, authentication, password };
++		}
++
++		public static WidgetBounds ServerListWithNotice(
++			WidgetBounds serverList, int noticeHeight, bool visible)
++		{
++			if (!visible)
++				return serverList;
++
++			var reserved = Math.Min(serverList.Height, Math.Max(0, noticeHeight));
++			return new WidgetBounds(
++				serverList.X, serverList.Y + reserved, serverList.Width, serverList.Height - reserved);
++		}
++
++		public static void ApplyServerRow(
++			Widget row, WidgetBounds[] columns, int height, IosMenuLayoutPolicy policy)
++		{
++			if (row == null || columns == null || columns.Length < 4)
++				return;
++
++			var group = row.Children.FirstOrDefault(candidate => candidate.Id == "LABEL");
++			if (group != null)
++			{
++				group.Bounds = new WidgetBounds(
++					columns[0].X, 0, columns[^1].Right - columns[0].X, height);
++				if (group is LabelWidget groupLabel)
++				{
++					groupLabel.Font = IosMenuLayoutPolicy.TouchFont(groupLabel.Font, false, true);
++					groupLabel.WordWrap = false;
++					groupLabel.VAlign = TextVAlign.Middle;
++					IosResponsiveText.Configure(groupLabel, false);
++				}
++			}
++
++			foreach (var (id, index) in new[]
++			{
++				("NAME", 0), ("TITLE", 0), ("PLAYERS", 1), ("LOCATION", 2), ("STATUS", 3)
++			})
++			{
++				var child = row.Children.FirstOrDefault(candidate => candidate.Id == id);
++				if (child == null)
++					continue;
++
++				child.Bounds = new WidgetBounds(columns[index].X, 0, columns[index].Width, height);
++				if (child is LabelWidget label)
++				{
++					label.WordWrap = false;
++					label.VAlign = TextVAlign.Middle;
++					IosResponsiveText.Configure(label, false);
++				}
++			}
++
++			var titleParts = ServerTitleAndIconBounds(
++				new WidgetBounds(columns[0].X, 0, columns[0].Width, height), policy);
++			SetDirectBounds(row, "TITLE", titleParts[0]);
++			SetDirectBounds(row, "REQUIRES_AUTHENTICATION", titleParts[1]);
++			SetDirectBounds(row, "PASSWORD_PROTECTED", titleParts[2]);
++		}
++
+ 		public static WidgetBounds[] ServerColumnBounds(int width, int minimumTarget)
+ 		{
+ 			var weights = new[] { 5, 2, 2, 2 };
+@@ -99,6 +190,13 @@
+ 			}
+ 
+ 			return columns;
++		}
++
++		static void SetDirectBounds(Widget row, string id, WidgetBounds bounds)
++		{
++			var child = row.Children.FirstOrDefault(candidate => candidate.Id == id);
++			if (child != null)
++				child.Bounds = bounds;
+ 		}
+ 	}
+ }
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/IosMultiplayerDetailsLayout.cs b/OpenRA.Mods.Common/Widgets/Logic/IosMultiplayerDetailsLayout.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/IosMultiplayerDetailsLayout.cs	1969-12-31 16:00:00
++++ b/OpenRA.Mods.Common/Widgets/Logic/IosMultiplayerDetailsLayout.cs	2026-08-26 15:43:11
+@@ -0,0 +1,207 @@
++#region Copyright & License Information
++/*
++ * Copyright (c) The OpenRA Developers and Contributors
++ * This file is part of OpenRA, which is free software. It is
++ * made available under the terms of the GNU General Public License
++ * as published by the Free Software Foundation, either version 3 of
++ * the License, or (at your option) any later version.
++ */
++#endregion
++
++using System;
++using System.Linq;
++using OpenRA.Widgets;
++
++namespace OpenRA.Mods.Common.Widgets.Logic
++{
++	public sealed class IosMultiplayerDetailsLayout
++	{
++		public WidgetBounds Window { get; }
++		public WidgetBounds MapBackground { get; }
++		public WidgetBounds MapPreview { get; }
++		public WidgetBounds TextColumn { get; }
++		public WidgetBounds[] DetailRows { get; }
++		public WidgetBounds ClientList { get; }
++		public WidgetBounds Join { get; }
++
++		IosMultiplayerDetailsLayout(
++			int width, int height, IosMenuLayoutPolicy policy, bool hasClients, bool hasJoin)
++		{
++			width = Math.Max(1, width);
++			height = Math.Max(1, height);
++			Window = new WidgetBounds(0, 0, width, height);
++			var rowHeight = Math.Min(policy.MinimumReadableTextHeight, height);
++			var joinHeight = hasJoin ? Math.Min(policy.MinimumTarget, height) : 0;
++			Join = new WidgetBounds(0, Math.Max(0, height - joinHeight), width, joinHeight);
++			DetailRows = new WidgetBounds[5];
++
++			if (policy.IsPhone)
++			{
++				var minimumTextWidth = 2 * policy.MinimumTarget;
++				var availableMapWidth = Math.Max(1, width - policy.Gap - minimumTextWidth);
++				var mapSize = Math.Min(Join.Y, Math.Max(policy.MinimumTarget, availableMapWidth));
++				mapSize = Math.Min(mapSize, Math.Max(1, width - policy.Gap - 1));
++				MapBackground = new WidgetBounds(0, 0, mapSize, mapSize);
++				MapPreview = Inset(MapBackground);
++				var textX = Math.Min(width, MapBackground.Right + policy.Gap);
++				var textWidth = Math.Max(1, width - textX);
++				TextColumn = new WidgetBounds(textX, 0, textWidth,
++					Math.Min(height, 5 * rowHeight));
++				for (var i = 0; i < DetailRows.Length; i++)
++					DetailRows[i] = hasClients && i == DetailRows.Length - 1
++						? new WidgetBounds(textX, i * rowHeight, textWidth, 0)
++						: new WidgetBounds(textX, i * rowHeight, textWidth, rowHeight);
++			}
++			else
++			{
++				var reservedBelowMap = policy.Gap + 5 * rowHeight + policy.Gap + rowHeight;
++				var mapSize = Math.Min(width,
++					Math.Max(policy.MinimumTarget, Join.Y - reservedBelowMap));
++				mapSize = Math.Min(mapSize, Math.Max(1, Join.Y - policy.Gap - rowHeight));
++				MapBackground = new WidgetBounds(0, 0, mapSize, mapSize);
++				MapPreview = Inset(MapBackground);
++				var textY = Math.Min(Join.Y, MapBackground.Bottom + policy.Gap);
++				TextColumn = new WidgetBounds(0, textY, width,
++					Math.Min(5 * rowHeight, Math.Max(1, Join.Y - textY)));
++				for (var i = 0; i < DetailRows.Length; i++)
++					DetailRows[i] = hasClients && i == DetailRows.Length - 1
++						? new WidgetBounds(0, textY + i * rowHeight, width, 0)
++						: new WidgetBounds(0, textY + i * rowHeight, width, rowHeight);
++			}
++
++			var visibleRowCount = hasClients ? 4 : 5;
++			var rowsBottom = DetailRows[visibleRowCount - 1].Bottom;
++			var listY = Math.Min(Join.Y,
++				Math.Max(MapBackground.Bottom, rowsBottom) + policy.Gap);
++			ClientList = new WidgetBounds(0, listY, width, Math.Max(1, Join.Y - listY));
++		}
++
++		public static IosMultiplayerDetailsLayout Create(
++			int width, int height, IosMenuLayoutPolicy policy, bool hasClients)
++		{
++			return new IosMultiplayerDetailsLayout(width, height, policy, hasClients, true);
++		}
++
++		public static IosMultiplayerDetailsLayout Create(
++			int width, int height, IosMenuLayoutPolicy policy, bool hasClients, bool hasJoin)
++		{
++			return new IosMultiplayerDetailsLayout(width, height, policy, hasClients, hasJoin);
++		}
++
++		public static void Apply(Widget selected, IosMenuLayoutPolicy policy, bool hasClients)
++		{
++			if (selected == null || !policy.Enabled ||
++				selected.Bounds.Width <= 0 || selected.Bounds.Height <= 0)
++				return;
++
++			var join = Direct(selected, "JOIN_BUTTON");
++			var clientContainer = Direct(selected, "CLIENT_LIST_CONTAINER");
++			var clientListWidget = clientContainer?.Children.FirstOrDefault();
++			var effectiveHasClients = hasClients && clientContainer != null && clientListWidget != null;
++			var layout = Create(
++				selected.Bounds.Width, selected.Bounds.Height, policy, effectiveHasClients, join != null);
++			var background = Direct(selected, "MAP_BG");
++			if (background != null)
++			{
++				background.Bounds = layout.MapBackground;
++				var preview = Direct(background, "SELECTED_MAP_PREVIEW");
++				if (preview != null)
++					preview.Bounds = layout.MapPreview;
++			}
++
++			var ids = new[]
++			{
++				"SELECTED_MAP", "SELECTED_IP", "SELECTED_STATUS", "SELECTED_MOD_VERSION", "SELECTED_PLAYERS"
++			};
++			for (var i = 0; i < ids.Length; i++)
++			{
++				var label = Direct(selected, ids[i]);
++				if (label == null)
++					continue;
++
++				label.Bounds = layout.DetailRows[i];
++				if (label is LabelWidget text)
++				{
++					text.WordWrap = false;
++					text.VAlign = TextVAlign.Middle;
++					IosResponsiveText.Configure(text, false);
++				}
++			}
++
++			if (clientContainer != null)
++			{
++				clientContainer.Bounds = layout.ClientList;
++				if (clientListWidget != null)
++					clientListWidget.Bounds = new WidgetBounds(0, 0,
++						clientContainer.Bounds.Width, clientContainer.Bounds.Height);
++
++				if (clientListWidget is ScrollPanelWidget clientList)
++				{
++					var contentWidth = Math.Max(1,
++						clientList.Bounds.Width - clientList.ScrollbarWidth);
++					foreach (var row in clientList.Children)
++					{
++						row.Bounds = new WidgetBounds(0, row.Bounds.Y, contentWidth, row.Bounds.Height);
++						ApplyClientRow(row, policy, row.Id == "HEADER");
++					}
++
++					clientList.Layout?.AdjustChildren();
++				}
++			}
++
++			if (join != null)
++				join.Bounds = layout.Join;
++		}
++
++		public static void ApplyClientRow(Widget row, IosMenuLayoutPolicy policy, bool isHeader)
++		{
++			if (row == null || !policy.Enabled)
++				return;
++
++			var height = isHeader ? policy.MinimumReadableTextHeight : policy.MinimumTarget;
++			row.Bounds = new WidgetBounds(0, row.Bounds.Y, Math.Max(1, row.Bounds.Width), height);
++			var local = new WidgetBounds(0, 0, row.Bounds.Width, height);
++			var label = Direct(row, "LABEL");
++			if (isHeader)
++				ApplyLabel(label, local, true);
++			else
++			{
++				var flag = Direct(row, "FLAG");
++				var flagWidth = Math.Min(height, Math.Max(1, row.Bounds.Width / 5));
++				if (flag != null)
++					flag.Bounds = new WidgetBounds(0, 0, flagWidth, height);
++
++				var nameX = Math.Min(row.Bounds.Width, flagWidth + policy.Gap);
++				ApplyLabel(label, new WidgetBounds(
++					nameX, 0, Math.Max(1, row.Bounds.Width - nameX), height), false);
++				ApplyLabel(Direct(row, "NOFLAG_LABEL"), local, false);
++			}
++		}
++
++		static void ApplyLabel(Widget widget, WidgetBounds bounds, bool bold)
++		{
++			if (widget == null)
++				return;
++
++			widget.Bounds = bounds;
++			if (widget is LabelWidget label)
++			{
++				label.Font = IosMenuLayoutPolicy.TouchFont(label.Font, false, bold);
++				label.WordWrap = false;
++				label.VAlign = TextVAlign.Middle;
++				IosResponsiveText.Configure(label, false);
++			}
++		}
++
++		static Widget Direct(Widget parent, string id)
++		{
++			return parent?.Children.FirstOrDefault(child => child.Id == id);
++		}
++
++		static WidgetBounds Inset(WidgetBounds bounds)
++		{
++			return new WidgetBounds(bounds.X + 1, bounds.Y + 1,
++				Math.Max(1, bounds.Width - 2), Math.Max(1, bounds.Height - 2));
++		}
++	}
++}
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/IosTouchMenuLogic.cs b/OpenRA.Mods.Common/Widgets/Logic/IosTouchMenuLogic.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/IosTouchMenuLogic.cs	2026-08-26 15:43:11
++++ b/OpenRA.Mods.Common/Widgets/Logic/IosTouchMenuLogic.cs	2026-08-26 15:43:11
+@@ -196,7 +196,7 @@
+ 
+ 			var mapRoot = panel.GetOrNull("MAP_PREVIEW_ROOT");
+ 			if (mapRoot != null)
+-				LayoutMapPreview(mapRoot, policy);
++				IosMapPreviewLayout.Apply(mapRoot, policy);
+ 		}
+ 
+ 		static void LayoutLabeledField(
+@@ -332,7 +332,7 @@
+ 		{
+ 			var labels = new[] { a, b, c };
+ 			var widths = labels.Select(label =>
+-				label == null || !label.Visible ? 0 :
++				!EvaluateDynamicVisibility(label) ? 0 :
+ 				Game.Renderer.Fonts[label.Font].Measure(label.GetText() ?? "").X).ToArray();
+ 			var segments = IosServerCreationLayout.HeaderSegments(header.Width, widths);
+ 			for (var i = 0; i < labels.Length; i++)
+@@ -341,32 +341,6 @@
+ 						header.X + segments[i].X, header.Y, segments[i].Width, header.Height);
+ 		}
+ 
+-		static void LayoutMapPreview(Widget mapRoot, IosMenuLayoutPolicy policy)
+-		{
+-			var preview = mapRoot.Children.FirstOrDefault(child => child.Id == "MAP_PREVIEW");
+-			if (preview == null)
+-				return;
+-
+-			preview.Bounds = new WidgetBounds(0, 0, mapRoot.Bounds.Width, mapRoot.Bounds.Height);
+-			foreach (var section in preview.Children)
+-			{
+-				section.Bounds = new WidgetBounds(0, 0, preview.Bounds.Width, preview.Bounds.Height);
+-				if (section.Id is not ("MAP_LARGE" or "MAP_SMALL"))
+-					continue;
+-
+-				var titleHeight = Math.Min(policy.MinimumTarget, section.Bounds.Height);
+-				var background = section.GetOrNull("MAP_BG");
+-				if (background != null)
+-					background.Bounds = new WidgetBounds(0, 0, section.Bounds.Width,
+-						Math.Max(0, section.Bounds.Height - titleHeight));
+-
+-				var title = section.GetOrNull("MAP_TITLE");
+-				if (title != null)
+-					title.Bounds = new WidgetBounds(0, background?.Bounds.Bottom ?? 0,
+-						section.Bounds.Width, titleHeight);
+-			}
+-		}
+-
+ 		static bool IsServerCreationPanel(Widget panel)
+ 		{
+ 			return panel.Id == "MULTIPLAYER_CREATESERVER_PANEL" ||
+@@ -395,24 +369,44 @@
+ 			var table = standalone ? layout.Table : new WidgetBounds(
+ 				0, 0, layout.Table.Width, Math.Max(0, height - policy.MinimumTarget - policy.Gap));
+ 			var details = standalone ? layout.Details : new WidgetBounds(
+-				table.Right + policy.Gap, 0, layout.Details.Width, table.Height);
++				table.Right + policy.Gap, 0, layout.Details.Width, height);
+ 			var headerHeight = Math.Min(policy.MinimumReadableTextHeight, table.Height);
+ 			var listY = Math.Min(table.Height, headerHeight + policy.Gap);
+ 			var listBounds = new WidgetBounds(table.X, table.Y + listY,
+ 				table.Width, Math.Max(0, table.Height - listY));
++			var noticeBounds = new WidgetBounds(
++				listBounds.X, listBounds.Y, listBounds.Width,
++				Math.Min(policy.MinimumReadableTextHeight, listBounds.Height));
++			var notice = panel.GetOrNull("NOTICE_CONTAINER");
++			if (notice != null)
++			{
++				notice.Bounds = noticeBounds;
++				foreach (var label in notice.Children.OfType<LabelWidget>())
++				{
++					label.Bounds = new WidgetBounds(
++						policy.Gap, 0, Math.Max(1, noticeBounds.Width - 2 * policy.Gap), noticeBounds.Height);
++					label.WordWrap = false;
++					label.VAlign = TextVAlign.Middle;
++					IosResponsiveText.Configure(label, false);
++				}
++			}
+ 
++			var effectiveListBounds = IosMultiplayerBrowserLayout.ServerListWithNotice(
++				listBounds, noticeBounds.Height, EvaluateDynamicVisibility(notice));
++
+ 			var labels = panel.GetOrNull("LABEL_CONTAINER");
+ 			if (labels != null)
+ 			{
+ 				labels.Bounds = new WidgetBounds(table.X, table.Y, table.Width, headerHeight);
+-				LayoutServerColumns(labels,
+-					IosMultiplayerBrowserLayout.ServerColumnBounds(table.Width, policy.MinimumTarget), headerHeight);
++				IosMultiplayerBrowserLayout.ApplyServerRow(labels,
++					IosMultiplayerBrowserLayout.ServerColumnBounds(table.Width, policy.MinimumTarget),
++					headerHeight, policy);
+ 			}
+ 
+ 			var list = panel.GetOrNull<ScrollPanelWidget>("SERVER_LIST");
+ 			if (list != null)
+ 			{
+-				list.Bounds = listBounds;
++				list.Bounds = effectiveListBounds;
+ 				list.EnableContentDragging = true;
+ 				list.ContentDragThreshold = policy.ContentDragThreshold;
+ 				if (policy.IsPhone)
+@@ -432,7 +426,8 @@
+ 				foreach (var row in list.Children)
+ 				{
+ 					row.Bounds = new WidgetBounds(0, row.Bounds.Y, contentWidth, policy.MinimumTarget);
+-					LayoutServerColumns(row, columns, policy.MinimumTarget);
++					IosMultiplayerBrowserLayout.ApplyServerRow(
++						row, columns, policy.MinimumTarget, policy);
+ 				}
+ 
+ 				list.Layout.AdjustChildren();
+@@ -440,19 +435,21 @@
+ 				lastServerRowCount = list.Children.Count;
+ 			}
+ 
+-			SetBounds(panel, "NOTICE_CONTAINER", listBounds);
+-			SetBounds(panel, "PROGRESS_LABEL", listBounds);
++			SetBounds(panel, "PROGRESS_LABEL", effectiveListBounds);
+ 			var selected = panel.GetOrNull("SELECTED_SERVER");
+ 			if (selected != null)
+ 			{
+ 				selected.Bounds = details;
+-				LayoutSelectedServer(selected, policy);
++				var dynamicClients = selected.GetOrNull("MULTIPLAYER_CLIENT_LIST");
++				IosMultiplayerDetailsLayout.Apply(
++					selected, policy, EvaluateDynamicVisibility(dynamicClients));
+ 			}
+ 
+ 			if (standalone)
+ 			{
+ 				SetBounds(panel, "FILTERS_DROPDOWNBUTTON", Offset(layout.Filters, layout.Footer.Y));
+ 				SetBounds(panel, "RELOAD_BUTTON", Offset(layout.Reload, layout.Footer.Y));
++				SetBounds(panel, "PLAYER_COUNT", Offset(layout.PlayerCount, layout.Footer.Y));
+ 				SetBounds(panel, "DIRECTCONNECT_BUTTON", Offset(layout.DirectConnect, layout.Footer.Y));
+ 				SetBounds(panel, "CREATE_BUTTON", Offset(layout.CreateButton, layout.Footer.Y));
+ 				SetBounds(panel, "BACK_BUTTON", Offset(layout.Back, layout.Footer.Y));
+@@ -469,48 +466,6 @@
+ 			}
+ 		}
+ 
+-		static void LayoutServerColumns(Widget row, WidgetBounds[] columns, int height)
+-		{
+-			foreach (var (id, index) in new[]
+-			{
+-				("NAME", 0), ("TITLE", 0), ("PLAYERS", 1), ("LOCATION", 2), ("STATUS", 3)
+-			})
+-			{
+-				var child = row.Children.FirstOrDefault(candidate => candidate.Id == id);
+-				if (child != null)
+-				{
+-					child.Bounds = new WidgetBounds(columns[index].X, 0, columns[index].Width, height);
+-					if (child is LabelWidget label)
+-					{
+-						label.WordWrap = true;
+-						label.VAlign = TextVAlign.Middle;
+-					}
+-				}
+-			}
+-		}
+-
+-		static void LayoutSelectedServer(Widget selected, IosMenuLayoutPolicy policy)
+-		{
+-			var joinHeight = Math.Min(policy.MinimumTarget, selected.Bounds.Height);
+-			var previewHeight = Math.Min(selected.Bounds.Width,
+-				Math.Max(0, selected.Bounds.Height - joinHeight - policy.Gap - 4 * policy.MinimumReadableTextHeight));
+-			SetBounds(selected, "MAP_BG", new WidgetBounds(0, 0, selected.Bounds.Width, previewHeight));
+-			var y = previewHeight;
+-			foreach (var id in new[]
+-			{
+-				"SELECTED_MAP", "SELECTED_IP", "SELECTED_STATUS", "SELECTED_MOD_VERSION", "SELECTED_PLAYERS"
+-			})
+-			{
+-				SetBounds(selected, id, new WidgetBounds(0, y, selected.Bounds.Width, policy.MinimumReadableTextHeight));
+-				y += policy.MinimumReadableTextHeight;
+-			}
+-
+-			var joinY = Math.Max(y, selected.Bounds.Height - joinHeight);
+-			SetBounds(selected, "CLIENT_LIST_CONTAINER", new WidgetBounds(
+-				0, y, selected.Bounds.Width, Math.Max(0, joinY - y)));
+-			SetBounds(selected, "JOIN_BUTTON", new WidgetBounds(0, joinY, selected.Bounds.Width, joinHeight));
+-		}
+-
+ 		static void ApplyDirectConnectLayout(Widget panel, IosMenuLayoutPolicy policy)
+ 		{
+ 			panel.Bounds = policy.ContentBounds;
+@@ -563,6 +518,11 @@
+ 		static bool SameBounds(WidgetBounds a, WidgetBounds b)
+ 		{
+ 			return a.X == b.X && a.Y == b.Y && a.Width == b.Width && a.Height == b.Height;
++		}
++
++		public static bool EvaluateDynamicVisibility(Widget widget)
++		{
++			return widget != null && widget.IsVisible();
+ 		}
+ 
+ 		static void ConfigureStepSlider(SliderWidget slider)
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/Lobby/IosLobbyLayout.cs b/OpenRA.Mods.Common/Widgets/Logic/Lobby/IosLobbyLayout.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/Lobby/IosLobbyLayout.cs	2026-08-26 15:43:11
++++ b/OpenRA.Mods.Common/Widgets/Logic/Lobby/IosLobbyLayout.cs	2026-08-26 15:43:11
+@@ -18,6 +18,8 @@
+ 		public int Gap { get; }
+ 		public WidgetBounds Header { get; }
+ 		public WidgetBounds Tabs { get; }
++		public WidgetBounds Main { get; }
++		public WidgetBounds Servers { get; }
+ 		public WidgetBounds Players { get; }
+ 		public WidgetBounds PlayerHeader { get; }
+ 		public WidgetBounds PlayerList { get; }
+@@ -58,6 +60,8 @@
+ 			var mainY = Math.Min(Footer.Y, Tabs.Bottom + Gap);
+ 			var mainBottom = Math.Max(mainY, Footer.Y - Gap);
+ 			var mainHeight = mainBottom - mainY;
++			Main = new WidgetBounds(0, mainY, width, mainHeight);
++			Servers = Main;
+ 			var minimumChatHeight = policy.MinimumTarget + Gap + policy.MinimumReadableTextHeight;
+ 			var utilityHeight = Math.Min(mainHeight,
+ 				Math.Max(minimumChatHeight, mainHeight / (policy.IsPhone ? 3 : 4)));
+@@ -76,26 +80,42 @@
+ 			PlayerList = new WidgetBounds(0, playerListY, Players.Width,
+ 				Math.Max(0, Players.Height - playerListY));
+ 
+-			var changeHeight = Math.Min(policy.MinimumTarget, upperHeight);
+-			var mapHeight = Math.Max(0, upperHeight - changeHeight - (changeHeight > 0 ? Gap : 0));
+-			Map = new WidgetBounds(Players.Right + Gap, mainY, mapWidth, mapHeight);
+-			ChangeMap = new WidgetBounds(Map.X, Map.Bottom + (changeHeight > 0 ? Gap : 0), mapWidth, changeHeight);
+-
+ 			var utilityY = upperHeight > 0 ? Players.Bottom + Gap : mainY;
+-			var positionWidth = Math.Min(width, Math.Max(2 * policy.MinimumTarget, width / 5));
++			var utilityWidth = policy.IsPhone ? playersWidth : width;
++			var positionWidth = Math.Min(utilityWidth, Math.Max(2 * policy.MinimumTarget, width / 5));
+ 			Position = new WidgetBounds(0, utilityY, positionWidth, utilityHeight);
+ 			Chat = new WidgetBounds(
+-				Math.Min(width, Position.Right + Gap), utilityY,
+-				Math.Max(0, width - Position.Right - Gap), utilityHeight);
++				Math.Min(utilityWidth, Position.Right + Gap), utilityY,
++				Math.Max(0, utilityWidth - Position.Right - Gap), utilityHeight);
+ 			var chatInputHeight = Math.Min(policy.MinimumTarget, Chat.Height);
+ 			var chatDisplayHeight = Math.Max(0, Chat.Height - chatInputHeight - Gap);
+ 			ChatDisplay = new WidgetBounds(0, 0, Chat.Width, chatDisplayHeight);
+ 			ChatInput = new WidgetBounds(0, chatDisplayHeight + Gap, Chat.Width, chatInputHeight);
+ 
+-			var footerButtonWidth = Math.Max(0, (Footer.Width - Gap) / 2);
+-			Start = new WidgetBounds(Footer.X, Footer.Y, footerButtonWidth, Footer.Height);
+-			Disconnect = new WidgetBounds(Start.Right + Gap, Footer.Y,
+-				Math.Max(0, Footer.Right - Start.Right - Gap), Footer.Height);
++			if (policy.IsPhone)
++			{
++				Map = new WidgetBounds(Players.Right + Gap, Main.Y, mapWidth, Main.Height);
++				var footerAvailable = Math.Max(0, Footer.Width - 2 * Gap);
++				var firstRight = footerAvailable / 3;
++				var secondRight = 2 * footerAvailable / 3;
++				Start = new WidgetBounds(Footer.X, Footer.Y, firstRight, Footer.Height);
++				ChangeMap = new WidgetBounds(Start.Right + Gap, Footer.Y,
++					Math.Max(0, secondRight - firstRight), Footer.Height);
++				Disconnect = new WidgetBounds(ChangeMap.Right + Gap, Footer.Y,
++					Math.Max(0, Footer.Right - ChangeMap.Right - Gap), Footer.Height);
++			}
++			else
++			{
++				var changeHeight = Math.Min(policy.MinimumTarget, upperHeight);
++				var mapHeight = Math.Max(0, upperHeight - changeHeight - (changeHeight > 0 ? Gap : 0));
++				Map = new WidgetBounds(Players.Right + Gap, mainY, mapWidth, mapHeight);
++				ChangeMap = new WidgetBounds(
++					Map.X, Map.Bottom + (changeHeight > 0 ? Gap : 0), mapWidth, changeHeight);
++				var footerButtonWidth = Math.Max(0, (Footer.Width - Gap) / 2);
++				Start = new WidgetBounds(Footer.X, Footer.Y, footerButtonWidth, Footer.Height);
++				Disconnect = new WidgetBounds(Start.Right + Gap, Footer.Y,
++					Math.Max(0, Footer.Right - Start.Right - Gap), Footer.Height);
++			}
+ 
+ 			var reservedScrollbar = policy.IsPhone ? 0 : policy.MinimumTarget + Gap;
+ 			var playerRowWidth = Math.Max(0, Players.Width - reservedScrollbar);
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/Lobby/LobbyLogic.cs b/OpenRA.Mods.Common/Widgets/Logic/Lobby/LobbyLogic.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/Lobby/LobbyLogic.cs	2026-08-26 15:43:11
++++ b/OpenRA.Mods.Common/Widgets/Logic/Lobby/LobbyLogic.cs	2026-08-26 15:43:11
+@@ -595,9 +595,14 @@
+ 			var topRoot = lobby.GetOrNull("TOP_PANELS_ROOT");
+ 			if (topRoot != null)
+ 			{
+-				topRoot.Bounds = layout.Players;
++				topRoot.Bounds = layout.Main;
+ 				foreach (var child in topRoot.Children)
+-					child.Bounds = new WidgetBounds(0, 0, topRoot.Bounds.Width, topRoot.Bounds.Height);
++				{
++					var surface = child.Id == "LOBBY_SERVERS_BIN" ? layout.Servers : layout.Players;
++					child.Bounds = new WidgetBounds(
++						surface.X - layout.Main.X, surface.Y - layout.Main.Y,
++						surface.Width, surface.Height);
++				}
+ 			}
+ 
+ 			LayoutTabRow(lobby.GetOrNull("SKIRMISH_TABS"), layout.Tabs, 3);
+@@ -607,6 +612,7 @@
+ 			if (chatRoot != null)
+ 			{
+ 				chatRoot.Bounds = layout.Chat;
++				chatRoot.IsVisible = () => panel != PanelType.Servers;
+ 				LayoutIosChat(chatRoot, layout, policy);
+ 			}
+ 
+@@ -622,7 +628,7 @@
+ 				layout.Position.Width, layout.Position.Height);
+ 
+ 			LayoutIosPlayerRows(layout, policy);
+-			ResizeMapPreview(mapRoot, policy);
++			IosMapPreviewLayout.Apply(mapRoot, policy);
+ 		}
+ 
+ 		static void LayoutTabRow(Widget container, WidgetBounds bounds, int count)
+@@ -795,35 +801,6 @@
+ 			if (text != null)
+ 				text.Bounds = new WidgetBounds(textX, layout.ChatInput.Y,
+ 					Math.Max(0, layout.ChatInput.Width - textX), layout.ChatInput.Height);
+-		}
+-
+-		static void ResizeMapPreview(Widget mapRoot, IosMenuLayoutPolicy policy)
+-		{
+-			if (mapRoot == null)
+-				return;
+-
+-			var preview = mapRoot.Children.FirstOrDefault(child => child.Id == "MAP_PREVIEW");
+-			if (preview == null)
+-				return;
+-
+-			preview.Bounds = new WidgetBounds(0, 0, mapRoot.Bounds.Width, mapRoot.Bounds.Height);
+-			foreach (var section in preview.Children)
+-			{
+-				section.Bounds = new WidgetBounds(0, 0, preview.Bounds.Width, preview.Bounds.Height);
+-				if (section.Id is not ("MAP_LARGE" or "MAP_SMALL"))
+-					continue;
+-
+-				var titleHeight = Math.Min(policy.MinimumTarget, section.Bounds.Height);
+-				var mapBackground = section.GetOrNull("MAP_BG");
+-				if (mapBackground != null)
+-					mapBackground.Bounds = new WidgetBounds(0, 0, section.Bounds.Width,
+-						Math.Max(0, section.Bounds.Height - titleHeight));
+-
+-				var mapTitle = section.GetOrNull("MAP_TITLE");
+-				if (mapTitle != null)
+-					mapTitle.Bounds = new WidgetBounds(0, mapBackground?.Bounds.Bottom ?? 0,
+-						section.Bounds.Width, titleHeight);
+-			}
+ 		}
+ 
+ 		bool disposed;
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/Lobby/MapPreviewLogic.cs b/OpenRA.Mods.Common/Widgets/Logic/Lobby/MapPreviewLogic.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/Lobby/MapPreviewLogic.cs	2026-08-26 15:43:11
++++ b/OpenRA.Mods.Common/Widgets/Logic/Lobby/MapPreviewLogic.cs	2026-08-26 15:43:11
+@@ -41,6 +41,7 @@
+ 		readonly int blinkTickLength = 10;
+ 		readonly Dictionary<PreviewStatus, Widget[]> previewWidgets = new();
+ 		readonly Func<(MapPreview Map, Session.MapStatus Status)> getMap;
++		readonly Widget widget;
+ 
+ 		enum PreviewStatus
+ 		{
+@@ -68,6 +69,7 @@
+ 			Action<MapPreviewWidget, MapPreview, MouseInput> onMouseDown, Func<Dictionary<int, SpawnOccupant>> getSpawnOccupants,
+ 			bool mapUpdatesEnabled, Action<string> onMapUpdate, Func<HashSet<int>> getDisabledSpawnPoints, bool showUnoccupiedSpawnpoints)
+ 		{
++			this.widget = widget;
+ 			this.getMap = getMap;
+ 
+ 			Widget SetupMapPreview(Widget parent)
+@@ -87,21 +89,10 @@
+ 
+ 				var titleLabel = parent.Get<LabelWithTooltipWidget>("MAP_TITLE");
+ 				titleLabel.IsVisible = () => getMap().Map != MapCache.UnknownMap;
+-				var font = Game.Renderer.Fonts[titleLabel.Font];
+-				var titleCache = new CachedTransform<string, string>(str =>
+-				{
+-					var truncatedText = WidgetUtils.TruncateText(str, titleLabel.Bounds.Width, font);
++				var titleCache = ResponsiveTextCache.WithTooltip(titleLabel);
++				titleLabel.GetText = () => titleCache.Update(getMap().Map.Title, titleLabel.Bounds.Width,
++					Game.Renderer.Fonts[titleLabel.Font]);
+ 
+-					if (str != truncatedText)
+-						titleLabel.GetTooltipText = () => str;
+-					else
+-						titleLabel.GetTooltipText = null;
+-
+-					return truncatedText;
+-				});
+-
+-				titleLabel.GetText = () => titleCache.Update(getMap().Map.Title);
+-
+ 				return parent;
+ 			}
+ 
+@@ -111,18 +102,15 @@
+ 			Widget SetupAuthorAndMapType(Widget parent)
+ 			{
+ 				var typeLabel = parent.Get<LabelWidget>("MAP_TYPE");
+-				var typeCache = new CachedTransform<MapPreview, string>(
+-					m => m.Categories.FirstOrDefault() ?? "");
++				var typeCache = new ResponsiveTextCache();
++				typeLabel.GetText = () => typeCache.Update(getMap().Map.Categories.FirstOrDefault() ?? "", typeLabel.Bounds.Width,
++					Game.Renderer.Fonts[typeLabel.Font]);
+ 
+-				typeLabel.GetText = () => typeCache.Update(getMap().Map);
+-
+ 				var authorLabel = parent.Get<LabelWidget>("MAP_AUTHOR");
+-				var font = Game.Renderer.Fonts[authorLabel.Font];
+-				var truncateCache = new CachedTransform<MapPreview, string>(
+-					m => WidgetUtils.TruncateText(authorCache.Update(m.Author), authorLabel.Bounds.Width, font));
++				var truncateCache = new ResponsiveTextCache();
++				authorLabel.GetText = () => truncateCache.Update(authorCache.Update(getMap().Map.Author), authorLabel.Bounds.Width,
++					Game.Renderer.Fonts[authorLabel.Font]);
+ 
+-				authorLabel.GetText = () => truncateCache.Update(getMap().Map);
+-
+ 				return parent;
+ 			}
+ 
+@@ -245,6 +233,14 @@
+ 			visibleWidgets = previewWidgets[currentStatus];
+ 			foreach (var widget in visibleWidgets)
+ 				widget.IsVisible = () => true;
++
++			if (Platform.IsIOS && widget.Parent != null)
++			{
++				var snapshot = IosScreenMetrics.SnapshotFor(Game.Renderer.Resolution);
++				IosMapPreviewLayout.ApplyActionState(widget.Parent,
++					IosMenuLayoutPolicy.Create(true, snapshot),
++					currentStatus == PreviewStatus.UpdateDownloadAvailable);
++			}
+ 		}
+ 
+ 		bool retryTriggered = false;
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/ServerListLogic.cs b/OpenRA.Mods.Common/Widgets/Logic/ServerListLogic.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/ServerListLogic.cs	2026-08-26 15:43:11
++++ b/OpenRA.Mods.Common/Widgets/Logic/ServerListLogic.cs	2026-08-26 15:43:11
+@@ -15,7 +15,6 @@
+ using System.Threading;
+ using System.Threading.Tasks;
+ using BeaconLib;
+-using OpenRA.Graphics;
+ using OpenRA.Mods.Common.Network;
+ using OpenRA.Network;
+ using OpenRA.Primitives;
+@@ -127,6 +126,32 @@
+ 
+ 	public class ServerListLogic : ChromeLogic
+ 	{
++		public static (WidgetBounds ServerList, WidgetBounds Progress) ReflowNoticeSurfaces(
++			WidgetBounds serverList, WidgetBounds progress, int noticeHeight, bool show, bool iosEnabled)
++		{
++			var direction = show ? 1 : -1;
++			var reflowedList = new WidgetBounds(
++				serverList.X, serverList.Y + direction * noticeHeight,
++				serverList.Width, serverList.Height - direction * noticeHeight);
++			var reflowedProgress = iosEnabled
++				? new WidgetBounds(
++					progress.X, progress.Y + direction * noticeHeight,
++					progress.Width, progress.Height - direction * noticeHeight)
++				: progress;
++			return (reflowedList, reflowedProgress);
++		}
++
++		public static bool ReflowSelection(
++			Widget selectedServer, IosMenuLayoutPolicy policy,
++			bool hasSelection, int clientCount, bool hasClientContainer, bool hasClientList)
++		{
++			var hasClients = hasSelection && clientCount > 0 && hasClientContainer && hasClientList;
++			if (policy != null)
++				IosMultiplayerDetailsLayout.Apply(selectedServer, policy, hasClients);
++
++			return hasClients;
++		}
++
+ 		[FluentReference]
+ 		const string SearchStatusFailed = "label-search-status-failed";
+ 
+@@ -219,6 +244,7 @@
+ 		readonly ScrollItemWidget serverTemplate;
+ 		readonly ScrollItemWidget headerTemplate;
+ 		readonly Widget noticeContainer;
++		readonly Widget selectedServer;
+ 		readonly Widget clientContainer;
+ 		readonly ScrollPanelWidget clientList;
+ 		readonly ScrollItemWidget clientTemplate, clientHeader;
+@@ -295,6 +321,7 @@
+ 			serverList = widget.Get<ScrollPanelWidget>("SERVER_LIST");
+ 			headerTemplate = serverList.Get<ScrollItemWidget>("HEADER_TEMPLATE");
+ 			serverTemplate = serverList.Get<ScrollItemWidget>("SERVER_TEMPLATE");
++			selectedServer = widget.GetOrNull("SELECTED_SERVER");
+ 
+ 			noticeContainer = widget.GetOrNull("NOTICE_CONTAINER");
+ 			if (noticeContainer != null)
+@@ -306,17 +333,19 @@
+ 			}
+ 
+ 			var noticeWatcher = widget.Get<LogicTickerWidget>("NOTICE_WATCHER");
++			var progressText = widget.Get<LabelWidget>("PROGRESS_LABEL");
+ 			if (noticeWatcher != null && noticeContainer != null)
+ 			{
+-				var containerHeight = noticeContainer.Bounds.Height;
+ 				noticeWatcher.OnTick = () =>
+ 				{
+ 					var show = services.ModVersionStatus != ModVersionStatus.NotChecked && services.ModVersionStatus != ModVersionStatus.Latest;
+ 					if (show != showNotices)
+ 					{
+-						var dir = show ? 1 : -1;
+-						serverList.Bounds.Y += dir * containerHeight;
+-						serverList.Bounds.Height -= dir * containerHeight;
++						var containerHeight = noticeContainer.Bounds.Height;
++						var noticeLayout = ReflowNoticeSurfaces(
++							serverList.Bounds, progressText.Bounds, containerHeight, show, Platform.IsIOS);
++						serverList.Bounds = noticeLayout.ServerList;
++						progressText.Bounds = noticeLayout.Progress;
+ 						showNotices = show;
+ 					}
+ 				};
+@@ -333,7 +362,6 @@
+ 
+ 			// Display the progress label over the server list
+ 			// The text is only visible when the list is empty
+-			var progressText = widget.Get<LabelWidget>("PROGRESS_LABEL");
+ 			progressText.IsVisible = () => searchStatus != SearchStatus.Hidden;
+ 			progressText.GetText = ProgressLabelText;
+ 
+@@ -437,19 +465,8 @@
+ 			var mapTitle = widget.GetOrNull<LabelWithTooltipWidget>("SELECTED_MAP");
+ 			if (mapTitle != null)
+ 			{
+-				var font = Game.Renderer.Fonts[mapTitle.Font];
+-				var title = new CachedTransform<MapPreview, string>(m =>
+-				{
+-					var truncated = WidgetUtils.TruncateText(m.Title, mapTitle.Bounds.Width, font);
++				var title = ResponsiveTextCache.WithTooltip(mapTitle);
+ 
+-					if (m.Title != truncated)
+-						mapTitle.GetTooltipText = () => m.Title;
+-					else
+-						mapTitle.GetTooltipText = null;
+-
+-					return truncated;
+-				});
+-
+ 				mapTitle.GetText = () =>
+ 				{
+ 					if (currentMap == null)
+@@ -461,7 +478,8 @@
+ 					if (currentMap.Class == MapClassification.Unknown)
+ 						return mapClassificationUnknown;
+ 
+-					return title.Update(currentMap);
++					return title.Update(currentMap.Title, mapTitle.Bounds.Width,
++						Game.Renderer.Fonts[mapTitle.Font]);
+ 				};
+ 			}
+ 
+@@ -486,9 +504,9 @@
+ 				modVersion.IsVisible = () => currentServer != null;
+ 				modVersion.GetColor = () => currentServer.IsCompatible ? modVersion.TextColor : incompatibleVersionColor;
+ 
+-				var font = Game.Renderer.Fonts[modVersion.Font];
+-				var version = new CachedTransform<GameServer, string>(s => WidgetUtils.TruncateText(s.ModLabel, modVersion.Bounds.Width, font));
+-				modVersion.GetText = () => version.Update(currentServer);
++				var version = new ResponsiveTextCache();
++				modVersion.GetText = () => version.Update(currentServer.ModLabel, modVersion.Bounds.Width,
++					Game.Renderer.Fonts[modVersion.Font]);
+ 			}
+ 
+ 			var selectedPlayers = widget.GetOrNull<LabelWidget>("SELECTED_PLAYERS");
+@@ -744,6 +762,13 @@
+ 		{
+ 			currentServer = server;
+ 			currentMap = server != null ? modData.MapCache[server.Map] : null;
++			var iosPolicy = Platform.IsIOS
++				? IosMenuLayoutPolicy.Create(true, IosScreenMetrics.SnapshotFor(Game.Renderer.Resolution))
++				: null;
++			var hasClients = ReflowSelection(
++				selectedServer, iosPolicy,
++				server != null, server?.Clients.Length ?? 0,
++				clientContainer != null, clientList != null);
+ 
+ 			// Can only show factions if the server is running the same mod
+ 			if (server != null && mapPreview != null)
+@@ -757,15 +782,15 @@
+ 				mapPreview.DisabledSpawnPoints = () => server.DisabledSpawnPoints;
+ 			}
+ 
+-			if (server == null || server.Clients.Length == 0)
++			if (!hasClients)
+ 			{
+-				if (joinButton != null)
++				if (!Platform.IsIOS && joinButton != null)
+ 					joinButton.Bounds.Y = joinButtonY;
+ 
+ 				return;
+ 			}
+ 
+-			if (joinButton != null)
++			if (!Platform.IsIOS && joinButton != null && clientContainer != null)
+ 				joinButton.Bounds.Y = clientContainer.Bounds.Bottom;
+ 
+ 			if (clientList == null)
+@@ -799,6 +824,12 @@
+ 				if (group.Length > 0)
+ 				{
+ 					var header = ScrollItemWidget.Setup(clientHeader, () => false, () => { });
++					if (iosPolicy != null)
++					{
++						header.Bounds.Width = clientList.Bounds.Width;
++						IosMultiplayerDetailsLayout.ApplyClientRow(header, iosPolicy, true);
++					}
++
+ 					header.Get<LabelWidget>("LABEL").GetText = () => group;
+ 					clientList.AddChild(header);
+ 				}
+@@ -806,21 +837,21 @@
+ 				foreach (var option in kv.Value)
+ 				{
+ 					var o = option;
+-					var playerName = new CachedTransform<(MapStatus, int, SpriteFont), string>(s =>
+-					{
+-						var name = o.IsBot
+-							? LobbyUtils.ResolveBotDisplayName(currentMap, o.Name)
+-							: o.Name;
++					var playerName = new ResponsiveTextCache();
+ 
+-						return WidgetUtils.TruncateText(name, s.Item2, s.Item3);
+-					});
+-
+ 					var item = ScrollItemWidget.Setup(clientTemplate, () => false, () => { });
++					if (iosPolicy != null)
++					{
++						item.Bounds.Width = clientList.Bounds.Width;
++						IosMultiplayerDetailsLayout.ApplyClientRow(item, iosPolicy, false);
++					}
++
+ 					if (!o.IsSpectator && server.Mod == modData.Manifest.Id)
+ 					{
+ 						var label = item.Get<LabelWidget>("LABEL");
+-						var font = Game.Renderer.Fonts[label.Font];
+-						label.GetText = () => playerName.Update((currentMap.Status, label.Bounds.Width, font));
++						label.GetText = () => playerName.Update(
++							o.IsBot ? LobbyUtils.ResolveBotDisplayName(currentMap, o.Name) : o.Name,
++							label.Bounds.Width, Game.Renderer.Fonts[label.Font]);
+ 						label.GetColor = () => o.Color;
+ 
+ 						var flag = item.Get<ImageWidget>("FLAG");
+@@ -831,17 +862,26 @@
+ 					else
+ 					{
+ 						var label = item.Get<LabelWidget>("NOFLAG_LABEL");
+-						var font = Game.Renderer.Fonts[label.Font];
+ 
+ 						// Force spectator color to prevent spoofing by the server
+ 						var color = o.IsSpectator ? Color.White : o.Color;
+-						label.GetText = () => playerName.Update((currentMap.Status, label.Bounds.Width, font));
++						label.GetText = () => playerName.Update(
++							o.IsBot ? LobbyUtils.ResolveBotDisplayName(currentMap, o.Name) : o.Name,
++							label.Bounds.Width, Game.Renderer.Fonts[label.Font]);
+ 						label.GetColor = () => color;
+ 					}
+ 
+ 					clientList.AddChild(item);
+ 				}
+ 			}
++
++			if (iosPolicy != null)
++			{
++				ReflowSelection(
++					selectedServer, iosPolicy, true, server.Clients.Length,
++					clientContainer != null, clientList != null);
++				clientList.Layout.AdjustChildren();
++			}
+ 		}
+ 
+ 		void RefreshServerListInner(List<GameServer> games)
+@@ -942,7 +982,9 @@
+ 						var title = item.GetOrNull<LabelWithTooltipWidget>("TITLE");
+ 						if (title != null)
+ 						{
+-							WidgetUtils.TruncateLabelToTooltip(title, game.Name);
++							var titleText = ResponsiveTextCache.WithTooltip(title);
++							title.GetText = () => titleText.Update(game.Name, title.Bounds.Width,
++								Game.Renderer.Fonts[title.Font]);
+ 							title.GetColor = () => canJoin ? title.TextColor : incompatibleGameColor;
+ 						}
+ 
+@@ -959,7 +1001,7 @@
+ 							auth.IsVisible = () => game.Authentication;
+ 							auth.GetImageName = () => canJoin ? "authentication" : "authentication-disabled";
+ 
+-							if (game.Protected && password != null)
++							if (!Platform.IsIOS && game.Protected && password != null)
+ 								auth.Bounds.X -= password.Bounds.Width + 5;
+ 						}
+ 
+@@ -1010,9 +1052,9 @@
+ 						var location = item.GetOrNull<LabelWidget>("LOCATION");
+ 						if (location != null)
+ 						{
+-							var font = Game.Renderer.Fonts[location.Font];
+-							var label = WidgetUtils.TruncateText(game.Location, location.Bounds.Width, font);
+-							location.GetText = () => label;
++							var locationText = new ResponsiveTextCache();
++							location.GetText = () => locationText.Update(game.Location, location.Bounds.Width,
++								Game.Renderer.Fonts[location.Font]);
+ 							location.GetColor = () => canJoin ? location.TextColor : incompatibleGameColor;
+ 						}
+ 
+diff -ruN a/OpenRA.Test/IosLobbyResponsiveLayoutTest.cs b/OpenRA.Test/IosLobbyResponsiveLayoutTest.cs
+--- a/OpenRA.Test/IosLobbyResponsiveLayoutTest.cs	1969-12-31 16:00:00
++++ b/OpenRA.Test/IosLobbyResponsiveLayoutTest.cs	2026-08-26 15:43:11
+@@ -0,0 +1,1447 @@
++#region Copyright & License Information
++/*
++ * Copyright (c) The OpenRA Developers and Contributors
++ * This file is part of OpenRA, which is free software. It is
++ * made available under the terms of the GNU General Public License
++ * as published by the Free Software Foundation, either version 3 of
++ * the License, or (at your option) any later version.
++ */
++#endregion
++
++using System;
++using System.Collections.Generic;
++using System.IO;
++using System.Linq;
++using System.Reflection;
++using System.Runtime.Serialization;
++using NUnit.Framework;
++using OpenRA.Graphics;
++using OpenRA.Mods.Common.Widgets;
++using OpenRA.Mods.Common.Widgets.Logic;
++using OpenRA.Platforms.Default;
++using OpenRA.Primitives;
++using OpenRA.Widgets;
++
++namespace OpenRA.Test
++{
++	[TestFixture]
++	[NonParallelizable]
++	public sealed class IosLobbyResponsiveLayoutTest
++	{
++		static IEnumerable<TestCaseData> SupportedDevices()
++		{
++			yield return Device("iPhone-932", 1560, 720, 932, 430, 59, 0, 59, 21);
++			yield return Device("iPhone-844", 1558, 720, 844, 390, 47, 0, 47, 21);
++			yield return Device("iPad-mini-1133", 1133, 744, 1133, 744, 0, 0, 0, 20);
++			yield return Device("iPad-mini-1024", 1024, 768, 1024, 768, 0, 0, 0, 20);
++			yield return Device("iPad-Air", 1180, 820, 1180, 820, 0, 0, 0, 20);
++			yield return Device("iPad-Pro", 1366, 1024, 1366, 1024, 0, 0, 0, 20);
++		}
++
++		static IEnumerable<TestCaseData> SupportedTablets()
++		{
++			yield return Device("iPad-mini-1133", 1133, 744, 1133, 744, 0, 0, 0, 20);
++			yield return Device("iPad-mini-1024", 1024, 768, 1024, 768, 0, 0, 0, 20);
++			yield return Device("iPad-Air", 1180, 820, 1180, 820, 0, 0, 0, 20);
++			yield return Device("iPad-Pro", 1366, 1024, 1366, 1024, 0, 0, 0, 20);
++		}
++
++		static IEnumerable<TestCaseData> SupportedPhones()
++		{
++			yield return Device("iPhone-932", 1560, 720, 932, 430, 59, 0, 59, 21);
++			yield return Device("iPhone-844", 1558, 720, 844, 390, 47, 0, 47, 21);
++		}
++
++		static IEnumerable<TestCaseData> PhoneLocales()
++		{
++			foreach (var locale in new[] { "en-US", "zh-CN" })
++			{
++				yield return PhoneLocale(
++					"iPhone-932", locale, 1560, 720, 932, 430, 59, 0, 59, 21);
++				yield return PhoneLocale(
++					"iPhone-844", locale, 1558, 720, 844, 390, 47, 0, 47, 21);
++			}
++		}
++
++		[TestCaseSource(nameof(SupportedTablets))]
++		public void TabletPlayableMapUsesTheMaximumLargePreviewSurface(IosScreenSnapshot snapshot)
++		{
++			var policy = IosMenuLayoutPolicy.Create(true, snapshot);
++			var lobby = IosLobbyLayout.Create(policy.ContentBounds.Width, policy.ContentBounds.Height, policy);
++			var createServer = IosServerCreationLayout.Create(policy);
++			foreach (var card in new[] { Local(lobby.Map), Local(createServer.MapPreview) })
++			{
++				var large = IosMapPreviewLayout.Create(card.Width, card.Height, policy, false);
++				var small = IosMapPreviewLayout.Create(card.Width, card.Height, policy, true);
++				var playableBand = 3 * policy.MinimumReadableTextHeight + 3 * policy.Gap;
++				var expectedMapSize = Math.Min(card.Width,
++					Math.Max(policy.MinimumTarget, card.Height - playableBand));
++
++				Assert.That(large.MapSurface.Height, Is.EqualTo(expectedMapSize),
++					"Playable map layout must reserve only title/type/author and their necessary gaps.");
++				Assert.That(large.MapSurface.Height, Is.GreaterThan(small.MapSurface.Height),
++					"Large and small tablet states must not collapse to identical preview geometry.");
++				AssertVisibleRoles(card,
++					large.MapSurface, large.Title, large.PrimaryText, large.SecondaryText);
++			}
++		}
++
++		[TestCaseSource(nameof(SupportedPhones))]
++		public void PhoneSingleActionsAndDualStateUseFullWidthStateSpecificSlots(
++			IosScreenSnapshot snapshot)
++		{
++			var policy = IosMenuLayoutPolicy.Create(true, snapshot);
++			var card = Local(IosServerCreationLayout.Create(policy).MapPreview);
++			var layout = IosMapPreviewLayout.Create(card.Width, card.Height, policy, true);
++			Assert.That(layout.SingleAction.X, Is.EqualTo(layout.TextColumn.X));
++			Assert.That(layout.SingleAction.Width, Is.EqualTo(layout.TextColumn.Width));
++			AssertPhysicalTarget(layout.SingleAction, policy);
++			Assert.That(layout.DualPrimaryAction.X, Is.EqualTo(layout.TextColumn.X));
++			Assert.That(layout.DualPrimaryAction.Width, Is.EqualTo(layout.TextColumn.Width));
++			Assert.That(layout.DualSecondaryAction.X, Is.EqualTo(layout.TextColumn.X));
++			Assert.That(layout.DualSecondaryAction.Width, Is.EqualTo(layout.TextColumn.Width));
++			Assert.That(layout.DualSecondaryAction.Bottom,
++				Is.LessThanOrEqualTo(layout.DualPrimaryAction.Y));
++			AssertPhysicalTarget(layout.DualPrimaryAction, policy);
++			AssertPhysicalTarget(layout.DualSecondaryAction, policy);
++
++			var host = BuildMapPreviewTree(card);
++			var preview = Direct(host, "MAP_PREVIEW");
++			IosMapPreviewLayout.Apply(host, policy);
++			Assert.That(Direct(Direct(preview, "MAP_DOWNLOAD_AVAILABLE"), "MAP_INSTALL").Bounds,
++				Is.EqualTo(layout.SingleAction));
++			Assert.That(Direct(preview, "MAP_UPDATE").Bounds, Is.EqualTo(layout.SingleAction));
++			Assert.That(Direct(preview, "MAP_RETRY").Bounds, Is.EqualTo(layout.SingleAction));
++
++			IosMapPreviewLayout.ApplyActionState(host, policy, true);
++			var update = Direct(preview, "MAP_UPDATE").Bounds;
++			var install = Direct(Direct(preview, "MAP_UPDATE_DOWNLOAD_AVAILABLE"), "MAP_INSTALL").Bounds;
++			Assert.That(update, Is.EqualTo(layout.DualPrimaryAction));
++			Assert.That(install, Is.EqualTo(layout.DualSecondaryAction));
++			Assert.That(update.ToRectangle().IntersectsWith(install.ToRectangle()), Is.False);
++			AssertPhysicalTarget(update, policy);
++			AssertPhysicalTarget(install, policy);
++
++			IosMapPreviewLayout.ApplyActionState(host, policy, false);
++			Assert.That(Direct(preview, "MAP_UPDATE").Bounds, Is.EqualTo(layout.SingleAction));
++		}
++
++		[TestCaseSource(nameof(PhoneLocales))]
++		public void PhoneLocalizedActionsAndLongStatusesRoundTripWithoutElision(
++			IosScreenSnapshot snapshot, string locale)
++		{
++			using var fonts = new ActualIosFontRenderer();
++			var policy = IosMenuLayoutPolicy.Create(true, snapshot);
++			var card = Local(IosServerCreationLayout.Create(policy).MapPreview);
++			var layout = IosMapPreviewLayout.Create(card.Width, card.Height, policy, true);
++			var host = BuildMapPreviewTree(card);
++			var preview = Direct(host, "MAP_PREVIEW");
++
++			var installText = FluentValue(locale, "chrome.ftl", "button-map-download-available-install");
++			var dualInstallText = FluentValue(
++				locale, "chrome.ftl", "button-map-update-download-available-install");
++			var updateText = FluentValue(locale, "chrome.ftl", "button-map-preview-update");
++			var retryText = FluentValue(locale, "common.ftl", "button-retry-install");
++			var downloadInstall = (ButtonWidget)Direct(
++				Direct(preview, "MAP_DOWNLOAD_AVAILABLE"), "MAP_INSTALL");
++			var dualInstall = (ButtonWidget)Direct(
++				Direct(preview, "MAP_UPDATE_DOWNLOAD_AVAILABLE"), "MAP_INSTALL");
++			var update = (ButtonWidget)Direct(preview, "MAP_UPDATE");
++			var retry = (ButtonWidget)Direct(preview, "MAP_RETRY");
++			SetButtonText(downloadInstall, installText);
++			SetButtonText(dualInstall, dualInstallText);
++			SetButtonText(update, updateText);
++			SetButtonText(retry, retryText);
++
++			var unavailable = Direct(preview, "MAP_UNAVAILABLE");
++			var updateAvailable = Direct(preview, "MAP_UPDATE_AVAILABLE");
++			SetLabelText((LabelWidget)Direct(unavailable, "a"),
++				FluentValue(locale, "chrome.ftl", "label-map-unavailable-a"));
++			SetLabelText((LabelWidget)Direct(unavailable, "b"),
++				FluentValue(locale, "chrome.ftl", "label-map-unavailable-b"));
++			SetLabelText((LabelWidget)Direct(updateAvailable, "a"),
++				FluentValue(locale, "chrome.ftl", "label-map-update-available-a"));
++			SetLabelText((LabelWidget)Direct(updateAvailable, "b"),
++				FluentValue(locale, "chrome.ftl", "label-map-update-available-b"));
++
++			IosMapPreviewLayout.Apply(host, policy);
++			Assert.Multiple(() =>
++			{
++				Assert.That(layout.StatusText.Width, Is.EqualTo(layout.TextColumn.Width));
++				Assert.That(layout.SecondaryStatusText.Width, Is.EqualTo(layout.TextColumn.Width),
++					"Both long-status lines need the full phone text column.");
++				Assert.That(layout.SecondaryStatusText.ToRectangle()
++					.IntersectsWith(layout.SingleAction.ToRectangle()), Is.False);
++				foreach (var (button, expected) in new[]
++				{
++					(downloadInstall, installText), (update, updateText), (retry, retryText)
++				})
++				{
++					Assert.That(button.Bounds, Is.EqualTo(layout.SingleAction));
++					Assert.That(button.GetText(), Is.EqualTo(expected),
++						$"{locale} single-action text must remain complete and unambiguous.");
++				}
++
++				foreach (var label in new[] { unavailable, updateAvailable }
++					.SelectMany(section => section.Children.OfType<LabelWidget>()))
++					AssertTwoLineRoundTrip(label, locale);
++			});
++
++			IosMapPreviewLayout.ApplyActionState(host, policy, true);
++			Assert.Multiple(() =>
++			{
++				Assert.That(update.Bounds, Is.EqualTo(layout.DualPrimaryAction));
++				Assert.That(dualInstall.Bounds, Is.EqualTo(layout.DualSecondaryAction));
++				Assert.That(update.GetText(), Is.EqualTo(updateText),
++					$"{locale} dual Update text must remain complete.");
++				Assert.That(dualInstall.GetText(), Is.EqualTo(dualInstallText),
++					$"{locale} dual Install text must remain complete.");
++				AssertPositiveContained(layout.TextColumn, update.Bounds);
++				AssertPositiveContained(layout.TextColumn, dualInstall.Bounds);
++				Assert.That(update.Bounds.ToRectangle().IntersectsWith(dualInstall.Bounds.ToRectangle()), Is.False);
++				Assert.That(update.Bounds.ToRectangle().IntersectsWith(layout.Title.ToRectangle()), Is.False);
++				Assert.That(dualInstall.Bounds.ToRectangle().IntersectsWith(layout.Title.ToRectangle()), Is.False);
++				Assert.That(update.Bounds.ToRectangle().IntersectsWith(layout.MapSurface.ToRectangle()), Is.False);
++				Assert.That(dualInstall.Bounds.ToRectangle().IntersectsWith(layout.MapSurface.ToRectangle()), Is.False);
++				AssertCompleteButtonText(update, updateText, locale);
++				AssertCompleteButtonText(dualInstall, dualInstallText, locale);
++			});
++		}
++
++		[TestCaseSource(nameof(PhoneLocales))]
++		public void PhoneLocalizedDynamicMapStatusesAndRetrySearchRemainComplete(
++			IosScreenSnapshot snapshot, string locale)
++		{
++			using var fonts = new ActualIosFontRenderer();
++			var policy = IosMenuLayoutPolicy.Create(true, snapshot);
++			var card = Local(IosServerCreationLayout.Create(policy).MapPreview);
++			var layout = IosMapPreviewLayout.Create(card.Width, card.Height, policy, true);
++			var host = BuildMapPreviewTree(card);
++			var preview = Direct(host, "MAP_PREVIEW");
++			var searching = (LabelWidget)Direct(preview, "MAP_SEARCHING");
++			var error = (LabelWidget)Direct(preview, "MAP_ERROR");
++			var validating = (LabelWidget)Direct(Direct(preview, "MAP_VALIDATING"), "MAP_STATUS_VALIDATING");
++			var downloading = (LabelWidget)Direct(Direct(preview, "MAP_DOWNLOADING"), "MAP_STATUS_DOWNLOADING");
++			var retry = (ButtonWidget)Direct(preview, "MAP_RETRY");
++
++			SetLabelText(searching, FluentValue(locale, "chrome.ftl", "label-map-preview-searching"));
++			SetLabelText(error, FluentValue(locale, "chrome.ftl", "label-map-preview-error"));
++			SetLabelText(validating, FluentValue(locale, "chrome.ftl", "label-map-validating-status"));
++			SetButtonText(retry, FluentValue(locale, "common.ftl", "button-retry-search"));
++			IosMapPreviewLayout.Apply(host, policy);
++
++			Assert.Multiple(() =>
++			{
++				foreach (var label in new[] { searching, error, validating })
++				{
++					Assert.That(label.Bounds, Is.EqualTo(layout.StatusText));
++					AssertTwoLineRoundTrip(label, locale);
++				}
++
++				Assert.That(retry.Bounds, Is.EqualTo(layout.SingleAction));
++				AssertCompleteButtonText(retry,
++					FluentValue(locale, "common.ftl", "button-retry-search"), locale);
++			});
++
++			foreach (var text in new[]
++			{
++				FluentValue(locale, "common.ftl", "label-connecting"),
++				FormatFluent(locale, "common.ftl", "label-downloading-map",
++					("size", "9007199254740991")),
++				FormatFluent(locale, "common.ftl", "label-downloading-map-progress",
++					("size", "9007199254740991"), ("progress", "100"))
++			})
++			{
++				SetLabelText(downloading, text);
++				IosMapPreviewLayout.Apply(host, policy);
++				Assert.That(downloading.Bounds, Is.EqualTo(layout.StatusText));
++				AssertTwoLineRoundTrip(downloading, locale);
++			}
++		}
++
++		[TestCaseSource(nameof(SupportedDevices))]
++		public void PureMapLayoutsContainEveryVisibleRole(IosScreenSnapshot snapshot)
++		{
++			var policy = IosMenuLayoutPolicy.Create(true, snapshot);
++			var lobby = IosLobbyLayout.Create(policy.ContentBounds.Width, policy.ContentBounds.Height, policy);
++			var createServer = IosServerCreationLayout.Create(policy);
++			foreach (var card in new[] { Local(lobby.Map), Local(createServer.MapPreview) })
++			{
++				var large = IosMapPreviewLayout.Create(card.Width, card.Height, policy, false);
++				var small = IosMapPreviewLayout.Create(card.Width, card.Height, policy, true);
++
++				AssertMapFrame(card, large, policy, false);
++				AssertMapFrame(card, small, policy, true);
++				AssertVisibleRoles(card, large.MapSurface, large.Title, large.PrimaryText, large.SecondaryText);
++				AssertVisibleRoles(card, small.MapSurface, small.Title, small.StatusText, small.Progress);
++				AssertVisibleRoles(card, small.MapSurface, small.Title,
++					small.PrimaryText, small.SecondaryText, small.SingleAction);
++				AssertVisibleRoles(card, small.MapSurface, small.Title,
++					small.DualPrimaryAction, small.DualSecondaryAction);
++				AssertVisibleRoles(card, small.MapSurface, small.Title, small.StatusText, small.SingleAction);
++				AssertPhysicalTarget(small.SingleAction, policy);
++				AssertPhysicalTarget(small.DualPrimaryAction, policy);
++				AssertPhysicalTarget(small.DualSecondaryAction, policy);
++			}
++		}
++
++		[TestCaseSource(nameof(SupportedDevices))]
++		public void MapWidgetTreeLayoutsEveryStateAndIsIdempotent(IosScreenSnapshot snapshot)
++		{
++			var policy = IosMenuLayoutPolicy.Create(true, snapshot);
++			var card = Local(IosServerCreationLayout.Create(policy).MapPreview);
++			var host = BuildMapPreviewTree(card);
++			var preview = Direct(host, "MAP_PREVIEW");
++			var large = IosMapPreviewLayout.Create(card.Width, card.Height, policy, false);
++			var small = IosMapPreviewLayout.Create(card.Width, card.Height, policy, true);
++
++			IosMapPreviewLayout.Apply(host, policy);
++			var firstGeometry = Descendants(host).Select(widget => widget.Bounds).ToArray();
++			IosMapPreviewLayout.Apply(host, policy);
++			Assert.That(Descendants(host).Select(widget => widget.Bounds), Is.EqualTo(firstGeometry),
++				"Responsive map application must be deterministic when reapplied after resize/state work.");
++
++			Assert.That(preview.Bounds, Is.EqualTo(card));
++			foreach (var id in new[]
++			{
++				"MAP_LARGE", "MAP_SMALL", "MAP_AVAILABLE", "MAP_INCOMPATIBLE", "MAP_VALIDATING",
++				"MAP_DOWNLOAD_AVAILABLE", "MAP_UPDATE_DOWNLOAD_AVAILABLE", "MAP_UNAVAILABLE",
++				"MAP_DOWNLOADING", "MAP_UPDATE_AVAILABLE"
++			})
++				Assert.That(Direct(preview, id).Bounds, Is.EqualTo(card), $"{id} must cover the full card.");
++
++			AssertPreviewSection(Direct(preview, "MAP_LARGE"), large);
++			AssertPreviewSection(Direct(preview, "MAP_SMALL"), small);
++
++			var available = Direct(preview, "MAP_AVAILABLE");
++			Assert.That(Direct(available, "MAP_TYPE").Bounds, Is.EqualTo(large.PrimaryText));
++			Assert.That(Direct(available, "MAP_AUTHOR").Bounds, Is.EqualTo(large.SecondaryText));
++			var incompatible = Direct(preview, "MAP_INCOMPATIBLE");
++			Assert.That(Direct(incompatible, "MAP_STATUS_A").Bounds, Is.EqualTo(large.PrimaryText));
++			Assert.That(Direct(incompatible, "MAP_STATUS_B").Bounds, Is.EqualTo(large.SecondaryText));
++
++			var validating = Direct(preview, "MAP_VALIDATING");
++			Assert.That(Direct(validating, "MAP_STATUS_VALIDATING").Bounds, Is.EqualTo(small.StatusText));
++			Assert.That(Direct(validating, "MAP_VALIDATING_BAR").Bounds, Is.EqualTo(small.Progress));
++			var downloading = Direct(preview, "MAP_DOWNLOADING");
++			Assert.That(Direct(downloading, "MAP_STATUS_DOWNLOADING").Bounds, Is.EqualTo(small.StatusText));
++			Assert.That(Direct(downloading, "MAP_PROGRESSBAR").Bounds, Is.EqualTo(small.Progress));
++
++			var download = Direct(preview, "MAP_DOWNLOAD_AVAILABLE");
++			Assert.That(Direct(download, "MAP_TYPE").Bounds, Is.EqualTo(small.PrimaryText));
++			Assert.That(Direct(download, "MAP_AUTHOR").Bounds, Is.EqualTo(small.SecondaryText));
++			Assert.That(Direct(download, "MAP_INSTALL").Bounds, Is.EqualTo(small.SingleAction));
++			IosMapPreviewLayout.ApplyActionState(host, policy, true);
++			var updateDownload = Direct(preview, "MAP_UPDATE_DOWNLOAD_AVAILABLE");
++			var install = Direct(updateDownload, "MAP_INSTALL").Bounds;
++			var update = Direct(preview, "MAP_UPDATE").Bounds;
++			Assert.That(install, Is.EqualTo(small.DualSecondaryAction));
++			Assert.That(update, Is.EqualTo(small.DualPrimaryAction));
++			Assert.That(install, Is.Not.EqualTo(update),
++				"UpdateDownloadAvailable shows MAP_INSTALL and MAP_UPDATE together, so they need distinct slots.");
++			Assert.That(install.ToRectangle().IntersectsWith(update.ToRectangle()), Is.False);
++
++			Assert.That(Direct(preview, "MAP_SEARCHING").Bounds, Is.EqualTo(small.StatusText));
++			Assert.That(Direct(preview, "MAP_ERROR").Bounds, Is.EqualTo(small.StatusText));
++			IosMapPreviewLayout.ApplyActionState(host, policy, false);
++			Assert.That(Direct(preview, "MAP_RETRY").Bounds, Is.EqualTo(small.SingleAction));
++			var unavailable = Direct(preview, "MAP_UNAVAILABLE");
++			AssertLongStatusPair(unavailable, Direct(preview, "MAP_RETRY"), small, policy);
++			var updateAvailable = Direct(preview, "MAP_UPDATE_AVAILABLE");
++			AssertLongStatusPair(updateAvailable, Direct(preview, "MAP_UPDATE"), small, policy);
++
++			var wrappedStatusIds = new HashSet<string>
++			{
++				"MAP_SEARCHING", "MAP_ERROR", "MAP_STATUS_VALIDATING", "MAP_STATUS_DOWNLOADING"
++			};
++			foreach (var label in Descendants(host).OfType<LabelWidget>())
++			{
++				var isWrappedStatus = wrappedStatusIds.Contains(label.Id) ||
++					(label.Id is "a" or "b" &&
++						label.Parent?.Id is "MAP_UNAVAILABLE" or "MAP_UPDATE_AVAILABLE");
++				Assert.That(label.WordWrap, Is.EqualTo(isWrappedStatus),
++					isWrappedStatus ? $"{label.Id} must use its measured two-line slot."
++						: $"{label.Id} must remain a single-line, elided label.");
++				Assert.That(label.VAlign, Is.EqualTo(TextVAlign.Middle));
++				Assert.That(label.Bounds.Width, Is.GreaterThan(0));
++				Assert.That(label.Bounds.Height, Is.GreaterThan(0));
++				if (isWrappedStatus)
++					Assert.That(label.Bounds.Height / policy.LogicalPerPoint, Is.GreaterThanOrEqualTo(48));
++			}
++
++			foreach (var button in Descendants(host).OfType<ButtonWidget>())
++				AssertPhysicalTarget(button.Bounds, policy);
++		}
++
++		[TestCase(0, 220)]
++		[TestCase(172, 0)]
++		[TestCase(-7, 220)]
++		[TestCase(172, -9)]
++		public void MapPreviewApplyNoOpsForNonPositiveHostDimensions(int width, int height)
++		{
++			var policy = IosMenuLayoutPolicy.Create(true,
++				new IosScreenSnapshot(new Size(1560, 720), new Size(932, 430),
++					new IosSafeAreaInsets(59, 0, 59, 21)));
++			var host = BuildMapPreviewTree(new WidgetBounds(0, 0, width, height));
++			var before = Descendants(host).Select(widget => widget.Bounds).ToArray();
++
++			IosMapPreviewLayout.Apply(host, policy);
++
++			Assert.That(Descendants(host).Select(widget => widget.Bounds), Is.EqualTo(before),
++				"An unmeasured host must remain untouched instead of creating clamped 1x1 child geometry.");
++			Assert.That(Descendants(host).Any(widget =>
++				widget.Bounds.Width == 1 || widget.Bounds.Height == 1), Is.False);
++		}
++
++		[TestCase(0, 220)]
++		[TestCase(172, 0)]
++		[TestCase(-7, 220)]
++		[TestCase(172, -9)]
++		public void MapPreviewActionStateNoOpsForNonPositiveHostDimensions(int width, int height)
++		{
++			var policy = IosMenuLayoutPolicy.Create(true,
++				new IosScreenSnapshot(new Size(1560, 720), new Size(932, 430),
++					new IosSafeAreaInsets(59, 0, 59, 21)));
++			var host = BuildMapPreviewTree(new WidgetBounds(0, 0, width, height));
++			var before = Descendants(host).Select(widget => widget.Bounds).ToArray();
++
++			IosMapPreviewLayout.ApplyActionState(host, policy, true);
++
++			Assert.That(Descendants(host).Select(widget => widget.Bounds), Is.EqualTo(before),
++				"An unmeasured map host must not create clamped action geometry.");
++			Assert.That(Descendants(host).Any(widget =>
++				widget.Bounds.Width == 1 || widget.Bounds.Height == 1), Is.False);
++		}
++
++		[TestCase(0, 432)]
++		[TestCase(327, 0)]
++		[TestCase(-7, 432)]
++		[TestCase(327, -9)]
++		public void MultiplayerDetailsApplyNoOpsForNonPositiveHostDimensions(int width, int height)
++		{
++			var policy = IosMenuLayoutPolicy.Create(true,
++				new IosScreenSnapshot(new Size(1560, 720), new Size(932, 430),
++					new IosSafeAreaInsets(59, 0, 59, 21)));
++			var selected = BuildSelectedServerTree(width, height);
++			var before = Descendants(selected).Select(widget => widget.Bounds).ToArray();
++
++			IosMultiplayerDetailsLayout.Apply(selected, policy, true);
++
++			Assert.That(Descendants(selected).Select(widget => widget.Bounds), Is.EqualTo(before),
++				"An unmeasured details host must not create clamped summary or client geometry.");
++			Assert.That(Descendants(selected).Any(widget =>
++				widget.Bounds.Width == 1 || widget.Bounds.Height == 1), Is.False);
++		}
++
++		[Test]
++		public void ResponsiveApplicationsKeepChildCoordinatesLocalToNonZeroParents()
++		{
++			var policy = IosMenuLayoutPolicy.Create(true,
++				new IosScreenSnapshot(new Size(1560, 720), new Size(932, 430),
++					new IosSafeAreaInsets(59, 0, 59, 21)));
++			var mapHost = BuildMapPreviewTree(new WidgetBounds(73, 41, 327, 249));
++			IosMapPreviewLayout.Apply(mapHost, policy);
++			var mapCard = new WidgetBounds(0, 0, mapHost.Bounds.Width, mapHost.Bounds.Height);
++			Assert.That(Direct(mapHost, "MAP_PREVIEW").Bounds, Is.EqualTo(mapCard));
++			AssertPreviewSection(Direct(Direct(mapHost, "MAP_PREVIEW"), "MAP_SMALL"),
++				IosMapPreviewLayout.Create(mapCard.Width, mapCard.Height, policy, true));
++
++			var selected = BuildSelectedServerTree(327, 432);
++			selected.Bounds = new WidgetBounds(91, 53, 327, 432);
++			IosMultiplayerDetailsLayout.Apply(selected, policy, true);
++			AssertSelectedTree(selected,
++				IosMultiplayerDetailsLayout.Create(327, 432, policy, true));
++		}
++
++		[Test]
++		public void DisabledPoliciesLeaveExistingDesktopGeometryUntouched()
++		{
++			var policy = IosMenuLayoutPolicy.Create(false, 900, 600);
++			var map = BuildMapPreviewTree(new WidgetBounds(27, 31, 172, 220));
++			var mapGeometry = Descendants(map).Select(widget => widget.Bounds).ToArray();
++			IosMapPreviewLayout.Apply(map, policy);
++			Assert.That(Descendants(map).Select(widget => widget.Bounds), Is.EqualTo(mapGeometry));
++
++			var selected = BuildSelectedServerTree(174, 280);
++			var selectedGeometry = Descendants(selected).Select(widget => widget.Bounds).ToArray();
++			IosMultiplayerDetailsLayout.Apply(selected, policy, true);
++			Assert.That(Descendants(selected).Select(widget => widget.Bounds), Is.EqualTo(selectedGeometry));
++
++			var row = Container("TEMPLATE", Container("FLAG"), Label("LABEL"), Label("NOFLAG_LABEL"));
++			var rowGeometry = Descendants(row).Select(widget => widget.Bounds).ToArray();
++			IosMultiplayerDetailsLayout.ApplyClientRow(row, policy, false);
++			Assert.That(Descendants(row).Select(widget => widget.Bounds), Is.EqualTo(rowGeometry));
++		}
++
++		[TestCaseSource(nameof(SupportedDevices))]
++		public void LobbyAllocatesUsableNormalAndDedicatedServerSurfaces(IosScreenSnapshot snapshot)
++		{
++			var policy = IosMenuLayoutPolicy.Create(true, snapshot);
++			var layout = IosLobbyLayout.Create(policy.ContentBounds.Width, policy.ContentBounds.Height, policy);
++			var window = new WidgetBounds(0, 0, policy.ContentBounds.Width, policy.ContentBounds.Height);
++
++			AssertPositiveContained(window, layout.Main);
++			AssertPositiveContained(window, layout.Servers);
++			Assert.That(layout.Servers, Is.EqualTo(layout.Main),
++				"The Servers tab needs the complete main surface, not the short player-list region.");
++			AssertPositiveContained(layout.Main, layout.Map);
++			AssertPhysicalTarget(layout.Map, policy);
++			AssertPositiveContained(Local(layout.Main), RelativeTo(layout.Players, layout.Main));
++			Assert.That(RelativeTo(layout.Servers, layout.Main), Is.EqualTo(Local(layout.Main)));
++
++			if (policy.IsPhone)
++			{
++				Assert.That(layout.Map.Y, Is.EqualTo(layout.Main.Y));
++				Assert.That(layout.Map.Bottom, Is.EqualTo(layout.Main.Bottom));
++				Assert.That(layout.Players.Right, Is.LessThanOrEqualTo(layout.Map.X));
++				Assert.That(layout.Chat.Right, Is.LessThanOrEqualTo(layout.Map.X));
++				AssertPositiveContained(layout.Footer, layout.Start);
++				AssertPositiveContained(layout.Footer, layout.ChangeMap);
++				AssertPositiveContained(layout.Footer, layout.Disconnect);
++				Assert.That(layout.Start.Right, Is.LessThanOrEqualTo(layout.ChangeMap.X));
++				Assert.That(layout.ChangeMap.Right, Is.LessThanOrEqualTo(layout.Disconnect.X));
++				AssertPhysicalTarget(layout.Start, policy);
++				AssertPhysicalTarget(layout.ChangeMap, policy);
++				AssertPhysicalTarget(layout.Disconnect, policy);
++			}
++			else
++			{
++				Assert.That(layout.Map.Bottom, Is.LessThanOrEqualTo(layout.ChangeMap.Y));
++				Assert.That(layout.ChangeMap.X, Is.EqualTo(layout.Map.X));
++				Assert.That(layout.ChangeMap.Width, Is.EqualTo(layout.Map.Width));
++			}
++		}
++
++		[TestCaseSource(nameof(SupportedDevices))]
++		public void MultiplayerDetailsAreStateAwareContainedAndKeepJoinFixed(IosScreenSnapshot snapshot)
++		{
++			var policy = IosMenuLayoutPolicy.Create(true, snapshot);
++			var browser = IosMultiplayerBrowserLayout.Create(policy);
++			var summary = IosMultiplayerDetailsLayout.Create(browser.Details.Width, browser.Details.Height, policy, false);
++			var clients = IosMultiplayerDetailsLayout.Create(browser.Details.Width, browser.Details.Height, policy, true);
++
++			AssertDetailsLayout(summary, policy, false);
++			AssertDetailsLayout(clients, policy, true);
++			Assert.That(summary.Join, Is.EqualTo(clients.Join),
++				"Summary -> Clients must not move Join back to the desktop Y=255 coordinate.");
++			Assert.That(clients.DetailRows[4].Height, Is.Zero,
++				"The hidden SELECTED_PLAYERS summary row must be reclaimed while real clients are visible.");
++			Assert.That(clients.ClientList.Height, Is.GreaterThan(summary.ClientList.Height));
++			Assert.That((clients.ClientList.Height - summary.ClientList.Height) / policy.LogicalPerPoint,
++				Is.GreaterThanOrEqualTo(24));
++			Assert.That(clients.ClientList.Height / policy.LogicalPerPoint, Is.GreaterThanOrEqualTo(72),
++				"Client details must fit a 24pt header and at least one complete 48pt player row.");
++		}
++
++		[TestCaseSource(nameof(SupportedDevices))]
++		public void SelectedServerTreeSurvivesSummaryClientSummaryTransitions(IosScreenSnapshot snapshot)
++		{
++			var policy = IosMenuLayoutPolicy.Create(true, snapshot);
++			var browser = IosMultiplayerBrowserLayout.Create(policy);
++			var selected = BuildSelectedServerTree(browser.Details.Width, browser.Details.Height);
++			var clientContainer = Direct(selected, "CLIENT_LIST_CONTAINER");
++			var clientList = Direct(clientContainer, "MULTIPLAYER_CLIENT_LIST");
++			var join = Direct(selected, "JOIN_BUTTON");
++
++			IosMultiplayerDetailsLayout.Apply(selected, policy, false);
++			var summaryGeometry = Descendants(selected).Select(widget => widget.Bounds).ToArray();
++			var summaryJoin = join.Bounds;
++			var summary = IosMultiplayerDetailsLayout.Create(selected.Bounds.Width, selected.Bounds.Height, policy, false);
++			AssertSelectedTree(selected, summary);
++
++			IosMultiplayerDetailsLayout.Apply(selected, policy, true);
++			var clients = IosMultiplayerDetailsLayout.Create(selected.Bounds.Width, selected.Bounds.Height, policy, true);
++			AssertSelectedTree(selected, clients);
++			Assert.That(join.Bounds, Is.EqualTo(summaryJoin));
++			Assert.That(Direct(selected, "SELECTED_PLAYERS").Bounds.Height, Is.Zero);
++			Assert.That(clientList.Bounds, Is.EqualTo(new WidgetBounds(
++				0, 0, clientContainer.Bounds.Width, clientContainer.Bounds.Height)));
++
++			IosMultiplayerDetailsLayout.Apply(selected, policy, false);
++			Assert.That(Descendants(selected).Select(widget => widget.Bounds), Is.EqualTo(summaryGeometry),
++				"Summary -> Clients -> Summary must exactly restore the responsive summary geometry.");
++			Assert.That(join.Bounds, Is.EqualTo(summaryJoin));
++		}
++
++		[TestCaseSource(nameof(SupportedDevices))]
++		public void EmbeddedServerDetailsTolerateMissingClientListAndJoin(IosScreenSnapshot snapshot)
++		{
++			var policy = IosMenuLayoutPolicy.Create(true, snapshot);
++			var browser = IosMultiplayerBrowserLayout.Create(policy);
++			var selected = BuildEmbeddedSelectedServerTree(browser.Details.Width, browser.Details.Height);
++			var beforeBottom = Direct(selected, "SELECTED_PLAYERS").Bounds.Bottom;
++
++			Assert.DoesNotThrow(() => IosMultiplayerDetailsLayout.Apply(selected, policy, false));
++			var expected = IosMultiplayerDetailsLayout.Create(
++				selected.Bounds.Width, selected.Bounds.Height, policy, false, false);
++			Assert.That(expected.Join.Height, Is.Zero);
++			Assert.That(expected.ClientList.Bottom, Is.EqualTo(expected.Window.Bottom),
++				"A missing Join action must not leave a reserved footer band.");
++			Assert.That(Direct(selected, "MAP_BG").Bounds, Is.EqualTo(expected.MapBackground));
++			Assert.That(Direct(selected, "SELECTED_PLAYERS").Bounds, Is.EqualTo(expected.DetailRows[4]));
++			Assert.That(Direct(selected, "SELECTED_PLAYERS").Bounds.Bottom, Is.GreaterThan(beforeBottom));
++		}
++
++		[TestCaseSource(nameof(SupportedDevices))]
++		public void EmbeddedRequestedClientsWithoutListKeepsPlayerSummary(IosScreenSnapshot snapshot)
++		{
++			var policy = IosMenuLayoutPolicy.Create(true, snapshot);
++			var browser = IosMultiplayerBrowserLayout.Create(policy);
++			var selected = BuildEmbeddedSelectedServerTree(browser.Details.Width, browser.Details.Height);
++
++			IosMultiplayerDetailsLayout.Apply(selected, policy, true);
++
++			var expected = IosMultiplayerDetailsLayout.Create(
++				selected.Bounds.Width, selected.Bounds.Height, policy, false, false);
++			Assert.That(Direct(selected, "SELECTED_PLAYERS").Bounds, Is.EqualTo(expected.DetailRows[4]));
++			Assert.That(Direct(selected, "SELECTED_PLAYERS").Bounds.Height, Is.GreaterThan(0),
++				"A server payload cannot reclaim the player summary when this embedded tree has no client-list surface.");
++		}
++
++		[Test]
++		public void DynamicClientVisibilityControlsSummaryReclamation()
++		{
++			var policy = IosMenuLayoutPolicy.Create(true,
++				new IosScreenSnapshot(new Size(1560, 720), new Size(932, 430),
++					new IosSafeAreaInsets(59, 0, 59, 21)));
++			var browser = IosMultiplayerBrowserLayout.Create(policy);
++			var selected = BuildSelectedServerTree(browser.Details.Width, browser.Details.Height);
++			var dynamicList = Direct(Direct(selected, "CLIENT_LIST_CONTAINER"), "MULTIPLAYER_CLIENT_LIST");
++			dynamicList.Visible = true;
++			var dynamicallyVisible = false;
++			dynamicList.IsVisible = () => dynamicallyVisible;
++
++			IosMultiplayerDetailsLayout.Apply(
++				selected, policy, EvaluateDynamicVisibility(dynamicList));
++			Assert.That(Direct(selected, "SELECTED_PLAYERS").Bounds.Height, Is.GreaterThan(0));
++
++			dynamicallyVisible = true;
++			IosMultiplayerDetailsLayout.Apply(
++				selected, policy, EvaluateDynamicVisibility(dynamicList));
++			Assert.That(Direct(selected, "SELECTED_PLAYERS").Bounds.Height, Is.Zero);
++		}
++
++		[TestCaseSource(nameof(SupportedDevices))]
++		public void ExistingClientRowsReflowOnEveryPhoneAndTabletRelayout(IosScreenSnapshot snapshot)
++		{
++			var policy = IosMenuLayoutPolicy.Create(true, snapshot);
++			var browser = IosMultiplayerBrowserLayout.Create(policy);
++			var selected = BuildScrollableSelectedServerTree(
++				browser.Details.Width, browser.Details.Height, policy);
++			var container = Direct(selected, "CLIENT_LIST_CONTAINER");
++			var list = (ScrollPanelWidget)Direct(container, "MULTIPLAYER_CLIENT_LIST");
++
++			IosMultiplayerDetailsLayout.Apply(selected, policy, true);
++			AssertClientRowsReflowed(list, container, policy);
++
++			selected.Bounds = new WidgetBounds(
++				selected.Bounds.X, selected.Bounds.Y,
++				Math.Max(policy.MinimumTarget * 2, selected.Bounds.Width - policy.MinimumTarget),
++				selected.Bounds.Height);
++			foreach (var row in list.Children)
++				row.Bounds = new WidgetBounds(7, 9, 11, 13);
++
++			IosMultiplayerDetailsLayout.Apply(selected, policy, true);
++			AssertClientRowsReflowed(list, container, policy);
++		}
++
++		[TestCaseSource(nameof(SupportedDevices))]
++		public void DynamicClientHeaderAndRowsUseCurrentResponsiveGeometry(IosScreenSnapshot snapshot)
++		{
++			var policy = IosMenuLayoutPolicy.Create(true, snapshot);
++			var details = IosMultiplayerDetailsLayout.Create(
++				IosMultiplayerBrowserLayout.Create(policy).Details.Width,
++				IosMultiplayerBrowserLayout.Create(policy).Details.Height,
++				policy, true);
++			var headerLabel = Label("LABEL");
++			headerLabel.Font = "TinyBold";
++			var header = Container("HEADER", headerLabel);
++			header.Bounds = new WidgetBounds(0, 0, details.ClientList.Width, 13);
++			var playerLabel = Label("LABEL");
++			playerLabel.Font = "Tiny";
++			var noFlagLabel = Label("NOFLAG_LABEL");
++			noFlagLabel.Font = "Tiny";
++			var row = Container("TEMPLATE", Container("FLAG"), playerLabel, noFlagLabel);
++			row.Bounds = new WidgetBounds(0, 0, details.ClientList.Width, 25);
++
++			IosMultiplayerDetailsLayout.ApplyClientRow(header, policy, true);
++			IosMultiplayerDetailsLayout.ApplyClientRow(row, policy, false);
++
++			Assert.That(header.Bounds.Height / policy.LogicalPerPoint, Is.GreaterThanOrEqualTo(24));
++			Assert.That(row.Bounds.Height / policy.LogicalPerPoint, Is.GreaterThanOrEqualTo(48));
++			AssertPositiveContained(Local(header.Bounds), Direct(header, "LABEL").Bounds);
++			var flag = Direct(row, "FLAG").Bounds;
++			var name = Direct(row, "LABEL").Bounds;
++			var noFlagName = Direct(row, "NOFLAG_LABEL").Bounds;
++			AssertPositiveContained(Local(row.Bounds), flag);
++			AssertPositiveContained(Local(row.Bounds), name);
++			AssertPositiveContained(Local(row.Bounds), noFlagName);
++			Assert.That(flag.Right, Is.LessThanOrEqualTo(name.X));
++			Assert.That(headerLabel.Font, Is.EqualTo("IosBold"));
++			Assert.That(playerLabel.Font, Is.EqualTo("IosRegular"));
++			Assert.That(noFlagLabel.Font, Is.EqualTo("IosRegular"));
++		}
++
++		[TestCaseSource(nameof(SupportedDevices))]
++		public void MultiplayerFooterAndServerRowsReserveEveryControl(IosScreenSnapshot snapshot)
++		{
++			var policy = IosMenuLayoutPolicy.Create(true, snapshot);
++			var layout = IosMultiplayerBrowserLayout.Create(policy);
++			var footer = Local(layout.Footer);
++			var cells = new[]
++			{
++				layout.Filters, layout.Reload, layout.PlayerCount,
++				layout.DirectConnect, layout.CreateButton, layout.Back
++			};
++
++			foreach (var cell in cells)
++				AssertPositiveContained(footer, cell);
++			for (var i = 1; i < cells.Length; i++)
++				Assert.That(cells[i - 1].Right, Is.LessThanOrEqualTo(cells[i].X));
++			foreach (var action in new[]
++			{
++				layout.Filters, layout.Reload, layout.DirectConnect, layout.CreateButton, layout.Back
++			})
++				AssertPhysicalTarget(action, policy);
++
++			var titleColumn = layout.ServerColumns[0];
++			AssertPositiveContained(titleColumn, layout.ServerTitle);
++			AssertPositiveContained(titleColumn, layout.PasswordIcon);
++			AssertPositiveContained(titleColumn, layout.AuthenticationIcon);
++			Assert.That(layout.ServerTitle.Right, Is.LessThanOrEqualTo(layout.AuthenticationIcon.X));
++			Assert.That(layout.AuthenticationIcon.Right, Is.LessThanOrEqualTo(layout.PasswordIcon.X),
++				"A server can require both authentication and a password, so both icon slots must remain distinct.");
++
++			var groupLabel = Label("LABEL");
++			groupLabel.Font = "TinyBold";
++			var groupHeader = Container("HEADER_TEMPLATE", groupLabel);
++			groupHeader.Bounds = new WidgetBounds(0, 0, layout.ServerList.Width, 13);
++			ApplyServerRow(groupHeader, layout.ServerColumns, policy.MinimumReadableTextHeight, policy);
++			Assert.That(groupLabel.Bounds, Is.EqualTo(new WidgetBounds(
++				layout.ServerColumns[0].X, 0,
++				layout.ServerColumns[^1].Right - layout.ServerColumns[0].X,
++				policy.MinimumReadableTextHeight)));
++			Assert.That(groupLabel.Font, Is.EqualTo("IosBold"));
++			Assert.That(groupLabel.VAlign, Is.EqualTo(TextVAlign.Middle));
++			Assert.That(groupLabel.WordWrap, Is.False);
++		}
++
++		[TestCaseSource(nameof(SupportedDevices))]
++		public void VisibleVersionNoticeReservesListAndProgressSurface(IosScreenSnapshot snapshot)
++		{
++			var policy = IosMenuLayoutPolicy.Create(true, snapshot);
++			var list = IosMultiplayerBrowserLayout.Create(policy).ServerList;
++			var noticeHeight = Math.Min(policy.MinimumReadableTextHeight, list.Height);
++			var notice = new WidgetBounds(list.X, list.Y, list.Width, noticeHeight);
++			var noticeWidget = Container("NOTICE_CONTAINER");
++			noticeWidget.Visible = true;
++			var dynamicallyVisible = false;
++			noticeWidget.IsVisible = () => dynamicallyVisible;
++
++			var hidden = IosMultiplayerBrowserLayout.ServerListWithNotice(
++				list, noticeHeight, EvaluateDynamicVisibility(noticeWidget));
++			dynamicallyVisible = true;
++			var visible = IosMultiplayerBrowserLayout.ServerListWithNotice(
++				list, noticeHeight, EvaluateDynamicVisibility(noticeWidget));
++
++			Assert.That(hidden, Is.EqualTo(list));
++			AssertPositiveContained(list, visible);
++			Assert.That(visible.Y, Is.EqualTo(notice.Bottom));
++			Assert.That(visible.Bottom, Is.EqualTo(list.Bottom));
++			Assert.That(notice.ToRectangle().IntersectsWith(visible.ToRectangle()), Is.False,
++				"The visible version notice must reserve space above both the server list and progress label.");
++		}
++
++		[Test]
++		public void DesktopNoticeWatcherLeavesProgressGeometryUntouched()
++		{
++			var list = new WidgetBounds(7, 11, 300, 120);
++			var progress = new WidgetBounds(17, 23, 280, 96);
++			var desktopShown = ServerListLogic.ReflowNoticeSurfaces(
++				list, progress, 48, true, false);
++			var desktopHidden = ServerListLogic.ReflowNoticeSurfaces(
++				desktopShown.ServerList, desktopShown.Progress, 48, false, false);
++			var iosShown = ServerListLogic.ReflowNoticeSurfaces(
++				list, progress, 48, true, true);
++			var iosHidden = ServerListLogic.ReflowNoticeSurfaces(
++				iosShown.ServerList, iosShown.Progress, 48, false, true);
++
++			Assert.Multiple(() =>
++			{
++				Assert.That(desktopShown.ServerList, Is.EqualTo(new WidgetBounds(7, 59, 300, 72)));
++				Assert.That(desktopShown.Progress, Is.EqualTo(progress),
++					"The version-notice watcher must not alter desktop progress geometry.");
++				Assert.That(desktopHidden.ServerList, Is.EqualTo(list));
++				Assert.That(desktopHidden.Progress, Is.EqualTo(progress));
++				Assert.That(iosShown.ServerList, Is.EqualTo(new WidgetBounds(7, 59, 300, 72)));
++				Assert.That(iosShown.Progress, Is.EqualTo(new WidgetBounds(17, 71, 280, 48)));
++				Assert.That(iosHidden.ServerList, Is.EqualTo(list));
++				Assert.That(iosHidden.Progress, Is.EqualTo(progress));
++			});
++		}
++
++		[Test]
++		public void StandaloneSelectionReflowHandlesNoSelectionAndClientSelection()
++		{
++			var policy = IosMenuLayoutPolicy.Create(true,
++				new IosScreenSnapshot(new Size(1560, 720), new Size(932, 430),
++					new IosSafeAreaInsets(59, 0, 59, 21)));
++			var details = IosMultiplayerBrowserLayout.Create(policy).Details;
++			var selected = BuildSelectedServerTree(details.Width, details.Height);
++
++			var noSelectionHasClients = ServerListLogic.ReflowSelection(
++				selected, policy, false, 0, true, true);
++			var summary = IosMultiplayerDetailsLayout.Create(
++				selected.Bounds.Width, selected.Bounds.Height, policy, false);
++			Assert.That(noSelectionHasClients, Is.False);
++			Assert.That(Direct(selected, "SELECTED_PLAYERS").Bounds,
++				Is.EqualTo(summary.DetailRows[4]));
++			Assert.That(Direct(selected, "SELECTED_PLAYERS").Bounds.Height, Is.GreaterThan(0));
++
++			var selectionHasClients = ServerListLogic.ReflowSelection(
++				selected, policy, true, 2, true, true);
++			var clients = IosMultiplayerDetailsLayout.Create(
++				selected.Bounds.Width, selected.Bounds.Height, policy, true);
++			Assert.That(selectionHasClients, Is.True);
++			Assert.That(Direct(selected, "SELECTED_PLAYERS").Bounds,
++				Is.EqualTo(clients.DetailRows[4]));
++			Assert.That(Direct(selected, "SELECTED_PLAYERS").Bounds.Height, Is.Zero);
++		}
++
++		[Test]
++		public void RuntimeWiringUsesSharedLayoutsAndResponsiveStateTransitions()
++		{
++			var root = RepositoryRoot();
++			var logic = Path.Combine(root, "engine", "OpenRA.Mods.Common", "Widgets", "Logic");
++			var lobby = File.ReadAllText(Path.Combine(logic, "Lobby", "LobbyLogic.cs"));
++			var touch = File.ReadAllText(Path.Combine(logic, "IosTouchMenuLogic.cs"));
++			var mapPreview = File.ReadAllText(Path.Combine(logic, "Lobby", "MapPreviewLogic.cs"));
++			var servers = File.ReadAllText(Path.Combine(logic, "ServerListLogic.cs"));
++
++			Assert.That(lobby, Does.Contain("IosMapPreviewLayout.Apply"));
++			Assert.That(touch, Does.Contain("IosMapPreviewLayout.Apply"));
++			Assert.That(mapPreview, Does.Contain("IosMapPreviewLayout.ApplyActionState"),
++				"The shared MAP_UPDATE button must switch between single and dual slots with its runtime state.");
++			Assert.That(mapPreview, Does.Contain(
++				"var titleCache = ResponsiveTextCache.WithTooltip(titleLabel);"));
++			Assert.That(mapPreview, Does.Contain("var typeCache = new ResponsiveTextCache();"));
++			Assert.That(mapPreview, Does.Contain("var truncateCache = new ResponsiveTextCache();"));
++			Assert.That(mapPreview, Does.Contain(
++				"titleCache.Update(getMap().Map.Title, titleLabel.Bounds.Width,"));
++			Assert.That(mapPreview, Does.Contain(
++				"typeCache.Update(getMap().Map.Categories.FirstOrDefault() ?? \"\", typeLabel.Bounds.Width,"));
++			Assert.That(mapPreview, Does.Contain(
++				"truncateCache.Update(authorCache.Update(getMap().Map.Author), authorLabel.Bounds.Width,"));
++			Assert.That(lobby, Does.Not.Contain("ResizeMapPreview"));
++			Assert.That(touch, Does.Not.Contain("LayoutMapPreview"));
++			Assert.That(touch, Does.Contain("ServerListWithNotice"),
++				"Resize reapplication must preserve the currently visible version-notice reservation.");
++			Assert.That(touch, Does.Match(@"EvaluateDynamicVisibility\(notice\)"));
++			Assert.That(touch, Does.Match(@"EvaluateDynamicVisibility\(dynamicClients\)"));
++			Assert.That(lobby, Does.Contain("layout.Main"));
++			Assert.That(lobby, Does.Contain("layout.Servers"));
++			Assert.That(lobby, Does.Contain("surface.Y - layout.Main.Y"),
++				"TOP_PANELS_ROOT children must use coordinates local to Main.");
++			Assert.That(lobby, Does.Match(@"chatRoot\.IsVisible\s*=\s*\(\)\s*=>\s*panel\s*!=\s*PanelType\.Servers"));
++			Assert.That(servers, Does.Contain("IosMultiplayerDetailsLayout.Apply"),
++				"Server selection must reapply responsive summary/client geometry.");
++			Assert.That(servers, Does.Contain("IosMultiplayerDetailsLayout.ApplyClientRow"),
++				"Dynamic header/player clones must be adapted after cloning.");
++			Assert.That(servers, Does.Contain(
++				"var title = ResponsiveTextCache.WithTooltip(mapTitle);"));
++			Assert.That(servers, Does.Contain("var version = new ResponsiveTextCache();"));
++			Assert.That(servers, Does.Contain(
++				"title.Update(currentMap.Title, mapTitle.Bounds.Width,"));
++			Assert.That(servers, Does.Contain(
++				"version.Update(currentServer.ModLabel, modVersion.Bounds.Width,"));
++			Assert.That(servers, Does.Contain(
++				"var playerName = new ResponsiveTextCache();"));
++			Assert.That(servers, Does.Contain(
++				"var titleText = ResponsiveTextCache.WithTooltip(title);"));
++			Assert.That(servers, Does.Contain(
++				"var locationText = new ResponsiveTextCache();"));
++			Assert.That(servers, Does.Contain("var hasClients = ReflowSelection("),
++				"Selection changes must run through the executable responsive reflow seam.");
++			Assert.That(servers, Does.Contain("server != null, server?.Clients.Length ?? 0,"));
++			Assert.That(servers, Does.Contain("clientContainer != null, clientList != null"),
++				"Embedded server payloads must not request client geometry without an actual loaded client list.");
++			Assert.That(servers, Does.Match(
++				@"if\s*\(!Platform\.IsIOS(?:\s*&&[^)]*)?\)[\s\S]{0,240}joinButton\.Bounds\.Y\s*="),
++				"Desktop may retain its original Join adjustment, but iOS must not restore Y=255.");
++			Assert.That(servers, Does.Match(
++				@"if\s*\(show\s*!=\s*showNotices\)[\s\S]{0,180}noticeContainer\.Bounds\.Height"),
++				"Responsive notice height must be read when visibility changes, not cached from desktop YAML.");
++			Assert.That(servers, Does.Contain("var noticeLayout = ReflowNoticeSurfaces("));
++			Assert.That(servers, Does.Contain("containerHeight, show, Platform.IsIOS"),
++				"Only iOS may reflow progress below a newly shown or hidden version notice.");
++			Assert.That(servers, Does.Contain("serverList.Bounds = noticeLayout.ServerList;"));
++			Assert.That(servers, Does.Contain("progressText.Bounds = noticeLayout.Progress;"));
++
++			var embeddedChrome = File.ReadAllText(Path.Combine(
++				root, "engine", "mods", "common", "chrome", "lobby-servers.yaml"));
++			Assert.That(embeddedChrome, Does.Not.Contain("CLIENT_LIST_CONTAINER"));
++			Assert.That(embeddedChrome, Does.Not.Contain("JOIN_BUTTON"));
++		}
++
++		[Test]
++		public void ProductionResponsiveTextCacheRemeasuresUnchangedContentAfterWidthAndFontChanges()
++		{
++			using var fonts = new ActualIosFontRenderer();
++			const string TestText = "Responsive multiplayer map status";
++			var cache = new ResponsiveTextCache();
++			var touchLabel = Game.Renderer.Fonts["IosTouchLabel"];
++			var bold = Game.Renderer.Fonts["IosBold"];
++			var wideWidth = touchLabel.Measure(TestText).X;
++			var narrowWidth = Math.Max(1, wideWidth / 2);
++
++			var narrow = cache.Update(TestText, narrowWidth, touchLabel);
++			var wide = cache.Update(TestText, wideWidth, touchLabel);
++			var fontChanged = cache.Update(TestText, wideWidth, bold);
++
++			Assert.Multiple(() =>
++			{
++				Assert.That(narrow,
++					Is.EqualTo(WidgetUtils.TruncateText(TestText, narrowWidth, touchLabel)));
++				Assert.That(narrow, Is.Not.EqualTo(TestText));
++				Assert.That(wide, Is.EqualTo(TestText),
++					"Widening the same cache instance must restore unchanged content.");
++				Assert.That(fontChanged,
++					Is.EqualTo(WidgetUtils.TruncateText(TestText, wideWidth, bold)));
++				Assert.That(fontChanged, Is.Not.EqualTo(wide),
++					"Changing only the font must force the same cache instance to remeasure.");
++			});
++		}
++
++		static void AssertMapFrame(
++			WidgetBounds card, IosMapPreviewLayout layout, IosMenuLayoutPolicy policy, bool small)
++		{
++			AssertPositiveContained(card, layout.MapSurface);
++			AssertPositiveContained(layout.MapSurface, layout.MapPreview);
++			Assert.That(layout.MapPreview, Is.EqualTo(Inset(layout.MapSurface, 1)));
++			AssertPositiveContained(card, layout.TextColumn);
++			AssertPositiveContained(card, layout.Title);
++			AssertPositiveContained(card, layout.PrimaryText);
++			AssertPositiveContained(card, layout.SecondaryText);
++			var textRoles = new List<WidgetBounds>
++			{
++				layout.Title, layout.PrimaryText, layout.SecondaryText
++			};
++			if (small)
++			{
++				AssertPositiveContained(card, layout.StatusText);
++				AssertPositiveContained(card, layout.SecondaryStatusText);
++				AssertPositiveContained(card, layout.Progress);
++				AssertPositiveContained(card, layout.SingleAction);
++				AssertPositiveContained(card, layout.DualPrimaryAction);
++				AssertPositiveContained(card, layout.DualSecondaryAction);
++				textRoles.AddRange(new[]
++				{
++					layout.StatusText, layout.Progress, layout.SingleAction,
++					layout.DualPrimaryAction, layout.DualSecondaryAction
++				});
++			}
++
++			foreach (var textRole in textRoles)
++				AssertPositiveContained(layout.TextColumn, textRole);
++			if (small)
++			{
++				Assert.That(layout.SingleAction.X, Is.EqualTo(layout.TextColumn.X));
++				Assert.That(layout.SingleAction.Width, Is.EqualTo(layout.TextColumn.Width));
++				Assert.That(layout.DualPrimaryAction.X, Is.EqualTo(layout.TextColumn.X));
++				Assert.That(layout.DualPrimaryAction.Width, Is.EqualTo(layout.TextColumn.Width));
++				Assert.That(layout.DualSecondaryAction.X, Is.EqualTo(layout.TextColumn.X));
++				Assert.That(layout.DualSecondaryAction.Width, Is.EqualTo(layout.TextColumn.Width));
++				Assert.That(layout.DualSecondaryAction.Bottom,
++					Is.LessThanOrEqualTo(layout.DualPrimaryAction.Y));
++				Assert.That(layout.DualPrimaryAction.ToRectangle()
++					.IntersectsWith(layout.DualSecondaryAction.ToRectangle()), Is.False);
++				Assert.That(layout.Title.ToRectangle()
++					.IntersectsWith(layout.DualSecondaryAction.ToRectangle()), Is.False);
++			}
++
++			if (small)
++			{
++				Assert.That(layout.Progress.ToRectangle().IntersectsWith(layout.SingleAction.ToRectangle()), Is.False,
++					"Progress must never occupy the single-action slot.");
++			}
++
++			if (policy.IsPhone)
++				Assert.That(layout.MapSurface.Right, Is.LessThanOrEqualTo(layout.TextColumn.X));
++			else
++				Assert.That(layout.MapSurface.Bottom, Is.LessThanOrEqualTo(layout.TextColumn.Y));
++			AssertPhysicalTarget(layout.MapSurface, policy);
++			Assert.That(layout.Title.Height / policy.LogicalPerPoint, Is.GreaterThanOrEqualTo(24));
++			Assert.That(layout.PrimaryText.Height / policy.LogicalPerPoint, Is.GreaterThanOrEqualTo(24));
++			Assert.That(layout.SecondaryText.Height / policy.LogicalPerPoint, Is.GreaterThanOrEqualTo(24));
++			Assert.That(layout.StatusText.Height / policy.LogicalPerPoint, Is.GreaterThanOrEqualTo(48));
++		}
++
++		static void AssertPreviewSection(Widget section, IosMapPreviewLayout expected)
++		{
++			var background = Direct(section, "MAP_BG");
++			Assert.That(background.Bounds, Is.EqualTo(expected.MapSurface));
++			Assert.That(Direct(background, "MAP_PREVIEW").Bounds, Is.EqualTo(expected.MapPreview));
++			Assert.That(Direct(section, "MAP_TITLE").Bounds, Is.EqualTo(expected.Title));
++		}
++
++		static void AssertLongStatusPair(
++			Widget section, Widget action, IosMapPreviewLayout layout, IosMenuLayoutPolicy policy)
++		{
++			var first = (LabelWidget)Direct(section, "a");
++			var second = (LabelWidget)Direct(section, "b");
++			foreach (var label in new[] { first, second })
++			{
++				AssertPositiveContained(layout.TextColumn, label.Bounds);
++				Assert.That(label.WordWrap, Is.True);
++				Assert.That(label.VAlign, Is.EqualTo(TextVAlign.Middle));
++				Assert.That(label.Bounds.Height / policy.LogicalPerPoint, Is.GreaterThanOrEqualTo(48));
++			}
++
++			Assert.That(first.Bounds.Bottom, Is.LessThanOrEqualTo(second.Bounds.Y));
++			Assert.That(second.Bounds.ToRectangle().IntersectsWith(action.Bounds.ToRectangle()), Is.False);
++			Assert.That(action.Bounds, Is.EqualTo(layout.SingleAction));
++			AssertPositiveContained(layout.TextColumn, action.Bounds);
++		}
++
++		static void AssertDetailsLayout(
++			IosMultiplayerDetailsLayout layout, IosMenuLayoutPolicy policy, bool hasClients)
++		{
++			Assert.That(layout.DetailRows, Has.Length.EqualTo(5));
++			AssertPositiveContained(layout.Window, layout.MapBackground);
++			AssertPositiveContained(layout.MapBackground, layout.MapPreview);
++			Assert.That(layout.MapPreview, Is.EqualTo(Inset(layout.MapBackground, 1)));
++			AssertPhysicalTarget(layout.MapBackground, policy);
++			AssertPositiveContained(layout.Window, layout.TextColumn);
++			for (var i = 0; i < (hasClients ? 4 : 5); i++)
++			{
++				AssertPositiveContained(layout.Window, layout.DetailRows[i]);
++				AssertPositiveContained(layout.TextColumn, layout.DetailRows[i]);
++				Assert.That(layout.DetailRows[i].Height / policy.LogicalPerPoint, Is.GreaterThanOrEqualTo(24));
++				if (i > 0)
++					Assert.That(layout.DetailRows[i - 1].Bottom, Is.LessThanOrEqualTo(layout.DetailRows[i].Y));
++			}
++
++			AssertPositiveContained(layout.Window, layout.ClientList);
++			AssertPositiveContained(layout.Window, layout.Join);
++			AssertPhysicalTarget(layout.Join, policy);
++			Assert.That(layout.Join.Bottom, Is.EqualTo(layout.Window.Bottom));
++			var visible = new List<WidgetBounds> { layout.MapBackground, layout.ClientList, layout.Join };
++			visible.AddRange(layout.DetailRows.Take(hasClients ? 4 : 5));
++			AssertVisibleRoles(layout.Window, visible.ToArray());
++			if (policy.IsPhone)
++			{
++				Assert.That(layout.MapBackground.Right, Is.LessThanOrEqualTo(layout.TextColumn.X));
++				Assert.That(layout.TextColumn.Width, Is.GreaterThanOrEqualTo(2 * policy.MinimumTarget));
++			}
++			else
++				Assert.That(layout.MapBackground.Bottom, Is.LessThanOrEqualTo(layout.TextColumn.Y));
++		}
++
++		static void AssertSelectedTree(Widget selected, IosMultiplayerDetailsLayout expected)
++		{
++			var background = Direct(selected, "MAP_BG");
++			Assert.That(background.Bounds, Is.EqualTo(expected.MapBackground));
++			Assert.That(Direct(background, "SELECTED_MAP_PREVIEW").Bounds, Is.EqualTo(expected.MapPreview));
++			var ids = new[]
++			{
++				"SELECTED_MAP", "SELECTED_IP", "SELECTED_STATUS", "SELECTED_MOD_VERSION", "SELECTED_PLAYERS"
++			};
++			for (var i = 0; i < ids.Length; i++)
++				Assert.That(Direct(selected, ids[i]).Bounds, Is.EqualTo(expected.DetailRows[i]));
++			Assert.That(Direct(selected, "CLIENT_LIST_CONTAINER").Bounds, Is.EqualTo(expected.ClientList));
++			Assert.That(Direct(selected, "JOIN_BUTTON").Bounds, Is.EqualTo(expected.Join));
++		}
++
++		static void AssertClientRowsReflowed(
++			ScrollPanelWidget list, Widget clientContainer,
++			IosMenuLayoutPolicy policy)
++		{
++			Assert.That(list.Bounds, Is.EqualTo(new WidgetBounds(
++				0, 0, clientContainer.Bounds.Width, clientContainer.Bounds.Height)));
++			var expectedWidth = Math.Max(1, list.Bounds.Width - list.ScrollbarWidth);
++			if (!policy.IsPhone)
++				Assert.That(list.ScrollbarWidth / policy.LogicalPerPoint, Is.GreaterThanOrEqualTo(48));
++
++			for (var i = 0; i < list.Children.Count; i++)
++			{
++				var row = list.Children[i];
++				Assert.That(row.Bounds.X, Is.Zero);
++				Assert.That(row.Bounds.Width, Is.EqualTo(expectedWidth));
++				Assert.That(row.Bounds.Height / policy.LogicalPerPoint,
++					Is.GreaterThanOrEqualTo(i == 0 ? 24 : 48));
++				if (i > 0)
++					Assert.That(list.Children[i - 1].Bounds.Bottom, Is.LessThanOrEqualTo(row.Bounds.Y));
++			}
++
++			var headerLabel = (LabelWidget)Direct(list.Children[0], "LABEL");
++			Assert.That(headerLabel.Font, Is.EqualTo("IosBold"));
++			Assert.That(headerLabel.VAlign, Is.EqualTo(TextVAlign.Middle));
++			foreach (var row in list.Children.Skip(1))
++			{
++				Assert.That(((LabelWidget)Direct(row, "LABEL")).Font, Is.EqualTo("IosRegular"));
++				Assert.That(((LabelWidget)Direct(row, "NOFLAG_LABEL")).Font, Is.EqualTo("IosRegular"));
++			}
++		}
++
++		static Widget BuildMapPreviewTree(WidgetBounds card)
++		{
++			var preview = Container("MAP_PREVIEW",
++				PreviewSection("MAP_LARGE"),
++				PreviewSection("MAP_SMALL"),
++				Container("MAP_AVAILABLE", Label("MAP_TYPE"), Label("MAP_AUTHOR")),
++				Container("MAP_INCOMPATIBLE", Label("MAP_STATUS_A"), Label("MAP_STATUS_B")),
++				Container("MAP_VALIDATING", Label("MAP_STATUS_VALIDATING"), Progress("MAP_VALIDATING_BAR")),
++				Container("MAP_DOWNLOAD_AVAILABLE", Label("MAP_TYPE"), Label("MAP_AUTHOR"), Button("MAP_INSTALL")),
++				Button("MAP_UPDATE"),
++				Container("MAP_UPDATE_DOWNLOAD_AVAILABLE", Button("MAP_INSTALL")),
++				Label("MAP_SEARCHING"),
++				Container("MAP_UNAVAILABLE", Label("a"), Label("b")),
++				Label("MAP_ERROR"),
++				Container("MAP_DOWNLOADING", Label("MAP_STATUS_DOWNLOADING"), Progress("MAP_PROGRESSBAR")),
++				Button("MAP_RETRY"),
++				Container("MAP_UPDATE_AVAILABLE", Label("a"), Label("b")));
++			preview.Bounds = new WidgetBounds(17, 19, 172, 220);
++			var host = Container("MAP_PREVIEW_ROOT", preview);
++			host.Bounds = card;
++			return host;
++		}
++
++		static Widget PreviewSection(string id)
++		{
++			return Container(id,
++				Container("MAP_BG", Container("MAP_PREVIEW")),
++				Label("MAP_TITLE"));
++		}
++
++		static Widget BuildSelectedServerTree(int width, int height)
++		{
++			var list = Container("MULTIPLAYER_CLIENT_LIST",
++				Container("HEADER", Label("LABEL")),
++				Container("TEMPLATE", Container("FLAG"), Label("LABEL"), Label("NOFLAG_LABEL")));
++			var selected = Container("SELECTED_SERVER",
++				Container("MAP_BG", Container("SELECTED_MAP_PREVIEW")),
++				Label("SELECTED_MAP"), Label("SELECTED_IP"), Label("SELECTED_STATUS"),
++				Label("SELECTED_MOD_VERSION"), Label("SELECTED_PLAYERS"),
++				Container("CLIENT_LIST_CONTAINER", list), Button("JOIN_BUTTON"));
++			selected.Bounds = new WidgetBounds(0, 0, width, height);
++			return selected;
++		}
++
++		static Widget BuildScrollableSelectedServerTree(
++			int width, int height, IosMenuLayoutPolicy policy)
++		{
++			var headerLabel = Label("LABEL");
++			headerLabel.Font = "TinyBold";
++			var header = Container("HEADER", headerLabel);
++			var firstLabel = Label("LABEL");
++			firstLabel.Font = "Tiny";
++			var firstNoFlag = Label("NOFLAG_LABEL");
++			firstNoFlag.Font = "Tiny";
++			var first = Container("TEMPLATE", Container("FLAG"), firstLabel, firstNoFlag);
++			var secondLabel = Label("LABEL");
++			secondLabel.Font = "Tiny";
++			var secondNoFlag = Label("NOFLAG_LABEL");
++			secondNoFlag.Font = "Tiny";
++			var second = Container("TEMPLATE", Container("FLAG"), secondLabel, secondNoFlag);
++			var list = BareWidget<ScrollPanelWidget>("MULTIPLAYER_CLIENT_LIST");
++			list.Layout = new ListLayout(list);
++			list.TopBottomSpacing = 0;
++			list.ItemSpacing = 0;
++			list.ScrollBar = policy.IsPhone ? ScrollBar.Hidden : ScrollBar.Right;
++			list.ScrollbarWidth = policy.IsPhone ? 0 : policy.MinimumTarget;
++			list.Bounds = new WidgetBounds(0, 0, 17, 19);
++			list.AddChild(header);
++			list.AddChild(first);
++			list.AddChild(second);
++
++			var selected = Container("SELECTED_SERVER",
++				Container("MAP_BG", Container("SELECTED_MAP_PREVIEW")),
++				Label("SELECTED_MAP"), Label("SELECTED_IP"), Label("SELECTED_STATUS"),
++				Label("SELECTED_MOD_VERSION"), Label("SELECTED_PLAYERS"),
++				Container("CLIENT_LIST_CONTAINER", list), Button("JOIN_BUTTON"));
++			selected.Bounds = new WidgetBounds(0, 0, width, height);
++			return selected;
++		}
++
++		static Widget BuildEmbeddedSelectedServerTree(int width, int height)
++		{
++			var selected = Container("SELECTED_SERVER",
++				Container("MAP_BG", Container("SELECTED_MAP_PREVIEW")),
++				Label("SELECTED_MAP"), Label("SELECTED_IP"), Label("SELECTED_STATUS"),
++				Label("SELECTED_MOD_VERSION"), Label("SELECTED_PLAYERS"));
++			selected.Bounds = new WidgetBounds(47, 29, width, height);
++			return selected;
++		}
++
++		static ContainerWidget Container(string id, params Widget[] children)
++		{
++			var container = new ContainerWidget
++			{
++				Id = id,
++				Bounds = new WidgetBounds(11, 13, 17, 19)
++			};
++			foreach (var child in children)
++				container.AddChild(child);
++			return container;
++		}
++
++		static LabelWidget Label(string id)
++		{
++			var label = BareWidget<LabelWidget>(id);
++			label.Bounds = new WidgetBounds(11, 13, 17, 19);
++			label.Font = "IosRegular";
++			label.WordWrap = true;
++			label.VAlign = TextVAlign.Top;
++			label.GetText = () => "A deliberately long translated label that requires elision";
++			return label;
++		}
++
++		static ButtonWidget Button(string id)
++		{
++			var button = BareWidget<ButtonWidget>(id);
++			button.Bounds = new WidgetBounds(11, 13, 17, 19);
++			button.Font = "IosBold";
++			button.LeftMargin = 5;
++			button.RightMargin = 5;
++			button.GetText = () => "Action";
++			return button;
++		}
++
++		static void SetButtonText(ButtonWidget button, string text)
++		{
++			button.Font = "IosBold";
++			button.LeftMargin = 5;
++			button.RightMargin = 5;
++			button.GetText = () => text;
++		}
++
++		static void SetLabelText(LabelWidget label, string text)
++		{
++			label.Text = text;
++			label.Font = "Tiny";
++			label.GetText = () => text;
++		}
++
++		static void AssertTwoLineRoundTrip(LabelWidget label, string locale)
++		{
++			var output = label.GetText();
++			Assert.That(label.Font, Is.EqualTo("IosTouchLabel"),
++				$"{locale} {label.Parent?.Id}/{label.Id} must use the compact iOS status font.");
++			if (!label.Text.Contains("...", StringComparison.Ordinal))
++				Assert.That(output, Does.Not.Contain("..."),
++					$"{locale} {label.Parent?.Id}/{label.Id} must not be silently elided.");
++			Assert.That(NormalizeDisplayText(output), Is.EqualTo(NormalizeDisplayText(label.Text)),
++				$"{locale} {label.Parent?.Id}/{label.Id} must survive wrapping without content loss.");
++			var lines = output.Split('\n');
++			Assert.That(lines, Has.Length.LessThanOrEqualTo(2));
++			var font = Game.Renderer.Fonts[label.Font];
++			foreach (var line in lines)
++				Assert.That(font.Measure(line).X, Is.LessThanOrEqualTo(label.Bounds.Width));
++		}
++
++		static void AssertCompleteButtonText(ButtonWidget button, string expected, string locale)
++		{
++			var output = button.GetText();
++			Assert.That(output, Is.EqualTo(expected));
++			Assert.That(output, Does.Not.Contain("..."),
++				$"{locale} {button.Parent?.Id}/{button.Id} must not be silently elided.");
++			var availableWidth = button.Bounds.Width - button.LeftMargin - button.RightMargin;
++			Assert.That(Game.Renderer.Fonts[button.Font].Measure(output).X,
++				Is.LessThanOrEqualTo(availableWidth));
++		}
++
++		static string NormalizeDisplayText(string text)
++		{
++			return string.Concat((text ?? "").Where(c => !char.IsWhiteSpace(c)));
++		}
++
++		static string FluentValue(string locale, string file, string key)
++		{
++			var relative = locale == "en-US" ? file : Path.Combine(locale, file);
++			var path = Path.Combine(RepositoryRoot(),
++				"engine", "mods", "common", "fluent", relative);
++			var prefix = key + " = ";
++			var line = File.ReadLines(path)
++				.Single(candidate => candidate.StartsWith(prefix, StringComparison.Ordinal));
++			return line[prefix.Length..];
++		}
++
++		static string FormatFluent(
++			string locale, string file, string key,
++			params (string Name, string Value)[] arguments)
++		{
++			var value = FluentValue(locale, file, key);
++			foreach (var argument in arguments)
++				value = value.Replace("{ $" + argument.Name + " }", argument.Value, StringComparison.Ordinal);
++			return value;
++		}
++
++		static ProgressBarWidget Progress(string id)
++		{
++			return new ProgressBarWidget
++			{
++				Id = id,
++				Bounds = new WidgetBounds(11, 13, 17, 19)
++			};
++		}
++
++		static T BareWidget<T>(string id) where T : Widget
++		{
++#pragma warning disable SYSLIB0050
++			var widget = (T)FormatterServices.GetUninitializedObject(typeof(T));
++#pragma warning restore SYSLIB0050
++			typeof(Widget).GetField(nameof(Widget.Children))!.SetValue(widget, new List<Widget>());
++			widget.Id = id;
++			return widget;
++		}
++
++		static IEnumerable<Widget> Descendants(Widget root)
++		{
++			yield return root;
++			foreach (var child in root.Children)
++				foreach (var descendant in Descendants(child))
++					yield return descendant;
++		}
++
++		static Widget Direct(Widget parent, string id)
++		{
++			return parent.Children.Single(child => child.Id == id);
++		}
++
++		static WidgetBounds Local(WidgetBounds bounds)
++		{
++			return new WidgetBounds(0, 0, bounds.Width, bounds.Height);
++		}
++
++		static WidgetBounds RelativeTo(WidgetBounds bounds, WidgetBounds parent)
++		{
++			return new WidgetBounds(
++				bounds.X - parent.X, bounds.Y - parent.Y, bounds.Width, bounds.Height);
++		}
++
++		static WidgetBounds Inset(WidgetBounds bounds, int inset)
++		{
++			return new WidgetBounds(bounds.X + inset, bounds.Y + inset,
++				bounds.Width - 2 * inset, bounds.Height - 2 * inset);
++		}
++
++		static void AssertVisibleRoles(WidgetBounds outer, params WidgetBounds[] roles)
++		{
++			for (var i = 0; i < roles.Length; i++)
++			{
++				AssertPositiveContained(outer, roles[i]);
++				for (var j = 0; j < i; j++)
++					Assert.That(roles[i].ToRectangle().IntersectsWith(roles[j].ToRectangle()), Is.False,
++						$"Visible roles {roles[j].ToRectangle()} and {roles[i].ToRectangle()} overlap.");
++			}
++		}
++
++		static void AssertPositiveContained(WidgetBounds outer, WidgetBounds inner)
++		{
++			Assert.That(inner.Width, Is.GreaterThan(0));
++			Assert.That(inner.Height, Is.GreaterThan(0));
++			Assert.That(outer.ToRectangle().Contains(inner.ToRectangle()), Is.True,
++				$"Expected {inner.ToRectangle()} inside {outer.ToRectangle()}.");
++		}
++
++		static void AssertPhysicalTarget(WidgetBounds bounds, IosMenuLayoutPolicy policy)
++		{
++			Assert.That(bounds.Width / policy.LogicalPerPoint, Is.GreaterThanOrEqualTo(48));
++			Assert.That(bounds.Height / policy.LogicalPerPoint, Is.GreaterThanOrEqualTo(48));
++		}
++
++		static bool EvaluateDynamicVisibility(Widget widget)
++		{
++			var method = typeof(IosTouchMenuLogic).GetMethod(
++				"EvaluateDynamicVisibility", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
++			Assert.That(method, Is.Not.Null,
++				"iOS relayout needs one evaluable dynamic-visibility seam shared by notice and client-list decisions.");
++			return (bool)method!.Invoke(null, new object[] { widget })!;
++		}
++
++		static void ApplyServerRow(
++			Widget row, WidgetBounds[] columns, int height, IosMenuLayoutPolicy policy)
++		{
++			var method = typeof(IosMultiplayerBrowserLayout).GetMethod(
++				"ApplyServerRow", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
++			Assert.That(method, Is.Not.Null,
++				"Server data rows and group headers need one executable responsive row applicator.");
++			method!.Invoke(null, new object[] { row, columns, height, policy });
++		}
++
++		static TestCaseData Device(
++			string name, int effectiveWidth, int effectiveHeight, int nativeWidth, int nativeHeight,
++			double safeLeft, double safeTop, double safeRight, double safeBottom)
++		{
++			return new TestCaseData(new IosScreenSnapshot(
++				new Size(effectiveWidth, effectiveHeight),
++				new Size(nativeWidth, nativeHeight),
++				new IosSafeAreaInsets(safeLeft, safeTop, safeRight, safeBottom))).SetName(name + "-{m}");
++		}
++
++		static TestCaseData PhoneLocale(
++			string name, string locale,
++			int effectiveWidth, int effectiveHeight, int nativeWidth, int nativeHeight,
++			double safeLeft, double safeTop, double safeRight, double safeBottom)
++		{
++			var snapshot = new IosScreenSnapshot(
++				new Size(effectiveWidth, effectiveHeight),
++				new Size(nativeWidth, nativeHeight),
++				new IosSafeAreaInsets(safeLeft, safeTop, safeRight, safeBottom));
++			return new TestCaseData(snapshot, locale).SetName(name + "-" + locale + "-{m}");
++		}
++
++		sealed class ActualIosFontRenderer : IDisposable
++		{
++			readonly Renderer previousRenderer;
++			readonly SheetBuilder sheetBuilder;
++			readonly SpriteFont touchLabel;
++			readonly SpriteFont regular;
++			readonly SpriteFont bold;
++
++			public ActualIosFontRenderer()
++			{
++				previousRenderer = Game.Renderer;
++				Log.AddChannel("perf", null);
++				var fontData = File.ReadAllBytes(Path.Combine(
++					RepositoryRoot(), "mods", "ra2", "fonts", "NotoSansCJKsc-Bold.otf"));
++				var platform = new DefaultPlatform();
++				sheetBuilder = new SheetBuilder(SheetType.BGRA, 2048);
++				touchLabel = new SpriteFont(platform, "IosTouchLabel", fontData, 20, 16, 1f, sheetBuilder);
++				regular = new SpriteFont(platform, "IosRegular", fontData, 24, 19, 1f, sheetBuilder);
++				bold = new SpriteFont(platform, "IosBold", fontData, 26, 20, 1f, sheetBuilder);
++#pragma warning disable SYSLIB0050
++				var renderer = (Renderer)FormatterServices.GetUninitializedObject(typeof(Renderer));
++#pragma warning restore SYSLIB0050
++				renderer.Fonts = new Dictionary<string, SpriteFont>
++				{
++					{ "IosTouchLabel", touchLabel },
++					{ "IosRegular", regular },
++					{ "IosBold", bold }
++				};
++				Game.Renderer = renderer;
++			}
++
++			public void Dispose()
++			{
++				Game.Renderer = previousRenderer;
++				touchLabel.Dispose();
++				regular.Dispose();
++				bold.Dispose();
++				sheetBuilder.Dispose();
++			}
++		}
++
++		static string RepositoryRoot()
++		{
++			var root = TestContext.CurrentContext.TestDirectory;
++			while (root != null &&
++				!Directory.Exists(Path.Combine(root, ".git")) &&
++				!File.Exists(Path.Combine(root, ".git")))
++				root = Directory.GetParent(root)?.FullName;
++
++			Assert.That(root, Is.Not.Null, "Could not locate repository root.");
++			return root!;
++		}
++	}
++}
+diff -ruN a/OpenRA.Test/IosMenuLayoutPolicyTest.cs b/OpenRA.Test/IosMenuLayoutPolicyTest.cs
+--- a/OpenRA.Test/IosMenuLayoutPolicyTest.cs	2026-08-26 15:43:11
++++ b/OpenRA.Test/IosMenuLayoutPolicyTest.cs	2026-08-26 15:43:11
+@@ -79,13 +79,16 @@
+ 		}
+ 
+ 		[Test]
+-		public void CompactLobbyKeepsMapAndMapActionTogether()
++		public void CompactLobbyUsesFullHeightMapAndFooterMapAction()
+ 		{
+ 			var layout = IosLobbyLayout.Create(812, 366, true);
+ 
+-			Assert.That(layout.ChangeMap.X, Is.EqualTo(layout.Map.X));
+-			Assert.That(layout.ChangeMap.Width, Is.EqualTo(layout.Map.Width));
+-			Assert.That(layout.ChangeMap.Y, Is.EqualTo(layout.Map.Bottom + layout.Gap));
++			Assert.That(layout.Map.Y, Is.EqualTo(layout.Main.Y));
++			Assert.That(layout.Map.Bottom, Is.EqualTo(layout.Main.Bottom));
++			Assert.That(layout.Start.Right, Is.LessThanOrEqualTo(layout.ChangeMap.X));
++			Assert.That(layout.ChangeMap.Right, Is.LessThanOrEqualTo(layout.Disconnect.X));
++			Assert.That(layout.ChangeMap.Y, Is.EqualTo(layout.Footer.Y));
++			Assert.That(layout.ChangeMap.Bottom, Is.EqualTo(layout.Footer.Bottom));
+ 			Assert.That(layout.Footer.Bottom, Is.LessThanOrEqualTo(366));
+ 		}
+ 
+@@ -210,15 +213,28 @@
+ 
+ 			foreach (var region in new[]
+ 			{
+-				layout.Header, layout.Tabs, layout.Players, layout.Map, layout.ChangeMap,
++				layout.Header, layout.Tabs, layout.Main, layout.Servers, layout.Players, layout.Map, layout.ChangeMap,
+ 				layout.Position, layout.Chat, layout.Footer, layout.Start, layout.Disconnect
+ 			})
+ 				AssertContained(window, region);
+ 
+ 			Assert.That(layout.Players.Right, Is.LessThanOrEqualTo(layout.Map.X));
+-			Assert.That(layout.ChangeMap.X, Is.EqualTo(layout.Map.X));
+-			Assert.That(layout.ChangeMap.Width, Is.EqualTo(layout.Map.Width));
+-			Assert.That(layout.ChangeMap.Y, Is.EqualTo(layout.Map.Bottom + layout.Gap));
++			Assert.That(layout.Servers, Is.EqualTo(layout.Main));
++			if (policy.IsPhone)
++			{
++				Assert.That(layout.Map.Y, Is.EqualTo(layout.Main.Y));
++				Assert.That(layout.Map.Bottom, Is.EqualTo(layout.Main.Bottom));
++				Assert.That(layout.Start.Right, Is.LessThanOrEqualTo(layout.ChangeMap.X));
++				Assert.That(layout.ChangeMap.Right, Is.LessThanOrEqualTo(layout.Disconnect.X));
++				Assert.That(layout.ChangeMap.Y, Is.EqualTo(layout.Footer.Y));
++			}
++			else
++			{
++				Assert.That(layout.ChangeMap.X, Is.EqualTo(layout.Map.X));
++				Assert.That(layout.ChangeMap.Width, Is.EqualTo(layout.Map.Width));
++				Assert.That(layout.ChangeMap.Y, Is.EqualTo(layout.Map.Bottom + layout.Gap));
++			}
++
+ 			AssertPhysicalTarget(layout.ChangeMap, policy);
+ 			AssertPhysicalTarget(layout.Start, policy);
+ 			AssertPhysicalTarget(layout.Disconnect, policy);
+@@ -509,7 +525,9 @@
+ 		static string RepositoryRoot()
+ 		{
+ 			var root = TestContext.CurrentContext.TestDirectory;
+-			while (root != null && !Directory.Exists(Path.Combine(root, ".git")))
++			while (root != null &&
++				!Directory.Exists(Path.Combine(root, ".git")) &&
++				!File.Exists(Path.Combine(root, ".git")))
+ 				root = Directory.GetParent(root)?.FullName;
+ 
+ 			Assert.That(root, Is.Not.Null, "Could not locate repository root.");

@@ -1,0 +1,31 @@
+From: local
+Subject: [PATCH] SettingsLogic: resolve settings tab labels via Fluent
+
+---
+ OpenRA.Mods.Common/Widgets/Logic/Settings/SettingsLogic.cs | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/OpenRA.Mods.Common/Widgets/Logic/Settings/SettingsLogic.cs b/OpenRA.Mods.Common/Widgets/Logic/Settings/SettingsLogic.cs
+index 1111111..2222222 100644
+--- a/OpenRA.Mods.Common/Widgets/Logic/Settings/SettingsLogic.cs
++++ b/OpenRA.Mods.Common/Widgets/Logic/Settings/SettingsLogic.cs
+@@ -143,7 +143,7 @@ namespace OpenRA.Mods.Common.Widgets.Logic
+ 				ConfirmationDialogs.ButtonPrompt(modData,
+ 					title: ResetTitle,
+ 					text: ResetPrompt,
+-					titleArguments: new object[] { "panel", panels[activePanel] },
++					titleArguments: new object[] { "panel", FluentProvider.GetMessage(panels[activePanel]) },
+ 					onConfirm: Reset,
+ 					confirmText: ResetAccept,
+ 					onCancel: () => { },
+@@ -176,7 +176,9 @@ namespace OpenRA.Mods.Common.Widgets.Logic
+ 			}
+ 
+ 			tab.Id = id;
+-			tab.GetText = () => label;
++			// Panel labels in chrome YAML are Fluent keys (e.g. button-settings-tab-display).
++			var resolvedLabel = FluentProvider.GetMessage(label);
++			tab.GetText = () => resolvedLabel;
+ 			tab.IsHighlighted = () => activePanel == id;
+ 			tab.OnClick = () =>
+ 			{

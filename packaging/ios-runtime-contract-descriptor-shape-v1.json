@@ -1,0 +1,2970 @@
+{
+  "schemaVersion": 1,
+  "descriptorCount": 296,
+  "purposeCounts": {
+    "Contract": 165,
+    "PreflightOnly": 131
+  },
+  "shapeDigest": "4fe820475ee4d6ef843320f406b5db3fd414fd106c953b4a7b4a05020fb3614d",
+  "shapeFraming": {
+    "magic": "OpenRA.RuntimeContractDescriptorShape",
+    "integerEncoding": "unsigned 32-bit little-endian",
+    "stringEncoding": "uint32 byte length followed by strict UTF-8 bytes",
+    "header": "LP_UTF8(magic), uint32 schemaVersion, uint32 descriptorCount",
+    "ordering": "ascending ordinal UTF-8 bytes of logicalName",
+    "record": "uint32 payloadByteLength, then payload: uint32 zeroBasedOrdinal, LP_UTF8(logicalName), LP_UTF8(bundleRelativePath), uint32 profileCount, LP_UTF8(each profile in Base,Yuri enum order), LP_UTF8(purpose)",
+    "digest": "lowercase hexadecimal SHA-256 of the complete framed byte stream",
+    "excludedShapeFields": [
+      "sourcePath"
+    ]
+  },
+  "sourcePathRules": [
+    {
+      "bundlePrefix": "AUTHORS, VERSION, or global mix database.dat",
+      "projectRelativePrefix": "../../engine/"
+    },
+    {
+      "bundlePrefix": "glsl/",
+      "projectRelativePrefix": "../../engine/glsl/"
+    },
+    {
+      "bundlePrefix": "mods/common/ or mods/ts/",
+      "projectRelativePrefix": "../../engine/mods/"
+    },
+    {
+      "bundlePrefix": "mods/ra2/",
+      "projectRelativePrefix": "../../mods/ra2/"
+    }
+  ],
+  "descriptors": [
+    {
+      "logicalName": "AUTHORS",
+      "bundleRelativePath": "AUTHORS",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../engine/AUTHORS"
+    },
+    {
+      "logicalName": "VERSION",
+      "bundleRelativePath": "VERSION",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../engine/VERSION"
+    },
+    {
+      "logicalName": "global mix database.dat",
+      "bundleRelativePath": "global mix database.dat",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../engine/global mix database.dat"
+    },
+    {
+      "logicalName": "glsl/combined.frag",
+      "bundleRelativePath": "glsl/combined.frag",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../engine/glsl/combined.frag"
+    },
+    {
+      "logicalName": "glsl/combined.vert",
+      "bundleRelativePath": "glsl/combined.vert",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../engine/glsl/combined.vert"
+    },
+    {
+      "logicalName": "glsl/model.frag",
+      "bundleRelativePath": "glsl/model.frag",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../engine/glsl/model.frag"
+    },
+    {
+      "logicalName": "glsl/model.vert",
+      "bundleRelativePath": "glsl/model.vert",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../engine/glsl/model.vert"
+    },
+    {
+      "logicalName": "glsl/postprocess.vert",
+      "bundleRelativePath": "glsl/postprocess.vert",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../engine/glsl/postprocess.vert"
+    },
+    {
+      "logicalName": "glsl/postprocess_chronoshift.frag",
+      "bundleRelativePath": "glsl/postprocess_chronoshift.frag",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../engine/glsl/postprocess_chronoshift.frag"
+    },
+    {
+      "logicalName": "glsl/postprocess_flash.frag",
+      "bundleRelativePath": "glsl/postprocess_flash.frag",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../engine/glsl/postprocess_flash.frag"
+    },
+    {
+      "logicalName": "glsl/postprocess_menufade.frag",
+      "bundleRelativePath": "glsl/postprocess_menufade.frag",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../engine/glsl/postprocess_menufade.frag"
+    },
+    {
+      "logicalName": "glsl/postprocess_textured.vert",
+      "bundleRelativePath": "glsl/postprocess_textured.vert",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../engine/glsl/postprocess_textured.vert"
+    },
+    {
+      "logicalName": "glsl/postprocess_textured_vortex.frag",
+      "bundleRelativePath": "glsl/postprocess_textured_vortex.frag",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../engine/glsl/postprocess_textured_vortex.frag"
+    },
+    {
+      "logicalName": "glsl/postprocess_tint.frag",
+      "bundleRelativePath": "glsl/postprocess_tint.frag",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../engine/glsl/postprocess_tint.frag"
+    },
+    {
+      "logicalName": "mods/common/chrome/color-picker.yaml",
+      "bundleRelativePath": "mods/common/chrome/color-picker.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/chrome/color-picker.yaml"
+    },
+    {
+      "logicalName": "mods/common/chrome/confirmation-dialogs.yaml",
+      "bundleRelativePath": "mods/common/chrome/confirmation-dialogs.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/chrome/confirmation-dialogs.yaml"
+    },
+    {
+      "logicalName": "mods/common/chrome/connection.yaml",
+      "bundleRelativePath": "mods/common/chrome/connection.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/chrome/connection.yaml"
+    },
+    {
+      "logicalName": "mods/common/chrome/credits.yaml",
+      "bundleRelativePath": "mods/common/chrome/credits.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/chrome/credits.yaml"
+    },
+    {
+      "logicalName": "mods/common/chrome/dropdowns.yaml",
+      "bundleRelativePath": "mods/common/chrome/dropdowns.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/chrome/dropdowns.yaml"
+    },
+    {
+      "logicalName": "mods/common/chrome/editor.yaml",
+      "bundleRelativePath": "mods/common/chrome/editor.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/chrome/editor.yaml"
+    },
+    {
+      "logicalName": "mods/common/chrome/gamesave-browser.yaml",
+      "bundleRelativePath": "mods/common/chrome/gamesave-browser.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/chrome/gamesave-browser.yaml"
+    },
+    {
+      "logicalName": "mods/common/chrome/ingame-chat.yaml",
+      "bundleRelativePath": "mods/common/chrome/ingame-chat.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/chrome/ingame-chat.yaml"
+    },
+    {
+      "logicalName": "mods/common/chrome/ingame-debuginfo.yaml",
+      "bundleRelativePath": "mods/common/chrome/ingame-debuginfo.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/chrome/ingame-debuginfo.yaml"
+    },
+    {
+      "logicalName": "mods/common/chrome/ingame-fmvplayer.yaml",
+      "bundleRelativePath": "mods/common/chrome/ingame-fmvplayer.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/chrome/ingame-fmvplayer.yaml"
+    },
+    {
+      "logicalName": "mods/common/chrome/ingame-info-lobby-options.yaml",
+      "bundleRelativePath": "mods/common/chrome/ingame-info-lobby-options.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/chrome/ingame-info-lobby-options.yaml"
+    },
+    {
+      "logicalName": "mods/common/chrome/ingame-infobriefing.yaml",
+      "bundleRelativePath": "mods/common/chrome/ingame-infobriefing.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/chrome/ingame-infobriefing.yaml"
+    },
+    {
+      "logicalName": "mods/common/chrome/ingame-infochat.yaml",
+      "bundleRelativePath": "mods/common/chrome/ingame-infochat.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/chrome/ingame-infochat.yaml"
+    },
+    {
+      "logicalName": "mods/common/chrome/ingame-infoobjectives.yaml",
+      "bundleRelativePath": "mods/common/chrome/ingame-infoobjectives.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/chrome/ingame-infoobjectives.yaml"
+    },
+    {
+      "logicalName": "mods/common/chrome/ingame-infoscripterror.yaml",
+      "bundleRelativePath": "mods/common/chrome/ingame-infoscripterror.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/chrome/ingame-infoscripterror.yaml"
+    },
+    {
+      "logicalName": "mods/common/chrome/ingame-infostats.yaml",
+      "bundleRelativePath": "mods/common/chrome/ingame-infostats.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/chrome/ingame-infostats.yaml"
+    },
+    {
+      "logicalName": "mods/common/chrome/ingame-perf.yaml",
+      "bundleRelativePath": "mods/common/chrome/ingame-perf.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/chrome/ingame-perf.yaml"
+    },
+    {
+      "logicalName": "mods/common/chrome/ingame-transients.yaml",
+      "bundleRelativePath": "mods/common/chrome/ingame-transients.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/chrome/ingame-transients.yaml"
+    },
+    {
+      "logicalName": "mods/common/chrome/lobby-kickdialogs.yaml",
+      "bundleRelativePath": "mods/common/chrome/lobby-kickdialogs.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/chrome/lobby-kickdialogs.yaml"
+    },
+    {
+      "logicalName": "mods/common/chrome/lobby-mappreview.yaml",
+      "bundleRelativePath": "mods/common/chrome/lobby-mappreview.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/chrome/lobby-mappreview.yaml"
+    },
+    {
+      "logicalName": "mods/common/chrome/lobby-music.yaml",
+      "bundleRelativePath": "mods/common/chrome/lobby-music.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/chrome/lobby-music.yaml"
+    },
+    {
+      "logicalName": "mods/common/chrome/lobby-options.yaml",
+      "bundleRelativePath": "mods/common/chrome/lobby-options.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/chrome/lobby-options.yaml"
+    },
+    {
+      "logicalName": "mods/common/chrome/lobby-players.yaml",
+      "bundleRelativePath": "mods/common/chrome/lobby-players.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/chrome/lobby-players.yaml"
+    },
+    {
+      "logicalName": "mods/common/chrome/lobby-servers.yaml",
+      "bundleRelativePath": "mods/common/chrome/lobby-servers.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/chrome/lobby-servers.yaml"
+    },
+    {
+      "logicalName": "mods/common/chrome/lobby.yaml",
+      "bundleRelativePath": "mods/common/chrome/lobby.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/chrome/lobby.yaml"
+    },
+    {
+      "logicalName": "mods/common/chrome/mainmenu-prompts.yaml",
+      "bundleRelativePath": "mods/common/chrome/mainmenu-prompts.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/chrome/mainmenu-prompts.yaml"
+    },
+    {
+      "logicalName": "mods/common/chrome/map-chooser.yaml",
+      "bundleRelativePath": "mods/common/chrome/map-chooser.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/chrome/map-chooser.yaml"
+    },
+    {
+      "logicalName": "mods/common/chrome/missionbrowser.yaml",
+      "bundleRelativePath": "mods/common/chrome/missionbrowser.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/chrome/missionbrowser.yaml"
+    },
+    {
+      "logicalName": "mods/common/chrome/multiplayer-browser.yaml",
+      "bundleRelativePath": "mods/common/chrome/multiplayer-browser.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/chrome/multiplayer-browser.yaml"
+    },
+    {
+      "logicalName": "mods/common/chrome/multiplayer-browserpanels.yaml",
+      "bundleRelativePath": "mods/common/chrome/multiplayer-browserpanels.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/chrome/multiplayer-browserpanels.yaml"
+    },
+    {
+      "logicalName": "mods/common/chrome/multiplayer-createserver.yaml",
+      "bundleRelativePath": "mods/common/chrome/multiplayer-createserver.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/chrome/multiplayer-createserver.yaml"
+    },
+    {
+      "logicalName": "mods/common/chrome/multiplayer-directconnect.yaml",
+      "bundleRelativePath": "mods/common/chrome/multiplayer-directconnect.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/chrome/multiplayer-directconnect.yaml"
+    },
+    {
+      "logicalName": "mods/common/chrome/musicplayer.yaml",
+      "bundleRelativePath": "mods/common/chrome/musicplayer.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/chrome/musicplayer.yaml"
+    },
+    {
+      "logicalName": "mods/common/chrome/playerprofile.yaml",
+      "bundleRelativePath": "mods/common/chrome/playerprofile.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/chrome/playerprofile.yaml"
+    },
+    {
+      "logicalName": "mods/common/chrome/replaybrowser.yaml",
+      "bundleRelativePath": "mods/common/chrome/replaybrowser.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/chrome/replaybrowser.yaml"
+    },
+    {
+      "logicalName": "mods/common/chrome/settings-advanced.yaml",
+      "bundleRelativePath": "mods/common/chrome/settings-advanced.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/chrome/settings-advanced.yaml"
+    },
+    {
+      "logicalName": "mods/common/chrome/settings-audio.yaml",
+      "bundleRelativePath": "mods/common/chrome/settings-audio.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/chrome/settings-audio.yaml"
+    },
+    {
+      "logicalName": "mods/common/chrome/settings-display.yaml",
+      "bundleRelativePath": "mods/common/chrome/settings-display.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/chrome/settings-display.yaml"
+    },
+    {
+      "logicalName": "mods/common/chrome/settings-hotkeys.yaml",
+      "bundleRelativePath": "mods/common/chrome/settings-hotkeys.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/chrome/settings-hotkeys.yaml"
+    },
+    {
+      "logicalName": "mods/common/chrome/settings-input.yaml",
+      "bundleRelativePath": "mods/common/chrome/settings-input.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/chrome/settings-input.yaml"
+    },
+    {
+      "logicalName": "mods/common/chrome/text-notifications.yaml",
+      "bundleRelativePath": "mods/common/chrome/text-notifications.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/chrome/text-notifications.yaml"
+    },
+    {
+      "logicalName": "mods/common/chrome/tooltips.yaml",
+      "bundleRelativePath": "mods/common/chrome/tooltips.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/chrome/tooltips.yaml"
+    },
+    {
+      "logicalName": "mods/common/fluent/chrome.ftl",
+      "bundleRelativePath": "mods/common/fluent/chrome.ftl",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/fluent/chrome.ftl"
+    },
+    {
+      "logicalName": "mods/common/fluent/common.ftl",
+      "bundleRelativePath": "mods/common/fluent/common.ftl",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/fluent/common.ftl"
+    },
+    {
+      "logicalName": "mods/common/fluent/hotkeys.ftl",
+      "bundleRelativePath": "mods/common/fluent/hotkeys.ftl",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/fluent/hotkeys.ftl"
+    },
+    {
+      "logicalName": "mods/common/fluent/rules.ftl",
+      "bundleRelativePath": "mods/common/fluent/rules.ftl",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/fluent/rules.ftl"
+    },
+    {
+      "logicalName": "mods/common/fluent/zh-CN/chrome.ftl",
+      "bundleRelativePath": "mods/common/fluent/zh-CN/chrome.ftl",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/fluent/zh-CN/chrome.ftl"
+    },
+    {
+      "logicalName": "mods/common/fluent/zh-CN/common.ftl",
+      "bundleRelativePath": "mods/common/fluent/zh-CN/common.ftl",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/fluent/zh-CN/common.ftl"
+    },
+    {
+      "logicalName": "mods/common/fluent/zh-CN/hotkeys.ftl",
+      "bundleRelativePath": "mods/common/fluent/zh-CN/hotkeys.ftl",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/fluent/zh-CN/hotkeys.ftl"
+    },
+    {
+      "logicalName": "mods/common/fluent/zh-CN/rules.ftl",
+      "bundleRelativePath": "mods/common/fluent/zh-CN/rules.ftl",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/fluent/zh-CN/rules.ftl"
+    },
+    {
+      "logicalName": "mods/common/hotkeys/chat.yaml",
+      "bundleRelativePath": "mods/common/hotkeys/chat.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/hotkeys/chat.yaml"
+    },
+    {
+      "logicalName": "mods/common/hotkeys/control-groups.yaml",
+      "bundleRelativePath": "mods/common/hotkeys/control-groups.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/hotkeys/control-groups.yaml"
+    },
+    {
+      "logicalName": "mods/common/hotkeys/editor.yaml",
+      "bundleRelativePath": "mods/common/hotkeys/editor.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/hotkeys/editor.yaml"
+    },
+    {
+      "logicalName": "mods/common/hotkeys/game.yaml",
+      "bundleRelativePath": "mods/common/hotkeys/game.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/hotkeys/game.yaml"
+    },
+    {
+      "logicalName": "mods/common/hotkeys/observer.yaml",
+      "bundleRelativePath": "mods/common/hotkeys/observer.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/hotkeys/observer.yaml"
+    },
+    {
+      "logicalName": "mods/common/hotkeys/production-common.yaml",
+      "bundleRelativePath": "mods/common/hotkeys/production-common.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/hotkeys/production-common.yaml"
+    },
+    {
+      "logicalName": "mods/common/hotkeys/supportpowers.yaml",
+      "bundleRelativePath": "mods/common/hotkeys/supportpowers.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/hotkeys/supportpowers.yaml"
+    },
+    {
+      "logicalName": "mods/common/hotkeys/viewport.yaml",
+      "bundleRelativePath": "mods/common/hotkeys/viewport.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/hotkeys/viewport.yaml"
+    },
+    {
+      "logicalName": "mods/common/metrics.yaml",
+      "bundleRelativePath": "mods/common/metrics.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/common/metrics.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/AUTHORS",
+      "bundleRelativePath": "mods/ra2/AUTHORS",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/AUTHORS"
+    },
+    {
+      "logicalName": "mods/ra2/audio/music.yaml",
+      "bundleRelativePath": "mods/ra2/audio/music.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/audio/music.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/audio/notifications.yaml",
+      "bundleRelativePath": "mods/ra2/audio/notifications.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/audio/notifications.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/audio/voices-base.yaml",
+      "bundleRelativePath": "mods/ra2/audio/voices-base.yaml",
+      "profiles": [
+        "Base"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/audio/voices-base.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/audio/voices.yaml",
+      "bundleRelativePath": "mods/ra2/audio/voices.yaml",
+      "profiles": [
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/audio/voices.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/bits/ammopips.shp",
+      "bundleRelativePath": "mods/ra2/bits/ammopips.shp",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/ammopips.shp"
+    },
+    {
+      "logicalName": "mods/ra2/bits/animations/clock.shp",
+      "bundleRelativePath": "mods/ra2/bits/animations/clock.shp",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/animations/clock.shp"
+    },
+    {
+      "logicalName": "mods/ra2/bits/animations/nc-impact-core.png",
+      "bundleRelativePath": "mods/ra2/bits/animations/nc-impact-core.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/animations/nc-impact-core.png"
+    },
+    {
+      "logicalName": "mods/ra2/bits/animations/nc-impact-debris.png",
+      "bundleRelativePath": "mods/ra2/bits/animations/nc-impact-debris.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/animations/nc-impact-debris.png"
+    },
+    {
+      "logicalName": "mods/ra2/bits/animations/nc-impact-ring.png",
+      "bundleRelativePath": "mods/ra2/bits/animations/nc-impact-ring.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/animations/nc-impact-ring.png"
+    },
+    {
+      "logicalName": "mods/ra2/bits/assaultmove.shp",
+      "bundleRelativePath": "mods/ra2/bits/assaultmove.shp",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/assaultmove.shp"
+    },
+    {
+      "logicalName": "mods/ra2/bits/cameos/acnsicon.shp",
+      "bundleRelativePath": "mods/ra2/bits/cameos/acnsicon.shp",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/cameos/acnsicon.shp"
+    },
+    {
+      "logicalName": "mods/ra2/bits/cameos/cameo-chevron.png",
+      "bundleRelativePath": "mods/ra2/bits/cameos/cameo-chevron.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/cameos/cameo-chevron.png"
+    },
+    {
+      "logicalName": "mods/ra2/bits/cameos/diskicon.shp",
+      "bundleRelativePath": "mods/ra2/bits/cameos/diskicon.shp",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/cameos/diskicon.shp"
+    },
+    {
+      "logicalName": "mods/ra2/bits/cameos/ggunicon.shp",
+      "bundleRelativePath": "mods/ra2/bits/cameos/ggunicon.shp",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/cameos/ggunicon.shp"
+    },
+    {
+      "logicalName": "mods/ra2/bits/cameos/gtncicon.shp",
+      "bundleRelativePath": "mods/ra2/bits/cameos/gtncicon.shp",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/cameos/gtncicon.shp"
+    },
+    {
+      "logicalName": "mods/ra2/bits/cameos/scnsicon.shp",
+      "bundleRelativePath": "mods/ra2/bits/cameos/scnsicon.shp",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/cameos/scnsicon.shp"
+    },
+    {
+      "logicalName": "mods/ra2/bits/cameos/slavicon.shp",
+      "bundleRelativePath": "mods/ra2/bits/cameos/slavicon.shp",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/cameos/slavicon.shp"
+    },
+    {
+      "logicalName": "mods/ra2/bits/cameos/ydomicon-cn.png",
+      "bundleRelativePath": "mods/ra2/bits/cameos/ydomicon-cn.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/cameos/ydomicon-cn.png"
+    },
+    {
+      "logicalName": "mods/ra2/bits/cameos/ydomicon.shp",
+      "bundleRelativePath": "mods/ra2/bits/cameos/ydomicon.shp",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/cameos/ydomicon.shp"
+    },
+    {
+      "logicalName": "mods/ra2/bits/cameos/yfixicon-cn.png",
+      "bundleRelativePath": "mods/ra2/bits/cameos/yfixicon-cn.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/cameos/yfixicon-cn.png"
+    },
+    {
+      "logicalName": "mods/ra2/bits/cameos/yfixicon.shp",
+      "bundleRelativePath": "mods/ra2/bits/cameos/yfixicon.shp",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/cameos/yfixicon.shp"
+    },
+    {
+      "logicalName": "mods/ra2/bits/cameos/yhvricon.shp",
+      "bundleRelativePath": "mods/ra2/bits/cameos/yhvricon.shp",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/cameos/yhvricon.shp"
+    },
+    {
+      "logicalName": "mods/ra2/bits/cameos/yrcyicon.png",
+      "bundleRelativePath": "mods/ra2/bits/cameos/yrcyicon.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/cameos/yrcyicon.png"
+    },
+    {
+      "logicalName": "mods/ra2/bits/cameos/ytnkicon.shp",
+      "bundleRelativePath": "mods/ra2/bits/cameos/ytnkicon.shp",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/cameos/ytnkicon.shp"
+    },
+    {
+      "logicalName": "mods/ra2/bits/camera.shp",
+      "bundleRelativePath": "mods/ra2/bits/camera.shp",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/camera.shp"
+    },
+    {
+      "logicalName": "mods/ra2/bits/isodepth.shp",
+      "bundleRelativePath": "mods/ra2/bits/isodepth.shp",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/isodepth.shp"
+    },
+    {
+      "logicalName": "mods/ra2/bits/mpspawn.shp",
+      "bundleRelativePath": "mods/ra2/bits/mpspawn.shp",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/mpspawn.shp"
+    },
+    {
+      "logicalName": "mods/ra2/bits/pip-disguise.shp",
+      "bundleRelativePath": "mods/ra2/bits/pip-disguise.shp",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/pip-disguise.shp"
+    },
+    {
+      "logicalName": "mods/ra2/bits/pipsra.shp",
+      "bundleRelativePath": "mods/ra2/bits/pipsra.shp",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/pipsra.shp"
+    },
+    {
+      "logicalName": "mods/ra2/bits/projectiles/zbomb.shp",
+      "bundleRelativePath": "mods/ra2/bits/projectiles/zbomb.shp",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/projectiles/zbomb.shp"
+    },
+    {
+      "logicalName": "mods/ra2/bits/structures/cgwash06_a.shp",
+      "bundleRelativePath": "mods/ra2/bits/structures/cgwash06_a.shp",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/structures/cgwash06_a.shp"
+    },
+    {
+      "logicalName": "mods/ra2/bits/structures/cgwt01.shp",
+      "bundleRelativePath": "mods/ra2/bits/structures/cgwt01.shp",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/structures/cgwt01.shp"
+    },
+    {
+      "logicalName": "mods/ra2/bits/structures/gaweth.shp",
+      "bundleRelativePath": "mods/ra2/bits/structures/gaweth.shp",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/structures/gaweth.shp"
+    },
+    {
+      "logicalName": "mods/ra2/bits/structures/ngweapbb.shp",
+      "bundleRelativePath": "mods/ra2/bits/structures/ngweapbb.shp",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/structures/ngweapbb.shp"
+    },
+    {
+      "logicalName": "mods/ra2/bits/structures/yadept.shp",
+      "bundleRelativePath": "mods/ra2/bits/structures/yadept.shp",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/structures/yadept.shp"
+    },
+    {
+      "logicalName": "mods/ra2/bits/structures/yadept_b.shp",
+      "bundleRelativePath": "mods/ra2/bits/structures/yadept_b.shp",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/structures/yadept_b.shp"
+    },
+    {
+      "logicalName": "mods/ra2/bits/structures/yadept_c.shp",
+      "bundleRelativePath": "mods/ra2/bits/structures/yadept_c.shp",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/structures/yadept_c.shp"
+    },
+    {
+      "logicalName": "mods/ra2/bits/structures/yadeptbb.shp",
+      "bundleRelativePath": "mods/ra2/bits/structures/yadeptbb.shp",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/structures/yadeptbb.shp"
+    },
+    {
+      "logicalName": "mods/ra2/bits/structures/yadeptmk.shp",
+      "bundleRelativePath": "mods/ra2/bits/structures/yadeptmk.shp",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/structures/yadeptmk.shp"
+    },
+    {
+      "logicalName": "mods/ra2/bits/structures/yadome.shp",
+      "bundleRelativePath": "mods/ra2/bits/structures/yadome.shp",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/structures/yadome.shp"
+    },
+    {
+      "logicalName": "mods/ra2/bits/structures/yadome_a.shp",
+      "bundleRelativePath": "mods/ra2/bits/structures/yadome_a.shp",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/structures/yadome_a.shp"
+    },
+    {
+      "logicalName": "mods/ra2/bits/structures/yadome_b.shp",
+      "bundleRelativePath": "mods/ra2/bits/structures/yadome_b.shp",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/structures/yadome_b.shp"
+    },
+    {
+      "logicalName": "mods/ra2/bits/structures/yadomemk.shp",
+      "bundleRelativePath": "mods/ra2/bits/structures/yadomemk.shp",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/structures/yadomemk.shp"
+    },
+    {
+      "logicalName": "mods/ra2/bits/structures/ygdept.shp",
+      "bundleRelativePath": "mods/ra2/bits/structures/ygdept.shp",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/structures/ygdept.shp"
+    },
+    {
+      "logicalName": "mods/ra2/bits/structures/ygdept_b.shp",
+      "bundleRelativePath": "mods/ra2/bits/structures/ygdept_b.shp",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/structures/ygdept_b.shp"
+    },
+    {
+      "logicalName": "mods/ra2/bits/structures/ygdept_c.shp",
+      "bundleRelativePath": "mods/ra2/bits/structures/ygdept_c.shp",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/structures/ygdept_c.shp"
+    },
+    {
+      "logicalName": "mods/ra2/bits/structures/ygdeptbb.shp",
+      "bundleRelativePath": "mods/ra2/bits/structures/ygdeptbb.shp",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/structures/ygdeptbb.shp"
+    },
+    {
+      "logicalName": "mods/ra2/bits/structures/ygdeptmk.shp",
+      "bundleRelativePath": "mods/ra2/bits/structures/ygdeptmk.shp",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/structures/ygdeptmk.shp"
+    },
+    {
+      "logicalName": "mods/ra2/bits/structures/ygdome.shp",
+      "bundleRelativePath": "mods/ra2/bits/structures/ygdome.shp",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/structures/ygdome.shp"
+    },
+    {
+      "logicalName": "mods/ra2/bits/structures/ygdome_a.shp",
+      "bundleRelativePath": "mods/ra2/bits/structures/ygdome_a.shp",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/structures/ygdome_a.shp"
+    },
+    {
+      "logicalName": "mods/ra2/bits/structures/ygdome_b.shp",
+      "bundleRelativePath": "mods/ra2/bits/structures/ygdome_b.shp",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/structures/ygdome_b.shp"
+    },
+    {
+      "logicalName": "mods/ra2/bits/structures/ygdomemk.shp",
+      "bundleRelativePath": "mods/ra2/bits/structures/ygdomemk.shp",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/structures/ygdomemk.shp"
+    },
+    {
+      "logicalName": "mods/ra2/bits/ts-mousepal.pal",
+      "bundleRelativePath": "mods/ra2/bits/ts-mousepal.pal",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/ts-mousepal.pal"
+    },
+    {
+      "logicalName": "mods/ra2/bits/tscameo.pal",
+      "bundleRelativePath": "mods/ra2/bits/tscameo.pal",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/tscameo.pal"
+    },
+    {
+      "logicalName": "mods/ra2/bits/undeploy.shp",
+      "bundleRelativePath": "mods/ra2/bits/undeploy.shp",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/undeploy.shp"
+    },
+    {
+      "logicalName": "mods/ra2/bits/waypoint.shp",
+      "bundleRelativePath": "mods/ra2/bits/waypoint.shp",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/bits/waypoint.shp"
+    },
+    {
+      "logicalName": "mods/ra2/chrome.yaml",
+      "bundleRelativePath": "mods/ra2/chrome.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/chrome.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/chrome/gamesave-loading.yaml",
+      "bundleRelativePath": "mods/ra2/chrome/gamesave-loading.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/chrome/gamesave-loading.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/chrome/ingame-debug.yaml",
+      "bundleRelativePath": "mods/ra2/chrome/ingame-debug.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/chrome/ingame-debug.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/chrome/ingame-info.yaml",
+      "bundleRelativePath": "mods/ra2/chrome/ingame-info.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/chrome/ingame-info.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/chrome/ingame-menu.yaml",
+      "bundleRelativePath": "mods/ra2/chrome/ingame-menu.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/chrome/ingame-menu.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/chrome/ingame-observer.yaml",
+      "bundleRelativePath": "mods/ra2/chrome/ingame-observer.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/chrome/ingame-observer.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/chrome/ingame-player.yaml",
+      "bundleRelativePath": "mods/ra2/chrome/ingame-player.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/chrome/ingame-player.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/chrome/ingame.yaml",
+      "bundleRelativePath": "mods/ra2/chrome/ingame.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/chrome/ingame.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/chrome/mainmenu-prerelease-notification.yaml",
+      "bundleRelativePath": "mods/ra2/chrome/mainmenu-prerelease-notification.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/chrome/mainmenu-prerelease-notification.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/chrome/mainmenu.yaml",
+      "bundleRelativePath": "mods/ra2/chrome/mainmenu.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/chrome/mainmenu.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/chrome/settings.yaml",
+      "bundleRelativePath": "mods/ra2/chrome/settings.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/chrome/settings.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/cursors.yaml",
+      "bundleRelativePath": "mods/ra2/cursors.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/cursors.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/fluent/assetbrowser.ftl",
+      "bundleRelativePath": "mods/ra2/fluent/assetbrowser.ftl",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/fluent/assetbrowser.ftl"
+    },
+    {
+      "logicalName": "mods/ra2/fluent/chrome.ftl",
+      "bundleRelativePath": "mods/ra2/fluent/chrome.ftl",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/fluent/chrome.ftl"
+    },
+    {
+      "logicalName": "mods/ra2/fluent/hotkeys.ftl",
+      "bundleRelativePath": "mods/ra2/fluent/hotkeys.ftl",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/fluent/hotkeys.ftl"
+    },
+    {
+      "logicalName": "mods/ra2/fluent/mod.ftl",
+      "bundleRelativePath": "mods/ra2/fluent/mod.ftl",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/fluent/mod.ftl"
+    },
+    {
+      "logicalName": "mods/ra2/fluent/rules.ftl",
+      "bundleRelativePath": "mods/ra2/fluent/rules.ftl",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/fluent/rules.ftl"
+    },
+    {
+      "logicalName": "mods/ra2/fluent/zh-CN/assetbrowser.ftl",
+      "bundleRelativePath": "mods/ra2/fluent/zh-CN/assetbrowser.ftl",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/fluent/zh-CN/assetbrowser.ftl"
+    },
+    {
+      "logicalName": "mods/ra2/fluent/zh-CN/chrome.ftl",
+      "bundleRelativePath": "mods/ra2/fluent/zh-CN/chrome.ftl",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/fluent/zh-CN/chrome.ftl"
+    },
+    {
+      "logicalName": "mods/ra2/fluent/zh-CN/hotkeys.ftl",
+      "bundleRelativePath": "mods/ra2/fluent/zh-CN/hotkeys.ftl",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/fluent/zh-CN/hotkeys.ftl"
+    },
+    {
+      "logicalName": "mods/ra2/fluent/zh-CN/mod.ftl",
+      "bundleRelativePath": "mods/ra2/fluent/zh-CN/mod.ftl",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/fluent/zh-CN/mod.ftl"
+    },
+    {
+      "logicalName": "mods/ra2/fluent/zh-CN/rules.ftl",
+      "bundleRelativePath": "mods/ra2/fluent/zh-CN/rules.ftl",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/fluent/zh-CN/rules.ftl"
+    },
+    {
+      "logicalName": "mods/ra2/fonts/NotoSansCJKsc-Bold.otf",
+      "bundleRelativePath": "mods/ra2/fonts/NotoSansCJKsc-Bold.otf",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/fonts/NotoSansCJKsc-Bold.otf"
+    },
+    {
+      "logicalName": "mods/ra2/fonts/NotoSansCJKsc-Regular.otf",
+      "bundleRelativePath": "mods/ra2/fonts/NotoSansCJKsc-Regular.otf",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/fonts/NotoSansCJKsc-Regular.otf"
+    },
+    {
+      "logicalName": "mods/ra2/fonts/OFL.txt",
+      "bundleRelativePath": "mods/ra2/fonts/OFL.txt",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/fonts/OFL.txt"
+    },
+    {
+      "logicalName": "mods/ra2/hotkeys.yaml",
+      "bundleRelativePath": "mods/ra2/hotkeys.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/hotkeys.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/icon.png",
+      "bundleRelativePath": "mods/ra2/icon.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/icon.png"
+    },
+    {
+      "logicalName": "mods/ra2/manifest/common.yaml",
+      "bundleRelativePath": "mods/ra2/manifest/common.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/manifest/common.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/manifest/filesystem-desktop.yaml",
+      "bundleRelativePath": "mods/ra2/manifest/filesystem-desktop.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/manifest/filesystem-desktop.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/manifest/filesystem-ios-base.yaml",
+      "bundleRelativePath": "mods/ra2/manifest/filesystem-ios-base.yaml",
+      "profiles": [
+        "Base"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/manifest/filesystem-ios-base.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/manifest/filesystem-ios-yuri.yaml",
+      "bundleRelativePath": "mods/ra2/manifest/filesystem-ios-yuri.yaml",
+      "profiles": [
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/manifest/filesystem-ios-yuri.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/manifest/gameplay-base.yaml",
+      "bundleRelativePath": "mods/ra2/manifest/gameplay-base.yaml",
+      "profiles": [
+        "Base"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/manifest/gameplay-base.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/manifest/gameplay-yuri.yaml",
+      "bundleRelativePath": "mods/ra2/manifest/gameplay-yuri.yaml",
+      "profiles": [
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/manifest/gameplay-yuri.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/maps/blank-shellmap/map.bin",
+      "bundleRelativePath": "mods/ra2/maps/blank-shellmap/map.bin",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/maps/blank-shellmap/map.bin"
+    },
+    {
+      "logicalName": "mods/ra2/maps/blank-shellmap/map.png",
+      "bundleRelativePath": "mods/ra2/maps/blank-shellmap/map.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/maps/blank-shellmap/map.png"
+    },
+    {
+      "logicalName": "mods/ra2/maps/blank-shellmap/map.yaml",
+      "bundleRelativePath": "mods/ra2/maps/blank-shellmap/map.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/maps/blank-shellmap/map.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/metrics.yaml",
+      "bundleRelativePath": "mods/ra2/metrics.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/metrics.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/mod.ios-base.yaml",
+      "bundleRelativePath": "mods/ra2/mod.ios-base.yaml",
+      "profiles": [
+        "Base"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/mod.ios-base.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/mod.ios-yuri.yaml",
+      "bundleRelativePath": "mods/ra2/mod.ios-yuri.yaml",
+      "profiles": [
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/mod.ios-yuri.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/mod.yaml",
+      "bundleRelativePath": "mods/ra2/mod.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/mod.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/rules/ai-profiles.yaml",
+      "bundleRelativePath": "mods/ra2/rules/ai-profiles.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/rules/ai-profiles.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/rules/ai.yaml",
+      "bundleRelativePath": "mods/ra2/rules/ai.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/rules/ai.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/rules/aircraft.yaml",
+      "bundleRelativePath": "mods/ra2/rules/aircraft.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/rules/aircraft.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/rules/allied-infantry-base.yaml",
+      "bundleRelativePath": "mods/ra2/rules/allied-infantry-base.yaml",
+      "profiles": [
+        "Base"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/rules/allied-infantry-base.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/rules/allied-infantry.yaml",
+      "bundleRelativePath": "mods/ra2/rules/allied-infantry.yaml",
+      "profiles": [
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/rules/allied-infantry.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/rules/allied-naval.yaml",
+      "bundleRelativePath": "mods/ra2/rules/allied-naval.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/rules/allied-naval.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/rules/allied-structures.yaml",
+      "bundleRelativePath": "mods/ra2/rules/allied-structures.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/rules/allied-structures.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/rules/allied-vehicles.yaml",
+      "bundleRelativePath": "mods/ra2/rules/allied-vehicles.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/rules/allied-vehicles.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/rules/animals.yaml",
+      "bundleRelativePath": "mods/ra2/rules/animals.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/rules/animals.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/rules/bridges.yaml",
+      "bundleRelativePath": "mods/ra2/rules/bridges.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/rules/bridges.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/rules/civilian-naval.yaml",
+      "bundleRelativePath": "mods/ra2/rules/civilian-naval.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/rules/civilian-naval.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/rules/civilian-props.yaml",
+      "bundleRelativePath": "mods/ra2/rules/civilian-props.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/rules/civilian-props.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/rules/civilian-structures.yaml",
+      "bundleRelativePath": "mods/ra2/rules/civilian-structures.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/rules/civilian-structures.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/rules/civilian-vehicles.yaml",
+      "bundleRelativePath": "mods/ra2/rules/civilian-vehicles.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/rules/civilian-vehicles.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/rules/civilians.yaml",
+      "bundleRelativePath": "mods/ra2/rules/civilians.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/rules/civilians.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/rules/defaults-base.yaml",
+      "bundleRelativePath": "mods/ra2/rules/defaults-base.yaml",
+      "profiles": [
+        "Base"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/rules/defaults-base.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/rules/defaults.yaml",
+      "bundleRelativePath": "mods/ra2/rules/defaults.yaml",
+      "profiles": [
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/rules/defaults.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/rules/misc.yaml",
+      "bundleRelativePath": "mods/ra2/rules/misc.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/rules/misc.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/rules/palettes.yaml",
+      "bundleRelativePath": "mods/ra2/rules/palettes.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/rules/palettes.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/rules/player.yaml",
+      "bundleRelativePath": "mods/ra2/rules/player.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/rules/player.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/rules/proxy-actors-base.yaml",
+      "bundleRelativePath": "mods/ra2/rules/proxy-actors-base.yaml",
+      "profiles": [
+        "Base"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/rules/proxy-actors-base.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/rules/proxy-actors.yaml",
+      "bundleRelativePath": "mods/ra2/rules/proxy-actors.yaml",
+      "profiles": [
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/rules/proxy-actors.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/rules/soviet-infantry-base.yaml",
+      "bundleRelativePath": "mods/ra2/rules/soviet-infantry-base.yaml",
+      "profiles": [
+        "Base"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/rules/soviet-infantry-base.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/rules/soviet-infantry.yaml",
+      "bundleRelativePath": "mods/ra2/rules/soviet-infantry.yaml",
+      "profiles": [
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/rules/soviet-infantry.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/rules/soviet-naval.yaml",
+      "bundleRelativePath": "mods/ra2/rules/soviet-naval.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/rules/soviet-naval.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/rules/soviet-structures.yaml",
+      "bundleRelativePath": "mods/ra2/rules/soviet-structures.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/rules/soviet-structures.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/rules/soviet-vehicles-base.yaml",
+      "bundleRelativePath": "mods/ra2/rules/soviet-vehicles-base.yaml",
+      "profiles": [
+        "Base"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/rules/soviet-vehicles-base.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/rules/soviet-vehicles.yaml",
+      "bundleRelativePath": "mods/ra2/rules/soviet-vehicles.yaml",
+      "profiles": [
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/rules/soviet-vehicles.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/rules/tech-structures.yaml",
+      "bundleRelativePath": "mods/ra2/rules/tech-structures.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/rules/tech-structures.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/rules/trees.yaml",
+      "bundleRelativePath": "mods/ra2/rules/trees.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/rules/trees.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/rules/world-base.yaml",
+      "bundleRelativePath": "mods/ra2/rules/world-base.yaml",
+      "profiles": [
+        "Base"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/rules/world-base.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/rules/world.yaml",
+      "bundleRelativePath": "mods/ra2/rules/world.yaml",
+      "profiles": [
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/rules/world.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/rules/yuri-infantry.yaml",
+      "bundleRelativePath": "mods/ra2/rules/yuri-infantry.yaml",
+      "profiles": [
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/rules/yuri-infantry.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/rules/yuri-naval.yaml",
+      "bundleRelativePath": "mods/ra2/rules/yuri-naval.yaml",
+      "profiles": [
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/rules/yuri-naval.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/rules/yuri-structures.yaml",
+      "bundleRelativePath": "mods/ra2/rules/yuri-structures.yaml",
+      "profiles": [
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/rules/yuri-structures.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/rules/yuri-vehicles.yaml",
+      "bundleRelativePath": "mods/ra2/rules/yuri-vehicles.yaml",
+      "profiles": [
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/rules/yuri-vehicles.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/sequences/aircraft.yaml",
+      "bundleRelativePath": "mods/ra2/sequences/aircraft.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/sequences/aircraft.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/sequences/allied-infantry.yaml",
+      "bundleRelativePath": "mods/ra2/sequences/allied-infantry.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/sequences/allied-infantry.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/sequences/allied-structures.yaml",
+      "bundleRelativePath": "mods/ra2/sequences/allied-structures.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/sequences/allied-structures.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/sequences/animals.yaml",
+      "bundleRelativePath": "mods/ra2/sequences/animals.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/sequences/animals.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/sequences/bridges.yaml",
+      "bundleRelativePath": "mods/ra2/sequences/bridges.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/sequences/bridges.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/sequences/civilian-props.yaml",
+      "bundleRelativePath": "mods/ra2/sequences/civilian-props.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/sequences/civilian-props.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/sequences/civilian-structures.yaml",
+      "bundleRelativePath": "mods/ra2/sequences/civilian-structures.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/sequences/civilian-structures.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/sequences/civilians.yaml",
+      "bundleRelativePath": "mods/ra2/sequences/civilians.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/sequences/civilians.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/sequences/defaults.yaml",
+      "bundleRelativePath": "mods/ra2/sequences/defaults.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/sequences/defaults.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/sequences/misc.yaml",
+      "bundleRelativePath": "mods/ra2/sequences/misc.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/sequences/misc.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/sequences/soviet-infantry.yaml",
+      "bundleRelativePath": "mods/ra2/sequences/soviet-infantry.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/sequences/soviet-infantry.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/sequences/soviet-structures.yaml",
+      "bundleRelativePath": "mods/ra2/sequences/soviet-structures.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/sequences/soviet-structures.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/sequences/tech-structures.yaml",
+      "bundleRelativePath": "mods/ra2/sequences/tech-structures.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/sequences/tech-structures.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/sequences/trees.yaml",
+      "bundleRelativePath": "mods/ra2/sequences/trees.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/sequences/trees.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/sequences/vehicles-base.yaml",
+      "bundleRelativePath": "mods/ra2/sequences/vehicles-base.yaml",
+      "profiles": [
+        "Base"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/sequences/vehicles-base.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/sequences/vehicles.yaml",
+      "bundleRelativePath": "mods/ra2/sequences/vehicles.yaml",
+      "profiles": [
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/sequences/vehicles.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/sequences/voxels-base.yaml",
+      "bundleRelativePath": "mods/ra2/sequences/voxels-base.yaml",
+      "profiles": [
+        "Base"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/sequences/voxels-base.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/sequences/voxels.yaml",
+      "bundleRelativePath": "mods/ra2/sequences/voxels.yaml",
+      "profiles": [
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/sequences/voxels.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/sequences/yuri-infantry.yaml",
+      "bundleRelativePath": "mods/ra2/sequences/yuri-infantry.yaml",
+      "profiles": [
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/sequences/yuri-infantry.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/sequences/yuri-structures.yaml",
+      "bundleRelativePath": "mods/ra2/sequences/yuri-structures.yaml",
+      "profiles": [
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/sequences/yuri-structures.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/tilesets/snow.yaml",
+      "bundleRelativePath": "mods/ra2/tilesets/snow.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/tilesets/snow.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/tilesets/temperat.yaml",
+      "bundleRelativePath": "mods/ra2/tilesets/temperat.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/tilesets/temperat.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/tilesets/urban.yaml",
+      "bundleRelativePath": "mods/ra2/tilesets/urban.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/tilesets/urban.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/NUCLEAR-CRISIS-BG-01.png",
+      "bundleRelativePath": "mods/ra2/uibits/NUCLEAR-CRISIS-BG-01.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/NUCLEAR-CRISIS-BG-01.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/NUCLEAR-CRISIS-BG-02.png",
+      "bundleRelativePath": "mods/ra2/uibits/NUCLEAR-CRISIS-BG-02.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/NUCLEAR-CRISIS-BG-02.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/NUCLEAR-CRISIS-BG-03.png",
+      "bundleRelativePath": "mods/ra2/uibits/NUCLEAR-CRISIS-BG-03.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/NUCLEAR-CRISIS-BG-03.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/NUCLEAR-CRISIS-BG-04.png",
+      "bundleRelativePath": "mods/ra2/uibits/NUCLEAR-CRISIS-BG-04.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/NUCLEAR-CRISIS-BG-04.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/NUCLEAR-CRISIS-BG-05.png",
+      "bundleRelativePath": "mods/ra2/uibits/NUCLEAR-CRISIS-BG-05.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/NUCLEAR-CRISIS-BG-05.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/NUCLEAR-CRISIS-BG-06.png",
+      "bundleRelativePath": "mods/ra2/uibits/NUCLEAR-CRISIS-BG-06.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/NUCLEAR-CRISIS-BG-06.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/NUCLEAR-CRISIS-BG-07.png",
+      "bundleRelativePath": "mods/ra2/uibits/NUCLEAR-CRISIS-BG-07.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/NUCLEAR-CRISIS-BG-07.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/NUCLEAR-CRISIS-BG-08.png",
+      "bundleRelativePath": "mods/ra2/uibits/NUCLEAR-CRISIS-BG-08.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/NUCLEAR-CRISIS-BG-08.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/NUCLEAR-CRISIS-BG-09.png",
+      "bundleRelativePath": "mods/ra2/uibits/NUCLEAR-CRISIS-BG-09.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/NUCLEAR-CRISIS-BG-09.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/buttons.png",
+      "bundleRelativePath": "mods/ra2/uibits/buttons.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/buttons.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/chrome.fps-pre.png",
+      "bundleRelativePath": "mods/ra2/uibits/chrome.fps-pre.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/chrome.fps-pre.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/chrome.png",
+      "bundleRelativePath": "mods/ra2/uibits/chrome.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/chrome.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/commandbar-bar-v2.png",
+      "bundleRelativePath": "mods/ra2/uibits/commandbar-bar-v2.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/commandbar-bar-v2.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/commandbar-chrome.png",
+      "bundleRelativePath": "mods/ra2/uibits/commandbar-chrome.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/commandbar-chrome.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/commandbar-icons-remastered.png",
+      "bundleRelativePath": "mods/ra2/uibits/commandbar-icons-remastered.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/commandbar-icons-remastered.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/commandbar-icons.png",
+      "bundleRelativePath": "mods/ra2/uibits/commandbar-icons.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/commandbar-icons.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/commandbar-panel-compact.png",
+      "bundleRelativePath": "mods/ra2/uibits/commandbar-panel-compact.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/commandbar-panel-compact.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/commandbar-panel.png",
+      "bundleRelativePath": "mods/ra2/uibits/commandbar-panel.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/commandbar-panel.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/commandbar-toggle-icons.png",
+      "bundleRelativePath": "mods/ra2/uibits/commandbar-toggle-icons.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/commandbar-toggle-icons.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/dialog.png",
+      "bundleRelativePath": "mods/ra2/uibits/dialog.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/dialog.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/ios-commandbar-icons-v2.png",
+      "bundleRelativePath": "mods/ra2/uibits/ios-commandbar-icons-v2.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/ios-commandbar-icons-v2.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/ios-joystick-command-icons.png",
+      "bundleRelativePath": "mods/ra2/uibits/ios-joystick-command-icons.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/ios-joystick-command-icons.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/ios-touch-actions-allies-2x.png",
+      "bundleRelativePath": "mods/ra2/uibits/ios-touch-actions-allies-2x.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/ios-touch-actions-allies-2x.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/ios-touch-actions-allies.png",
+      "bundleRelativePath": "mods/ra2/uibits/ios-touch-actions-allies.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/ios-touch-actions-allies.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/ios-touch-actions-soviets-2x.png",
+      "bundleRelativePath": "mods/ra2/uibits/ios-touch-actions-soviets-2x.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/ios-touch-actions-soviets-2x.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/ios-touch-actions-soviets.png",
+      "bundleRelativePath": "mods/ra2/uibits/ios-touch-actions-soviets.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/ios-touch-actions-soviets.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/ios-touch-actions-yuri-2x.png",
+      "bundleRelativePath": "mods/ra2/uibits/ios-touch-actions-yuri-2x.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/ios-touch-actions-yuri-2x.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/ios-touch-actions-yuri.png",
+      "bundleRelativePath": "mods/ra2/uibits/ios-touch-actions-yuri.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/ios-touch-actions-yuri.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/ios-touch-joystick-allies-2x.png",
+      "bundleRelativePath": "mods/ra2/uibits/ios-touch-joystick-allies-2x.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/ios-touch-joystick-allies-2x.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/ios-touch-joystick-allies.png",
+      "bundleRelativePath": "mods/ra2/uibits/ios-touch-joystick-allies.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/ios-touch-joystick-allies.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/ios-touch-joystick-soviets-2x.png",
+      "bundleRelativePath": "mods/ra2/uibits/ios-touch-joystick-soviets-2x.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/ios-touch-joystick-soviets-2x.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/ios-touch-joystick-soviets.png",
+      "bundleRelativePath": "mods/ra2/uibits/ios-touch-joystick-soviets.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/ios-touch-joystick-soviets.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/ios-touch-joystick-yuri-2x.png",
+      "bundleRelativePath": "mods/ra2/uibits/ios-touch-joystick-yuri-2x.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/ios-touch-joystick-yuri-2x.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/ios-touch-joystick-yuri.png",
+      "bundleRelativePath": "mods/ra2/uibits/ios-touch-joystick-yuri.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/ios-touch-joystick-yuri.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/ios-touch-quickbar-allies-2x.png",
+      "bundleRelativePath": "mods/ra2/uibits/ios-touch-quickbar-allies-2x.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/ios-touch-quickbar-allies-2x.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/ios-touch-quickbar-allies.png",
+      "bundleRelativePath": "mods/ra2/uibits/ios-touch-quickbar-allies.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/ios-touch-quickbar-allies.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/ios-touch-quickbar-soviets-2x.png",
+      "bundleRelativePath": "mods/ra2/uibits/ios-touch-quickbar-soviets-2x.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/ios-touch-quickbar-soviets-2x.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/ios-touch-quickbar-soviets.png",
+      "bundleRelativePath": "mods/ra2/uibits/ios-touch-quickbar-soviets.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/ios-touch-quickbar-soviets.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/ios-touch-quickbar-yuri-2x.png",
+      "bundleRelativePath": "mods/ra2/uibits/ios-touch-quickbar-yuri-2x.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/ios-touch-quickbar-yuri-2x.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/ios-touch-quickbar-yuri.png",
+      "bundleRelativePath": "mods/ra2/uibits/ios-touch-quickbar-yuri.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/ios-touch-quickbar-yuri.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/ios-viewport-joystick.png",
+      "bundleRelativePath": "mods/ra2/uibits/ios-viewport-joystick.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/ios-viewport-joystick.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/menubg1.png",
+      "bundleRelativePath": "mods/ra2/uibits/menubg1.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/menubg1.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/menubg2.png",
+      "bundleRelativePath": "mods/ra2/uibits/menubg2.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/menubg2.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/menubg3.png",
+      "bundleRelativePath": "mods/ra2/uibits/menubg3.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/menubg3.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/menubg4.png",
+      "bundleRelativePath": "mods/ra2/uibits/menubg4.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/menubg4.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/menubuttons.gold-bak.png",
+      "bundleRelativePath": "mods/ra2/uibits/menubuttons.gold-bak.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/menubuttons.gold-bak.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/menubuttons.png",
+      "bundleRelativePath": "mods/ra2/uibits/menubuttons.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/menubuttons.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/menupanel.gold-bak.png",
+      "bundleRelativePath": "mods/ra2/uibits/menupanel.gold-bak.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/menupanel.gold-bak.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/menupanel.png",
+      "bundleRelativePath": "mods/ra2/uibits/menupanel.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/menupanel.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/musicplayer.png",
+      "bundleRelativePath": "mods/ra2/uibits/musicplayer.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/musicplayer.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/production-x5-icon.png",
+      "bundleRelativePath": "mods/ra2/uibits/production-x5-icon.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/production-x5-icon.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/settingspanel.png",
+      "bundleRelativePath": "mods/ra2/uibits/settingspanel.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/settingspanel.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/spawnpoints.png",
+      "bundleRelativePath": "mods/ra2/uibits/spawnpoints.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/spawnpoints.png"
+    },
+    {
+      "logicalName": "mods/ra2/uibits/strategic.png",
+      "bundleRelativePath": "mods/ra2/uibits/strategic.png",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../mods/ra2/uibits/strategic.png"
+    },
+    {
+      "logicalName": "mods/ra2/weapons/bullets.yaml",
+      "bundleRelativePath": "mods/ra2/weapons/bullets.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/weapons/bullets.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/weapons/defaults.yaml",
+      "bundleRelativePath": "mods/ra2/weapons/defaults.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/weapons/defaults.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/weapons/explosions.yaml",
+      "bundleRelativePath": "mods/ra2/weapons/explosions.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/weapons/explosions.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/weapons/flaks.yaml",
+      "bundleRelativePath": "mods/ra2/weapons/flaks.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/weapons/flaks.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/weapons/gatling.yaml",
+      "bundleRelativePath": "mods/ra2/weapons/gatling.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/weapons/gatling.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/weapons/melee.yaml",
+      "bundleRelativePath": "mods/ra2/weapons/melee.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/weapons/melee.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/weapons/mgs.yaml",
+      "bundleRelativePath": "mods/ra2/weapons/mgs.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/weapons/mgs.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/weapons/misc.yaml",
+      "bundleRelativePath": "mods/ra2/weapons/misc.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/weapons/misc.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/weapons/missiles.yaml",
+      "bundleRelativePath": "mods/ra2/weapons/missiles.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/weapons/missiles.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/weapons/yuri.yaml",
+      "bundleRelativePath": "mods/ra2/weapons/yuri.yaml",
+      "profiles": [
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/weapons/yuri.yaml"
+    },
+    {
+      "logicalName": "mods/ra2/weapons/zaps.yaml",
+      "bundleRelativePath": "mods/ra2/weapons/zaps.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../mods/ra2/weapons/zaps.yaml"
+    },
+    {
+      "logicalName": "mods/ts/chrome/assetbrowser.yaml",
+      "bundleRelativePath": "mods/ts/chrome/assetbrowser.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "Contract",
+      "sourcePath": "../../engine/mods/ts/chrome/assetbrowser.yaml"
+    },
+    {
+      "logicalName": "mods/ts/mod.yaml",
+      "bundleRelativePath": "mods/ts/mod.yaml",
+      "profiles": [
+        "Base",
+        "Yuri"
+      ],
+      "purpose": "PreflightOnly",
+      "sourcePath": "../../engine/mods/ts/mod.yaml"
+    }
+  ]
+}

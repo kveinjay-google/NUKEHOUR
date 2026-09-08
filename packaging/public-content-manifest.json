@@ -1,0 +1,2965 @@
+{
+  "schemaVersion": 1,
+  "files": [
+    {
+      "path": "en.lproj/InfoPlist.strings",
+      "sha256": "fb67a2796e368e1be7e9a21672877f49191d87532dc9cf4da126923879766a13",
+      "size": 152,
+      "category": "project-original",
+      "license": "Project original",
+      "public": true
+    },
+    {
+      "path": "mods/common-content/chrome-2x.png",
+      "sha256": "37ce76b3a37ab15fe11c76d5bda9da903ff5339f47f45c8e3c673d1c6d1a22f1",
+      "size": 149370,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common-content/chrome-3x.png",
+      "sha256": "3a3ad683bc4f7259498c146000ca13a470074ceb845de47cca585a0ed77ffbcd",
+      "size": 293202,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common-content/chrome.png",
+      "sha256": "f6b0c8578448c7148a6b5ec58346641458710d66d498467230b73aa549e33bb3",
+      "size": 60775,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common-content/chrome.yaml",
+      "sha256": "769057519985b1ac573e747a60e9eca8a353e40a7d47613a52b2745eff55211b",
+      "size": 2604,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common-content/content.yaml",
+      "sha256": "28002d1d5762f999d76e3a9f3ba77fc6cfd3ab89a1f1a54e67323fb8220eec24",
+      "size": 8082,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common-content/cursor.png",
+      "sha256": "35afede64604910d4550c1d86f0f875c145846ebed1c229a62c2295e754a405a",
+      "size": 128,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common-content/cursors.yaml",
+      "sha256": "f9feffc3099584d95b9ab819d5f4d74683678ac8ac601833d374e9cf36c80aea",
+      "size": 63,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common-content/fluent/chrome.ftl",
+      "sha256": "22b83e2457ae408dd0cd4d70b32289c77fb60417fc2c84149fc0726c6df84bfc",
+      "size": 581,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common-content/fluent/content.ftl",
+      "sha256": "5145cffd5fbff5f1b689ebc98bf93a929209ddc2cae50719b00e7f12bfdfce25",
+      "size": 44,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common-content/metrics.yaml",
+      "sha256": "28f03628d38567e9f476829f76413451f84e7feacbc9c61f39093ef5e0949ad0",
+      "size": 185,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common-content/notifications.yaml",
+      "sha256": "99938664ee4ec3e147414731a5434aeeeb0b02a4c89baa3d08fe79af5ce562c4",
+      "size": 60,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common-content/rules.yaml",
+      "sha256": "1720b56be91b3f4ec84ca713f597ae950db21eff807977fd3cb93916b0100a98",
+      "size": 7,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/FreeSans.ttf",
+      "sha256": "13d65b85a5a91620906577cc5effdef8a3ed2873472b2144eda4a422ab6ff588",
+      "size": 568896,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/FreeSansBold.ttf",
+      "sha256": "16294c0eb62b33d904d4e1dfce18730e8ea1030c56731aa23c6d9a743254667f",
+      "size": 283180,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/assetbrowser.yaml",
+      "sha256": "e27f91053335c73ecd6032ff3b092f8538c0098f5304743b7eb1a90bdccf102a",
+      "size": 4504,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/color-picker.yaml",
+      "sha256": "2ad3d92a9014ecb632f5458671d3d4e16875b0a2157cbecb31e8fcf70792c28d",
+      "size": 5299,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/confirmation-dialogs.yaml",
+      "sha256": "73fa60ecc996d6660d1d978842b1d514c4f7b88154d7ada30d52b96c8a079ae5",
+      "size": 2289,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/connection.yaml",
+      "sha256": "9a084016e2bf108b4c9f747fb4c3e18fb95e7575b0e1bfdb93a6b7b8323013d1",
+      "size": 3134,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/credits.yaml",
+      "sha256": "f052b346d1facd870298fd292ff9b28f96c5bcf07d59e8e5a091c98f2c312044",
+      "size": 976,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/dropdowns.yaml",
+      "sha256": "1274814243f543db09d1b455ada9d1b2e9fd9b4fbe12cc81326758cae8933e4f",
+      "size": 3451,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/editor.yaml",
+      "sha256": "30128e74af81dc211fd220027eee9923f2d8e4af09c802a24d4a7af51fa6f556",
+      "size": 21691,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/gamesave-browser.yaml",
+      "sha256": "79f79065ffe8be94541a17ac222aa469875077e2e4e3c04de2209521852de55d",
+      "size": 2689,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/gamesave-loading.yaml",
+      "sha256": "4c14f997c137dde157167f9fdef2e1410547011fa42171726158fc0fc68d7e78",
+      "size": 837,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/ingame-chat.yaml",
+      "sha256": "63f1839528f4be7d2470233f5011273d047d325b9ee534d31694d726d1a06578",
+      "size": 1480,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/ingame-debug-hpf.yaml",
+      "sha256": "e0fa2203510ed8e793b5a4aecdeb464570b8c034940c60200cf2fd3058559b79",
+      "size": 391,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/ingame-debug.yaml",
+      "sha256": "eba5de4e25df7596214a3b9e1535743ddd8a0012067c07f9587cb8bea3eced3b",
+      "size": 2740,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/ingame-debuginfo.yaml",
+      "sha256": "91b21b7c4e72a1713f4bed4bb06bd6cb957b899a3470044e1fdbdb4884273686",
+      "size": 230,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/ingame-fmvplayer.yaml",
+      "sha256": "0a31682a2e318255b2b5dd74ac7a1d854bbeb65ccf92410530352e29b2746408",
+      "size": 184,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/ingame-info-lobby-options.yaml",
+      "sha256": "677d1b52d661d5bbc7c99269fccda6ff02ee5eceb772e5a8a7606ae82f5a1d3d",
+      "size": 1569,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/ingame-info.yaml",
+      "sha256": "09cded63f4a609fe18cb3b50491f5ea390b512f1bb1c84d83daa03c19e533aa1",
+      "size": 2463,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/ingame-infobriefing.yaml",
+      "sha256": "0cfb4085e88eb20f3345a8e92562e7dce5adbddf1a8d32abc1fb292c2caed9e3",
+      "size": 618,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/ingame-infochat.yaml",
+      "sha256": "1781532bb4871a1bbdd34767414b78ef876c8609c26332ee301922ce070c03bb",
+      "size": 833,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/ingame-infoobjectives.yaml",
+      "sha256": "9c134c055863b3a9c3202524fe5769603cc5161bbdabbdca3fabe7a911fd0755",
+      "size": 873,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/ingame-infoscripterror.yaml",
+      "sha256": "72c0a945a060c9c50fc393e028a79d2f72aa744537742991ff04c32102bf462a",
+      "size": 755,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/ingame-infostats.yaml",
+      "sha256": "31e4f09d5c0d738cbe1cf4e446bc82ad3f7b48796f876a1602d50a6daaa64be6",
+      "size": 3813,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/ingame-menu.yaml",
+      "sha256": "05103677bba0810c56650d4d8a94e4306aab936ce5fbbb9d2e33448d8af8c0aa",
+      "size": 1140,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/ingame-perf.yaml",
+      "sha256": "a13b22c98a77a2c883255b7ea883ad5e0b0a686f80000b4c51a754bb81b7e76c",
+      "size": 369,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/ingame-transients.yaml",
+      "sha256": "a2754a87d05de7dd8df75fd6c3d03467860a7bb834164dfb819dd5e9045cfc55",
+      "size": 304,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/ingame.yaml",
+      "sha256": "571c034452e9cbb673d7ee7adcc3468009c01228f7eec0773ffc4d92bfa2e9da",
+      "size": 2358,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/lobby-kickdialogs.yaml",
+      "sha256": "6d059cfd7852c82bbcc094911bc71dd350c32678ec2522a83dfe8b58bd491ca9",
+      "size": 2813,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/lobby-mappreview.yaml",
+      "sha256": "31feb7f1c35ba46a29c2b6fc649d7ba6100cb0fb7ce1fa2752f9043be726fd3f",
+      "size": 4597,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/lobby-music.yaml",
+      "sha256": "6cbfa038b502d69504b2a9310b7cf7f141162190eb53ba1cac21a16585593a2c",
+      "size": 3837,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/lobby-options.yaml",
+      "sha256": "dfac71e9a02190e2e8f405916ad8206f8200a871796a9b59abe7a34e3b425444",
+      "size": 2232,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/lobby-players.yaml",
+      "sha256": "abbe86df792cbebeaabbc24f24177ab19972451ba06f6aa818ecde10639a2de7",
+      "size": 8609,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/lobby-servers.yaml",
+      "sha256": "1ec2f2d47ee70105a5470b974ba53a05651ba078b030450388f3af7f35cb32b1",
+      "size": 4512,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/lobby.yaml",
+      "sha256": "75a9eb6dad5a07025ce7e7901bc32aa0ed6c7dc4afa6cf77f7965a5d77d1a764",
+      "size": 3243,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/mainmenu-prompts.yaml",
+      "sha256": "cb8a445b81866dd06c316722d6364b53d72122bfeebcdf7ffeb29c7056609191",
+      "size": 8956,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/mainmenu.yaml",
+      "sha256": "01b18f2794d00390f0990445d25efec2866db256c255a6b5f7aa49444988d54d",
+      "size": 6422,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/map-chooser.yaml",
+      "sha256": "16d6fbfbbcddec47ef50d7ce90480013e127eb29a5ee2ff8c53e357c318a8fec",
+      "size": 4176,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/missionbrowser.yaml",
+      "sha256": "99f1c78be68c5807173a674918d57d384d0b07380458babd3a53fb589f56f2d7",
+      "size": 6446,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/multiplayer-browser.yaml",
+      "sha256": "e3163a9a7491511cac78d2eecd828f49ff984ff8f5da9e18b6fe823fbf4e9c58",
+      "size": 5703,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/multiplayer-browserpanels.yaml",
+      "sha256": "14afc9c91c4560731f9579f2980abc6ee305adef6d484bcba7497059c03e0330",
+      "size": 1716,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/multiplayer-createserver.yaml",
+      "sha256": "9e955f1c7e6f77ef0d273babf8347b7dafdd1f02e3b454575e10c7d0c69fcfe3",
+      "size": 4578,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/multiplayer-directconnect.yaml",
+      "sha256": "39e906d3c29b70c0966407580b71df37d1ded63c8fc4904492d164d302788d02",
+      "size": 1080,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/musicplayer.yaml",
+      "sha256": "b73792f13a0f3e39223b854dd4870ac2bc7d613dbf42e58d7158ffb3cbae71aa",
+      "size": 3700,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/playerprofile.yaml",
+      "sha256": "cbe19c02119fb25b5f07879e4c3025e1a9e1de7bc8a2fbacfb09cf69821961a5",
+      "size": 4730,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/replaybrowser.yaml",
+      "sha256": "d6977399046034cf6ca77673385d2799562671b60a9d5954494929864d2b7ca0",
+      "size": 6197,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/settings-advanced.yaml",
+      "sha256": "f763b4efe15bb6bc8560ceabb68d4563bce327a779c8607cff41213dd106e496",
+      "size": 1281,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/settings-audio.yaml",
+      "sha256": "0322a8f983dd042b657c5696e1964b8559b7d7481f981ee53ca5804f8ea7c9b6",
+      "size": 3921,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/settings-display.yaml",
+      "sha256": "85732b9e1e4bc3147c1971aeda8074fe205ed3c7ebf903f107c9dc6c29d0fcf9",
+      "size": 10598,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/settings-hotkeys.yaml",
+      "sha256": "4f621ba8464811a81df8d875d4d1fe884b648640474b11c4596ff3caaf9dde92",
+      "size": 4156,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/settings-input.yaml",
+      "sha256": "6a27110964e2bd8eb93b35dfb69b0b1cff4c852ff9b3d35eda1c74678864a48b",
+      "size": 9000,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/settings.yaml",
+      "sha256": "52e6759f4e117ca79a6785ff66e7c0dc05f7846dd6fb74a118b05da442156875",
+      "size": 1182,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/text-notifications.yaml",
+      "sha256": "6a409ceb38c413ea2906678986c66f5907720479331b41f9bada1a006c596778",
+      "size": 807,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/chrome/tooltips.yaml",
+      "sha256": "22c6ec6191ab54a0582b18feb55af9915c7bb3db70aaac2ed6386d983e0aeadf",
+      "size": 5764,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/fluent/chrome.ftl",
+      "sha256": "d803a2420b1c1d14fd1f63b379be621f8dae6a26be07eb322222016735447704",
+      "size": 26024,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/fluent/common.ftl",
+      "sha256": "d0596b20d394a86b9a4788c75d4ea4c5772548c8ddcf703ae01f2e2330d0634c",
+      "size": 35052,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/fluent/hotkeys.ftl",
+      "sha256": "9dfebd29d64d25159373f566cccfc7cca39ba14b5c3ab448cbcfbe8b1c1b4f0d",
+      "size": 8815,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/fluent/rules.ftl",
+      "sha256": "b9b0a8be69d9a650d0af9b44eabaeb98d0276affd155c55a690c83e609126a4f",
+      "size": 1709,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/fluent/zh-CN/chrome.ftl",
+      "sha256": "88c32558028f5f3ef755f3d397846352bf3ab782faf42bb927988e5a0633c4d9",
+      "size": 25250,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/fluent/zh-CN/common.ftl",
+      "sha256": "1c56e8fe9e986f84775ddc90e9b34dd8954251481ef5725dd598a6fc931f4aac",
+      "size": 28427,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/fluent/zh-CN/hotkeys.ftl",
+      "sha256": "28cddf2c95f90458f0f5a619d0ca4966b6fe7ea0ae42f319abb098dd0f077c29",
+      "size": 8854,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/fluent/zh-CN/rules.ftl",
+      "sha256": "365636a8f9f17e5c0059c75994930367db9fd80a6fb6ca8fe243d0e16ecddf98",
+      "size": 1563,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/hotkeys/chat.yaml",
+      "sha256": "8cd84f5adefd977b25aa6cc8002da4c0e5560a82e653b31ff5bd4f5c4f04c4ea",
+      "size": 479,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/hotkeys/control-groups.yaml",
+      "sha256": "5c25f78379e0fa21333e2bb43db97ffc8d96cb5ce79ef3f048ccd891367b17b4",
+      "size": 7480,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/hotkeys/editor.yaml",
+      "sha256": "db009113cac73c5cb561cc0061bab0144806fe0fe0d6a58967ae5ddae04f35a4",
+      "size": 1889,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/hotkeys/game.yaml",
+      "sha256": "04ecdd9d4a4e6f62f7c322d73f3cbcaf617aa128c57aeab142c2c946008e0ed9",
+      "size": 2817,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/hotkeys/observer.yaml",
+      "sha256": "91e8d62444716b0686b5b0c23754cc86e2cb97ce5b095b07ba73790aee7a3ce5",
+      "size": 1669,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/hotkeys/production-common.yaml",
+      "sha256": "f22f824561949e1abe2df053aa2c32fc401eeb0c57d6ec5787ef27354b4efb0a",
+      "size": 2853,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/hotkeys/supportpowers.yaml",
+      "sha256": "507af34575ee6f80dfc2fc8fd9b60a30d6d27dc3b058c251472eba996b748b8b",
+      "size": 623,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/hotkeys/viewport.yaml",
+      "sha256": "adf9e0c521d078b4eb3118fcf6f593db5e88553357240a667ad138a922e71a1f",
+      "size": 2448,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/metrics.yaml",
+      "sha256": "20fd2aec9d2488bcb9478c342530b9a7ad7aaff97897431d9d6c650618159549",
+      "size": 1683,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/common/scripts/utils.lua",
+      "sha256": "9c359f3efadb6361b381070a18f46040ff4436c3b0c0c73233835d5e621dd776",
+      "size": 1660,
+      "category": "engine-source",
+      "license": "OpenRA GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/ra2-content/fluent/chrome.ftl",
+      "sha256": "e947c3de741408459b312013987db9a5e159c0cd5fe85eb0f2e0d53b9c796d99",
+      "size": 554,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2-content/fluent/zh-CN/chrome.ftl",
+      "sha256": "622f20c8f8f81e66e747dab7bff313ade70d35fd6d7148b4b4ebbfcf5dd46790",
+      "size": 572,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2-content/installer/firstdecade.yaml",
+      "sha256": "249d347b877f69dadb1133a2f758fbee513497357aa693cbf11194ca1126f127",
+      "size": 713,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2-content/installer/origin.yaml",
+      "sha256": "b98064dc3c9f2490544b2638d3c9f5939ca20d5fe6f44e11a2a8d24416ce5761",
+      "size": 996,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2-content/installer/ra2-disk.yaml",
+      "sha256": "739f068406bf887cafa51ad25e4144460903edae06de2c6c6bc1718298807d09",
+      "size": 646,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2-content/mod.yaml",
+      "sha256": "9a56afed84fc602c39e16f8b61af418f024df6555bf0e9a6e6bf45fb1eb31357",
+      "size": 2394,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/.DS_Store",
+      "sha256": "3c350d472a11ea608267e7ab73b26d7817c622d0351df8edc386223535c8bfdc",
+      "size": 8196,
+      "category": "unknown-or-derivative",
+      "license": "Unreviewed",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/AUTHORS",
+      "sha256": "170aff3aa3b0e881cc0a6961b62ee319cfe464d1f4ff22781c19038df288e539",
+      "size": 597,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/audio/music.yaml",
+      "sha256": "652203293201774f118405375fa16424b8a15f27e29814d9f6daaa9dfcdb8a7e",
+      "size": 569,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/audio/notifications.yaml",
+      "sha256": "85c73433b8527a6499fb617b251176c7a636a9030038566c5d48d384afdbfe94",
+      "size": 3504,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/audio/voices-base.yaml",
+      "sha256": "55bda8df946562d3750912a4350ebeffe3340a6a96002d6ad31cfc6e6c2bd40a",
+      "size": 10461,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/audio/voices.yaml",
+      "sha256": "8af108c3c861fdeca8f636fc3f8d5318f9d8ad172afb2a8c8b9ccf242f944ba3",
+      "size": 13232,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/bits/ammopips.shp",
+      "sha256": "0fc71f5dc70cdf675a68009823184532122e123c88f653d2de82a56125a94a6a",
+      "size": 128,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/animations/clock.shp",
+      "sha256": "a9ba0f3375674c19886baeedae6b7cf62240d42147cd417e2ff835481a2c8117",
+      "size": 165008,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/animations/nc-impact-core.png",
+      "sha256": "30f790a756b8dbd79a08f4734dc1778a3966808d6b3a82e3480823e28578d93b",
+      "size": 173982,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/bits/animations/nc-impact-debris.png",
+      "sha256": "c8bae7db9c20b5d147ad5a946b56f6a8e37694253f6aec2af8b6181635e15323",
+      "size": 34090,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/bits/animations/nc-impact-ring.png",
+      "sha256": "bb906789d33dfb7fb68c8aa07a636e6623afd17e37808f2d64340d7ba2c78797",
+      "size": 95954,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/bits/assaultmove.shp",
+      "sha256": "61bab48852e042e01dde99a49beed564ee1be4e8f3606c7d2b2fdc869b84e3ce",
+      "size": 5782,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/cameos/acnsicon.shp",
+      "sha256": "289c6b1d51718f015858c900017f90e3cc83232c1c33d56c207a47c730f39485",
+      "size": 2912,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/cameos/cameo-chevron.png",
+      "sha256": "c70e8eb5e37d04c9373f035c557d13aa3d05d4c1976d85e951ae0908259c3f57",
+      "size": 592,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/cameos/diskicon.shp",
+      "sha256": "a906943c0bf15b641040e0f5620a33d7e15e5b92ee5f48bfc86b8da9a2cbe77f",
+      "size": 2912,
+      "category": "unknown-or-derivative",
+      "license": "Unreviewed",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/cameos/ggunicon.shp",
+      "sha256": "de3b8199cfdf671c7d3e1ab725dafc5abf38d153892f4ffef1414767b34892cf",
+      "size": 2912,
+      "category": "unknown-or-derivative",
+      "license": "Unreviewed",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/cameos/gtncicon.shp",
+      "sha256": "a2d63ce4d353b5448de5faab307b0ac0619a28e52f9806d58a0e3f0a39e5f73d",
+      "size": 2912,
+      "category": "unknown-or-derivative",
+      "license": "Unreviewed",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/cameos/scnsicon.shp",
+      "sha256": "82da3fd39738ac526710cbab9c774eba5211fd65a80b06672027c1ab2c372cda",
+      "size": 2912,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/cameos/slavicon.shp",
+      "sha256": "b58f44f81d27c334779b2dbf1e0f589c2e0ef2422914257aa2e3342d2b9fd06c",
+      "size": 2912,
+      "category": "unknown-or-derivative",
+      "license": "Unreviewed",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/cameos/ydomicon-cn.png",
+      "sha256": "72dd940734e47f31173828bdb9b92d2b481cac08a85fde23e1926483e7a2d094",
+      "size": 82096,
+      "category": "unknown-or-derivative",
+      "license": "Unreviewed",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/cameos/ydomicon.shp",
+      "sha256": "fb7f0da638303aa6b96ebf15e4d5ee7ccac2ab7377eb24d72431ed07f40dcde7",
+      "size": 2912,
+      "category": "unknown-or-derivative",
+      "license": "Unreviewed",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/cameos/yfixicon-cn.png",
+      "sha256": "0748b9a69b95721481b6d6120dba7ecbe54593d1b8fe2adaf40d0b8a6b907f5e",
+      "size": 94879,
+      "category": "unknown-or-derivative",
+      "license": "Unreviewed",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/cameos/yfixicon.shp",
+      "sha256": "3c6c6a04c01b0b7299ae1c073d05df90c6676a33fbf7eec776ccde281a1410d5",
+      "size": 2912,
+      "category": "unknown-or-derivative",
+      "license": "Unreviewed",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/cameos/yhvricon.shp",
+      "sha256": "bab3957ec6309d8bb0d9b1b3fb6c1409e04b207dbfbba14d6c80524f2a3df7bb",
+      "size": 2912,
+      "category": "unknown-or-derivative",
+      "license": "Unreviewed",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/cameos/yrcyicon.png",
+      "sha256": "6707dc6a805238372f595aeba791a4a88203bf69706c1de4a7186d66efc1096f",
+      "size": 10252,
+      "category": "unknown-or-derivative",
+      "license": "Unreviewed",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/cameos/ytnkicon.shp",
+      "sha256": "d0f3242e6b0065783bc675b305cbf0d4c7a76988ffa0284472681cd3166a0c4b",
+      "size": 2912,
+      "category": "unknown-or-derivative",
+      "license": "Unreviewed",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/camera.shp",
+      "sha256": "f07850b1c52f4722578fccabac07760c8fbe66b09d4505964ba9985631f66cb0",
+      "size": 563,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/isodepth.shp",
+      "sha256": "bd1cdb5d8286d389d01e865d97dddddf9ad8ab330915997f330c791b36de73d2",
+      "size": 57676,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/mpspawn.shp",
+      "sha256": "549d7825b160990e5d85ed8b3add457ca7499736c5acc24cc61504974440d867",
+      "size": 594,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/pip-disguise.shp",
+      "sha256": "8d707d8f3970f21b64fc41a4b94efd4488405ac5153333cb3bab0d01c200b102",
+      "size": 887,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/pipsra.shp",
+      "sha256": "97f782920a91070682925885b97da1f07630602a0b2cb3f679c0f59dd6ac7472",
+      "size": 1225,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/projectiles/zbomb.shp",
+      "sha256": "8bf939364cb923c4edc16dcbbbf7681843175d10cc888bc94b3604b8618dacb2",
+      "size": 4061,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/structures/cgwash06_a.shp",
+      "sha256": "27f70e47ae5e5c9b0fda5e17043b0e9ab5b1204cceed1428340bd724c9409d34",
+      "size": 20315,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/structures/cgwt01.shp",
+      "sha256": "67093843cda2133326ebf2ee46ca6058b4e73f8f0dbfae94a4cf37e8032a2618",
+      "size": 8646,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/structures/gaweth.shp",
+      "sha256": "a9458724c21e2e92e18d6f1f07b6b2bb59166dcbf98fa5a73dc65fa1d01f729a",
+      "size": 27699,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/structures/ngweapbb.shp",
+      "sha256": "5b5abbf5e2232b536ca151c6146b4cd1109c44043ec15ce751746a0d30822809",
+      "size": 5942,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/structures/yadept.shp",
+      "sha256": "3d11dbbcfe3a91f6afa262bc728d240de73bcef5c6b098cfda8cc897943fa003",
+      "size": 5993,
+      "category": "unknown-or-derivative",
+      "license": "Unreviewed",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/structures/yadept_b.shp",
+      "sha256": "56d4715050c47a16cdf76df7419e886f70be585c12a50a8525c51eb8b7d32243",
+      "size": 26913,
+      "category": "unknown-or-derivative",
+      "license": "Unreviewed",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/structures/yadept_c.shp",
+      "sha256": "3242fa59ed7bf501ad4fecbc4ec5c280ce7c0a557d881fe7820b07a800139590",
+      "size": 437543,
+      "category": "unknown-or-derivative",
+      "license": "Unreviewed",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/structures/yadeptbb.shp",
+      "sha256": "85aa14c95b6f2310fb1661929d35758613c05da5c053608d90d9182a0b1ccda7",
+      "size": 11459,
+      "category": "unknown-or-derivative",
+      "license": "Unreviewed",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/structures/yadeptmk.shp",
+      "sha256": "4c216da4cf881abb00bed1ca64b791d84716ff30f4aa650a30af1b954d7b1afe",
+      "size": 225268,
+      "category": "unknown-or-derivative",
+      "license": "Unreviewed",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/structures/yadome.shp",
+      "sha256": "27f27af328148ff2a6097e109e68ab6f1dc49df12cce212bec336b7d97d884cb",
+      "size": 31801,
+      "category": "unknown-or-derivative",
+      "license": "Unreviewed",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/structures/yadome_a.shp",
+      "sha256": "92572e7e08bffe4e085efb9c696d54303e10e40b63ac35cfb91b45b50e899af9",
+      "size": 344,
+      "category": "unknown-or-derivative",
+      "license": "Unreviewed",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/structures/yadome_b.shp",
+      "sha256": "688da93eab2d645aedb404fcac244a3fcc9b540f215988748619ed1ce24d0246",
+      "size": 2648,
+      "category": "unknown-or-derivative",
+      "license": "Unreviewed",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/structures/yadomemk.shp",
+      "sha256": "cf37847b8fb76c9e78d7282111710348e89e7402634e7a346fb27a61b30a6a35",
+      "size": 99048,
+      "category": "unknown-or-derivative",
+      "license": "Unreviewed",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/structures/ygdept.shp",
+      "sha256": "3d11dbbcfe3a91f6afa262bc728d240de73bcef5c6b098cfda8cc897943fa003",
+      "size": 5993,
+      "category": "unknown-or-derivative",
+      "license": "Unreviewed",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/structures/ygdept_b.shp",
+      "sha256": "b92a746f9678cabc27931ed97c583c0f18d8cb49b82560263ce473f3abd1e96b",
+      "size": 26892,
+      "category": "unknown-or-derivative",
+      "license": "Unreviewed",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/structures/ygdept_c.shp",
+      "sha256": "13aa378c2d902380d6b281642ac69caeee03101b84ccc9cc5e2fb7946039827a",
+      "size": 437198,
+      "category": "unknown-or-derivative",
+      "license": "Unreviewed",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/structures/ygdeptbb.shp",
+      "sha256": "c0774c396f918edbe4128197150de39c79b37cf0e948dfa706d128ce74f3c4b3",
+      "size": 11436,
+      "category": "unknown-or-derivative",
+      "license": "Unreviewed",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/structures/ygdeptmk.shp",
+      "sha256": "4c216da4cf881abb00bed1ca64b791d84716ff30f4aa650a30af1b954d7b1afe",
+      "size": 225268,
+      "category": "unknown-or-derivative",
+      "license": "Unreviewed",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/structures/ygdome.shp",
+      "sha256": "45e9377d728da0cc2496c3220d2e2bccd54401959734870f7803e1433772af85",
+      "size": 31646,
+      "category": "unknown-or-derivative",
+      "license": "Unreviewed",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/structures/ygdome_a.shp",
+      "sha256": "92572e7e08bffe4e085efb9c696d54303e10e40b63ac35cfb91b45b50e899af9",
+      "size": 344,
+      "category": "unknown-or-derivative",
+      "license": "Unreviewed",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/structures/ygdome_b.shp",
+      "sha256": "688da93eab2d645aedb404fcac244a3fcc9b540f215988748619ed1ce24d0246",
+      "size": 2648,
+      "category": "unknown-or-derivative",
+      "license": "Unreviewed",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/structures/ygdomemk.shp",
+      "sha256": "ce2fb7d7825f8083745f753ec1cb58e14d49b0763fb30de7e73ca318329c7f2b",
+      "size": 98953,
+      "category": "unknown-or-derivative",
+      "license": "Unreviewed",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/ts-mousepal.pal",
+      "sha256": "99c1fddc98ce5fc3749a71567385d985d6f82743e5e290a91278a8024cb18fdd",
+      "size": 768,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/tscameo.pal",
+      "sha256": "9c7cb0680f74fc41990abefbb2fa83a858d0f0cbb7d23818c7b52a978a8ac2d2",
+      "size": 768,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/undeploy.shp",
+      "sha256": "9348b415e3f513036892e94a31057ddb34b62c58af14957ed2aa80a9a00130b4",
+      "size": 3234,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/bits/waypoint.shp",
+      "sha256": "160f3dbd2ce103ce8de0c6a17147c45d25d0bae53a21de63ddd8a40655b24776",
+      "size": 602,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/chrome.yaml",
+      "sha256": "9e77ba6405d5e756dacfd608e5d77e8ca1df5179219bf5a1e9db7c40fcac8fed",
+      "size": 86359,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/chrome/gamesave-loading.yaml",
+      "sha256": "30a15792d130bf343482575d81ccead7d752b77606f84f83315fef5ed979f9a6",
+      "size": 942,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/chrome/ingame-chat.yaml",
+      "sha256": "38f9908c2ec6e986d48e540ad99f2722c38859d75329fd247e3e92261ad55701",
+      "size": 1542,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/chrome/ingame-debug.yaml",
+      "sha256": "79cef049969871d5d0a0a6ed46fb45160319bbef9e5ea298ba248726cc2cb249",
+      "size": 2856,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/chrome/ingame-info.yaml",
+      "sha256": "c985d91360fa57f89d911802d5b7bee1461f61b693463dfcece73e392ae3fad4",
+      "size": 3370,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/chrome/ingame-menu.yaml",
+      "sha256": "365b4aa7b65fcc43d46e358111c73a6fdad8e2de02da164cbba37f4ef55602f8",
+      "size": 1999,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/chrome/ingame-observer.yaml",
+      "sha256": "51a5791c1e17c94e6c67547e5890ea79d60c15769eedc57a4842c9f699b88dc8",
+      "size": 24385,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/chrome/ingame-player.yaml",
+      "sha256": "7cc897d520112206a16cf3157ae6089cbbbbac1f6dbf6b4fc03cd327cee6b2f1",
+      "size": 42449,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/chrome/ingame.yaml",
+      "sha256": "f088740f4e2d373226d366546ac1fa6be415b33b8aca698ab3a01037d3ed6183",
+      "size": 4809,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/chrome/mainmenu-prerelease-notification.yaml",
+      "sha256": "d76733481a7fc3da887e18dfe48fa5b8c1eb9efa9919ba9a206c79fd259cc522",
+      "size": 1271,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/chrome/mainmenu.yaml",
+      "sha256": "89446af7e79245f58dc4ce867844153ae1280bcbea396475c7bd401b6d415314",
+      "size": 4938,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/chrome/settings-advanced.yaml",
+      "sha256": "216855dae536f3e424de943f5b63c2356f64e485506586d490a91809c096b6e2",
+      "size": 5994,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/chrome/settings.yaml",
+      "sha256": "07bc06b70f7e8e925b9f7a965c46f3849aad445efaf420b5319123178a6e0f03",
+      "size": 1461,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/cursors.yaml",
+      "sha256": "1a0e96910c9c0d4740b0872352b1ff3196bb42fa1f6695580998175a4c28ab0b",
+      "size": 4385,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/fluent/assetbrowser.ftl",
+      "sha256": "5483f3a081d30ef5c0952cd2ede3164bb7e645a977185480227372be65e0639d",
+      "size": 159,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/fluent/chrome.ftl",
+      "sha256": "42c18c589b6c857c69cf7f5ccd8615ff36a25bd1422419fca7dae511b3663029",
+      "size": 12547,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/fluent/hotkeys.ftl",
+      "sha256": "557189f7d55d90b20bd5367ab2943abdb084c61d541e464973e5ae6a2e8500c6",
+      "size": 399,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/fluent/mod.ftl",
+      "sha256": "929fd6b9b2a50f2dbcdcad69f1d545d8203cca6f059d21800d766e3a2347ccfb",
+      "size": 259,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/fluent/rules.ftl",
+      "sha256": "efdc9fa4691c13b20f26e62c35649032d3d08860f7ba7a6af63ba155f046ce8d",
+      "size": 28211,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/fluent/zh-CN/assetbrowser.ftl",
+      "sha256": "743354a17b787981abadb81241e946e3810176d5616a5f08fd25dfd9043136fa",
+      "size": 169,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/fluent/zh-CN/chrome.ftl",
+      "sha256": "1e72b1f866e9807a0cd52853def51ffd425ffe07c06bb69260d1b3cb3eb1aa93",
+      "size": 12114,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/fluent/zh-CN/hotkeys.ftl",
+      "sha256": "ef54492e1b7d85b25d1ae4687194fdf57953ffbd920d8bd682c8e2442fabc5de",
+      "size": 422,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/fluent/zh-CN/mod.ftl",
+      "sha256": "1a6351196239572aeb54e29f4251c0a71d30c50bcb374d7d90eb68bcf7484209",
+      "size": 296,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/fluent/zh-CN/rules.ftl",
+      "sha256": "c0b68a371f948d894cb06c6c4402da92afba50ff6ef5f4d686deeef36fe7d098",
+      "size": 27483,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/fonts/NotoSansCJKsc-Bold.otf",
+      "sha256": "b5f0d1a190a7f9b43c310a8850630af12553df32c4c050543f9059732d9b4c0a",
+      "size": 17002248,
+      "category": "redistributable-third-party",
+      "license": "Upstream open-source license",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/fonts/NotoSansCJKsc-Regular.otf",
+      "sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+      "size": 16437364,
+      "category": "redistributable-third-party",
+      "license": "Upstream open-source license",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/fonts/OFL.txt",
+      "sha256": "6a73f9541c2de74158c0e7cf6b0a58ef774f5a780bf191f2d7ec9cc53efe2bf2",
+      "size": 4301,
+      "category": "redistributable-third-party",
+      "license": "Upstream open-source license",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/hotkeys.yaml",
+      "sha256": "f98d66fda10e06821aa037df68a3f74f2bd3635451d811bd503eceb4b9ff8e50",
+      "size": 800,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/icon.png",
+      "sha256": "edc7f2d9a651b7e6d8ff6eeedf501cbc57fa3bfc5af7e2ef7372005a6e1013a8",
+      "size": 2626,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/manifest/common.yaml",
+      "sha256": "d19bc04a3c750224b5c090d2909a3565c72462b9a653ab66a8ce89efd08a71e4",
+      "size": 4455,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/manifest/filesystem-desktop.yaml",
+      "sha256": "b0d4e4a93847d45e63b5dd6d9347eeb2ca8526e69b4609d3a31489bcedbb07c3",
+      "size": 1707,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/manifest/filesystem-ios-base.yaml",
+      "sha256": "2558f4f3a9f1bebf6e27ccef99c714481e7573a519b5a38348765056f037d148",
+      "size": 875,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/manifest/filesystem-ios-yuri.yaml",
+      "sha256": "7f7a1a8a5b61eff70b536f96ad61e39253e2be60b4c86bdd9ad397a84a65bbd4",
+      "size": 1664,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/manifest/gameplay-base.yaml",
+      "sha256": "091aa3e3392f41cfcee50f4c20864c2dc8f4e993e16e6ec5772d8bf90d69ed51",
+      "size": 2468,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/manifest/gameplay-yuri.yaml",
+      "sha256": "2946c42ec4e41679b0eb845fca3da0a1926b879503092031bb5e2407b43f707f",
+      "size": 2635,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/a-path-beyond-2/map.bin",
+      "sha256": "6c9603aaf66f8703fe18a83b7b0bba5fe3356344e15ee6b96cee2a171b97e29e",
+      "size": 205937,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/a-path-beyond-2/map.png",
+      "sha256": "07ac8e72dce9993e021091147fd01431026d54e41d7e7fcbac83fca4c283c718",
+      "size": 70599,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/a-path-beyond-2/map.yaml",
+      "sha256": "9347285612c43808133352d1e39ff9b2785d74942ff9983274bae7a04491a7f6",
+      "size": 54883,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/arctic-circle/map.bin",
+      "sha256": "66f7b34c269b885f75229f0e2227e39ef53258091e7730e08a6eaddc64a5b5f6",
+      "size": 154397,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/arctic-circle/map.png",
+      "sha256": "4ef02fe0375bce78124569cee8caf66465416eaba9c6c55b11dbc88b9f80f4ba",
+      "size": 67730,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/arctic-circle/map.yaml",
+      "sha256": "5bcd18affcd924d7c8d1bc6ac61222e77b563964e0b9e8393b701e2a04b743bb",
+      "size": 97926,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/bering-strait/map.bin",
+      "sha256": "7b5ffba23c67639afb986550a1e0db54fad39b4056d822bfba1da638ffa1a670",
+      "size": 144353,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/bering-strait/map.png",
+      "sha256": "750ab36a23bba0d4d164ed0b44ee20aec5d3c6de58e6ccd5c464d8f60f81fc34",
+      "size": 47348,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/bering-strait/map.yaml",
+      "sha256": "7d6c3f90abf8632bf69ccdbab78423ee963c16d4bfbf4481bdcb1df2a71880b9",
+      "size": 10008,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/blank-shellmap/map.bin",
+      "sha256": "8f79a9655fc0bc1f250384baeed44914fd212ea3dfc20ad59ddec44f9e157081",
+      "size": 113897,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/blank-shellmap/map.png",
+      "sha256": "3df95869181db2f33417249808412d85b668e52b0c21d700fba6ef5b3bf791e3",
+      "size": 565,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/blank-shellmap/map.yaml",
+      "sha256": "cc39574a9647b98ec70fe5f593c9babbcb9db8a3af6811034f98ff5e543e0fb5",
+      "size": 800,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/breakaway/map.bin",
+      "sha256": "95e34d4a1fe80a930427cf92e7e555af3b2b169571a5ced35987bfbdffbfe9dc",
+      "size": 105857,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/breakaway/map.png",
+      "sha256": "7f4f415d72ee85ab6ae2f8f326939eaf007333f9b6252f493dda799a5837b48b",
+      "size": 31136,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/breakaway/map.yaml",
+      "sha256": "e4c0319052da39e7a99d27cdf86b0a8bc04b846fcafad19ef6d16b230781305f",
+      "size": 19589,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/defcon-6/map.bin",
+      "sha256": "129a53e46a2d4cd095bfa36903f42d68fb46f59e9a6f7de0c659bff855fd3f11",
+      "size": 145025,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/defcon-6/map.png",
+      "sha256": "66ba14af8d9cac89ec5e74587a739b4539ba0edc98beb7c10305759a8195c70e",
+      "size": 26152,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/defcon-6/map.yaml",
+      "sha256": "a8652209774250411b3b74551c5d6eb475534a7111080f098dca09aa8eaf8c8c",
+      "size": 31485,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/dustbowl/map.bin",
+      "sha256": "5c5af7e6c9ad12b97c93d7ddbeb35f879c63c2c80d62547062c4f41ef3d7312c",
+      "size": 63857,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/dustbowl/map.png",
+      "sha256": "413f41d2cdcc3f29c5fcc5ba5e0265a06cb444266dbc7840cb7597256af95eaa",
+      "size": 34683,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/dustbowl/map.yaml",
+      "sha256": "5fb39fda2082f3916a0f235c78749cc5e006217050209952e20c5770cc477a4b",
+      "size": 105228,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/golden-state-freeway/map.bin",
+      "sha256": "9290941e2fab91bba613888b75d3b2f435d171ada54ad9025ff88843d3375cd3",
+      "size": 128357,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/golden-state-freeway/map.png",
+      "sha256": "d0c79e3dd2b045d20e2ad1a208980c88073e0c0f1d998fe14628e9ce6654340d",
+      "size": 60817,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/golden-state-freeway/map.yaml",
+      "sha256": "5f46ed2c39c8c48a4264d5e319fdf952a5049a189600f0f7fa011ec437d2907f",
+      "size": 71720,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/heartland/map.bin",
+      "sha256": "6e97cd58ea257f195dd84be4d38fb1cb8e60a397b16529c24ef4517aae610841",
+      "size": 79697,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/heartland/map.png",
+      "sha256": "49ebc43414dfddaf6e378381605ad52da8b68db222a9a071fbb2d83464c88678",
+      "size": 41587,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/heartland/map.yaml",
+      "sha256": "7bb99c6e5570a14c46feec47c29a55293d99425d1b68be2c6e23de0c1c812d1a",
+      "size": 78399,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/heck-freezes-over/map.bin",
+      "sha256": "198dd11e74d6247cc9e434c0257e2ecd3189060f5b2c90cf008366631c4cb771",
+      "size": 118817,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/heck-freezes-over/map.png",
+      "sha256": "1b9486a04eb7168bb1f9febcf6cb1b2efe2362445d97fd05012ddc27181179a4",
+      "size": 36006,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/heck-freezes-over/map.yaml",
+      "sha256": "3d27afa4b64cd343ef90307d1269505c77cc2bae1eadac196fd7e3aed0203c06",
+      "size": 24537,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/lake-blitzen/map.bin",
+      "sha256": "a8b8b5dd4d8aafce9eb7feefb483084866ce8dd90f604a2d7ae706c7b3f8d8b8",
+      "size": 109853,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/lake-blitzen/map.png",
+      "sha256": "e539df43bf716968cf28d6ae6c805ee54409f4c6c647c59b5a646adff27d8265",
+      "size": 37984,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/lake-blitzen/map.yaml",
+      "sha256": "7f9e1360290c2230949ede75e282b7e43f45978ef711c656fa186bf45d3e5d36",
+      "size": 22040,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/little-big-lake/map.bin",
+      "sha256": "ee3c2aeeeef9a0faea0036d22d959c8d97c0dd93b22530330d744e854b8a3d32",
+      "size": 38417,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/little-big-lake/map.png",
+      "sha256": "79fcd4c8183384ea0779dc5eed872f13322bb0a6121921559e47e1d944df68a7",
+      "size": 17487,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/little-big-lake/map.yaml",
+      "sha256": "66be79ab3b4ca614fd346110e687005346f7412522718e1180d32dbef3d9d3b4",
+      "size": 17309,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/malibu-cliffs/map.bin",
+      "sha256": "304a21afa45eec0bc1fa2e52ec2772436f807373de9455e24966b100cc4de837",
+      "size": 155153,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/malibu-cliffs/map.png",
+      "sha256": "65aaf64107ca645624db038982a3220c12ee99546ba88d69a6ad14635dc8fc5e",
+      "size": 78506,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/malibu-cliffs/map.yaml",
+      "sha256": "45aa770af4536fc07879df79280978dbbc622a9c4bf611fef1c3e78e050add81",
+      "size": 92861,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/may-day/map.bin",
+      "sha256": "26b40c427ea4fa191fea4e8e627575e784484ecfc1bdf012e711c2dbc4b17d18",
+      "size": 69737,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/may-day/map.png",
+      "sha256": "ba7b6b9c6b10baac871b5ca8cc2ed475dd58c271c5780df0bd1042de26a92b69",
+      "size": 34091,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/may-day/map.yaml",
+      "sha256": "7464ec1f2af76be14e697b837bcbb0601c61252a8d014ba42b92a09d8cff4688",
+      "size": 33111,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/montana-dmz/map.bin",
+      "sha256": "4cc1e4fb5603f8f402a6058c946e6ed5f400f8d77e5bbaaeeb7351de02912383",
+      "size": 86717,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/montana-dmz/map.png",
+      "sha256": "63e429ea86e6b58b592a5d8d8adc4a7071b352b17f95b1b37ad03d99d78b6331",
+      "size": 34552,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/montana-dmz/map.yaml",
+      "sha256": "9e6016db421cd64675a20ddeb411a09936fee3cf9736ea3411dd9328bbc28c55",
+      "size": 40307,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/pinch-point/map.bin",
+      "sha256": "669bc304d75640945f6f7f5e5555e64a690ff7f834f59b728857f270ee9b66a6",
+      "size": 100817,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/pinch-point/map.png",
+      "sha256": "d23a37c0578f112f61c2a8d950a4375a7946f6e6e561f97a0101d65f97e97705",
+      "size": 40490,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/pinch-point/map.yaml",
+      "sha256": "77d62c1a9cd3afe86ad5f0c2f95437dc46c83d84b5f194460c607c1df88ec73b",
+      "size": 45379,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/powder-keg/map.bin",
+      "sha256": "0ef0a9f3b250aeb089bbb2309357f775138c3460f6ab1f70b712cd025440fdfa",
+      "size": 180017,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/powder-keg/map.png",
+      "sha256": "c18ce1a7861c26e9ec007d460b4cba400fa1c4b1ca37446abaf546ef0e6c662c",
+      "size": 56365,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/powder-keg/map.yaml",
+      "sha256": "ec64523db4258e5cf623511c9cb1b9df4fd140a0dd16adff569d573208f95eef",
+      "size": 54973,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/roundhouse-kick/map.bin",
+      "sha256": "54b7673765641d8ece9d3266574101b0af336bfa681139ebf961db117c335ccb",
+      "size": 63665,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/roundhouse-kick/map.png",
+      "sha256": "1f8b505c19740c0b551c8e8d26bd0e27448744b3659e40b5ec1844ac47d71f2c",
+      "size": 12290,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/roundhouse-kick/map.yaml",
+      "sha256": "72dd208c01581d40c0318a6b4531ff39e488362f60f822623233e9e0dd5ca5a5",
+      "size": 15239,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/siberian-wastes/map.bin",
+      "sha256": "aec96cf7805d8de764dd15d78d488c40cd421432f8a63b4e821ce9bb23907355",
+      "size": 145109,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/siberian-wastes/map.png",
+      "sha256": "b48f83e4b9c46fe30bf7ede0342d990f0f64769acbd5319b11468cb0bac5c57a",
+      "size": 59345,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/siberian-wastes/map.yaml",
+      "sha256": "4d4dc6e7e1ba39be05657d299a31b3de584fdfc4ff96443838934259b1322d85",
+      "size": 25748,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/snow-valley/map.bin",
+      "sha256": "928a3b6c0d296ee0030d612c2319b3c5a0ddde42fde2d3f60b356a385460b5cb",
+      "size": 116441,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/snow-valley/map.png",
+      "sha256": "e2a611afd2e5986a4cc28cf19afac19a46e33cf855c12c3649d947afa853395c",
+      "size": 40012,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/snow-valley/map.yaml",
+      "sha256": "9bdc15417bfa054aecd0bf23b772690601873624b3e10a2013aabc66b3d565a7",
+      "size": 38573,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/snowballs-chance/map.bin",
+      "sha256": "19786aefe23d04d653eced8b5f94e2ed59782bc5327912ac9bc626ed4a746a12",
+      "size": 92417,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/snowballs-chance/map.png",
+      "sha256": "44dbf6f606a7e0ffae012f7579c3ff00147d546d551c06238b55ed32e899a631",
+      "size": 33746,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/snowballs-chance/map.yaml",
+      "sha256": "353adb9b00966429be008fe6afee64a20f7d4b3d19304badaeed81362f583da4",
+      "size": 36825,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/south-pacific/map.bin",
+      "sha256": "55703d1a056b882bb380d36e6a7b202d52af697da110d25f375419e7257b1a37",
+      "size": 119717,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/south-pacific/map.png",
+      "sha256": "e944dfb883eb6cab51cdb7bd989640b94a0e01e1d1244bc2d9d9c67563b2574c",
+      "size": 42873,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/south-pacific/map.yaml",
+      "sha256": "df309793943648266eb226f393bd5f92a98bd02d8c3fc668e9cb36a42c5df1ec",
+      "size": 19653,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/the-alamo/map.bin",
+      "sha256": "c58e7694cc9a37fb213b86a05ba45f31f276b11ad9f17321ef6c9a2eec0f9b51",
+      "size": 52097,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/the-alamo/map.png",
+      "sha256": "a462bda303661d7a1daa5c92435a2737adf46fdc7800d887dc8732ea4fa69797",
+      "size": 15624,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/the-alamo/map.yaml",
+      "sha256": "e0ca32076d26d7309b21e931ae0aef9aa0a0810654a3954ee90f94dad7e795d7",
+      "size": 26973,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/tournament-2A/map.bin",
+      "sha256": "a6bac4ce704ae79d474da54b0a15d84e0222d4a7492e39c1544229facd0c93e8",
+      "size": 69965,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/tournament-2A/map.png",
+      "sha256": "1fba3e3ae0c4873650573b678eae57ba595a9956a1985aa986494c345d898ba2",
+      "size": 16307,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/tournament-2A/map.yaml",
+      "sha256": "0c63aa9d8d491a52435cf62d1a9e059e2fc0237fa7ff0879cf38b44748d59f67",
+      "size": 16854,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/tournament-2B/map.bin",
+      "sha256": "f2d5c3fc9c4e934179c6ef9ef5db25d5a79f45d7dc875ecf2cdf855b3c495c2b",
+      "size": 93857,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/tournament-2B/map.png",
+      "sha256": "ada7e319d37e819d1950d54e33f7ced15f25e9a04d3b95ec158f89b8f443d0d3",
+      "size": 26555,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/tournament-2B/map.yaml",
+      "sha256": "df28f53bf74d5d654992028e4aa5ecf096a45580db8f36784bb2039669f88193",
+      "size": 5757,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/tsunami/map.bin",
+      "sha256": "094e6a9da1fde29973b2737bea56326b0a0b87bcfec0465be735c4399b7356c5",
+      "size": 111689,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/tsunami/map.png",
+      "sha256": "6d893a3951d5d4fdc368345d9d81f2c754f3d03f924eb5e968156cac6d6cfe82",
+      "size": 34092,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/tsunami/map.yaml",
+      "sha256": "e9e3afd056a8027d7115a2ed3bc160552853a3e2140e4bd1b8673f4102231d82",
+      "size": 16747,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/valley-of-gems/map.bin",
+      "sha256": "1f4514b68fd26ac22b6bae10478101c5643197f318b2e08ab04d8b61d234b2a5",
+      "size": 132317,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/valley-of-gems/map.png",
+      "sha256": "44209a490c849f25fb662cd29b749d61d5c78e8e63cad336147ec5d0f3ae0b01",
+      "size": 44817,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/valley-of-gems/map.yaml",
+      "sha256": "b00c2f6754c2e5e434ccd0eb98b1db985025522346af6f68ab0fd4555788a9b6",
+      "size": 22076,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/wild-animal-park/map.bin",
+      "sha256": "e61679c6be3e3f77eb3cb823654b45e4591584a7b7b7c46522cc37b9619cf6bc",
+      "size": 229529,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/wild-animal-park/map.png",
+      "sha256": "4143c5f89381e5255c48fd79ea1b2e75a12cdc1b9cc8a3eb32a6fce65ab22db3",
+      "size": 111741,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/maps/wild-animal-park/map.yaml",
+      "sha256": "d58352abe209f68d7e38926fd9f8571a55cc0f7c2ca599489749859e24871f6c",
+      "size": 91777,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/metrics.yaml",
+      "sha256": "b22ccd95b535ff29f4874693e69252893f8480e572efe35b582f3711cdcaded1",
+      "size": 730,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/mod.ios-base.yaml",
+      "sha256": "0d21035c2b97903225989484205a029f8a9419b11748a8f746cf4c50bf58eb09",
+      "size": 110,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/mod.ios-yuri.yaml",
+      "sha256": "4a078d5d26559b92b8c5220968dda0d2e648b8e69413b95c116e17f93942d888",
+      "size": 110,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/mod.yaml",
+      "sha256": "6fa6eb2beeb17488d2ef3a7d2bab5c87acfa3f03b6ed26e572f51c80583178f7",
+      "size": 8796,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/rules/ai-profiles.yaml",
+      "sha256": "07d0233e60a9826d725ea50cd950a31e19d5ee4b386cd71870e3751de913b566",
+      "size": 12753,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/rules/ai.yaml",
+      "sha256": "afcf48baec31d0ebaf3a0e139774cc4cdebca3dc1dc8ca3a3c5ef8aa5c5bd995",
+      "size": 3834,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/rules/aircraft.yaml",
+      "sha256": "db498da3c3569dbf89d1f3f95148ab1272582f9ec50da704142dd1970bdcfed7",
+      "size": 7656,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/rules/allied-infantry-base.yaml",
+      "sha256": "ba7ea292674960dcad7b0c0638c4a0db1fab791d09ccaf8a522ad63e10af9664",
+      "size": 14806,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/rules/allied-infantry.yaml",
+      "sha256": "84cff40c9c20ec22b6fdd11ae46cf0030e16710c7a4e8390757b1b2e3536ddae",
+      "size": 15008,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/rules/allied-naval.yaml",
+      "sha256": "b72e113c35896caf69ae3269a6991681a310f89f54a10a75c1f7a9535b74ebc3",
+      "size": 6063,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/rules/allied-structures.yaml",
+      "sha256": "58bb43d1bac00e8d0e798c30124dca7e5d410a6db62d955145fb4d809e36694a",
+      "size": 25910,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/rules/allied-vehicles.yaml",
+      "sha256": "de894640a713105f313433a0831f110a299b460e1c441aade42905701a9f4658",
+      "size": 11900,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/rules/animals.yaml",
+      "sha256": "bc8b1e3514534178b7cf3d5c205913830402933526df063c4d65dbc51a974066",
+      "size": 1094,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/rules/bridges.yaml",
+      "sha256": "14927fc4ab2fc082b4fd7d2e647492e88cbc4d69f3e81c0f99e5975baea394ee",
+      "size": 6551,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/rules/civilian-naval.yaml",
+      "sha256": "870fcfb0a471d943015f02448c96df96b86f3701c4591317a6806e9587859b33",
+      "size": 775,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/rules/civilian-props.yaml",
+      "sha256": "538a687be1b8fb8530d8daaa1a86bb092f365440683abbb2ac15d8ff0f07bcdd",
+      "size": 8681,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/rules/civilian-structures.yaml",
+      "sha256": "5cdf8fcc2448ff60d33d17376f028cbd4f02cf3d37f3cf8447edd63ab54f56df",
+      "size": 68036,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/rules/civilian-vehicles.yaml",
+      "sha256": "9fcc88e82f6d2fe12ac28a5d7c7cd1dc1ca0ad87bffd6971b730675a26ed936a",
+      "size": 1825,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/rules/civilians.yaml",
+      "sha256": "bf37d3f68c76b16ffac16c7df76b2b6a24123e3c0859b1330f469267f2f79e3a",
+      "size": 2042,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/rules/defaults-base.yaml",
+      "sha256": "6ff96cd51bc552b7446af3bbaaa24cd0b740cfdbfe6cf618deb7eb29bde13978",
+      "size": 27704,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/rules/defaults.yaml",
+      "sha256": "1b4f61f869754b333176fd37058eb02fcc64b30f4a96236fd83b4caf3d23a8c6",
+      "size": 29110,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/rules/misc.yaml",
+      "sha256": "653de8be22ba5d013c4cbc98f57f32b55c12204091881af6371855368ade16ca",
+      "size": 4137,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/rules/palettes.yaml",
+      "sha256": "e7c062869b5f714ee32940283a193ab07f42711840d2e407e85fcbb33555e249",
+      "size": 3878,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/rules/player.yaml",
+      "sha256": "fadbe306e525e059bd5fcf79fae6610c4aa86a0f6fe5bbc675c48eccf7de8047",
+      "size": 3457,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/rules/proxy-actors-base.yaml",
+      "sha256": "7515fb3ff4581e86144a7e6e9c36095385784c30697490d99a2824f80b61b0cb",
+      "size": 256,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/rules/proxy-actors.yaml",
+      "sha256": "1aa6110f77972d8f698b33ab4fbec0a93f8f40e6d2f8d4c4b4d6b39aeb1a2b79",
+      "size": 319,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/rules/soviet-infantry-base.yaml",
+      "sha256": "776dd519e357e63700e7e4557ce0f15a202fbe46f6b836ee3cf6d20f2b24b8f2",
+      "size": 10492,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/rules/soviet-infantry.yaml",
+      "sha256": "e13ffb6fefdea6c51d8dcf737ffd0313dc45ce3d4b2a2a3e9fb8449c3c3c4ab3",
+      "size": 10667,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/rules/soviet-naval.yaml",
+      "sha256": "bd136439d7c4f459a2572a8ff1e80de20eeb42a3e6ae76cdb0c7bb8f3ba1dd5e",
+      "size": 7384,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/rules/soviet-structures.yaml",
+      "sha256": "4dc9aaceef3079e48f5e2111c4317bf2b2b4c71c662322bc92198189f382530b",
+      "size": 24097,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/rules/soviet-vehicles-base.yaml",
+      "sha256": "3751401e17e45cf4bdaa4724a739b84046225532e86ffc42e346ce5cdebe907a",
+      "size": 11668,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/rules/soviet-vehicles.yaml",
+      "sha256": "373fbdef57c090ca382a08b774c901cb905bbc53f656616554c13bb568c1de59",
+      "size": 11843,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/rules/tech-structures.yaml",
+      "sha256": "6d3a1fcdfdb53def74849a9954d4a08107bf0659b82f30feb6c0d1c99a66a8d8",
+      "size": 4460,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/rules/trees.yaml",
+      "sha256": "60d56e487a9e0e7a6cd76c71cb0f2874d4616847831ca6454828ecfb1c871ebf",
+      "size": 823,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/rules/world-base.yaml",
+      "sha256": "20b2ef9cad9d901a6c8d776298b0de5ef02c0bb1b52e6223900b283e64dc49b4",
+      "size": 10245,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/rules/world.yaml",
+      "sha256": "55ed4dca1c2a4c4053db5dfa8d21462d0a60e956361d9cf1839912a180a9034b",
+      "size": 11326,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/rules/yuri-infantry.yaml",
+      "sha256": "ccd53ee9f6113e94f13e93845fb51608575ee7b799a00ad8e6567c9c5627f656",
+      "size": 4994,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/rules/yuri-naval.yaml",
+      "sha256": "81481bb276b662186435f2803bee1cdf2508152e5ef822916e27c3cd08dcd46e",
+      "size": 4551,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/rules/yuri-structures.yaml",
+      "sha256": "b7332fa29fdb2113726bf319b955dd326991188fc0cc5ed3071631dc05a53b5b",
+      "size": 19268,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/rules/yuri-vehicles.yaml",
+      "sha256": "7d7aec73f7942676c69af5308349863e06b683900ccd57e2a89f6ec8e4e7c46b",
+      "size": 9841,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/sequences/aircraft.yaml",
+      "sha256": "025ca748109ee99f156959dbca1a6ca88f1824fe24ebad0be76b78a8ae1fb807",
+      "size": 452,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/sequences/allied-infantry.yaml",
+      "sha256": "03275435590d1d84ec3f926b951bf112ddcef04dc0c515b941d5bbf6c58030ca",
+      "size": 4858,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/sequences/allied-structures.yaml",
+      "sha256": "a9941dcf1cf7d39337d9257465062125fd0c08e82519a8f8a149d0d5cb79d951",
+      "size": 16955,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/sequences/animals.yaml",
+      "sha256": "6f2df1555063403cce01157929acd40b508ed93461fb5f94930928791e09762d",
+      "size": 877,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/sequences/bridges.yaml",
+      "sha256": "d5816936b7a90c3938b532bf654459568e1a6b73c1826c6e6eb35929707fff55",
+      "size": 7857,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/sequences/civilian-props.yaml",
+      "sha256": "bf2f9fbe7c1fc46d3667c889cd3112b2b4fc99b79da8d4bfa3e19eddfd396819",
+      "size": 6041,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/sequences/civilian-structures.yaml",
+      "sha256": "265ae0c84a8b653c5eab643dfc47e4c5de579d89fa17b88f827ba79e0037b780",
+      "size": 45614,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/sequences/civilians.yaml",
+      "sha256": "4ce4feb7f0cb03fccdb605af7d0007bb418edb9b981382bca18d6d484a101232",
+      "size": 2886,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/sequences/defaults.yaml",
+      "sha256": "0675fb11969535c164e8d3c30f7d085f026a9cab85a8fcdb6fa97534229a2b4a",
+      "size": 4096,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/sequences/misc.yaml",
+      "sha256": "946f1fbac3564d89f4d44bb643d25fc9ed334f8a7e5738e47b04318403b90c44",
+      "size": 15931,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/sequences/soviet-infantry.yaml",
+      "sha256": "e4a6e8ed4d456aa4e5019316f01874c0bc9c4fada1a115d9cfeb7f63858df3ef",
+      "size": 2504,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/sequences/soviet-structures.yaml",
+      "sha256": "d7424606c0a7ed803be43361e4e24321033930256947795dec8616ad2c288021",
+      "size": 16102,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/sequences/tech-structures.yaml",
+      "sha256": "7bda80fb57c6a9a26915be2180c570aa1736a32d88deec712be75a53140f75b4",
+      "size": 3082,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/sequences/trees.yaml",
+      "sha256": "5ee546b98d70473a1eeac8a3f40caf4e6fd5521ae824dae300ec34202820781f",
+      "size": 3727,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/sequences/vehicles-base.yaml",
+      "sha256": "531215cb99083575d61bc7e4a4980b30c2fb79403254ab5cc5b3bc8580ed0dd1",
+      "size": 4424,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/sequences/vehicles.yaml",
+      "sha256": "39e0f87a785572b3c41e9b4b57bc19a0167d9fe4908c8c2671618ad53a2cbf3c",
+      "size": 5432,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/sequences/voxels-base.yaml",
+      "sha256": "b31dc55d451f9b04bb28fa380cde0829a72ccdec8f5d4b1c89f388b2f533b3ea",
+      "size": 1910,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/sequences/voxels.yaml",
+      "sha256": "2c66ce26eff7fd3b3147ab38c5f31d0813cf75ed6a7237c9c8cc9c67c7ab0b2d",
+      "size": 2390,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/sequences/yuri-infantry.yaml",
+      "sha256": "a5574fbcfade1e670372d8f2a146c92ce7ce9bc223ea9d644df21bd4046a65fb",
+      "size": 2140,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/sequences/yuri-structures.yaml",
+      "sha256": "6f9966f4b5281bb7013a1cf0c5954925b5b86788f0a93f606ff82091cabd3cee",
+      "size": 13618,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/tilesets/snow.yaml",
+      "sha256": "400dacb90ea59f9cf9d02fbf117298358bcf561cb8d0b1f06256e05688177424",
+      "size": 271925,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/tilesets/temperat.yaml",
+      "sha256": "ffeb8fd51958bacc4502667307a1d6e845f9e31acef67e6ab052e6548a9d16e5",
+      "size": 285984,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/tilesets/urban.yaml",
+      "sha256": "fdcbcf70461ecc61bbf7d824a50473d9f7d7c2abf0ad709319110f65493d9cb8",
+      "size": 301770,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/uibits/buttons.png",
+      "sha256": "85cbfe493165ca19331f10b3de3e85b08ba2afaed71d40e17583b77bac18b41e",
+      "size": 11431,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/uibits/chrome.fps-pre.png",
+      "sha256": "02f96081a41ee39635df6b844cf267b71342c49764b4841d1aedf017efa889c3",
+      "size": 750997,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/uibits/chrome.png",
+      "sha256": "6329792d850adf4dde2652daba308fe42b05b1844f30d74b6488bbc24724d360",
+      "size": 740579,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/uibits/commandbar-chrome.png",
+      "sha256": "b37ad0165d17b634a22e0e5e37bd8a9c7973d25cd2591eed7f60692a997f9398",
+      "size": 10213,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/uibits/commandbar-icons-remastered.png",
+      "sha256": "aba5ab66c229c7428541248b7988c4700ce67956b9bffd039de249daab927387",
+      "size": 136894,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/uibits/commandbar-icons.png",
+      "sha256": "af6d27aa0418e3451920d7c46806f8a3a02d21df8a54ff4f35d4b846dbf3d3f1",
+      "size": 5737,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/uibits/commandbar-panel-compact.png",
+      "sha256": "56f0bb0aa793282cf10a7d3eaff31525d883f718ba7a6a526c9ae0732cb5fd61",
+      "size": 373,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/uibits/commandbar-panel.png",
+      "sha256": "2494c48ac1ea02f3f3266c0d13987081afe77215ec9c4551ea9edcb2c8121bb6",
+      "size": 339,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/uibits/dialog.png",
+      "sha256": "36ff278c3559d4dada36ddff037020458f2267123237b5b226443b4c61b56170",
+      "size": 140010,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/uibits/ios-joystick-command-icons.png",
+      "sha256": "05d98873b65202269c3888a9524351abd201fd8ed968f912c078acd840657120",
+      "size": 228714,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/uibits/ios-viewport-joystick.png",
+      "sha256": "fb4574cd5d0b00801175670c88da82970012c30c3302e13d50a2ccd1cb3724cc",
+      "size": 29803,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/uibits/loadscreen.png",
+      "sha256": "487973d836ea2053ad8169855c39d3c3001bf414bf822b6279f30098598cedaf",
+      "size": 5598831,
+      "category": "unknown-or-derivative",
+      "license": "Unreviewed",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/uibits/menubg1.png",
+      "sha256": "cfc59a7ce11dcf17f42a80649d2868de85cc037dc2e3cc022c26956ae3f24a9b",
+      "size": 3358000,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/uibits/menubg2.png",
+      "sha256": "335c4531a7242f08dec8dddbc8ba70fd50a4838d09db69d6863227ca8a3b71a4",
+      "size": 3796657,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/uibits/menubg3.png",
+      "sha256": "02c65bcf6180eb8d5c136742f3444eb517e646fa1bf737134ffdfc61d7b04a79",
+      "size": 3378766,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/uibits/menubg4.png",
+      "sha256": "cdbdfd920853ca1dbcb8c2337ac7f86832c74f98ef2d9ddc0df8c056d4d26914",
+      "size": 3891127,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/uibits/menubuttons.gold-bak.png",
+      "sha256": "6655390615720172b990e01e8d1df412da4ab63d89101d70a1ca264236af2e05",
+      "size": 1108,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/uibits/menubuttons.png",
+      "sha256": "dbc21ba9f852c0a1652c371bfc66a3a2c333938b59ff837f24c50d63a4c63eb4",
+      "size": 1099,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/uibits/menulogo-sm.png",
+      "sha256": "c11ef8bb205644255cde51fa777257a7d194058fb6161018c42cfc26e083b4b9",
+      "size": 34353,
+      "category": "unknown-or-derivative",
+      "license": "Unreviewed",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/uibits/menulogo.png",
+      "sha256": "4337eb9022027b99011098506613d8e630cb0d247f916dff1f1185417907e27d",
+      "size": 382964,
+      "category": "unknown-or-derivative",
+      "license": "Unreviewed",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/uibits/menupanel.gold-bak.png",
+      "sha256": "298f3b3b1304604ec3167b406707b416dbd9922f4f17baa4b6bd3884f362ce26",
+      "size": 1300,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/uibits/menupanel.png",
+      "sha256": "cc73a98b729436764f0a10f95ddc30f8bc5d3aa7bc0e37d18afb09f4c41857bd",
+      "size": 1319,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/uibits/menutitle-sm.png",
+      "sha256": "437d8a898b9bab4d8f3a6ceb842ebd42270caa245035ca8543d483b1d2bf9660",
+      "size": 28607,
+      "category": "unknown-or-derivative",
+      "license": "Unreviewed",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/uibits/menutitle.png",
+      "sha256": "f8507a2e0c7406c6e1626c1c4a3d8d7f1ff69d889ef20106d1c4fc7d2f665ad8",
+      "size": 76016,
+      "category": "unknown-or-derivative",
+      "license": "Unreviewed",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/uibits/musicplayer.png",
+      "sha256": "34dbd233f2e721602fa244c54b87bf08b61596c4a1596ab1b8b5c9c1a00cf902",
+      "size": 708,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/uibits/settingspanel.png",
+      "sha256": "9b09d3a3a4669ce16a0e670315ce66a4c799a81c303c08668f0b170f6e33ab45",
+      "size": 2496,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/uibits/spawnpoints.png",
+      "sha256": "acb4d2e7876e744f96c9be206c7343d28f2ffc61eb21d448ef37c093c1fd0ff8",
+      "size": 6163,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/uibits/strategic.png",
+      "sha256": "880f3d1bd09409dd0f76f249a3e18af206293a3a9333a633d3db99d1342a6b74",
+      "size": 3461,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": false
+    },
+    {
+      "path": "mods/ra2/weapons/bullets.yaml",
+      "sha256": "5b2392150e0ada3370cab8bdfd651209793d74a45d8f6d853616a111b2343934",
+      "size": 5223,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/weapons/defaults.yaml",
+      "sha256": "a5ff5ca1394be1cb9e84ce470589c46e1714cfd1c3e1ed4bcccea2b5825defee",
+      "size": 3324,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/weapons/explosions.yaml",
+      "sha256": "068bfdefc32759a6337d5fd7e3d63161076c84b5b33f111e295af9c0540a479e",
+      "size": 10655,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/weapons/flaks.yaml",
+      "sha256": "a1e17fbbd01d89db425c706ac6cc08ab80215cbdd17ccb45c850777325230fd4",
+      "size": 777,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/weapons/gatling.yaml",
+      "sha256": "59565979930cb83f7229cb223cc0414b1a40cf33739f63708e3c8bf36c123d34",
+      "size": 1266,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/weapons/melee.yaml",
+      "sha256": "91c13c331c8dc87dc6aacabc01599dc9a7c139aa3c8b02b41cb2dd7adab84a33",
+      "size": 2674,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/weapons/mgs.yaml",
+      "sha256": "ed1359e38a28c6304b99b01a105c892fd9690c7cb2c4aef8fbbe040154d1ec07",
+      "size": 2405,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/weapons/misc.yaml",
+      "sha256": "d5053839f5d0a361e1c34206853361a5dc76af164385389cf6a48adaa8ecd058",
+      "size": 4009,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/weapons/missiles.yaml",
+      "sha256": "f9a7d61e2ccbf4804b6a3d5f1fd40a7bc81e71a90ed6b848f19cc09f55c414f5",
+      "size": 5349,
+      "category": "engine-source",
+      "license": "OpenRA/ra2 GPLv3+",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/weapons/yuri.yaml",
+      "sha256": "edda70d8b77f1409d6e53f6e1203dbefdcd7b730f4e4b78a12ec1fb1f9d9054f",
+      "size": 4665,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/weapons/zaps.yaml",
+      "sha256": "e664329d0f5ca9966d9a7cd882062bbf9138ddbf0c1cfdbff7543d8c71626e74",
+      "size": 5685,
+      "category": "project-original",
+      "license": "Project original; GPLv3+ distribution",
+      "public": true
+    },
+    {
+      "path": "zh-Hans.lproj/InfoPlist.strings",
+      "sha256": "d14cf869fd49b8459cd87cb5d882f2e7882bd6f4bf851171957821d605559db1",
+      "size": 126,
+      "category": "project-original",
+      "license": "Project original",
+      "public": true
+    }
+  ]
+}

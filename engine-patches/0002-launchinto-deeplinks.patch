@@ -1,0 +1,252 @@
+--- a/OpenRA.Mods.Common/Widgets/Logic/MainMenuLogic.cs	2026-07-30 23:29:12
++++ b/OpenRA.Mods.Common/Widgets/Logic/MainMenuLogic.cs	2026-07-30 23:29:12
+@@ -47,6 +47,8 @@
+ 		readonly Widget newsTemplate;
+ 		readonly LabelWidget newsStatus;
+ 		readonly ModData modData;
++		readonly World world;
++		readonly ContentInstallerFileSystemLoader contentInstaller;
+ 
+ 		// Update news once per game launch
+ 		static bool fetchedNews;
+@@ -81,9 +83,11 @@
+ 			mainMenu.Get<ButtonWidget>("MULTIPLAYER_BUTTON").OnClick = OpenMultiplayerPanel;
+ 
+ 			var contentButton = mainMenu.GetOrNull<ButtonWidget>("CONTENT_BUTTON");
++			contentInstaller = modData.FileSystemLoader as ContentInstallerFileSystemLoader;
++			this.world = world;
++
+ 			if (contentButton != null)
+ 			{
+-				var contentInstaller = modData.FileSystemLoader as ContentInstallerFileSystemLoader;
+ 				contentButton.Disabled = contentInstaller == null;
+ 				contentButton.OnClick = () =>
+ 				{
+@@ -97,14 +101,7 @@
+ 				};
+ 			}
+ 
+-			mainMenu.Get<ButtonWidget>("SETTINGS_BUTTON").OnClick = () =>
+-			{
+-				SwitchMenu(MenuType.None);
+-				Game.OpenWindow("SETTINGS_PANEL", new WidgetArgs
+-				{
+-					{ "onExit", () => SwitchMenu(MenuType.Main) }
+-				});
+-			};
++			mainMenu.Get<ButtonWidget>("SETTINGS_BUTTON").OnClick = OpenSettingsPanel;
+ 
+ 			mainMenu.Get<ButtonWidget>("EXTRAS_BUTTON").OnClick = () => SwitchMenu(MenuType.Extras);
+ 
+@@ -258,6 +255,7 @@
+ 				{
+ 					LoadAndDisplayNews(webServices, newsBG);
+ 					SwitchMenu(MenuType.Main);
++					LaunchIntoRequestedPanel();
+ 				}
+ 
+ 				if (SystemInfoPromptLogic.ShouldShowPrompt())
+@@ -525,9 +523,203 @@
+ 				{ "onStart", () => { RemoveShellmapUI(); lastGameState = MenuPanel.GameSaves; } },
+ 				{ "isSavePanel", false },
+ 				{ "world", null }
++			});
++		}
++
++		void OpenSettingsPanel()
++		{
++			SwitchMenu(MenuType.None);
++			Game.OpenWindow("SETTINGS_PANEL", new WidgetArgs
++			{
++				{ "onExit", () => SwitchMenu(MenuType.Main) }
+ 			});
++		}
++
++		void LaunchIntoRequestedPanel()
++		{
++			var target = Game.Settings.Game.LaunchInto;
++			if (string.IsNullOrEmpty(target))
++				return;
++
++			Game.Settings.Game.LaunchInto = "";
++
++			// Local patch: support deep-link targets of the form "<command> <argument>"
++			// so external launchers can jump straight into a specific replay or saved game.
++			var separator = target.IndexOf(' ');
++			var command = separator < 0 ? target.ToLowerInvariant() : target[..separator].ToLowerInvariant();
++			var argument = separator < 0 ? null : target[(separator + 1)..];
++
++			switch (command)
++			{
++				case "replay" when !string.IsNullOrEmpty(argument):
++					Game.JoinReplay(argument);
++					break;
++				case "loadsave" when !string.IsNullOrEmpty(argument):
++					LoadSavedGame(argument);
++					break;
++				case "skirmish" when !string.IsNullOrEmpty(argument):
++					StartSkirmishGameDeepLink(argument);
++					break;
++				case "connect" when !string.IsNullOrEmpty(argument):
++					ConnectToServerDeepLink(argument);
++					break;
++				case "skirmish":
++					StartSkirmishGame();
++					break;
++				case "multiplayer":
++					OpenMultiplayerPanel();
++					break;
++				case "load":
++					OpenGameSaveBrowserPanel();
++					break;
++				case "settings":
++					OpenSettingsPanel();
++					break;
++				case "replays":
++					OpenReplayBrowserPanel();
++					break;
++				case "missions":
++					var hasCampaign = modData.Manifest.Missions.Length > 0;
++					var hasMissions = modData.MapCache
++						.Any(p => p.Status == MapStatus.Available && p.Visibility.HasFlag(MapVisibility.MissionSelector));
++					if (hasCampaign || hasMissions)
++						OpenMissionBrowserPanel(modData.MapCache.PickLastModifiedMap(MapVisibility.MissionSelector));
++
++					break;
++				case "editor":
++					SwitchMenu(MenuType.MapEditor);
++					break;
++				case "assetbrowser":
++					SwitchMenu(MenuType.None);
++					Game.OpenWindow("ASSETBROWSER_PANEL", new WidgetArgs
++					{
++						{ "onExit", () => SwitchMenu(MenuType.Extras) }
++					});
++					break;
++				case "credits":
++					Game.OpenWindow("CREDITS_PANEL", new WidgetArgs
++					{
++						{ "onExit", () => SwitchMenu(MenuType.Extras) }
++					});
++					break;
++				case "music":
++					SwitchMenu(MenuType.None);
++					Game.OpenWindow("MUSIC_PANEL", new WidgetArgs
++					{
++						{ "onExit", () => SwitchMenu(MenuType.Extras) },
++						{ "world", world }
++					});
++					break;
++				case "content":
++					if (contentInstaller != null)
++						Game.RunAfterTick(() => Game.InitializeMod(contentInstaller.ContentInstallerMod, new Arguments()));
++
++					break;
++			}
+ 		}
+ 
++		// Local patch: replicate GameSaveBrowserLogic's load flow so LaunchInto
++		// can deep-link into a specific saved game ("loadsave <filename>").
++		void LoadSavedGame(string saveFilename)
++		{
++			var savePath = Path.Combine(
++				Platform.SupportDir,
++				"Saves",
++				modData.Manifest.Id,
++				modData.Manifest.Metadata.Version,
++				saveFilename);
++
++			if (!File.Exists(savePath))
++				return;
++
++			GameSave save;
++			try
++			{
++				save = new GameSave(savePath);
++			}
++			catch (Exception)
++			{
++				return;
++			}
++
++			var map = modData.MapCache[save.GlobalSettings.Map];
++			if (map.Status != MapStatus.Available)
++				return;
++
++			var orders = new List<Order>()
++			{
++				Order.FromTargetString("LoadGameSave", saveFilename, true),
++				Order.Command($"state {Session.ClientState.Ready}")
++			};
++
++			Game.CreateAndStartLocalServer(map.Uid, orders);
++		}
++
++		// Local patch: deep-link straight into a running skirmish, bypassing the lobby UI.
++		// Argument format: "<mapUid> <lobby command 1>|<lobby command 2>|..."
++		// Lobby commands follow LobbyCommands grammar (option/slot_bot/faction/team/spawn...).
++		// A final "state Ready" is appended, which auto-starts local (singleplayer-enabled) games.
++		void StartSkirmishGameDeepLink(string argument)
++		{
++			SwitchMenu(MenuType.None);
++
++			var parts = argument.Split(new[] { ' ' }, 2);
++			var mapUid = parts[0];
++
++			// Resolve by UID first, then by package name / title so external launchers
++			// can reference maps without replicating the SHA1-based UID algorithm.
++			var preview = modData.MapCache.FirstOrDefault(p =>
++				p.Status == MapStatus.Available &&
++				(p.Uid == mapUid || p.PackageName == mapUid ||
++				 string.Equals(p.Title, mapUid, StringComparison.OrdinalIgnoreCase)));
++			mapUid = preview?.Uid ?? modData.MapCache.ChooseInitialMap(
++				modData.MapCache.PickLastModifiedMap(MapVisibility.Lobby) ?? Game.Settings.Server.Map,
++				Game.CosmeticRandom);
++
++			Game.Settings.Server.Map = mapUid;
++			Game.Settings.Save();
++
++			var setupOrders = new List<Order>();
++			if (parts.Length > 1)
++				foreach (var cmd in parts[1].Split('|'))
++					if (!string.IsNullOrWhiteSpace(cmd))
++						setupOrders.Add(Order.Command(cmd.Trim()));
++
++			setupOrders.Add(Order.Command($"state {Session.ClientState.Ready}"));
++			Game.CreateAndStartLocalServer(mapUid, setupOrders);
++		}
++
++		// Local patch: deep-link straight into a multiplayer server lobby, bypassing
++		// the server browser UI. Argument format: "<host>" or "<host>:<port>".
++		void ConnectToServerDeepLink(string endpoint)
++		{
++			SwitchMenu(MenuType.None);
++
++			var host = endpoint;
++			var port = 1234;
++			var idx = endpoint.LastIndexOf(':');
++			if (idx > 0 && int.TryParse(endpoint.AsSpan(idx + 1), out var parsed))
++			{
++				host = endpoint[..idx];
++				port = parsed;
++			}
++
++			void OnLobbyExit()
++			{
++				Game.Disconnect();
++				SwitchMenu(MenuType.Main);
++			}
++
++			ConnectionLogic.Connect(new ConnectionTarget(host, port), "",
++				() => Game.OpenWindow("SERVER_LOBBY", new WidgetArgs
++				{
++					{ "onStart", () => { RemoveShellmapUI(); lastGameState = MenuPanel.Multiplayer; } },
++					{ "onExit", OnLobbyExit },
++					{ "skirmishMode", false }
++				}),
++				() => SwitchMenu(MenuType.Main));
++		}
++
+ 		protected override void Dispose(bool disposing)
+ 		{
+ 			if (disposing)

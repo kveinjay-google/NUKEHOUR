@@ -1,0 +1,313 @@
+^Animal:
+	Defaults:
+		Offset: 0, 0, 16
+	stand:
+		Facings: 8
+	run:
+		Start: 8
+		Length: 6
+		Facings: 8
+		Tick: 100
+	idle1:
+		Start: 56
+		Length: 15
+	idle2:
+		Start: 71
+		Length: 15
+	die1:
+		Start: 86
+		Length: 15
+	die2:
+		Start: 101
+		Length: 15
+	paradrop:
+	icon:
+		Filename: xxicon.shp
+
+^BasicInfantry:
+	Inherits: ^Animal
+	idle1:
+		Tick: 120
+	idle2:
+		Tick: 120
+	cheer:
+		Start: 245
+		Length: 8
+		Tick: 120
+	die1:
+		Start: 134
+	die2:
+		Start: 149
+	die4:
+		Filename: nukedie.shp
+		Length: *
+		Tick: 50
+	die5:
+		Filename: yuridie.shp
+		Length: *
+		Tick: 80
+	die6:
+		Filename: electro.shp
+		Length: *
+		Tick: 80
+
+^ProneInfantry:
+	liedown:
+		Start: 212
+		Length: 2
+		Facings: 8
+	standup:
+		Start: 228
+		Length: 2
+		Facings: 8
+	prone-stand:
+		Frames: 86, 92, 98, 104, 110, 116, 122, 128
+		Facings: 8
+	prone-run:
+		Start: 86
+		Length: 6
+		Facings: 8
+		Tick: 100
+
+^Infantry:
+	Inherits@1: ^BasicInfantry
+	Inherits@2: ^ProneInfantry
+
+^CivInfantry:
+	Inherits: ^Infantry
+	Inherits@MC: ^MindControllable
+	-idle2:
+	die1:
+		Start: 71
+	die2:
+		Start: 71
+	-standup:
+	-liedown:
+	prone-stand:
+		Frames: 182, 188, 194, 200, 206, 212, 218, 224
+	prone-run:
+		Start: 182
+	shoot:
+		Start: 86
+		Length: 6
+		Facings: 8
+	cheer:
+		Start: 230
+		Length: 8
+	panic-stand:
+		Facings: 8
+	panic-run:
+		Start: 134
+		Length: 6
+		Facings: 8
+
+^ArmedInfantry:
+	Inherits: ^Infantry
+	shoot:
+		Start: 164
+		Length: 6
+		Facings: 8
+		Tick: 80
+	prone-shoot:
+		Start: 212
+		Length: 6
+		Facings: 8
+		Tick: 80
+	liedown:
+		Start: 260
+	standup:
+		Start: 276
+	cheer:
+		Start: 293
+
+^MindControllable:
+	mindcontrol:
+		Filename: yuricntl.shp
+		Length: *
+		Offset: 0, -24, 24
+
+^bridge:
+	Defaults:
+		ZOffset: -1c511
+		Start: 1
+		ZRamp: 1
+		Offset: 0, 0, 0.5
+
+^Structure:
+	Defaults:
+		DepthSprite: isodepth.shp
+	idle:
+		ShadowStart: 3
+	make:
+		Length: 25
+		ShadowStart: 25
+	damaged-idle:
+		Start: 1
+		ShadowStart: 4
+	icon:
+		Offset: 0,0
+
+^TechStructure:
+	Defaults:
+		DepthSprite: isodepth.shp
+	idle:
+		ShadowStart: 4
+	damaged-idle:
+		Start: 1
+		ShadowStart: 5
+	flag:
+		Length: 16
+	rubble:
+		Start: 3
+		ShadowStart: 7
+		ZOffset: -3c0
+
+^CivStructure:
+	Defaults:
+		DepthSprite: isodepth.shp
+	idle:
+		ShadowStart: 4
+	damaged-idle:
+		Start: 1
+		ShadowStart: 5
+	rubble:
+		Start: 3
+		ShadowStart: 7
+		ZOffset: -3c0
+
+^CivStructureNoRubble:
+	Inherits: ^CivStructure
+	idle:
+		ShadowStart: 3
+	damaged-idle:
+		ShadowStart: 4
+	-rubble:
+
+^Flag:
+	Inherits: ^CivStructureNoRubble
+	Defaults:
+		Offset: 0, -15, 15
+	flag:
+		Length: 16
+		ShadowStart: 16
+
+^Fence:
+	Defaults:
+		Offset: 0, -15, 15
+		DepthSprite: isodepth.shp
+	idle:
+		Length: 16
+		ShadowStart: 32
+	damaged-idle:
+		Start: 16
+		Length: 16
+		ShadowStart: 48
+	icon:
+		Offset: 0,0
+
+^Wall:
+	Inherits: ^Fence
+	Defaults:
+		Offset: 0, -12, 12
+		DepthSprite: isodepth.shp
+	idle:
+		ShadowStart: 48
+	damaged-idle:
+		ShadowStart: 64
+	critical-idle:
+		Start: 32
+		Length: 16
+		ShadowStart: 80
+	icon:
+		Offset: 0,0
+
+^Pole:
+	Defaults:
+	idle:
+		ShadowStart: 1
+
+^Prop:
+	Defaults:
+		Offset: 0, -15, 15
+	idle:
+		ShadowStart: 3
+
+^Rock:
+	idle:
+		ShadowStart: 1
+		Offset: 0, -15, 15
+
+^Drill:
+	Defaults:
+		Offset: -1, -16, 16
+	idle:
+		ShadowStart: 11
+	active:
+		Start: 1
+		Length: 10
+		ShadowStart: 12
+		Tick: 160
+
+^Tree:
+	idle:
+		ShadowStart: 1
+		Offset: -1, -16, 16
+
+^WithMachineGunMuzzle:
+	muzzle:
+		Facings: 8
+		Length: 6
+		Combine:
+			0:
+				Filename: mgun-n.shp
+				Length: 6
+				Offset: 0, 0
+			1:
+				Filename: mgun-nw.shp
+				Length: 6
+				Offset: 0, 0
+			2:
+				Filename: mgun-w.shp
+				Length: 6
+				Offset: 0, 0
+			3:
+				Filename: mgun-sw.shp
+				Length: 6
+				Offset: 0, 0
+			4:
+				Filename: mgun-s.shp
+				Length: 6
+				Offset: 0, 0
+			5:
+				Filename: mgun-se.shp
+				Length: 6
+				Offset: 0, 0
+			6:
+				Filename: mgun-e.shp
+				Length: 6
+				Offset: 0, 0
+			7:
+				Filename: mgun-ne.shp
+				Length: 6
+				Offset: 0, 0
+
+^WithCannonMuzzle:
+	muzzle:
+		Filename: gunfire.shp
+		Length: *
+	muzzle-2:
+		Filename: vtmuzzle.shp
+		Length: *
+
+^WithFlakMuzzle:
+	muzzle:
+		Filename: gunfire.shp
+		Length: *
+		Offset: 0,0
+
+^GarrisonableBuilding:
+	Inherits: ^CivStructure
+	garrisoned:
+		Start: 2
+		ShadowStart: 6
+		ZOffset: -3c0

@@ -1,0 +1,39 @@
+asw:
+	icon:
+		Filename: xxicon.shp
+
+beag:
+	icon:
+		Filename: beagicon.shp
+
+cargoplane:
+	icon:
+		Filename: xxicon.shp
+
+falc:
+	icon:
+		Filename: falcicon.shp
+
+hind:
+	icon:
+		Filename: hindicon.shp
+
+hornet:
+	icon:
+		Filename: xxicon.shp
+
+pdplane:
+	icon:
+		Filename: xxicon.shp
+
+shad:
+	Inherits@MC: ^MindControllable
+	Inherits@Muzzle: ^WithMachineGunMuzzle
+	icon:
+		Filename: shadicon.shp
+	muzzle:
+		Filename: shad.shp
+
+zep:
+	icon:
+		Filename: zepicon.shp

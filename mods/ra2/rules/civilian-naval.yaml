@@ -1,0 +1,56 @@
+tug:
+	Inherits: ^Ship
+	Inherits@MC: ^MindControllable
+	Valued:
+		Cost: 500
+	Tooltip:
+		Name: actor-tug-name
+	Mobile:
+		TurnSpeed: 8
+		Speed: 60
+	Health:
+		HP: 200
+	Armor:
+		Type: Light
+	RevealsShroud:
+		Range: 8c0
+	RenderSprites:
+	Selectable:
+		Bounds: 1544, 2509, 0, -289
+	RenderVoxels:
+		NormalsPalette: ts-normals
+	WithVoxelBody:
+	-Voiced:
+	HitShape:
+
+cruise:
+	Inherits: ^Ship
+	Inherits@MC: ^MindControllable
+	Valued:
+		Cost: 500
+	Tooltip:
+		Name: actor-cruise-name
+	Mobile:
+		TurnSpeed: 4
+		Speed: 60
+	Health:
+		HP: 300
+	Armor:
+		Type: Light
+	RevealsShroud:
+		Range: 8c0
+	RenderSprites:
+	Selectable:
+		Bounds: 1544, 2509, 0, -289
+	WithVoxelBody:
+	-Voiced:
+	HitShape:
+
+cdest:
+	Inherits: dest
+	-Buildable:
+	Tooltip:
+		Name: actor-cdest-name
+	Armor:
+		Type: Light
+	-Voiced:

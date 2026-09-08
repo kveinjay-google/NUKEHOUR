@@ -1,0 +1,73 @@
+Container@INGAME_MENU:
+	Width: WINDOW_WIDTH
+	Height: WINDOW_HEIGHT
+	Logic: IngameMenuLogic
+		Buttons: RESUME, LOAD_GAME, SAVE_GAME, SETTINGS, MUSIC, SURRENDER, RESTART, BACK_TO_EDITOR, ABORT_MISSION, SAVE_MAP, PLAY_MAP, EXIT_EDITOR
+		ButtonStride: 0, 44
+	Children:
+		# Full-bleed backdrop — no battlefield peeking through borders/holes.
+		StretchBackground@MENU_BG:
+			Logic: RandomBackgroundLogic
+				Images: menu-bg-1, menu-bg-2, menu-bg-3, menu-bg-4, menu-bg-5, menu-bg-6, menu-bg-7, menu-bg-8, menu-bg-9, menu-bg-10, menu-bg-11, menu-bg-12, menu-bg-13
+			Background: menu-bg-1
+			X: 0
+			Y: 0
+			Width: WINDOW_WIDTH
+			Height: WINDOW_HEIGHT
+			ClickThrough: true
+		# One integrated card: left nav + right info (no floating halves / cut-off logo).
+		Background@MENU_SHELL:
+			Background: menu-panel
+			X: (WINDOW_WIDTH - WIDTH) / 2
+			Y: (WINDOW_HEIGHT - HEIGHT) / 2
+			Width: 1040
+			Height: 600
+			Children:
+				Label@SHELL_TITLE:
+					X: 28
+					Y: 28
+					Width: 220
+					Height: 32
+					Text: label-menu-buttons-title
+					Font: Bold
+					Align: Center
+					Shadow: true
+					TextColor: F0C040
+				# Logic recenters this container by button count (grows up & down).
+				# Seed Y high enough that a full skirmish button stack clears the title.
+				Container@MENU_BUTTONS:
+					X: 36
+					Y: 260
+					Width: 204
+					Height: 48
+					Children:
+						Button@BUTTON_TEMPLATE:
+							X: 0
+							Y: 0
+							Width: 204
+							Height: 40
+							VisualHeight: 0
+							Background: menu-button
+							Font: Bold
+				# Thin rule between nav and info — reads as one module, two columns.
+				Background@COLUMN_RULE:
+					Background: menu-button
+					X: 252
+					Y: 20
+					Width: 2
+					Height: PARENT_HEIGHT - 40
+					ClickThrough: true
+				Container@PANEL_ROOT:
+					X: 268
+					Y: 24
+					Width: 748
+					Height: 552
+				Label@VERSION_LABEL:
+					Logic: VersionLabelLogic
+					X: 28
+					Y: PARENT_HEIGHT - 36
+					Width: 220
+					Height: 22
+					Align: Center
+					Font: Small
+					Shadow: true

@@ -1,0 +1,51 @@
+--- a/OpenRA.Game/Game.cs
++++ b/OpenRA.Game/Game.cs
+@@ -192,26 +192,34 @@
+ 			using (new PerfTimer("NewWorld"))
+ 				OrderManager.World = new World(mapUID, ModData, OrderManager, type);
+ 
+-			OrderManager.World.GameOver += FinishBenchmark;
++			// Local patch: pin the OrderManager/World this call created.
++			// LoadComplete below can synchronously replace Game.OrderManager via JoinInner
++			// (e.g. Game.LaunchInto opening the skirmish lobby from MainMenuLogic),
++			// so dereferencing OrderManager.World after that point can hit a null World
++			// on the freshly-joined lobby OrderManager.
++			var orderManager = OrderManager;
++			var world = OrderManager.World;
+ 
+-			worldRenderer = new WorldRenderer(ModData, OrderManager.World);
++			world.GameOver += FinishBenchmark;
++
++			worldRenderer = new WorldRenderer(ModData, world);
+ 
+ 			// Proactively collect memory during loading to reduce peak memory.
+ 			GC.Collect();
+ 
+ 			using (new PerfTimer("LoadComplete"))
+-				OrderManager.World.LoadComplete(worldRenderer);
++				world.LoadComplete(worldRenderer);
+ 
+ 			// Proactively collect memory during loading to reduce peak memory.
+ 			GC.Collect();
+ 
+-			if (OrderManager.GameStarted)
++			if (orderManager.GameStarted)
+ 				return;
+ 
+ 			Ui.MouseFocusWidget = null;
+ 			Ui.KeyboardFocusWidget = null;
+ 
+-			OrderManager.StartGame();
++			orderManager.StartGame();
+ 			worldRenderer.RefreshPalette();
+ 			Cursor.SetCursor(ChromeMetrics.Get<string>("DefaultCursor"));
+ 
+@@ -227,7 +235,7 @@
+ 
+ 			// PostLoadComplete is designed for anything that should trigger at the very end of loading.
+ 			// e.g. audio notifications that the game is starting.
+-			OrderManager.World.PostLoadComplete(worldRenderer);
++			world.PostLoadComplete(worldRenderer);
+ 
+ 			AfterGameStart();
+ 		}

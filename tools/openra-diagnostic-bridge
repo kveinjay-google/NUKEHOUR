@@ -1,0 +1,54 @@
+#!/bin/zsh
+set -eu
+
+bundle_id="com.openra.ipad.personal"
+device_id="${OPENRA_DEVICE_ID:-C5CA8947-3880-593B-84D6-B57DE642A8FD}"
+project_dir="${OPENRA_PROJECT_DIR:-$(cd "$(dirname "$0")/.." && pwd)}"
+inbox="$project_dir/.diagnostics/inbox"
+state="$project_dir/.diagnostics/imported.txt"
+watch=0
+if [[ "${1:-}" == "--watch" ]]; then watch=1; fi
+
+pull_once() {
+	local scratch
+	scratch="$(mktemp -d /private/tmp/openra-diagnostics.XXXXXX)"
+	mkdir -p "$inbox" "${state:h}"
+	xcrun devicectl device copy from --device "$device_id" \
+		--domain-type appDataContainer --domain-identifier "$bundle_id" \
+		--source Documents/OpenRA/Diagnostics/Pending --destination "$scratch" >/dev/null 2>&1 || {
+		rm -rf "$scratch"
+		return 0
+	}
+	for report in "$scratch"/**/*.oradiag(N/); do
+		local id="${report:t:r}"
+		grep -Fxq "$id" "$state" 2>/dev/null && continue
+		[[ -s "$report/summary.json" && -s "$report/timeline.txt" ]] || continue
+		cp -R "$report" "$inbox/$id"
+		{
+			echo "# OpenRA iOS diagnostic: $id"
+			echo
+			echo "- Imported: $(date -u '+%Y-%m-%d %H:%M:%S UTC')"
+			echo "- Device: paired development iPad"
+			echo "- Summary: [summary.json](summary.json)"
+			echo "- Timeline: [timeline.txt](timeline.txt)"
+		} > "$inbox/$id/summary.md"
+		echo "$id" >> "$state"
+		print "Imported $id"
+	done
+	for payload in "$scratch"/**/metrickit-*.json(N.); do
+		local id="${payload:t:r}"
+		grep -Fxq "$id" "$state" 2>/dev/null && continue
+		mkdir -p "$inbox/$id"
+		cp "$payload" "$inbox/$id/metric-kit.json"
+		echo "# OpenRA iOS MetricKit diagnostic: $id" > "$inbox/$id/summary.md"
+		echo "$id" >> "$state"
+		print "Imported $id"
+	done
+	rm -rf "$scratch"
+}
+
+if (( watch )); then
+	while true; do pull_once; sleep 20; done
+else
+	pull_once
+fi

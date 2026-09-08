@@ -1,0 +1,168 @@
+diff -ruN a/OpenRA.Game/FluentProvider.cs b/OpenRA.Game/FluentProvider.cs
+--- a/OpenRA.Game/FluentProvider.cs	2026-07-30 23:29:12
++++ b/OpenRA.Game/FluentProvider.cs	2026-07-30 23:29:12
+@@ -10,6 +10,8 @@
+ #endregion
+ 
+ using System;
++using System.Collections.Generic;
++using System.IO;
+ using System.Text;
+ using OpenRA.FileSystem;
+ 
+@@ -22,11 +24,35 @@
+ 		static FluentBundle modFluentBundle;
+ 		static FluentBundle mapFluentBundle;
+ 
++		static string[] WithLanguageOverrides(string[] paths, string language, IReadOnlyFileSystem fileSystem)
++		{
++			if (paths == null || string.IsNullOrEmpty(language) || language == "en")
++				return paths;
++
++			var combined = new List<string>(paths);
++			foreach (var path in paths)
++			{
++				var directory = Path.GetDirectoryName(path)?.Replace('\\', '/');
++				var filename = Path.GetFileName(path);
++				if (string.IsNullOrEmpty(directory) || string.IsNullOrEmpty(filename))
++					continue;
++
++				var overridePath = $"{directory}/{language}/{filename}";
++				if (fileSystem.Exists(overridePath))
++					combined.Add(overridePath);
++			}
++
++			return combined.ToArray();
++		}
++
+ 		public static void Initialize(ModData modData, IReadOnlyFileSystem fileSystem)
+ 		{
+ 			lock (SyncObject)
+ 			{
+-				modFluentBundle = new FluentBundle(modData.Manifest.FluentCulture, modData.Manifest.FluentMessages, fileSystem);
++				var language = Game.Settings?.Game?.Language;
++				var culture = string.IsNullOrEmpty(language) ? modData.Manifest.FluentCulture : language;
++				var paths = WithLanguageOverrides(modData.Manifest.FluentMessages, language, fileSystem);
++				modFluentBundle = new FluentBundle(culture, paths, fileSystem);
+ 				if (fileSystem is Map map && map.FluentMessageDefinitions != null)
+ 				{
+ 					var files = Array.Empty<string>();
+@@ -44,7 +70,7 @@
+ 						text = builder.ToString();
+ 					}
+ 
+-					mapFluentBundle = new FluentBundle(modData.Manifest.FluentCulture, files, fileSystem, text);
++					mapFluentBundle = new FluentBundle(culture, files, fileSystem, text);
+ 				}
+ 			}
+ 		}
+diff -ruN a/OpenRA.Game/Settings.cs b/OpenRA.Game/Settings.cs
+--- a/OpenRA.Game/Settings.cs	2026-07-30 23:29:12
++++ b/OpenRA.Game/Settings.cs	2026-07-30 23:29:12
+@@ -255,6 +255,13 @@
+ 	{
+ 		public string Platform = "Default";
+ 
++		[Desc("BCP 47 culture used for in-game text. Applies after restarting the game.")]
++		public string Language = "en";
++
++		[Desc("Open a specific panel instead of the main menu on startup (skirmish, multiplayer, load, settings,",
++			"replays, missions, editor, assetbrowser, credits, music, content). Cleared after use.")]
++		public string LaunchInto = "";
++
+ 		public bool ViewportEdgeScroll = true;
+ 		public int ViewportEdgeScrollMargin = 5;
+ 
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/Settings/DisplaySettingsLogic.cs b/OpenRA.Mods.Common/Widgets/Logic/Settings/DisplaySettingsLogic.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/Settings/DisplaySettingsLogic.cs	2026-07-30 23:29:12
++++ b/OpenRA.Mods.Common/Widgets/Logic/Settings/DisplaySettingsLogic.cs	2026-07-30 23:29:12
+@@ -182,6 +182,10 @@
+ 			glProfileDropdown.GetText = () => glProfileLabel.Update(ds.GLProfile);
+ 			glProfileDropdown.IsDisabled = () => disableProfile;
+ 
++			var languageDropdown = panel.Get<DropDownButtonWidget>("LANGUAGE_DROPDOWN");
++			languageDropdown.OnMouseDown = _ => ShowLanguageDropdown(languageDropdown, gs);
++			languageDropdown.GetText = () => LanguageName(gs.Language);
++
+ 			var statusBarsDropDown = panel.Get<DropDownButtonWidget>("STATUS_BAR_DROPDOWN");
+ 			statusBarsDropDown.OnMouseDown = _ => ShowStatusBarsDropdown(statusBarsDropDown, gs);
+ 			statusBarsDropDown.GetText = () => gs.StatusBars == StatusBarsType.Standard
+@@ -364,6 +368,40 @@
+ 						s.Mode = options[o];
+ 						SettingsUtils.AdjustSettingsScrollPanelLayout(scrollPanel);
+ 					});
++
++				item.Get<LabelWidget>("LABEL").GetText = () => o;
++				return item;
++			}
++
++			dropdown.ShowDropDown("LABEL_DROPDOWN_TEMPLATE", 500, options.Keys, SetupItem);
++		}
++
++		static readonly (string Culture, string NativeName)[] SupportedLanguages =
++		{
++			("en", "English"),
++			("zh-CN", "简体中文"),
++		};
++
++		static string LanguageName(string culture)
++		{
++			foreach (var (c, name) in SupportedLanguages)
++				if (c == culture)
++					return name;
++
++			return culture;
++		}
++
++		static void ShowLanguageDropdown(DropDownButtonWidget dropdown, GameSettings s)
++		{
++			var options = new Dictionary<string, string>();
++			foreach (var (culture, nativeName) in SupportedLanguages)
++				options.Add(nativeName, culture);
++
++			ScrollItemWidget SetupItem(string o, ScrollItemWidget itemTemplate)
++			{
++				var item = ScrollItemWidget.Setup(itemTemplate,
++					() => s.Language == options[o],
++					() => s.Language = options[o]);
+ 
+ 				item.Get<LabelWidget>("LABEL").GetText = () => o;
+ 				return item;
+diff -ruN a/mods/common/chrome/settings-display.yaml b/mods/common/chrome/settings-display.yaml
+--- a/mods/common/chrome/settings-display.yaml	2026-07-30 23:29:12
++++ b/mods/common/chrome/settings-display.yaml	2026-07-30 23:29:12
+@@ -289,6 +289,23 @@
+ 					Width: PARENT_WIDTH - 24
+ 					Height: 50
+ 					Children:
++						Container@LANGUAGE_DROPDOWN_CONTAINER:
++							X: 10
++							Width: PARENT_WIDTH / 2 - 20
++							Children:
++								Label@LANGUAGE_LABEL:
++									Width: PARENT_WIDTH
++									Height: 20
++									Text: label-language-dropdown-container
++								DropDownButton@LANGUAGE_DROPDOWN:
++									Y: 25
++									Width: PARENT_WIDTH
++									Height: 25
++									Font: Regular
++				Container@ROW:
++					Width: PARENT_WIDTH - 24
++					Height: 50
++					Children:
+ 						Container@FRAME_LIMIT_CHECKBOX_CONTAINER:
+ 							X: 10
+ 							Width: PARENT_WIDTH / 2 - 20
+diff -ruN a/mods/common/fluent/chrome.ftl b/mods/common/fluent/chrome.ftl
+--- a/mods/common/fluent/chrome.ftl	2026-07-30 23:29:12
++++ b/mods/common/fluent/chrome.ftl	2026-07-30 23:29:12
+@@ -496,6 +496,7 @@
+ label-video-section-header = Video
+ label-video-mode-dropdown-container = Video Mode:
+ dropdownbutton-video-mode-dropdown-container = Windowed
++label-language-dropdown-container = Language (applies after restart):
+ label-window-resolution-container-size = Window Size:
+ label-window-resolution-container-x = x
+ label-display-selection-container = Select Display:

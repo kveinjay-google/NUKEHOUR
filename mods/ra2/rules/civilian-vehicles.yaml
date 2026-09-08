@@ -1,0 +1,118 @@
+bus:
+	Inherits: ^CivVehicle
+	Tooltip:
+		Name: actor-bus-name
+	Cargo:
+		Types: Infantry
+		MaxWeight: 20
+		UnloadVoice: Move
+	WithCargoPipsDecoration:
+		Position: BottomLeft
+		RequiresSelection: true
+		PipCount: 5
+		Palette: pips
+		CustomPipSequences:
+			blue: pip-blue
+			yellow: pip-yellow
+			green: pip-green
+			red: pip-red
+
+limo:
+	Inherits: ^CivVehicle
+	Tooltip:
+		Name: actor-limo-name
+	Cargo:
+		Types: Infantry
+		MaxWeight: 20
+		UnloadVoice: Move
+	WithCargoPipsDecoration:
+		Position: BottomLeft
+		RequiresSelection: true
+		PipCount: 5
+		Palette: pips
+		CustomPipSequences:
+			blue: pip-blue
+			yellow: pip-yellow
+			green: pip-green
+			red: pip-red
+
+pick:
+	Inherits: ^CivVehicle
+	Tooltip:
+		Name: actor-pick-name
+
+car:
+	Inherits: ^CivVehicle
+	Tooltip:
+		Name: actor-car-name
+
+wini:
+	Inherits: ^CivVehicle
+	Tooltip:
+		Name: actor-wini-name
+	RenderVoxels:
+		NormalsPalette: ts-normals
+
+propa:
+	Inherits: ^CivVehicle
+	Tooltip:
+		Name: actor-propa-name
+
+cop:
+	Inherits: ^CivVehicle
+	Tooltip:
+		Name: actor-cop-name
+
+euroc:
+	Inherits: ^CivVehicle
+	Tooltip:
+		Name: actor-euroc-name
+	RenderVoxels:
+		NormalsPalette: ts-normals
+
+cona:
+	Inherits: ^CivVehicle
+	Tooltip:
+		Name: actor-cona-name
+	RenderVoxels:
+		NormalsPalette: ts-normals
+
+trucka:
+	Inherits: ^CivVehicle
+	Tooltip:
+		Name: actor-trucka-name
+
+truckb:
+	Inherits: ^CivVehicle
+	Tooltip:
+		Name: actor-truckb-name
+
+suvb:
+	Inherits: ^CivVehicle
+	Tooltip:
+		Name: actor-suvb-name
+
+suvw:
+	Inherits: ^CivVehicle
+	Tooltip:
+		Name: actor-suvw-name
+
+stang:
+	Inherits: ^CivVehicle
+	Tooltip:
+		Name: actor-stang.name
+		GenericName: actor-stang.generic-name
+	RenderVoxels:
+		NormalsPalette: ts-normals
+
+ptruck:
+	Inherits: ^CivVehicle
+	Tooltip:
+		Name: actor-ptruck-name
+
+taxi:
+	Inherits: ^CivVehicle
+	Tooltip:
+		Name: actor-taxi-name
+	RenderVoxels:
+		NormalsPalette: ts-normals

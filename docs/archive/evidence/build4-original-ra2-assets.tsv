@@ -1,0 +1,19 @@
+path	sha256	size	classification_basis	tracked	bundled_in_build4	required_to_compile	only_runtime_game_data	public_tree
+artsrc/vxl-reference/1tnk.vxl	45e3bb0e6413589f659a2b2ede8d0b658a1da3f7bff630aaa41a7f68930f0d56	12537	Westwood VXL vehicle data preserved from the loose engine-root reference set by commit 0c29059	yes	no	no	no	no
+artsrc/vxl-reference/2tnk.vxl	09c50d30a9e47498a920681cdf03d070daf0dd7fe7f8d04a634cbb95655064f0	14895	Westwood VXL vehicle data preserved from the loose engine-root reference set by commit 0c29059	yes	no	no	no	no
+artsrc/vxl-reference/3tnk.vxl	4fa0fd5435a781461d30dbeafd8b05bdb4fbd876c2d51c2c54bef0963164ad94	17639	Westwood VXL vehicle data preserved from the loose engine-root reference set by commit 0c29059	yes	no	no	no	no
+artsrc/vxl-reference/3tnktur.vxl	79430cf43177a86f8fed93d7549c901424583867e2a0924f37aa95e58d834fd7	4876	Westwood VXL turret data preserved from the loose engine-root reference set by commit 0c29059	yes	no	no	no	no
+artsrc/vxl-reference/4tnk.hva	73345b5919b4d8d01718b0adaeeee07ef55559c90cff8553638cfca66efe4a4e	88	Westwood HVA animation data preserved from the loose engine-root reference set by commit 0c29059	yes	no	no	no	no
+artsrc/vxl-reference/4tnk.vxl	19eb45b4c2dec9474c2fc88fbf4a62f38f5d01583e836a14650fbf89cf5c6107	23783	Westwood VXL vehicle data preserved from the loose engine-root reference set by commit 0c29059	yes	no	no	no	no
+artsrc/vxl-reference/4tnkbarl.vxl	cfe3f7f9cc8dca810a3dcf4e8bece0a2247af25a9074b626f8ef6d91974261e1	4007	Westwood VXL barrel data preserved from the loose engine-root reference set by commit 0c29059	yes	no	no	no	no
+artsrc/vxl-reference/4tnktur.hva	f347b1bb248ed4c290ae97b79c93ea3ea5fa225c591d9897d72275623a0f69bf	88	Westwood HVA animation data preserved from the loose engine-root reference set by commit 0c29059	yes	no	no	no	no
+artsrc/vxl-reference/4tnktur.vxl	8ddd128e21d3b693b452cf8e98c31a631932ea1f46ac8999e3d41d429c7007d1	11355	Westwood VXL turret data preserved from the loose engine-root reference set by commit 0c29059	yes	no	no	no	no
+artsrc/vxl-reference/htnk.vxl	0ca8517c29f8bed26c3a3f0138bb36bae01fbb751fc9eaa30bfa1fba352923a2	34550	Westwood VXL vehicle data preserved from the loose engine-root reference set by commit 0c29059	yes	no	no	no	no
+artsrc/vxl-reference/htnkbarl.vxl	42a3a41fdc52a5491b172bddcd8aac5b9baedec1d7703f95a68a9b96f8531398	1907	Westwood VXL barrel data preserved from the loose engine-root reference set by commit 0c29059	yes	no	no	no	no
+artsrc/vxl-reference/htnktur.vxl	4fc6ca0efb803621ae4dc99357f81eb4bc524cc70a90e386831fa0e63a416451	11694	Westwood VXL turret data preserved from the loose engine-root reference set by commit 0c29059	yes	no	no	no	no
+artsrc/vxl-reference/hwtz.vxl	cd69bc51cf7dc58ec41685c8aaccc817632de8ed29a7dfac7c6610bec4df6537	51445	Westwood VXL vehicle data; exact local RA2 map-library match	yes	no	no	no	no
+artsrc/vxl-reference/rtnk.vxl	5ffa424b33fbb14a51743c69a02d9fe0137922e19b474e32402f5aba0f00f985	53459	Westwood VXL vehicle data preserved from the loose engine-root reference set by commit 0c29059	yes	no	no	no	no
+artsrc/vxl-reference/sref.vxl	fa3e79d7e457d9368a77998f5de743e9559bbeb11b917a805aa8f4ee76cad979	50277	Westwood VXL vehicle data preserved from the loose engine-root reference set by commit 0c29059	yes	no	no	no	no
+artsrc/vxl-reference/sreftur.vxl	dbdf90aa9002796555450b6aa0ae05cb4926d83a2d6b21a4ed0cbe37e4af057b	5482	Westwood VXL turret data preserved from the loose engine-root reference set by commit 0c29059	yes	no	no	no	no
+artsrc/vxl-reference/ttnk.vxl	9ad57394e667f3d555d48ab6bc7aa537658af4aa5ad1de5729840aa0758c797d	39873	Westwood VXL vehicle data preserved from the loose engine-root reference set by commit 0c29059	yes	no	no	no	no
+artsrc/vxl-reference/ttnktur.vxl	7f5a8bd5b12e800b1edd7ce8f593e791857ffaf82341cc6e1c7c8ff93a78b4b7	14305	Westwood VXL turret data; exact local RA2 map-library match	yes	no	no	no	no

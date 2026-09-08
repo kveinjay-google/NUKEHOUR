@@ -1,0 +1,120 @@
+civ1:
+	Inherits: ^CivilianInfantry
+	Voiced:
+		VoiceSet: CivilianAlliedFemaleVoice
+
+civ2:
+	Inherits: ^CivilianInfantry
+
+civ3:
+	Inherits: ^CivilianInfantry
+
+civa:
+	Inherits: ^CivilianInfantry
+	Tooltip:
+		Name: actor-civa-name
+	Voiced:
+		VoiceSet: CivilianTexanVoice
+
+civb:
+	Inherits: ^CivilianInfantry
+	Tooltip:
+		Name: actor-civb-name
+	Voiced:
+		VoiceSet: CivilianTexanVoice
+
+civc:
+	Inherits: ^CivilianInfantry
+	Tooltip:
+		Name: actor-civc-name
+	Voiced:
+		VoiceSet: CivilianTexanVoice
+
+civbbp:
+	Inherits: ^CivilianInfantry
+	Tooltip:
+		Name: actor-civbbp-name
+
+civbfm:
+	Inherits: ^CivilianInfantry
+	Tooltip:
+		Name: actor-civbfm-name
+	-WithInfantryBody:
+	WithInfantryBody:
+		IdleSequences: idle1
+		StandSequences: stand
+
+civbf:
+	Inherits: ^CivilianInfantry
+	Voiced:
+		VoiceSet: CivilianAlliedFemaleVoice
+	Tooltip:
+		Name: actor-civbf-name
+	-WithInfantryBody:
+	WithInfantryBody:
+		IdleSequences: idle1
+		StandSequences: stand
+
+civbtm:
+	Inherits: ^CivilianInfantry
+	Tooltip:
+		Name: actor-civbtm-name
+	-WithInfantryBody:
+	WithInfantryBody:
+		IdleSequences: idle1
+		StandSequences: stand
+
+civsfm:
+	Inherits: ^CivilianInfantry
+	Tooltip:
+		Name: actor-civsfm-name
+	Voiced:
+		VoiceSet: CivilianSovietMaleVoice
+
+civsf:
+	Inherits: ^CivilianInfantry
+	Tooltip:
+		Name: actor-civsf-name
+	Voiced:
+		VoiceSet: CivilianSovietFemaleVoice
+
+civstm:
+	Inherits: ^CivilianInfantry
+	Tooltip:
+		Name: actor-civstm-name
+	Voiced:
+		VoiceSet: CivilianSovietMaleVoice
+
+vladimir:
+	Inherits: ^CivilianInfantry
+	Tooltip:
+		Name: actor-vladimir-name
+		GenericVisibility: None
+	WithInfantryBody:
+		IdleSequences: idle1, idle2
+
+pentgen:
+	Inherits: ^CivilianInfantry
+	Tooltip:
+		Name: actor-pentgen-name
+		GenericVisibility: None
+	Voiced:
+		VoiceSet: GIVoice
+
+ssrv:
+	Inherits: ^CivilianInfantry
+	Tooltip:
+		Name: actor-ssrv-name
+		GenericVisibility: None
+	Voiced:
+		VoiceSet: SecretServiceVoice
+
+pres:
+	Inherits: ^CivilianInfantry
+	Tooltip:
+		Name: actor-pres-name
+		GenericVisibility: None
+	-WithInfantryBody:
+	WithInfantryBody:
+		IdleSequences: idle1
+		StandSequences: stand

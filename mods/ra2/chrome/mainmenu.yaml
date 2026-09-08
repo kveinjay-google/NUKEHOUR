@@ -1,0 +1,217 @@
+Container@MAINMENU:
+	Logic: MainMenuLogic
+	Children:
+		LogicKeyListener@GLOBAL_KEYHANDLER:
+			Logic: MusicHotkeyLogic, ScreenshotHotkeyLogic, MuteHotkeyLogic
+				StopMusicKey: StopMusic
+				PauseMusicKey: PauseMusic
+				PrevMusicKey: PrevMusic
+				NextMusicKey: NextMusic
+				TakeScreenshotKey: TakeScreenshot
+				MuteAudioKey: ToggleMute
+		StretchBackground@MENU_BG:
+			Logic: RandomBackgroundLogic
+				Images: menu-bg-1, menu-bg-2, menu-bg-3, menu-bg-4, menu-bg-5, menu-bg-6, menu-bg-7, menu-bg-8, menu-bg-9, menu-bg-10, menu-bg-11, menu-bg-12, menu-bg-13
+			Background: menu-bg-1
+			X: 0
+			Y: 0
+			Width: WINDOW_WIDTH
+			Height: WINDOW_HEIGHT
+			ClickThrough: true
+		# Soft vignette frame — no heavy red chrome border
+		Background@BORDER:
+			Background: menu-panel
+			X: 24
+			Y: 24
+			Width: WINDOW_WIDTH - 48
+			Height: WINDOW_HEIGHT - 48
+			ClickThrough: true
+			Visible: false
+		Label@VERSION_LABEL:
+			Logic: VersionLabelLogic
+			X: WINDOW_WIDTH - 420
+			Y: WINDOW_HEIGHT - 36
+			Width: 400
+			Height: 25
+			Align: Right
+			Font: Small
+			Shadow: true
+		Container@MENUS:
+			X: 72
+			Y: 200
+			Width: 320
+			Height: 460
+			Children:
+				Background@MAIN_MENU:
+					Background: menu-panel
+					Width: PARENT_WIDTH
+					Height: 420
+					Children:
+						Button@SINGLEPLAYER_BUTTON:
+							X: 28
+							Y: 36
+							Width: 264
+							Height: 46
+							VisualHeight: 0
+							Background: menu-button
+							Text: label-singleplayer-title
+							Font: Bold
+						Button@MULTIPLAYER_BUTTON:
+							X: 28
+							Y: 92
+							Width: 264
+							Height: 46
+							VisualHeight: 0
+							Background: menu-button
+							Text: label-multiplayer-title
+							Font: Bold
+						Button@SETTINGS_BUTTON:
+							X: 28
+							Y: 148
+							Width: 264
+							Height: 46
+							VisualHeight: 0
+							Background: menu-button
+							Text: button-settings-title
+							Font: Bold
+						DropDownButton@LANGUAGE_DROPDOWN:
+							X: 28
+							Y: 204
+							Width: 264
+							Height: 46
+							VisualHeight: 0
+							Background: menu-button
+							Font: Bold
+						Button@CONTENT_BUTTON:
+							X: 28
+							Y: 260
+							Width: 264
+							Height: 46
+							VisualHeight: 0
+							Background: menu-button
+							Text: button-main-menu-content
+							Font: Bold
+						Button@QUIT_BUTTON:
+							X: 28
+							Y: 316
+							Width: 264
+							Height: 46
+							VisualHeight: 0
+							Background: menu-button
+							Text: button-quit
+							Font: Bold
+				Background@SINGLEPLAYER_MENU:
+					Background: menu-panel
+					Width: PARENT_WIDTH
+					Height: 420
+					Children:
+						Label@SINGLEPLAYER_MENU_TITLE:
+							X: 0
+							Y: 28
+							Width: PARENT_WIDTH
+							Height: 30
+							Text: label-singleplayer-title
+							Align: Center
+							Font: Bold
+							Shadow: true
+						Button@SKIRMISH_BUTTON:
+							X: 28
+							Y: 80
+							Width: 264
+							Height: 46
+							VisualHeight: 0
+							Background: menu-button
+							Text: button-singleplayer-menu-skirmish
+							Font: Bold
+						Button@MISSIONS_BUTTON:
+							X: 28
+							Y: 136
+							Width: 264
+							Height: 46
+							VisualHeight: 0
+							Background: menu-button
+							Text: label-missions-title
+							Font: Bold
+						Button@LOAD_BUTTON:
+							X: 28
+							Y: 192
+							Width: 264
+							Height: 46
+							VisualHeight: 0
+							Background: menu-button
+							Text: button-singleplayer-menu-load
+							Font: Bold
+						Button@BACK_BUTTON:
+							X: 28
+							Key: escape
+							Y: 340
+							Width: 264
+							Height: 46
+							VisualHeight: 0
+							Background: menu-button
+							Text: button-back
+							Font: Bold
+				Background@MAP_EDITOR_MENU:
+					Background: menu-panel
+					Width: PARENT_WIDTH
+					Height: 360
+					Children:
+						Label@MAP_EDITOR_MENU_TITLE:
+							X: 0
+							Y: 28
+							Width: PARENT_WIDTH
+							Height: 30
+							Text: label-map-editor-title
+							Align: Center
+							Font: Bold
+							Shadow: true
+						Button@NEW_MAP_BUTTON:
+							X: 28
+							Y: 90
+							Width: 264
+							Height: 46
+							VisualHeight: 0
+							Background: menu-button
+							Text: button-map-editor-new-map
+							Font: Bold
+						Button@LOAD_MAP_BUTTON:
+							X: 28
+							Y: 146
+							Width: 264
+							Height: 46
+							VisualHeight: 0
+							Background: menu-button
+							Text: button-map-editor-load-map
+							Font: Bold
+						Button@BACK_BUTTON:
+							X: 28
+							Key: escape
+							Y: 280
+							Width: 264
+							Height: 46
+							VisualHeight: 0
+							Background: menu-button
+							Text: button-back
+							Font: Bold
+		Container@PERFORMANCE_INFO:
+			Logic: PerfDebugLogic
+			Children:
+				Label@PERF_TEXT:
+					X: 30
+					Y: WINDOW_HEIGHT - 70
+					Width: 170
+					Height: 40
+					Contrast: true
+				Background@GRAPH_BG:
+					ClickThrough: true
+					Background: dialog4
+					X: WINDOW_WIDTH - 240
+					Y: WINDOW_HEIGHT - 240
+					Width: 210
+					Height: 210
+					Children:
+						PerfGraph@GRAPH:
+							X: 5
+							Y: 5
+							Width: 200
+							Height: 200

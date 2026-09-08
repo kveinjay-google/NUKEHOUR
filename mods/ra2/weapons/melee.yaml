@@ -1,0 +1,154 @@
+DogJaw:
+	ValidTargets: Infantry
+	ReloadDelay: 10
+	Range: 3c0
+	Report: idogatta.wav, idogatca.wav
+	TargetActorCenter: true
+	Projectile: InstantHit
+	Warhead@1Dam: TargetDamage
+		Damage: 200
+		ValidTargets: Infantry
+		Versus:
+			None: 100
+			Flak: 100
+			Plate: 100
+			Light: 0
+			Medium: 0
+			Heavy: 0
+			Wood: 0
+			Steel: 0
+			Concrete: 0
+			Drone: 0
+			Rocket: 0
+		DamageTypes: BulletDeath
+
+DroneJump:
+	ValidTargets: DroneParasiteable
+	ReloadDelay: 10
+	Range: 3c0
+	Report: vteratta.wav
+	Projectile: InstantHit
+	Warhead@1Dam: SpreadDamage
+		Spread: 64
+		Falloff: 100, 0
+		Damage: 10000
+		ValidTargets: ValidForTerrorDrone
+		Versus:
+			None: 100
+			Flak: 100
+			Plate: 100
+			Light: 0
+			Medium: 0
+			Heavy: 0
+			Wood: 0
+			Steel: 0
+			Concrete: 0
+			Drone: 0
+			Rocket: 0
+		DamageTypes: AltBulletDeath, DefaultDeath, DroneSurvive
+
+AlligatorBite:
+	ReloadDelay: 30
+	Range: 1c512
+	Report: galiatta.wav, galiattb.wav
+	ValidTargets: Ground
+	Projectile: InstantHit
+	Warhead@1Dam: SpreadDamage
+		Spread: 213
+		Damage: 30
+		DamageTypes: BulletDeath
+
+BearBite:
+	Inherits: AlligatorBite
+	Report: gbeaatta.wav, gbeaattb.wav
+
+ChimpBite:
+	Inherits: AlligatorBite
+	Report: gchiatta.wav, gchiattb.wav, gchiattc.wav
+
+SquidPunch:
+	Inherits: AlligatorBite
+	ReloadDelay: 32
+	Range: 1c856
+	Report: vsquat1a.wav
+	ValidTargets: Water, Underwater
+	Warhead@1Dam: SpreadDamage
+		Damage: 50
+		ValidTargets: Water, Underwater
+
+Punch:
+	ReloadDelay: 60
+	Range: 1c496
+	ValidTargets: Ground
+	Report: ibruatta.wav, ibruattb.wav, ibruattc.wav, ibruattd.wav, ibruatte.wav, ibruattf.wav
+	Projectile: InstantHit
+	Warhead@1Dam: SpreadDamage
+		Damage: 125
+		ValidTargets: Ground
+		Versus:
+			None: 100
+			Flak: 100
+			Plate: 80
+			Light: 0
+			Medium: 0
+			Heavy: 0
+			Wood: 25
+			Steel: 30
+			Concrete: 15
+			Drone: 200
+			Rocket: 100
+		DamageTypes: BulletDeath
+
+PunchE:
+	Inherits: Punch
+	Burst: 2
+	BurstDelays: 10
+
+Smash:
+	ReloadDelay: 60
+	Range: 1c496
+	ValidTargets: Vehicle
+	Report: ibruatta.wav, ibruattb.wav, ibruattc.wav, ibruattd.wav, ibruatte.wav, ibruattf.wav
+	Projectile: InstantHit
+	Warhead@1Dam: SpreadDamage
+		Damage: 100
+		ValidTargets: Vehicle
+		Versus:
+			None: 0
+			Flak: 0
+			Plate: 0
+			Light: 100
+			Medium: 100
+			Heavy: 75
+			Wood: 0
+			Steel: 0
+			Concrete: 0
+			Drone: 0
+			Rocket: 0
+		DamageTypes: BulletDeath
+
+SmashE:
+	Inherits: Smash
+	Warhead@1Dam: SpreadDamage
+		Damage: 150
+
+Shovel:
+	Inherits: AlligatorBite
+	ReloadDelay: 30
+	Range: 1c512
+	Report: isl1atta.wav
+	Warhead@1Dam: SpreadDamage
+		Damage: 15
+		ValidTargets: Ground
+		Versus:
+			None: 100
+			Flak: 100
+			Plate: 80
+			Light: 50
+			Medium: 10
+			Heavy: 10
+			Wood: 55
+			Steel: 10
+			Concrete: 45
+			Drone: 100
+			Rocket: 100

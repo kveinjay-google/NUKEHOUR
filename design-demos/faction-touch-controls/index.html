@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="dark">
+  <link rel="icon" href="data:,">
+  <title>三阵营触控控制皮肤预览</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-faction="allies" data-size="128" data-state="normal">
+  <header class="review-header">
+    <div class="title-block">
+      <p class="review-kicker">触控控制皮肤评审</p>
+      <h1>三阵营战斗 HUD</h1>
+    </div>
+    <nav class="faction-selector" aria-label="选择阵营或比较模式">
+      <button class="faction-button" type="button" data-faction="allies" aria-pressed="true">盟军</button>
+      <button class="faction-button" type="button" data-faction="soviet" aria-pressed="false">苏军</button>
+      <button class="faction-button" type="button" data-faction="yuri" aria-pressed="false">尤里</button>
+      <button class="faction-button compare-button" type="button" data-faction="compare" aria-pressed="false">并排比较</button>
+    </nav>
+  </header>
+  <p class="sr-only" id="joystickInstructions">使用方向键移动摇杆，按 Home 或 Escape 归中。</p>
+  <p class="sr-only" id="joystickValue">摇杆位于中心</p>
+  <p class="sr-only" id="interactionStatus" role="status" aria-live="polite" aria-atomic="true">盟军，中号，正常状态</p>
+  <main class="review-layout">
+    <section class="stage" id="stage" aria-label="交互式战斗 HUD 预览">
+      <div class="battlefield" id="battlefield">
+        <div class="control-cluster" id="controlCluster">
+          <div class="joystick" id="joystick" role="application" tabindex="0" aria-label="可拖动虚拟摇杆"
+            aria-describedby="joystickInstructions joystickValue" aria-disabled="false">
+            <span class="joystick-bearing" aria-hidden="true"></span>
+            <span class="joystick-thumb" id="joystickThumb" aria-hidden="true"></span>
+          </div>
+          <div class="action-ring" id="actionRing" role="group" aria-label="左侧战斗命令"></div>
+        </div>
+        <div class="quickbar" id="quickbar" role="toolbar" aria-label="快捷命令栏"></div>
+        <aside class="review-controls" aria-label="预览控制">
+          <div class="review-control-row size-controls" role="group" aria-label="摇杆尺寸">
+            <span class="control-label">尺寸</span>
+            <button type="button" data-size="112" aria-pressed="false">小</button>
+            <button type="button" data-size="128" aria-pressed="true">中</button>
+            <button type="button" data-size="144" aria-pressed="false">大</button>
+          </div>
+          <div class="review-control-row state-controls" role="group" aria-label="组件状态">
+            <span class="control-label">状态</span>
+            <button type="button" data-state="normal" aria-pressed="true">正常</button>
+            <button type="button" data-state="pressed" aria-pressed="false">按下</button>
+            <button type="button" data-state="active" aria-pressed="false">激活</button>
+            <button type="button" data-state="disabled" aria-pressed="false">禁用</button>
+          </div>
+          <button class="quickbar-toggle" type="button" aria-controls="quickbar" aria-expanded="true">收起快捷栏</button>
+        </aside>
+      </div>
+    </section>
+    <section class="concept-panel" id="conceptPanel" aria-labelledby="conceptTitle">
+      <div class="panel-heading">
+        <p class="panel-label">材质与造型参考</p>
+        <h2 id="conceptTitle">盟军控制套件</h2>
+      </div>
+      <figure class="concept-frame">
+        <img id="conceptImage" src="assets/allies-control-kit.png" alt="盟军触控控制套件概念板">
+      </figure>
+      <p class="concept-note">概念板定义阵营材质。战场中的命中区和几何由网页精确绘制。</p>
+    </section>
+    <section class="comparison" id="comparison" aria-label="三阵营概念板比较" hidden></section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

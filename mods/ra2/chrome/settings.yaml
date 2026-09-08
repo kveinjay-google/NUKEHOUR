@@ -1,0 +1,64 @@
+Background@SETTINGS_PANEL:
+	Logic: SettingsLogic
+		ButtonStride: 0, 44
+		Panels:
+			DISPLAY_PANEL: button-settings-tab-display
+			AUDIO_PANEL: button-settings-tab-audio
+			INPUT_PANEL: button-settings-tab-input
+			HOTKEYS_PANEL: button-settings-tab-hotkeys
+			ADVANCED_PANEL: button-settings-tab-advanced
+	Background: settings-panel
+	X: (WINDOW_WIDTH - WIDTH) / 2
+	Y: (WINDOW_HEIGHT - HEIGHT) / 2
+	Width: 1000
+	Height: 580
+	Children:
+		Label@SETTINGS_LABEL_TITLE:
+			Y: 22
+			Width: PARENT_WIDTH
+			Height: 28
+			Text: button-settings-title
+			Align: Center
+			Font: Bold
+			Shadow: true
+		Button@RESET_BUTTON:
+			X: 28
+			Y: PARENT_HEIGHT - 52
+			Width: 160
+			Height: 36
+			VisualHeight: 0
+			Background: menu-button
+			Text: button-settings-panel-reset
+			Font: Bold
+		Button@BACK_BUTTON:
+			Key: escape
+			X: PARENT_WIDTH - 188
+			Y: PARENT_HEIGHT - 52
+			Width: 160
+			Height: 36
+			VisualHeight: 0
+			Background: menu-button
+			Text: button-back
+			Font: Bold
+		Container@SETTINGS_TAB_CONTAINER:
+			X: 28
+			Y: 64
+			Width: PARENT_WIDTH
+			Height: 36
+			Children:
+				Button@BUTTON_TEMPLATE:
+					Width: 168
+					Height: 36
+					VisualHeight: 0
+					Background: menu-button
+					Font: Bold
+		Container@PANEL_CONTAINER:
+			Width: PARENT_WIDTH
+			Height: PARENT_HEIGHT
+			Children:
+				Container@PANEL_TEMPLATE:
+					X: 208
+					Y: 112
+					Width: PARENT_WIDTH - 208 - 28
+					Height: PARENT_HEIGHT - 112 - 68
+		TooltipContainer@SETTINGS_TOOLTIP_CONTAINER:

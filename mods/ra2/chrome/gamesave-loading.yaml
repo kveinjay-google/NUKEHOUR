@@ -1,0 +1,44 @@
+Container@GAMESAVE_LOADING_SCREEN:
+	Logic: GameSaveLoadingLogic
+	Width: WINDOW_WIDTH
+	Height: WINDOW_HEIGHT
+	Children:
+		LogicKeyListener@CANCEL_HANDLER:
+		StretchBackground@BACKGROUND:
+			Background: menu-bg-9
+			X: 0
+			Y: 0
+			Width: WINDOW_WIDTH
+			Height: WINDOW_HEIGHT
+			ClickThrough: true
+		Background@PANEL:
+			Background: menu-panel
+			X: (WINDOW_WIDTH - WIDTH) / 2
+			Y: (WINDOW_HEIGHT - HEIGHT) / 2
+			Width: 720
+			Height: 220
+			Children:
+				Label@TITLE:
+					X: 24
+					Y: 28
+					Width: PARENT_WIDTH - 48
+					Height: 36
+					Font: Bold
+					Align: Center
+					Shadow: true
+					TextColor: F0C040
+					Text: label-gamesave-loading-screen-title
+				ProgressBar@PROGRESS:
+					X: 48
+					Y: 96
+					Width: PARENT_WIDTH - 96
+					Height: 28
+				Label@DESC:
+					X: 24
+					Y: 140
+					Width: PARENT_WIDTH - 48
+					Height: 30
+					Font: Regular
+					Align: Center
+					Shadow: true
+					Text: label-gamesave-loading-screen-desc

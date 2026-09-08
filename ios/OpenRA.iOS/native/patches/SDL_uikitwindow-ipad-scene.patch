@@ -1,0 +1,29 @@
+--- SDL_uikitwindow.m.orig
++++ SDL_uikitwindow.m
+@@
+-        uiwindow = [[SDL_uikitwindow alloc] initWithFrame:data.uiscreen.bounds];
++        /* Attach SDL to the active iPad window scene. A detached UIWindow is
++         * treated as a resizable compatibility window on modern iPadOS. */
++        uiwindow = nil;
++#if !TARGET_OS_TV
++        if (@available(iOS 13.0, *)) {
++            for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
++                if (scene.activationState == UISceneActivationStateForegroundActive &&
++                    [scene isKindOfClass:[UIWindowScene class]]) {
++                    uiwindow = [[SDL_uikitwindow alloc] initWithWindowScene:(UIWindowScene *)scene];
++                    break;
++                }
++            }
++        }
++#endif
++        if (uiwindow == nil) {
++            uiwindow = [[SDL_uikitwindow alloc] initWithFrame:data.uiscreen.bounds];
++        }
++
++        /* UIWindowScene can be smaller than UIScreen in iPad windowing mode.
++         * Use its coordinate space so rendering and touch share one geometry. */
++        if (uiwindow.windowScene != nil) {
++            uiwindow.frame = uiwindow.windowScene.coordinateSpace.bounds;
++        } else {
++            uiwindow.frame = data.uiscreen.bounds;
++        }

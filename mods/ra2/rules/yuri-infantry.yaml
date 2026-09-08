@@ -1,0 +1,247 @@
+init:
+	Inherits@1: ^Infantry
+	Inherits@2: ^Parachutable
+	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
+	Inherits@MC: ^MindControllable
+	Buildable:
+		Queue: Infantry
+		Prerequisites: ~infantry.yuri
+		BuildPaletteOrder: 10
+		Description: actor-init.description
+	Valued:
+		Cost: 200
+	UpdatesPlayerStatistics:
+		AddToArmyValue: true
+	Tooltip:
+		Name: actor-init.name
+	Selectable:
+		Bounds: 482, 1448, 0, -530
+	Health:
+		HP: 125
+	Mobile:
+		Speed: 56
+	Garrisoner:
+		Voice: Move
+		CustomPipType: red
+		GarrisonType: Garrisoner
+	Passenger:
+		CustomPipType: red
+	RevealsShroud:
+		Range: 5c0
+	Armament:
+		Weapon: PsychicJab
+		RequiresCondition: !rank-elite
+	Armament@elite:
+		Weapon: PsychicJabE
+		RequiresCondition: rank-elite
+	Armament@opentopped:
+		Weapon: PsychicJab
+		Name: opentopped
+		RequiresCondition: !rank-elite
+	Armament@elite-opentopped:
+		Weapon: PsychicJabE
+		Name: opentopped
+		RequiresCondition: rank-elite
+	AttackFrontal:
+		Voice: Attack
+		FacingTolerance: 0
+	WithInfantryBody:
+		DefaultAttackSequence: shoot
+	RenderSprites:
+		Image: init
+	Voiced:
+		VoiceSet: InitiateVoice
+	QuantizeFacingsFromSequence:
+		Sequence: stand
+
+brute:
+	Inherits@1: ^Infantry
+	Inherits@2: ^Parachutable
+	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
+	Inherits@MC: ^MindControllable
+	Buildable:
+		Queue: Infantry
+		Prerequisites: ~infantry.yuri
+		BuildPaletteOrder: 20
+		Description: actor-brute.description
+	Valued:
+		Cost: 500
+	UpdatesPlayerStatistics:
+		AddToArmyValue: true
+	Tooltip:
+		Name: actor-brute.name
+	Selectable:
+		Bounds: 724, 1737, 0, -482
+	Health:
+		HP: 300
+	Mobile:
+		Speed: 75
+	Garrisoner:
+		Voice: Move
+		CustomPipType: red
+		GarrisonType: Garrisoner
+	Passenger:
+		CustomPipType: red
+	RevealsShroud:
+		Range: 5c0
+	Armament@primary:
+		Weapon: Punch
+		RequiresCondition: !rank-elite
+	Armament@elite:
+		Weapon: PunchE
+		RequiresCondition: rank-elite
+	Armament@second:
+		Name: secondary
+		Weapon: Smash
+		FireDelay: 4
+		RequiresCondition: !rank-elite
+	Armament@second-elite:
+		Name: secondary
+		Weapon: SmashE
+		FireDelay: 4
+		RequiresCondition: rank-elite
+	AttackFrontal:
+		Voice: Attack
+		FacingTolerance: 0
+	WithInfantryBody:
+		DefaultAttackSequence: shoot
+		AttackSequences:
+			secondary: smash
+	Voiced:
+		VoiceSet: BruteVoice
+	QuantizeFacingsFromSequence:
+		Sequence: stand
+
+virus:
+	Inherits@1: ^Infantry
+	Inherits@2: ^Parachutable
+	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
+	Inherits@MC: ^MindControllable
+	Buildable:
+		Queue: Infantry
+		Prerequisites: ~infantry.yuri, radar
+		BuildPaletteOrder: 30
+		Description: actor-virus.description
+	Valued:
+		Cost: 600
+	UpdatesPlayerStatistics:
+		AddToArmyValue: true
+	DeliversCash:
+		Payload: 300
+		PlayerExperience: 30
+		Voice: Move
+	Tooltip:
+		Name: actor-virus.name
+	Selectable:
+		Bounds: 482, 1448, 0, -530
+	Health:
+		HP: 125
+	Mobile:
+		Speed: 56
+	Garrisoner:
+		Voice: Move
+		CustomPipType: red
+		GarrisonType: Garrisoner
+	Passenger:
+		CustomPipType: red
+	RevealsShroud:
+		Range: 6c0
+	Armament:
+		Weapon: Virusgun
+		RequiresCondition: !rank-elite
+	Armament@elite:
+		Weapon: VirusgunE
+		RequiresCondition: rank-elite
+	AttackFrontal:
+		Voice: Attack
+		FacingTolerance: 0
+	WithInfantryBody:
+		DefaultAttackSequence: shoot
+	RenderSprites:
+		Image: virus
+	Voiced:
+		VoiceSet: InitiateVoice
+	QuantizeFacingsFromSequence:
+		Sequence: stand
+
+# Yuri Prime for Yuri faction (Soviet Prime remains infiltrated unlock).
+yurix:
+	Inherits: yuripr
+	Buildable:
+		Queue: Infantry
+		BuildAtProductionType: Infantry
+		BuildPaletteOrder: 40
+		Prerequisites: yatech, ~infantry.yuri
+		BuildLimit: 1
+		Description: actor-yuripr.description
+	Tooltip:
+		Name: actor-yuripr.name
+	RenderSprites:
+		Image: yurix
+
+slav:
+	Inherits: ^Infantry
+	# Never appear in the barracks queue — only spawned by the Slave Miner.
+	Valued:
+		Cost: 0
+	Tooltip:
+		Name: actor-slav.name
+	Selectable:
+		Priority: 7
+		Bounds: 482, 1448, 0, -530
+	Health:
+		HP: 100
+	Mobile:
+		Speed: 60
+	Harvester:
+		Type: SlaveUnload
+		Resources: Ore, Gems
+		BaleLoadDelay: 4
+		BaleUnloadDelay: 1
+		FullyLoadedSpeed: 100
+		SearchFromProcRadius: 24
+		SearchFromHarvesterRadius: 12
+		SearchOnCreation: true
+		HarvestVoice: Harvest
+		EmptyCondition: no-ore
+	StoresResources:
+		Capacity: 5
+		Resources: Ore, Gems
+	DockClientManager:
+		Voice: Move
+	SlaveMinerWorker:
+	RevealsShroud:
+		Range: 4c0
+	WithInfantryBody:
+		IdleSequences: idle1, idle2
+		StandSequences: stand
+		MoveSequence: run
+		DefaultAttackSequence: shoot
+		RequiresCondition: no-ore
+	WithInfantryBody@full:
+		IdleSequences: idle1, idle2
+		StandSequences: stand
+		MoveSequence: full-run
+		DefaultAttackSequence: shoot
+		RequiresCondition: !no-ore
+	Armament:
+		Weapon: Shovel
+	AttackFrontal:
+		Voice: Attack
+		FacingTolerance: 2
+	WithStoresResourcesPipsDecoration:
+		Position: BottomLeft
+		RequiresSelection: true
+		PipCount: 5
+		Palette: pips
+		ResourceSequences:
+			Ore: pip-yellow
+			Gems: pip-red
+	RenderSprites:
+		Image: slav
+	Voiced:
+		VoiceSet: SlaveVoice
+	QuantizeFacingsFromSequence:
+		Sequence: stand
+	-Passenger:
+	-TakeCover:

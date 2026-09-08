@@ -1,0 +1,928 @@
+yacnst:
+	Inherits: ^BaseBuilding
+	Inherits@shape: ^4x4Shape
+	Buildable:
+		Queue: Building
+		BuildPaletteOrder: 1000
+		Prerequisites: ~disabled
+		Description: actor-yacnst.description
+	Building:
+		Footprint: xxxx xxxx xxxx xxxx
+		Dimensions: 4,4
+	IsometricSelectable:
+		Height: 90
+	ProvidesPrerequisite@yuri:
+		Prerequisite: structures.yuri
+	Health:
+		HP: 1000
+	Armor:
+		Type: Concrete
+	RevealsShroud:
+		Range: 8c0
+	Valued:
+		Cost: 3000
+	Production:
+		Produces: Building, Support
+	Tooltip:
+		Name: actor-yacnst.name
+	BaseBuilding:
+	BaseProvider:
+		Range: 0
+	Transforms:
+		IntoActor: pcv
+		Offset: 1,1
+		Facing: 384
+		DeployCursor: undeploy
+		RequiresCondition: factundeploy && !build-incomplete
+	TransformsIntoMobile:
+		RequiresCondition: factundeploy
+		Locomotor: heavytracked
+		Voice: Move
+		RequiresForceMove: true
+	GrantConditionOnPrerequisite@GLOBALFACTUNDEPLOY:
+		Condition: factundeploy
+		Prerequisites: global-factundeploy
+	ProductionBar@Building:
+		ProductionType: Building
+	ProductionBar@Support:
+		ProductionType: Support
+	WithIdleOverlay@top:
+		Sequence: idle-top
+		RequiresCondition: !build-incomplete
+	WithIdleOverlay@normal:
+		Sequence: idle-normal
+		RequiresCondition: !build-incomplete
+	WithBuildingPlacedAnimation:
+	SpawnActorsOnSell:
+		ActorTypes: init, init, init, engineer
+	SpawnSurvivors:
+		DeathTypes: ExplosionDeath, BulletDeath
+		Actors: engineer, init, init, init
+	RenderSprites:
+		Image: yacnst
+
+yapowr:
+	Inherits: ^BaseBuilding
+	Inherits@shape: ^2x2Shape
+	Buildable:
+		Queue: Building
+		BuildPaletteOrder: 10
+		Prerequisites: ~structures.yuri
+		Description: actor-yapowr.description
+	Valued:
+		Cost: 600
+	Tooltip:
+		Name: actor-yapowr.name
+	ProvidesPrerequisite:
+		Prerequisite: power
+	Building:
+		Footprint: xx xx
+		Dimensions: 2,2
+	IsometricSelectable:
+		Height: 45
+	Health:
+		HP: 600
+	Armor:
+		Type: Wood
+	RevealsShroud:
+		Range: 4c0
+	Power:
+		Amount: 150
+		RequiresCondition: !power-outage
+	InfiltrateForPowerOutage:
+		Types: SpyInfiltrate
+		InfiltrationNotification: BuildingInfiltratedPowerSabotaged
+		InfiltratedNotification: PowerSabotaged
+	AffectedByPowerOutage:
+		Condition: power-outage
+	ScalePowerWithHealth:
+	PowerTooltip:
+	Targetable:
+		TargetTypes: Ground, C4, DetonateAttack, Structure, SpyInfiltrate
+	SpawnSurvivors:
+		DeathTypes: ExplosionDeath, BulletDeath
+		Actors: init, init
+	WithIdleOverlay@empty:
+		Sequence: empty
+		RequiresCondition: !build-incomplete
+	WithIdleOverlay@lights:
+		Sequence: idle-lights
+		RequiresCondition: !build-incomplete
+	RenderSprites:
+		Image: yapowr
+
+yabrck:
+	Inherits: ^BaseBuilding
+	Inherits@shape: ^2x3Shape
+	Buildable:
+		Queue: Building
+		BuildPaletteOrder: 20
+		Prerequisites: ~structures.yuri, power
+		Description: actor-yabrck.description
+	Valued:
+		Cost: 500
+	Tooltip:
+		Name: actor-yabrck.name
+	ProvidesPrerequisite:
+		Prerequisite: barracks
+	ProvidesPrerequisite@infantry:
+		Prerequisite: infantry.yuri
+	Building:
+		Footprint: xx xx xx
+		Dimensions: 2,3
+	IsometricSelectable:
+		Height: 45
+	Health:
+		HP: 500
+	Armor:
+		Type: Wood
+	RevealsShroud:
+		Range: 5c0
+	Exit@1:
+		SpawnOffset: 0,512,0
+		ExitCell: 1,3
+	Production:
+		Produces: Infantry
+	ProductionBar:
+		ProductionType: Infantry
+	PrimaryBuilding:
+		PrimaryCondition: primary
+		SelectionNotification: PrimaryBuildingSelected
+	WithTextDecoration@primary:
+		RequiresSelection: true
+		Text: PRIMARY
+		Color: 00FF00
+		RequiresCondition: primary
+	RallyPoint:
+		Path: 1,3
+		Palette: mouse
+		IsPlayerPalette: false
+	Power:
+		Amount: -20
+	SpawnSurvivors:
+		DeathTypes: ExplosionDeath, BulletDeath
+		Actors: init, init
+	WithIdleOverlay@lights:
+		Sequence: idle-lights
+		RequiresCondition: !build-incomplete
+	RenderSprites:
+		Image: yabrck
+
+yarefn:
+	Inherits: ^BaseBuilding
+	Inherits@shape: ^2x2Shape
+	Buildable:
+		Queue: Building
+		BuildPaletteOrder: 30
+		Prerequisites: ~structures.yuri, power
+		Description: actor-yarefn.description
+	Valued:
+		Cost: 1500
+	Tooltip:
+		Name: actor-yarefn.name
+	ProvidesPrerequisite:
+		Prerequisite: refinery
+	ProvidesPrerequisite@psirefn:
+		Prerequisite: psirefn
+	Building:
+		Footprint: x+ x+
+		Dimensions: 2,2
+	IsometricSelectable:
+		Height: 60
+	Health:
+		HP: 900
+	Armor:
+		Type: Wood
+	RevealsShroud:
+		Range: 6c0
+	Refinery:
+		ShowTicks: True
+		TickRate: 10
+		UseStorage: false
+	StoresResources:
+		Capacity: 2000
+		Resources: Ore, Gems
+	WithResourceStoragePipsDecoration:
+		Position: BottomLeft
+		RequiresSelection: true
+		PipCount: 10
+		Palette: pips
+	DockHost@SLAVE_NORTH:
+		Type: SlaveUnload
+		DockAngle: 120
+		DockOffset: 724,0,0
+		MaxQueueLength: 5
+	DockHost@SLAVE_EAST:
+		Type: SlaveUnload
+		DockAngle: 120
+		DockOffset: 0,724,0
+		MaxQueueLength: 5
+	# Spawn outside the 2x2 footprint (not on the dock '+' cell) so slaves can path to ore.
+	# Wait until construction finishes so DockHost is ready for unload.
+	FreeActor@1:
+		Actor: slav
+		SpawnOffset: 2,1
+		Facing: 640
+		RequiresCondition: !build-incomplete
+	FreeActor@2:
+		Actor: slav
+		SpawnOffset: 1,2
+		Facing: 640
+		RequiresCondition: !build-incomplete
+	FreeActor@3:
+		Actor: slav
+		SpawnOffset: 2,0
+		Facing: 640
+		RequiresCondition: !build-incomplete
+	FreeActor@4:
+		Actor: slav
+		SpawnOffset: 0,2
+		Facing: 640
+		RequiresCondition: !build-incomplete
+	FreeActor@5:
+		Actor: slav
+		SpawnOffset: 2,2
+		Facing: 640
+		RequiresCondition: !build-incomplete
+	RallyPoint:
+		Path: 2,2
+		Palette: mouse
+		IsPlayerPalette: false
+	Transforms:
+		IntoActor: smin
+		Facing: 896
+		DeployCursor: undeploy
+		RequiresCondition: !build-incomplete
+	TransformsIntoMobile:
+		RequiresCondition: !build-incomplete
+		Locomotor: tracked
+		Voice: Move
+		RequiresForceMove: true
+	MarkSlaveMinerAsDeployedOnTransform:
+	AutoDeployedSlaveMiner:
+		WorkRadius: 12
+		DepletedGracePeriod: 250
+		MaximumDeliveryWait: 750
+	Power:
+		Amount: -40
+	CustomSellValue:
+		Value: 300
+	Targetable:
+		TargetTypes: Ground, C4, DetonateAttack, Structure, SpyInfiltrate
+	SpawnSurvivors:
+		DeathTypes: ExplosionDeath, BulletDeath
+		Actors: init, init
+	WithIdleOverlay@processing:
+		Sequence: idle-processing
+		RequiresCondition: !build-incomplete
+	RenderSprites:
+		Image: yarefn
+
+yaweap:
+	Inherits: ^BaseBuilding
+	Inherits@shape: ^5x3Shape
+	Buildable:
+		Queue: Building
+		BuildPaletteOrder: 40
+		Prerequisites: ~structures.yuri, refinery
+		Description: actor-yaweap.description
+	Valued:
+		Cost: 2000
+	Tooltip:
+		Name: actor-yaweap.name
+	ProvidesPrerequisite:
+		Prerequisite: vehicles.yuri
+	ProvidesPrerequisite@default:
+	Building:
+		Footprint: xxxx= xxxx= xxxx=
+		Dimensions: 5,3
+	IsometricSelectable:
+		Height: 90
+	Health:
+		HP: 1000
+	Armor:
+		Type: Wood
+	RevealsShroud:
+		Range: 4c0
+	RallyPoint:
+		Path: 5,1
+		Palette: mouse
+		IsPlayerPalette: false
+	Exit@1:
+		SpawnOffset: -384,-384,0
+		ExitCell: 4,1
+	Production:
+		Produces: Vehicle
+	ProductionBar:
+		ProductionType: Vehicle
+	PrimaryBuilding:
+		PrimaryCondition: primary
+		SelectionNotification: PrimaryBuildingSelected
+	WithTextDecoration@primary:
+		RequiresSelection: true
+		Text: PRIMARY
+		Color: 00FF00
+		RequiresCondition: primary
+	Power:
+		Amount: -25
+	SpawnSurvivors:
+		DeathTypes: ExplosionDeath, BulletDeath
+		Actors: init, init
+	WithExitOverlay@front:
+		Sequence: build-front
+		RequiresCondition: !build-incomplete
+	WithExitOverlay@top:
+		Sequence: build-top
+		RequiresCondition: !build-incomplete
+	WithIdleOverlay@bib:
+		Sequence: bib
+		RequiresCondition: !build-incomplete
+	WithIdleOverlay@lights:
+		Sequence: idle-lights
+		RequiresCondition: !build-incomplete
+	RenderSprites:
+		Image: yaweap
+
+yadome:
+	Inherits: ^BaseBuilding
+	Inherits@shape: ^2x2Shape
+	Buildable:
+		Queue: Building
+		BuildPaletteOrder: 50
+		Prerequisites: ~structures.yuri, power, refinery
+		Description: actor-yadome.description
+	Valued:
+		Cost: 1000
+	Tooltip:
+		Name: actor-yadome.name
+	ProvidesPrerequisite:
+		Prerequisite: radar
+	Building:
+		Footprint: xx xx
+		Dimensions: 2,2
+	IsometricSelectable:
+		Height: 60
+	Health:
+		HP: 600
+	Armor:
+		Type: Wood
+	RevealsShroud:
+		Range: 10c0
+	ProvidesRadar:
+	Power:
+		Amount: -50
+	SpawnSurvivors:
+		DeathTypes: ExplosionDeath, BulletDeath
+		Actors: init, init
+	RenderSprites:
+		Image: yadome
+
+yawall:
+	Inherits: ^Wall
+	Buildable:
+		Queue: Support
+		BuildPaletteOrder: 10
+		Prerequisites: ~structures.yuri
+		Description: actor-yawall.description
+	Valued:
+		Cost: 100
+	Tooltip:
+		Name: actor-yawall.name
+	Health:
+		HP: 300
+	Armor:
+		Type: Concrete
+	RenderSprites:
+		Image: yawall
+
+yaggun:
+	Inherits: ^VoxelLighting
+	Inherits@AUTOTARGET: ^AutoTargetAll
+	Buildable:
+		Queue: Support
+		BuildPaletteOrder: 20
+		Prerequisites: ~structures.yuri, barracks
+		Description: actor-yaggun.description
+	Valued:
+		Cost: 1000
+	Tooltip:
+		Name: actor-yaggun.name
+	Building:
+		Footprint: x
+		Dimensions: 1,1
+	IsometricSelectable:
+		Height: 45
+	Health:
+		HP: 400
+	Armor:
+		Type: Steel
+	RevealsShroud:
+		Range: 6c0
+	Turreted:
+		TurnSpeed: 40
+		InitialFacing: 896
+		Offset: 480,0,0
+	AttackTurreted:
+		Voice: Attack
+		RequiresCondition: !build-incomplete
+	Armament@primary:
+		Weapon: AGGatling
+		LocalOffset: 0,0,1024
+	Armament@aa:
+		Name: secondary
+		Weapon: AAGatling
+		LocalOffset: 0,0,1024
+	BodyOrientation:
+		QuantizedFacings: 16
+	RenderVoxels:
+		Image: yaggun
+		NormalsPalette: ts-normals
+	WithVoxelTurret:
+		RequiresCondition: !build-incomplete
+	WithRangeCircle:
+		Range: 6c0
+		Type: pillbox
+	Power:
+		Amount: -50
+	RenderSprites:
+		Image: yaggun
+
+yatech:
+	Inherits: ^BaseBuilding
+	Inherits@shape: ^3x2Shape
+	Buildable:
+		Queue: Building
+		BuildPaletteOrder: 80
+		Prerequisites: yaweap, radar, ~structures.yuri
+		Description: actor-yatech.description
+	Valued:
+		Cost: 2000
+	Tooltip:
+		Name: actor-yatech.name
+	ProvidesPrerequisite@default:
+	ProvidesPrerequisite@psychiclab:
+		Prerequisite: psychic.lab
+	Building:
+		Footprint: xxx xxx
+		Dimensions: 3,2
+	IsometricSelectable:
+		Height: 90
+	Health:
+		HP: 500
+	Armor:
+		Type: Wood
+	RevealsShroud:
+		Range: 6c0
+	Power:
+		Amount: -150
+	InfiltrateForSupportPower:
+		Types: SpyInfiltrate
+		Proxy: yuri.tech.infiltrated
+		InfiltrationNotification: BuildingInfiltratedTechnologyStolen
+		InfiltratedNotification: TechnologyStolen
+	Targetable:
+		TargetTypes: Ground, C4, DetonateAttack, Structure, SpyInfiltrate
+	WithIdleOverlay@lift:
+		Sequence: idle-lift
+		RequiresCondition: !build-incomplete
+	SpawnSurvivors:
+		DeathTypes: ExplosionDeath, BulletDeath
+		Actors: init, init, init
+	RenderSprites:
+		Image: yatech
+
+yagrnd:
+	Inherits: ^BaseBuilding
+	Inherits@shape: ^3x3Shape
+	Buildable:
+		Queue: Building
+		BuildPaletteOrder: 70
+		Prerequisites: yaweap, ~structures.yuri
+		Description: actor-yagrnd.description
+	Valued:
+		Cost: 600
+	Tooltip:
+		Name: actor-yagrnd.name
+	ProvidesPrerequisite@default:
+	ProvidesPrerequisite@repairpad:
+		Prerequisite: repairpad
+	Building:
+		Footprint: xxx xxx xxx
+		Dimensions: 3,3
+	IsometricSelectable:
+		Height: 60
+	Health:
+		HP: 900
+	Armor:
+		Type: Wood
+	RevealsShroud:
+		Range: 6c0
+	AcceptsDeliveredCash:
+	WithAcceptDeliveredCashAnimation:
+		Sequence: grind
+	Power:
+		Amount: -50
+	SpawnSurvivors:
+		DeathTypes: ExplosionDeath, BulletDeath
+		Actors: init, init
+	RenderSprites:
+		Image: yagrnd
+
+yadept:
+	Inherits: ^BaseBuilding
+	Inherits@shape: ^4x3Shape
+	Buildable:
+		Queue: Building
+		BuildPaletteOrder: 75
+		Prerequisites: yaweap, ~structures.yuri
+		Description: actor-yadept.description
+	IsometricSelectable:
+		Height: 90
+	Valued:
+		Cost: 800
+	Tooltip:
+		Name: actor-yadept.name
+	ProvidesPrerequisite:
+		Prerequisite: repairpad
+	Building:
+		Footprint: x=== x=== x===
+		Dimensions: 4,3
+	Health:
+		HP: 1200
+	Armor:
+		Type: Wood
+	RevealsShroud:
+		Range: 5c0
+	Reservable:
+	RallyPoint:
+		Palette: mouse
+		IsPlayerPalette: false
+		Notification: NewRallyPointEstablished
+	CommandBarBlacklist:
+		DisableStop: false
+	RepairsUnits:
+		Interval: 148
+		HpPerStep: 20
+		RepairDamageTypes: KillTerrorDrone
+		StartRepairingNotification: Repairing
+		FinishRepairingNotification: UnitRepaired
+	WithIdleOverlay@normal:
+		Sequence: idle-normal
+		RequiresCondition: !build-incomplete
+	WithIdleOverlay@bib:
+		Sequence: bib
+		RequiresCondition: !build-incomplete
+	WithResupplyAnimation:
+		Sequence: repair
+		RequiresCondition: !build-incomplete
+	Power:
+		Amount: -25
+	SpawnSurvivors:
+		DeathTypes: ExplosionDeath, BulletDeath
+		Actors: init, init
+	RenderSprites:
+		Image: yadept
+
+yayard:
+	Inherits: ^BaseBuilding
+	Inherits@shape: ^4x4Shape
+	Valued:
+		Cost: 1000
+	Tooltip:
+		Name: actor-yayard.name
+	Buildable:
+		Queue: Building
+		BuildPaletteOrder: 55
+		Prerequisites: power, refinery, ~structures.yuri
+		Description: actor-yayard.description
+	Targetable:
+		TargetTypes: Ground, Water, C4
+	ProvidesPrerequisite@default:
+	ProvidesPrerequisite@ships:
+		Prerequisite: ships.yuri
+	Building:
+		Footprint: xxxx xxxx xxxx xxxx
+		Dimensions: 4,4
+		TerrainTypes: Water
+	IsometricSelectable:
+		Height: 120
+	-GivesBuildableArea:
+	Health:
+		HP: 1500
+	Armor:
+		Type: Concrete
+	RevealsShroud:
+		Range: 10c0
+	Exit@n2_n2:
+		ExitCell: -2,-2
+	Exit@n2_n1:
+		ExitCell: -2,-1
+	Exit@n2_0:
+		ExitCell: -2,0
+	Exit@n2_1:
+		ExitCell: -2,1
+	Exit@n2_2:
+		ExitCell: -2,2
+	Exit@n2_3:
+		ExitCell: -2,3
+	Exit@n2_4:
+		ExitCell: -2,4
+	Exit@n2_5:
+		ExitCell: -2,5
+	Exit@n1_n2:
+		ExitCell: -1,-2
+	Exit@n1_5:
+		ExitCell: -1,5
+	Exit@0_n2:
+		ExitCell: 0,-2
+	Exit@0_5:
+		ExitCell: 0,5
+	Exit@1_n2:
+		ExitCell: 1,-2
+	Exit@1_5:
+		ExitCell: 1,5
+	Exit@2_n2:
+		ExitCell: 2,-2
+	Exit@2_5:
+		ExitCell: 2,5
+	Exit@3_n2:
+		ExitCell: 3,-2
+	Exit@3_5:
+		ExitCell: 3,5
+	Exit@4_n2:
+		ExitCell: 4,-2
+	Exit@4_5:
+		SpawnOffset: 0,-113,0
+		Facing: 640
+		ExitCell: 4,5
+	Exit@5_n2:
+		ExitCell: 5,-2
+	Exit@5_n1:
+		ExitCell: 5,-1
+	Exit@5_0:
+		ExitCell: 5,0
+	Exit@5_1:
+		ExitCell: 5,1
+	Exit@5_2:
+		ExitCell: 5,2
+	Exit@5_3:
+		ExitCell: 5,3
+	Exit@5_4:
+		SpawnOffset: 0,-113,0
+		Facing: 384
+		ExitCell: 5,4
+	Exit@5_5:
+		ExitCell: 5,5
+	Production:
+		Produces: Ship
+	PrimaryBuilding:
+		PrimaryCondition: primary
+		SelectionNotification: PrimaryBuildingSelected
+	WithTextDecoration@primary:
+		RequiresSelection: true
+		Text: PRIMARY
+		Position: Top
+		RequiresCondition: primary
+	RallyPoint:
+		Path: 5,1
+		Palette: mouse
+		IsPlayerPalette: false
+		Notification: NewRallyPointEstablished
+	CommandBarBlacklist:
+		DisableStop: false
+	RepairsUnits:
+		StartRepairingNotification: Repairing
+		FinishRepairingNotification: UnitRepaired
+	ProductionBar:
+		ProductionType: Ship
+	Power:
+		Amount: -50
+	WithIdleOverlay@crane:
+		Sequence: idle-crane
+		RequiresCondition: !build-incomplete
+	WithIdleOverlay@waves:
+		Sequence: idle-waves
+		RequiresCondition: !build-incomplete
+	SpawnSurvivors:
+		DeathTypes: ExplosionDeath, BulletDeath
+		Actors: init, init
+	RenderSprites:
+		Image: yayard
+
+yapsyt:
+	Inherits: ^SupportBuilding
+	Inherits@AUTOTARGET: ^AutoTargetGround
+	Buildable:
+		Queue: Support
+		BuildPaletteOrder: 40
+		Prerequisites: radar, ~structures.yuri
+		Description: actor-yapsyt.description
+	Valued:
+		Cost: 1500
+	Tooltip:
+		Name: actor-yapsyt.name
+	Building:
+		Footprint: x
+		Dimensions: 1,1
+	IsometricSelectable:
+		Height: 60
+	Health:
+		HP: 600
+	Armor:
+		Type: Steel
+	RevealsShroud:
+		Range: 7c0
+	DetectCloaked:
+		Range: 6c0
+	RenderDetectionCircle:
+	Armament:
+		Weapon: TowerMindControl
+		LocalOffset: 0,0,960
+		MuzzleSequence: muzzle
+		PauseOnCondition: lowpower
+	AttackOmni:
+		Voice: Attack
+		RequiresCondition: !build-incomplete
+		PauseOnCondition: lowpower
+	MindController:
+		Capacity: 3
+		ControllingCondition: controlling
+		Sounds: iyurat1a.wav
+		PauseOnCondition: lowpower
+	WithMindControllerPipsDecoration:
+		Position: BottomLeft
+		Palette: pips
+	WithMindControlArc:
+		UsePlayerColor: true
+		Offset: 0,0,960
+	AutoTarget:
+	AutoTargetPriority@DEFAULT:
+		ValidTargets: MindControl
+		RequiresCondition: !controlling
+	WithIdleOverlay@top:
+		Sequence: idle-top
+		RequiresCondition: !build-incomplete && !controlling
+	WithIdleOverlay@full:
+		Sequence: idle-full
+		RequiresCondition: !build-incomplete && controlling
+	WithMuzzleOverlay:
+	Power:
+		Amount: -100
+	GrantConditionOnPowerState@LOWPOWER:
+		Condition: lowpower
+		ValidPowerStates: Low, Critical
+	RenderSprites:
+		Image: yapsyt
+
+natbnk:
+	Inherits: ^SupportBuilding
+	Inherits@shape: ^2x2Shape
+	Buildable:
+		Queue: Support
+		BuildPaletteOrder: 30
+		Prerequisites: vehicles.yuri, ~structures.yuri
+		Description: actor-natbnk.description
+	Valued:
+		Cost: 500
+	Tooltip:
+		Name: actor-natbnk.name
+	Building:
+		Footprint: xx xx
+		Dimensions: 2,2
+	IsometricSelectable:
+		Height: 45
+	Health:
+		HP: 1000
+	Armor:
+		Type: Steel
+	RevealsShroud:
+		Range: 5c0
+	Cargo:
+		Types: Vehicle
+		MaxWeight: 1
+		UnloadVoice: Move
+	WithCargoPipsDecoration:
+		Position: BottomLeft
+		RequiresSelection: true
+		Palette: pips
+	Power:
+		Amount: 0
+	RenderSprites:
+		Image: natbnk
+
+yagntc:
+	Inherits: ^BaseBuilding
+	Inherits@shape: ^3x3Shape
+	Buildable:
+		Queue: Support
+		BuildPaletteOrder: 80
+		Prerequisites: yatech, ~structures.yuri, ~techlevel.unrestricted
+		BuildLimit: 1
+		Description: actor-yagntc.description
+	Valued:
+		Cost: 2500
+	Tooltip:
+		Name: actor-yagntc.name
+	Building:
+		Footprint: xxx xxx xxx
+		Dimensions: 3,3
+	IsometricSelectable:
+		Height: 90
+	Health:
+		HP: 1000
+	Armor:
+		Type: Concrete
+	RevealsShroud:
+		Range: 4c0
+	Power:
+		Amount: -200
+	GrantConditionOnPowerState@LOWPOWER:
+		Condition: lowpower
+		ValidPowerStates: Low, Critical
+	SupportPowerChargeBar:
+	InfiltrateForSupportPowerReset:
+		Types: SpyInfiltrate
+	Targetable:
+		TargetTypes: Ground, C4, DetonateAttack, Structure, SpyInfiltrate
+	IonCannonPower@GENETIC:
+		OrderName: GeneticMutator
+		Icon: invuln
+		ChargeInterval: 6000
+		Name: actor-yagntc.power-name
+		Description: actor-yagntc.power-description
+		EndChargeSound: sgenopen.wav
+		OnFireSound: slazarus.wav
+		DisplayTimerRelationships: Ally, Neutral, Enemy
+		DisplayRadarPing: True
+		PauseOnCondition: lowpower
+		Weapon: GeneticMutator
+		Effect: explosion
+		EffectSequence: psi_wave
+		EffectPalette: effect
+		WeaponDelay: 10
+	WithSupportPowerChargedOverlay:
+	WithIdleOverlay@top:
+		Sequence: idle-top
+		RequiresCondition: !build-incomplete
+	SpawnSurvivors:
+		DeathTypes: ExplosionDeath, BulletDeath
+		Actors: init, init, init
+	RenderSprites:
+		Image: yagntc
+
+yappet:
+	Inherits: ^BaseBuilding
+	Inherits@shape: ^3x3Shape
+	Buildable:
+		Queue: Support
+		BuildPaletteOrder: 90
+		Prerequisites: yatech, ~structures.yuri, ~techlevel.unrestricted
+		BuildLimit: 1
+		Description: actor-yappet.description
+	Valued:
+		Cost: 5000
+	Tooltip:
+		Name: actor-yappet.name
+	Building:
+		Footprint: xxx xxx xxx
+		Dimensions: 3,3
+	IsometricSelectable:
+		Height: 90
+	Health:
+		HP: 1200
+	Armor:
+		Type: Concrete
+	RevealsShroud:
+		Range: 4c0
+	Power:
+		Amount: -200
+	GrantConditionOnPowerState@LOWPOWER:
+		Condition: lowpower
+		ValidPowerStates: Low, Critical
+	SupportPowerChargeBar:
+	InfiltrateForSupportPowerReset:
+		Types: SpyInfiltrate
+	Targetable:
+		TargetTypes: Ground, C4, DetonateAttack, Structure, SpyInfiltrate
+	IonCannonPower@DOMINATOR:
+		OrderName: PsychicDominator
+		Icon: abomb
+		ChargeInterval: 9000
+		Name: actor-yappet.power-name
+		Description: actor-yappet.power-description
+		EndChargeSound: spsyopen.wav
+		OnFireSound: iyurat1a.wav
+		DisplayTimerRelationships: Ally, Neutral, Enemy
+		DisplayRadarPing: True
+		PauseOnCondition: lowpower
+		Weapon: PsychicDomination
+		Effect: explosion
+		EffectSequence: psi_wave
+		EffectPalette: effect
+		WeaponDelay: 20
+	WithSupportPowerChargedOverlay:
+	SpawnSurvivors:
+		DeathTypes: ExplosionDeath, BulletDeath
+		Actors: init, init, init
+	RenderSprites:
+		Image: yappet

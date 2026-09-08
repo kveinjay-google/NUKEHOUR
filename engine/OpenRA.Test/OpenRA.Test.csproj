@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPublishable>false</IsPublishable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="../../ios/OpenRA.Platforms.iOS/IosNearbyGameService.cs"
+      Link="IosNearbyReliabilityPolicy.cs" />
+    <ProjectReference Include="..\OpenRA.Game\OpenRA.Game.csproj" />
+    <ProjectReference Include="..\OpenRA.Platforms.Default\OpenRA.Platforms.Default.csproj" />
+    <ProjectReference Include="..\OpenRA.Mods.Common\OpenRA.Mods.Common.csproj">
+      <Private>True</Private>
+    </ProjectReference>
+	<ProjectReference Include="..\..\OpenRA.Mods.RA2\OpenRA.Mods.RA2.csproj">
+	  <Private>True</Private>
+	</ProjectReference>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.10.0" />
+    <PackageReference Include="NUnit" Version="3.13.3" />
+    <PackageReference Include="NUnit.Console" Version="3.16.3" />
+    <PackageReference Include="NUnit3TestAdapter" Version="4.5.0" />
+  </ItemGroup>
+</Project>

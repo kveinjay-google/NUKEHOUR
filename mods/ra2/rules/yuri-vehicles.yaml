@@ -1,0 +1,501 @@
+pcv:
+	Inherits: ^Vehicle
+	Inherits@MC: ^MindControllable
+	Buildable:
+		Queue: Vehicle
+		BuildPaletteOrder: 80
+		Prerequisites: ~vehicles.yuri
+		Description: actor-pcv.description
+	Valued:
+		Cost: 3000
+	UpdatesPlayerStatistics:
+		AddToArmyValue: true
+	Tooltip:
+		Name: actor-pcv.name
+	Selectable:
+		Priority: 4
+		Bounds: 1544, 2509, 0, -289
+	Health:
+		HP: 1000
+	Armor:
+		Type: Heavy
+	Mobile:
+		Speed: 60
+		TurnSpeed: 20
+		Locomotor: heavytracked
+	RevealsShroud:
+		Range: 4c0
+	MustBeDestroyed:
+		RequiredForShortGame: true
+	BaseBuilding:
+	Transforms:
+		Voice: Move
+		IntoActor: yacnst
+		Offset: -1,-1
+		Facing: 384
+		TransformSounds: uplace.wav
+		NoTransformNotification: BuildingCannotPlaceAudio
+	RenderSprites:
+		Image: pcv
+	RenderVoxels:
+		Image: pcv
+	WithVoxelBody:
+	Voiced:
+		VoiceSet: SovietVehicleVoice
+	HitShape:
+
+smin:
+	Inherits: ^Vehicle
+	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
+	Buildable:
+		Queue: Vehicle
+		BuildPaletteOrder: 15
+		Prerequisites: ~vehicles.yuri, radar
+		Description: actor-smin.description
+	Valued:
+		Cost: 1500
+	UpdatesPlayerStatistics:
+		AddToArmyValue: true
+	Tooltip:
+		Name: actor-smin.name
+	Selectable:
+		Priority: 7
+		Bounds: 1544, 2509, 0, -289
+	Health:
+		HP: 900
+	Armor:
+		Type: Medium
+	Mobile:
+		Speed: 60
+		TurnSpeed: 20
+		Locomotor: tracked
+	RevealsShroud:
+		Range: 5c0
+	MustBeDestroyed:
+		RequiredForShortGame: true
+	Turreted:
+		TurnSpeed: 20
+	Armament:
+		Weapon: 20mmrapid
+		LocalOffset: 512,0,1388
+		MuzzleSequence: muzzle
+		RequiresCondition: !rank-elite
+	Armament@elite:
+		Weapon: 20mmrapidE
+		LocalOffset: 512,0,1388
+		MuzzleSequence: muzzle
+		RequiresCondition: rank-elite
+	AttackTurreted:
+		Voice: Attack
+	WithMuzzleOverlay:
+	Transforms:
+		Voice: Move
+		IntoActor: yarefn
+		Facing: 896
+		TransformSounds: uplace.wav
+		NoTransformNotification: BuildingCannotPlaceAudio
+	SuppressTargetFreeActorsOnTransform:
+	AutoSlaveMiner:
+		WorkRadius: 8
+		SearchRadius: 0
+	RenderSprites:
+		Image: smin
+	RenderVoxels:
+		Image: smin
+	WithVoxelBody:
+	WithVoxelTurret:
+	Voiced:
+		VoiceSet: SlaveMinerVoice
+	HitShape:
+
+ltnk:
+	Inherits: ^Vehicle
+	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
+	Inherits@MC: ^MindControllable
+	Buildable:
+		Queue: Vehicle
+		BuildPaletteOrder: 20
+		Prerequisites: ~vehicles.yuri
+		Description: actor-ltnk.description
+	Valued:
+		Cost: 700
+	UpdatesPlayerStatistics:
+		AddToArmyValue: true
+	Tooltip:
+		Name: actor-ltnk.name
+	Selectable:
+		Bounds: 1158, 2316, 0, -579
+	Health:
+		HP: 300
+	Armor:
+		Type: Heavy
+	Mobile:
+		Speed: 90
+		TurnSpeed: 28
+		Locomotor: tracked
+	RevealsShroud:
+		Range: 8c0
+	Turreted:
+		TurnSpeed: 32
+	Armament:
+		Weapon: ATGUN
+		LocalOffset: 800,0,832
+		MuzzleSequence: muzzle
+		RequiresCondition: !rank-elite
+	Armament@elite:
+		Weapon: ATGUNE
+		LocalOffset: 800,0,832
+		MuzzleSequence: muzzle-2
+		RequiresCondition: rank-elite
+	AttackTurreted:
+		Voice: Attack
+	WithMuzzleOverlay:
+	RenderSprites:
+		Image: ltnk
+	RenderVoxels:
+		Image: ltnk
+	WithVoxelBody:
+	WithVoxelTurret:
+	Voiced:
+		VoiceSet: LasherTankVoice
+	HitShape:
+
+ytnk:
+	Inherits: ^Vehicle
+	Inherits@AUTOTARGET: ^AutoTargetAllAssaultMove
+	Inherits@MC: ^MindControllable
+	Buildable:
+		Queue: Vehicle
+		BuildPaletteOrder: 30
+		Prerequisites: ~vehicles.yuri
+		Description: actor-ytnk.description
+	Valued:
+		Cost: 800
+	UpdatesPlayerStatistics:
+		AddToArmyValue: true
+	Tooltip:
+		Name: actor-ytnk.name
+	Selectable:
+		Bounds: 1158, 2316, 0, -579
+	Health:
+		HP: 210
+	Armor:
+		Type: Light
+	Mobile:
+		Speed: 85
+		TurnSpeed: 28
+		Locomotor: tracked
+	RevealsShroud:
+		Range: 7c0
+	Turreted:
+		TurnSpeed: 40
+	Armament@primary:
+		Weapon: AGGatling
+		LocalOffset: 544,100,1024, 544,-100,1024
+		MuzzleSequence: muzzle
+		RequiresCondition: !rank-elite
+	Armament@elite:
+		Weapon: AGGatlingE
+		LocalOffset: 544,100,1024, 544,-100,1024
+		MuzzleSequence: muzzle
+		RequiresCondition: rank-elite
+	Armament@aa:
+		Name: secondary
+		Weapon: AAGatling
+		LocalOffset: 544,100,1024, 544,-100,1024
+		MuzzleSequence: muzzle
+		RequiresCondition: !rank-elite
+	Armament@aa-elite:
+		Name: secondary
+		Weapon: AAGatlingE
+		LocalOffset: 544,100,1024, 544,-100,1024
+		MuzzleSequence: muzzle
+		RequiresCondition: rank-elite
+	AttackTurreted:
+		Voice: Attack
+	WithMuzzleOverlay:
+	RenderSprites:
+		Image: ytnk
+	RenderVoxels:
+		Image: ytnk
+	WithVoxelBody:
+	WithVoxelTurret:
+	Voiced:
+		VoiceSet: GatlingTankVoice
+	HitShape:
+
+caos:
+	Inherits: ^Vehicle
+	-FirepowerMultiplier@CHAOS:
+	-Berserkable@CHAOS:
+	-RejectsOrders@CHAOS:
+	-WithColoredOverlay@CHAOS:
+	-TimedConditionBar@CHAOS:
+	-Targetable@CHAOS:
+	-ExternalCondition@CHAOS:
+	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
+	Inherits@MC: ^MindControllable
+	Buildable:
+		Queue: Vehicle
+		BuildPaletteOrder: 40
+		Prerequisites: ~vehicles.yuri
+		Description: actor-caos.description
+	Valued:
+		Cost: 700
+	UpdatesPlayerStatistics:
+		AddToArmyValue: true
+	DeliversCash:
+		Payload: 350
+		PlayerExperience: 35
+		Voice: Move
+	Tooltip:
+		Name: actor-caos.name
+	Selectable:
+		Bounds: 1158, 1930, 0, -289
+	Health:
+		HP: 250
+	Armor:
+		Type: Light
+	Mobile:
+		Speed: 120
+		TurnSpeed: 32
+		Locomotor: tracked
+		PauseOnCondition: !undeployed || chronodisable
+	RevealsShroud:
+		Range: 6c0
+	GrantConditionOnDeploy:
+		DeployedCondition: deployed
+		UndeployedCondition: undeployed
+		CanDeployOnRamps: true
+		UndeployOnMove: true
+		Voice: Deploy
+	PeriodicExplosion:
+		Weapon: ChaosAttack
+		LocalOffset: 0,0,128
+		RequiresCondition: deployed
+	Armament:
+		Weapon: ChaosAttack
+		RequiresCondition: undeployed
+	AttackFrontal:
+		Voice: Attack
+		FacingTolerance: 0
+		RequiresCondition: undeployed
+	RenderSprites:
+		Image: caos
+	RenderVoxels:
+		Image: caos
+	WithVoxelBody:
+	Voiced:
+		VoiceSet: SlaveMinerVoice
+	HitShape:
+	Targetable@NOBERSERK:
+		TargetTypes: NoBerserkAutoTarget
+
+tele:
+	Inherits: ^Vehicle
+	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
+	Inherits@MC: ^MindControllable
+	Buildable:
+		Queue: Vehicle
+		BuildPaletteOrder: 50
+		Prerequisites: ~vehicles.yuri, radar
+		Description: actor-tele.description
+	Valued:
+		Cost: 800
+	UpdatesPlayerStatistics:
+		AddToArmyValue: true
+	DeliversCash:
+		Payload: 400
+		PlayerExperience: 40
+		Voice: Move
+	Tooltip:
+		Name: actor-tele.name
+	Selectable:
+		Bounds: 1158, 2316, 0, -579
+	Health:
+		HP: 150
+	Armor:
+		Type: Light
+	Mobile:
+		Speed: 75
+		TurnSpeed: 28
+		Locomotor: tracked
+	RevealsShroud:
+		Range: 8c0
+	Turreted:
+		TurnSpeed: 28
+	Armament@primary:
+		Weapon: MagneShake
+		LocalOffset: 0,0,1024
+		RequiresCondition: !rank-elite
+	Armament@elite:
+		Weapon: MagneShakeE
+		LocalOffset: 0,0,1024
+		RequiresCondition: rank-elite
+	Armament@lift:
+		Name: secondary
+		Weapon: MagneLift
+		LocalOffset: 0,0,1024
+	AttackTurreted:
+		Voice: Attack
+	MagneticBeam:
+		Armament: secondary
+	RenderSprites:
+		Image: tele
+	RenderVoxels:
+		Image: tele
+	WithVoxelBody:
+	WithVoxelTurret:
+	Voiced:
+		VoiceSet: SovietVehicleVoice
+	HitShape:
+
+mind:
+	Inherits: ^Vehicle
+	-FirepowerMultiplier@CHAOS:
+	-Berserkable@CHAOS:
+	-RejectsOrders@CHAOS:
+	-WithColoredOverlay@CHAOS:
+	-TimedConditionBar@CHAOS:
+	-Targetable@CHAOS:
+	-ExternalCondition@CHAOS:
+	Targetable@NOBERSERK:
+		TargetTypes: NoBerserkAutoTarget
+	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
+	Inherits@MC: ^MindControllable
+	Buildable:
+		Queue: Vehicle
+		BuildPaletteOrder: 60
+		Prerequisites: ~vehicles.yuri, yatech
+		Description: actor-mind.description
+	Valued:
+		Cost: 1750
+	UpdatesPlayerStatistics:
+		AddToArmyValue: true
+	DeliversCash:
+		Payload: 875
+		PlayerExperience: 85
+		Voice: Move
+	Tooltip:
+		Name: actor-mind.name
+	Selectable:
+		Bounds: 1544, 2509, 0, -289
+	Health:
+		HP: 500
+	Armor:
+		Type: Heavy
+	Mobile:
+		Speed: 60
+		TurnSpeed: 20
+		Locomotor: heavytracked
+	RevealsShroud:
+		Range: 9c0
+	Armament:
+		Weapon: MasterMindControl
+		LocalOffset: 0,0,960
+		MuzzleSequence: muzzle
+	AttackFrontal:
+		Voice: Attack
+		FacingTolerance: 0
+	MindController:
+		ControllingCondition: controlling
+		Sounds: iyurat1a.wav
+	WithMindControllerPipsDecoration:
+		Position: BottomLeft
+		Palette: pips
+	WithMindControlArc:
+		UsePlayerColor: true
+		Offset: 0,0,960
+	AutoTarget:
+	AutoTargetPriority@DEFAULT:
+		ValidTargets: MindControl
+		RequiresCondition: !controlling
+	WithMuzzleOverlay:
+	RenderSprites:
+		Image: mind
+	RenderVoxels:
+		Image: mind
+	WithVoxelBody:
+	Voiced:
+		VoiceSet: SovietVehicleVoice
+	HitShape:
+
+disk:
+	Inherits: ^Aircraft
+	Inherits@AUTOTARGET: ^AutoTargetAllAssaultMove
+	Inherits@MC: ^MindControllable
+	Buildable:
+		Queue: Vehicle
+		BuildPaletteOrder: 70
+		Prerequisites: ~vehicles.yuri, yatech
+		Description: actor-disk.description
+	Valued:
+		Cost: 1750
+	UpdatesPlayerStatistics:
+		AddToArmyValue: true
+	DeliversCash:
+		Payload: 875
+		PlayerExperience: 85
+		Voice: Move
+	Tooltip:
+		Name: actor-disk.name
+	Selectable:
+		Bounds: 1689, 2509, 0, -482
+	Health:
+		HP: 600
+	Armor:
+		Type: Light
+	Aircraft:
+		CruiseAltitude: 2560
+		LandableTerrainTypes: Clear, Rough, Road, DirtRoad, Ore, Gems
+		TurnSpeed: 28
+		Speed: 140
+		AltitudeVelocity: 100
+		CruisingCondition: cruising
+		IdleBehavior: Land
+		CanHover: true
+		VTOL: true
+		Crushes: crate
+	Hovers@CRUISING:
+		RequiresCondition: cruising
+		BobDistance: -45
+	RevealsShroud:
+		Range: 8c0
+		Type: CenterPosition
+	Turreted:
+		TurnSpeed: 40
+	Armament@primary:
+		Weapon: DiskLaser
+		LocalOffset: 0,0,128
+		MuzzleSequence: muzzle
+		RequiresCondition: !rank-elite
+	Armament@elite:
+		Weapon: DiskLaserE
+		LocalOffset: 0,0,128
+		MuzzleSequence: muzzle
+		RequiresCondition: rank-elite
+	Armament@aa:
+		Name: secondary
+		Weapon: DiskLaserAA
+		LocalOffset: 0,0,128
+		MuzzleSequence: muzzle
+		RequiresCondition: !rank-elite
+	Armament@aa-elite:
+		Name: secondary
+		Weapon: DiskLaserAAE
+		LocalOffset: 0,0,128
+		MuzzleSequence: muzzle
+		RequiresCondition: rank-elite
+	AttackAircraft:
+		Voice: Attack
+		AttackType: Hover
+	WithMuzzleOverlay:
+	RenderSprites:
+		Image: disk
+	RenderVoxels:
+		Image: disk
+	WithVoxelBody:
+	WithVoxelTurret:
+	Voiced:
+		VoiceSet: NighthawkVoice
+	HitShape:

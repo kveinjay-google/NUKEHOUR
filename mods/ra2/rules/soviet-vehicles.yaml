@@ -1,0 +1,588 @@
+smcv:
+	Inherits: ^Vehicle
+	Inherits@MC: ^MindControllable
+	Buildable:
+		Queue: Vehicle
+		BuildPaletteOrder: 80
+		Prerequisites: ~naweap, repairpad
+		Description: actor-smcv.description
+	Valued:
+		Cost: 3000
+	UpdatesPlayerStatistics:
+		AddToArmyValue: true
+	Tooltip:
+		Name: actor-smcv.name
+	Selectable:
+		Priority: 4
+		Bounds: 1544, 2509, 0, -289
+	Health:
+		HP: 1000
+	Armor:
+		Type: Heavy
+	Mobile:
+		Speed: 60
+		TurnSpeed: 20
+		Locomotor: heavytracked
+	RevealsShroud:
+		Range: 4c0
+	MustBeDestroyed:
+		RequiredForShortGame: true
+	BaseBuilding:
+	Transforms:
+		Voice: Move
+		IntoActor: nacnst
+		Offset: -1,-1
+		Facing: 384
+		TransformSounds: uplace.wav
+		NoTransformNotification: BuildingCannotPlaceAudio
+	RenderSprites:
+	RenderVoxels:
+	WithVoxelBody:
+	Voiced:
+		VoiceSet: SovietVehicleVoice
+	HitShape:
+
+harv:
+	Inherits: ^Vehicle
+	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
+	Buildable:
+		Queue: Vehicle
+		BuildPaletteOrder: 10
+		Prerequisites: ~naweap, refinery
+		Description: actor-harv.description
+	Valued:
+		Cost: 1400
+	UpdatesPlayerStatistics:
+		AddToArmyValue: true
+	Tooltip:
+		Name: actor-harv.name
+	Selectable:
+		Priority: 7
+		Bounds: 1544, 2509, 0, -289
+	Harvester:
+		Resources: Ore, Gems
+		BaleUnloadDelay: 1
+		SearchFromProcRadius: 24
+		SearchFromHarvesterRadius: 12
+		HarvestVoice: Move
+	Health:
+		HP: 1000
+	Armor:
+		Type: Medium
+	Targetable@RadiationImmunity:
+		TargetTypes: ImmuneToRadiation
+	Armament@primary:
+		Weapon: 20mmrapid
+		LocalOffset: 384,0,1024
+		MuzzleSequence: muzzle
+		RequiresCondition: !rank-elite
+	Armament@elite:
+		Weapon: 20mmrapidE
+		LocalOffset: 384,0,1024
+		MuzzleSequence: muzzle
+		RequiresCondition: rank-elite
+	AttackTurreted:
+		Voice: Attack
+	WithMuzzleOverlay:
+	AutoTarget:
+	Turreted:
+		TurnSpeed: 40
+		Offset: 196,0,-24
+	Mobile:
+		Speed: 60
+		TurnSpeed: 32
+		Locomotor: tracked
+	RevealsShroud:
+		Range: 4c0
+	WithHarvestOverlay:
+		LocalOffset: 121,0,0
+		Palette: effect
+	RenderSprites:
+	RenderVoxels:
+	WithVoxelTurret:
+	WithVoxelUnloadBody:
+	Voiced:
+		VoiceSet: SovietVehicleVoice
+	HitShape:
+	WithStoresResourcesPipsDecoration:
+		Position: BottomLeft
+		RequiresSelection: true
+		PipCount: 7
+		Palette: pips
+		ResourceSequences:
+			Ore: pip-yellow
+			Gems: pip-red
+	StoresResources:
+		Capacity: 40
+		Resources: Ore, Gems
+	DockClientManager:
+		Voice: Move
+
+dron:
+	Inherits: ^Vehicle
+	-FirepowerMultiplier@CHAOS:
+	-Berserkable@CHAOS:
+	-RejectsOrders@CHAOS:
+	-WithColoredOverlay@CHAOS:
+	-TimedConditionBar@CHAOS:
+	-Targetable@CHAOS:
+	-ExternalCondition@CHAOS:
+	Targetable@NOBERSERK:
+		TargetTypes: NoBerserkAutoTarget
+	Valued:
+		Cost: 500
+	UpdatesPlayerStatistics:
+		AddToArmyValue: true
+	Tooltip:
+		Name: actor-dron.name
+	Buildable:
+		Queue: Vehicle
+		BuildPaletteOrder: 40
+		Prerequisites: ~naweap
+		Description: actor-dron.description
+	Mobile:
+		Speed: 150
+		TurnSpeed: 60
+		TerrainOrientationAdjustmentMargin: -1
+	Health:
+		HP: 100
+	Armor:
+		Type: Drone
+	Targetable@RadiationImmunity:
+		TargetTypes: ImmuneToRadiation
+	RevealsShroud:
+		Range: 4c0
+	Passenger:
+		CargoType: Infantry
+		Weight: 2
+	RenderSprites:
+	-RenderVoxels:
+	WithInfantryBody:
+		StandSequences: stand
+		DefaultAttackSequence: jump
+		RequiresCondition: !jumping
+	WithFacingSpriteBody:
+		Sequence: shoot
+		RequiresCondition: jumping
+	Armament:
+		Weapon: DroneJump
+	AttackInfect:
+		Voice: Attack
+		Damage: 25
+		DamageInterval: 20
+		DamageTypes: DefaultDeath, BulletDeath, DroneSurvive
+		SurviveHostDamageTypes: DroneSurvive
+		JumpRange: 1c768
+	AutoTarget:
+		InitialStance: AttackAnything
+	AutoTargetPriority@DEFAULT:
+		ValidTargets: DroneParasiteable
+	Voiced:
+		VoiceSet: TerrorDroneVoice
+	HitShape:
+
+htk:
+	Inherits: ^Vehicle
+	Inherits@AUTOTARGET: ^AutoTargetAllAssaultMove
+	Inherits@MC: ^MindControllable
+	Valued:
+		Cost: 500
+	UpdatesPlayerStatistics:
+		AddToArmyValue: true
+	Tooltip:
+		Name: actor-htk.name
+	Selectable:
+		Bounds: 1206, 1930, 0, -289
+	Buildable:
+		Queue: Vehicle
+		BuildPaletteOrder: 30
+		Prerequisites: ~naweap
+		Description: actor-htk.description
+	Mobile:
+		Speed: 120
+		TurnSpeed: 20
+		Locomotor: tracked
+		PauseOnCondition: notmobile || chronodisable
+	Health:
+		HP: 180
+	Armor:
+		Type: Heavy
+	RevealsShroud:
+		Range: 8c0
+	Cargo:
+		Types: Infantry
+		MaxWeight: 5
+		PassengerFacing: 0
+		UnloadTerrainTypes: Clear, Rough, Rail, Road, DirtRoad, Beach, Ore, Gems
+		UnloadVoice: Move
+		LoadingCondition: notmobile
+	AttackTurreted:
+		Voice: Attack
+	AutoTarget:
+	Armament@primary:
+		Weapon: FlakTrackGun
+		LocalOffset: 256,0,1536
+		MuzzleSequence: muzzle
+	Armament@secondary:
+		Weapon: FlakTrackAAGun
+		LocalOffset: 256,0,1536
+		MuzzleSequence: muzzle
+	WithMuzzleOverlay:
+	Turreted:
+		TurnSpeed: 60
+		Offset: -280,-3,0
+	RenderSprites:
+	RenderVoxels:
+	WithVoxelTurret:
+	WithVoxelBody:
+	Voiced:
+		VoiceSet: SovietVehicleVoice
+	ProducibleWithLevel:
+		Prerequisites: warfactory.infiltrated
+	HitShape:
+	WithCargoPipsDecoration:
+		Position: BottomLeft
+		RequiresSelection: true
+		Palette: pips
+		CustomPipSequences:
+			blue: pip-blue
+			yellow: pip-yellow
+			green: pip-green
+			red: pip-red
+
+htnk:
+	Inherits: ^Vehicle
+	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
+	Inherits@MC: ^MindControllable
+	Valued:
+		Cost: 900
+	UpdatesPlayerStatistics:
+		AddToArmyValue: true
+	Tooltip:
+		Name: actor-htnk.name
+	Buildable:
+		Queue: Vehicle
+		BuildPaletteOrder: 20
+		Prerequisites: ~naweap
+		Description: actor-htnk.description
+	Mobile:
+		Speed: 90
+		TurnSpeed: 20
+		Locomotor: heavytracked
+	Health:
+		HP: 400
+	Armor:
+		Type: Heavy
+	RevealsShroud:
+		Range: 8c0
+	Turreted:
+		TurnSpeed: 20
+	Armament@primary:
+		Weapon: 120mm
+		LocalOffset: 768,0,512
+		MuzzleSequence: muzzle
+		RequiresCondition: !rank-elite
+	Armament@elite:
+		Weapon: 120mmE
+		LocalOffset: 768,0,512
+		MuzzleSequence: muzzle-2
+		RequiresCondition: rank-elite
+	AttackTurreted:
+		Voice: Attack
+	WithMuzzleOverlay:
+	AutoTarget:
+	RenderSprites:
+	Selectable:
+		Bounds: 1544, 2509, 0, -289
+	RenderVoxels:
+		NormalsPalette: ts-normals
+	WithVoxelBody:
+	WithVoxelTurret:
+	WithVoxelBarrel:
+	Voiced:
+		VoiceSet: SovietVehicleVoice
+	ProducibleWithLevel:
+		Prerequisites: warfactory.infiltrated
+	HitShape:
+
+apoc:
+	Inherits: ^Vehicle
+	Inherits@AUTOTARGET: ^AutoTargetAllAssaultMove
+	Inherits@MC: ^MindControllable
+	Valued:
+		Cost: 1750
+	UpdatesPlayerStatistics:
+		AddToArmyValue: true
+	Tooltip:
+		Name: actor-apoc.name
+	Buildable:
+		Queue: Vehicle
+		BuildPaletteOrder: 70
+		Prerequisites: ~naweap, natech
+		Description: actor-apoc.description
+	Mobile:
+		Speed: 60
+		TurnSpeed: 20
+		Locomotor: heavytracked
+	Health:
+		HP: 800
+	Armor:
+		Type: Heavy
+	RevealsShroud:
+		Range: 6c0
+	Turreted:
+		TurnSpeed: 20
+	Armament@primary:
+		Weapon: 120mmx
+		LocalOffset: 768,100,640, 768,-100,640
+		MuzzleSequence: muzzle
+		RequiresCondition: !rank-elite
+	Armament@elite:
+		Weapon: 120mmxE
+		LocalOffset: 768,100,640, 768,-100,640
+		MuzzleSequence: muzzle-2
+		RequiresCondition: rank-elite
+	Armament@antiair:
+		Weapon: MammothTusk
+		LocalOffset: 80,200,768, 80,-200,768
+	AttackTurreted:
+		Voice: Attack
+	WithMuzzleOverlay:
+	AutoTarget:
+	RenderSprites:
+	Selectable:
+		Bounds: 1544, 2509, 0, -289
+	RenderVoxels:
+		Scale: 10.5
+	WithVoxelBody:
+	WithVoxelTurret:
+	WithVoxelBarrel:
+	FireWarheadsOnDeath:
+		Weapon: ApocExplode
+		EmptyWeapon: ApocExplode
+	Voiced:
+		VoiceSet: SovietVehicleVoice
+	ProducibleWithLevel:
+		Prerequisites: warfactory.infiltrated
+	HitShape:
+
+ttnk:
+	Inherits: ^Vehicle
+	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
+	Inherits@MC: ^MindControllable
+	Valued:
+		Cost: 1200
+	UpdatesPlayerStatistics:
+		AddToArmyValue: true
+	Tooltip:
+		Name: actor-ttnk.name
+	Buildable:
+		Queue: Vehicle
+		BuildPaletteOrder: 50
+		Prerequisites: ~naweap, naradr, ~vehicles.russia
+		Description: actor-ttnk.description
+	Mobile:
+		Speed: 90
+		Locomotor: heavytracked
+	Health:
+		HP: 300
+	Armor:
+		Type: Heavy
+	RevealsShroud:
+		Range: 8c0
+	Turreted:
+		TurnSpeed: 20
+	Armament@primary:
+		Weapon: TankBolt
+		LocalOffset: 280,196,640, 280,-196,640
+		RequiresCondition: !rank-elite
+	Armament@elite:
+		Weapon: TankBoltE
+		LocalOffset: 280,196,640, 280,-196,640
+		RequiresCondition: rank-elite
+	AttackTurreted:
+		Voice: Attack
+	AutoTarget:
+	RenderSprites:
+	Selectable:
+		Bounds: 1544, 2509, 0, -289
+	RenderVoxels:
+	WithVoxelBody:
+	WithVoxelTurret:
+	Voiced:
+		VoiceSet: SovietVehicleVoice
+	ProducibleWithLevel:
+		Prerequisites: warfactory.infiltrated
+	HitShape:
+
+dtruck:
+	Inherits: ^Vehicle
+	Inherits@MC: ^MindControllable
+	Buildable:
+		Queue: Vehicle
+		BuildPaletteOrder: 60
+		Prerequisites: naradr, ~vehicles.libya
+		Description: actor-dtruck.description
+	Valued:
+		Cost: 1500
+	UpdatesPlayerStatistics:
+		AddToArmyValue: true
+	Tooltip:
+		Name: actor-dtruck.name
+	Selectable:
+		Bounds: 1544, 2509, 0, -289
+	Health:
+		HP: 150
+	Armor:
+		Type: Light
+	Mobile:
+		Speed: 75
+		TurnSpeed: 20
+		Locomotor: heavytracked
+	RevealsShroud:
+		Range: 4c0
+	FireWarheadsOnDeath:
+		Weapon: demobomb
+		EmptyWeapon: demobomb
+	AttackFrontal:
+		Voice: Attack
+		FacingTolerance: 512
+		RequiresCondition: !chronodisable
+	Armament@PRIMARY:
+		Weapon: DemoTruckTargeting
+	GrantConditionOnAttack:
+		Condition: triggered
+	GrantConditionOnDeploy:
+		DeployedCondition: triggered
+		PauseOnCondition: chronodisable
+		Voice: Attack
+	KillsSelf:
+		RequiresCondition: triggered
+	RenderSprites:
+	RenderVoxels:
+	WithVoxelBody:
+	VoiceAnnouncement:
+		Voice: Build
+	Voiced:
+		VoiceSet: DemolitionTruckVoice
+	HitShape:
+
+v3:
+	Inherits: ^Vehicle
+	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
+	Inherits@MC: ^MindControllable
+	Valued:
+		Cost: 800
+	UpdatesPlayerStatistics:
+		AddToArmyValue: true
+	Tooltip:
+		Name: actor-v3.name
+	Buildable:
+		Queue: Vehicle
+		BuildPaletteOrder: 45
+		Prerequisites: ~naweap, naradr
+		Description: actor-v3.description
+	Mobile:
+		Speed: 60
+		TurnSpeed: 32
+		Locomotor: heavytracked
+	Health:
+		HP: 150
+	Armor:
+		Type: Light
+	RevealsShroud:
+		Range: 7c0
+	Armament:
+		Weapon: V3Launcher
+	MissileSpawnerMaster:
+		Actors: v3rocket
+		RespawnTicks: 300
+		LoadedCondition: loaded
+		SpawnOffset: 0,640,300
+	WithSpawnerMasterPipsDecoration:
+		Position: BottomLeft
+		Palette: pips
+	GrantExternalConditionToSpawnedMissile:
+		Condition: rank-elite
+		RequiresCondition: rank-elite
+	AttackFrontal:
+		Voice: Attack
+		FacingTolerance: 2
+		PauseOnCondition: chronodisable
+	RenderSprites:
+		Image: v3
+	RenderVoxels:
+		# The original V3 voxel uses the Red Alert 2 normals table.
+		Image: v3
+	WithVoxelBody@FULL:
+		RequiresCondition: loaded
+	WithVoxelBody@EMPTY:
+		Sequence: empty
+		RequiresCondition: !loaded
+	Voiced:
+		VoiceSet: V3LauncherVoice
+	HitShape:
+
+v3rocket:
+	Inherits: ^ExistsInWorld
+	-GivesExperience:
+	Valued:
+		Cost: 50
+	Tooltip:
+		Name: actor-v3rocket.name
+	Health:
+		HP: 50
+	Armor:
+		Type: Rocket
+	BallisticMissile:
+		CreateAngle: 64
+		PrepareTick: 25
+		LaunchAngle: 160
+		Speed: 250
+		BeginCruiseAltitude: 3c0
+		BeginHitRange: 4c0
+		TurnSpeed: 25
+		TerminalDive: true
+		TerminalTurnSpeed: 48
+		HitAcceleration: 20
+		MaxHitSpeed: 350
+		LaunchSounds: vv3latta.wav, vv3lattb.wav
+		SoundVolume: 0.7
+		AirborneCondition: airborne
+	Targetable@GROUND:
+		TargetTypes: Ground, Vehicle
+		RequiresCondition: !airborne
+	Targetable@AIRBORNE:
+		TargetTypes: Air
+		RequiresCondition: airborne
+	HitShape:
+	BodyOrientation:
+		QuantizedFacings: 0
+	Interactable:
+	LeavesTrails:
+		Image: smokey2
+		MovingInterval: 2
+		SpawnAtLastPosition: false
+		Type: CenterPosition
+	MissileSpawnerSlave:
+	HasParent:
+	ExplodesForMaster:
+		Weapon: V3Weapon
+		EmptyWeapon: V3Weapon
+		RequiresCondition: !airborne && !rank-elite
+	ExplodesForMaster@Elite:
+		Weapon: V3WeaponE
+		EmptyWeapon: V3WeaponE
+		RequiresCondition: !airborne && rank-elite
+	ExplodesForMaster@Airborne:
+		Weapon: UnitExplode
+		EmptyWeapon: UnitExplode
+		RequiresCondition: airborne
+	ExternalCondition@RANK-ELITE:
+		Condition: rank-elite
+	RenderVoxels:
+		# The original rocket voxel uses the Red Alert 2 normals table.
+		Image: v3rocket
+	WithVoxelBody:
+	HiddenUnderFog:
+		Type: GroundPosition

@@ -1,0 +1,773 @@
+yacnst:
+	Inherits: ^Structure
+	Defaults:
+		Filename: ygcnst.shp
+		Offset: 4, -58, 58
+	idle:
+		Filename: ygcnst_c.shp
+		TilesetFilenames:
+			SNOW: yacnst_c.shp
+		Length: 1
+		ShadowStart: 2
+		Tick: 150
+	damaged-idle:
+		Filename: ygcnst_c.shp
+		TilesetFilenames:
+			SNOW: yacnst_c.shp
+		Start: 1
+		Length: 1
+		ShadowStart: 3
+		Tick: 150
+	make:
+		Filename: ygcnstmk.shp
+		TilesetFilenames:
+			SNOW: yacnstmk.shp
+		Length: 27
+		ShadowStart: 27
+	idle-top:
+		Filename: ygcnst_a.shp
+		TilesetFilenames:
+			SNOW: yacnst_a.shp
+		Length: 3
+		ShadowStart: 6
+		Tick: 200
+	damaged-idle-top:
+		Filename: ygcnst_a.shp
+		TilesetFilenames:
+			SNOW: yacnst_a.shp
+		Start: 3
+		Length: 3
+		ShadowStart: 9
+		Tick: 150
+	idle-normal:
+		Filename: ygcnst.shp
+		TilesetFilenames:
+			SNOW: yacnst.shp
+		ShadowStart: 3
+		ZOffset: -1024
+	damaged-idle-normal:
+		Filename: ygcnst.shp
+		TilesetFilenames:
+			SNOW: yacnst.shp
+		Start: 1
+		ShadowStart: 4
+		ZOffset: -1024
+	build:
+		Filename: ygcnst_b.shp
+		TilesetFilenames:
+			SNOW: yacnst_b.shp
+		Length: 18
+		Tick: 150
+		ZOffset: 1c0
+	damaged-build:
+		Filename: ygcnst_b.shp
+		TilesetFilenames:
+			SNOW: yacnst_b.shp
+		Start: 18
+		Length: 18
+		Tick: 150
+		ZOffset: 1c0
+	icon:
+		Filename: bits/cameos/yrcyicon.png
+
+yapowr:
+	Inherits: ^Structure
+	Defaults:
+		Filename: ygpowr.shp
+		Offset: 0, -30, 30
+	idle:
+		Filename: ygpowr.shp
+		TilesetFilenames:
+			SNOW: yapowr.shp
+		Length: 1
+		ShadowStart: 3
+	damaged-idle:
+		Filename: ygpowr.shp
+		TilesetFilenames:
+			SNOW: yapowr.shp
+		Start: 1
+		Length: 1
+		ShadowStart: 4
+	empty:
+		Filename: ygpowr_a.shp
+		TilesetFilenames:
+			SNOW: yapowr_a.shp
+		Length: 8
+		Tick: 150
+	damaged-empty:
+		Filename: ygpowr_a.shp
+		TilesetFilenames:
+			SNOW: yapowr_a.shp
+		Start: 8
+		Length: 8
+		Tick: 150
+	idle-lights:
+		Filename: ygpowr_c.shp
+		TilesetFilenames:
+			SNOW: yapowr_c.shp
+		Length: 5
+		Tick: 200
+	damaged-idle-lights:
+		Filename: ygpowr_c.shp
+		TilesetFilenames:
+			SNOW: yapowr_c.shp
+		Start: 5
+		Length: 2
+		Tick: 200
+	make:
+		Filename: ygpowrmk.shp
+		TilesetFilenames:
+			SNOW: yapowrmk.shp
+		Length: 23
+		ShadowStart: 23
+	icon:
+		Filename: cameomd|ypwricon.shp
+
+yabrck:
+	Inherits: ^Structure
+	Defaults:
+		Filename: ygbrck.shp
+		Offset: 15, -37, 37
+	idle:
+		Filename: ygbrck.shp
+		TilesetFilenames:
+			SNOW: yabrck.shp
+		ShadowStart: 3
+	damaged-idle:
+		Filename: ygbrck.shp
+		TilesetFilenames:
+			SNOW: yabrck.shp
+		Start: 1
+		ShadowStart: 4
+	idle-lights:
+		Filename: ygbrck_a.shp
+		TilesetFilenames:
+			SNOW: yabrck_a.shp
+		Length: 8
+		ShadowStart: 16
+		Tick: 150
+	damaged-idle-lights:
+		Filename: ygbrck_a.shp
+		TilesetFilenames:
+			SNOW: yabrck_a.shp
+		Start: 8
+		Length: 8
+		ShadowStart: 24
+		Tick: 150
+	make:
+		Filename: ygbrckmk.shp
+		TilesetFilenames:
+			SNOW: yabrckmk.shp
+		Length: 25
+		ShadowStart: 25
+	icon:
+		Filename: cameomd|brckicon.shp
+
+yarefn:
+	Inherits: ^Structure
+	Defaults:
+		Filename: ygrefn.shp
+		Offset: 0, -31, 31
+	idle:
+		Filename: ygrefn.shp
+		TilesetFilenames:
+			SNOW: yarefn.shp
+		ShadowStart: 3
+	damaged-idle:
+		Filename: ygrefn.shp
+		TilesetFilenames:
+			SNOW: yarefn.shp
+		Start: 1
+		ShadowStart: 4
+	make:
+		Filename: ygrefnmk.shp
+		TilesetFilenames:
+			SNOW: yarefnmk.shp
+		Length: 17
+		ShadowStart: 17
+	idle-processing:
+		Filename: ygrefn_a.shp
+		TilesetFilenames:
+			SNOW: yarefn_a.shp
+		Length: 2
+		ShadowStart: 2
+		Tick: 150
+	damaged-idle-processing:
+		Filename: ygrefn_a.shp
+		TilesetFilenames:
+			SNOW: yarefn_a.shp
+		Length: 2
+		ShadowStart: 2
+		Tick: 150
+	icon:
+		Filename: cameomd|sminicon.shp
+
+yaweap:
+	Inherits: ^Structure
+	Defaults:
+		Filename: ygweap.shp
+		Offset: -30, -60, 60
+	idle:
+		Filename: ygweap.shp
+		TilesetFilenames:
+			SNOW: yaweap.shp
+		ShadowStart: 3
+		ZOffset: -1536
+	damaged-idle:
+		Filename: ygweap.shp
+		TilesetFilenames:
+			SNOW: yaweap.shp
+		Start: 1
+		ShadowStart: 4
+		ZOffset: -1536
+	build-front:
+		Filename: ygweap_1.shp
+		TilesetFilenames:
+			SNOW: yaweap_1.shp
+		ShadowStart: 2
+		ZOffset: -1024
+	damaged-build-front:
+		Filename: ygweap_1.shp
+		TilesetFilenames:
+			SNOW: yaweap_1.shp
+		Start: 1
+		ShadowStart: 3
+		ZOffset: -1024
+	build-top:
+		Filename: ygweap_2.shp
+		TilesetFilenames:
+			SNOW: yaweap_2.shp
+		ShadowStart: 2
+		ZOffset: 1024
+	damaged-build-top:
+		Filename: ygweap_2.shp
+		TilesetFilenames:
+			SNOW: yaweap_2.shp
+		Start: 1
+		ShadowStart: 3
+		ZOffset: 1024
+	bib:
+		Filename: ygweapbb.shp
+		TilesetFilenames:
+			SNOW: yaweapbb.shp
+		ShadowStart: 3
+		ZOffset: -1024
+	damaged-bib:
+		Filename: ygweapbb.shp
+		TilesetFilenames:
+			SNOW: yaweapbb.shp
+		Start: 1
+		ShadowStart: 3
+		ZOffset: -1024
+	idle-lights:
+		Filename: ygweap_a.shp
+		TilesetFilenames:
+			SNOW: yaweap_a.shp
+		Length: 8
+		ShadowStart: 8
+		Tick: 150
+	make:
+		Filename: ygweapmk.shp
+		TilesetFilenames:
+			SNOW: yaweapmk.shp
+		Length: 25
+		ShadowStart: 25
+	icon:
+		Filename: cameomd|ywepicon.shp
+
+yadome:
+	Inherits: ^Structure
+	Defaults:
+		Filename: ygdome.shp
+		Offset: 0, -40, 40
+	idle:
+		Filename: ygdome.shp
+		TilesetFilenames:
+			SNOW: yadome.shp
+		ShadowStart: 3
+	damaged-idle:
+		Filename: ygdome.shp
+		TilesetFilenames:
+			SNOW: yadome.shp
+		Start: 1
+		ShadowStart: 4
+	make:
+		Filename: ygdomemk.shp
+		TilesetFilenames:
+			SNOW: yadomemk.shp
+		Length: 13
+		ShadowStart: 13
+	icon:
+		Filename: bits/cameos/ydomicon-cn.png
+
+yawall:
+	Inherits: ^Wall
+	Defaults:
+		TilesetFilenames:
+			TEMPERATE: ygwall.shp
+			SNOW: yawall.shp
+			URBAN: ygwall.shp
+	icon:
+		Filename: cameomd|citwicon.shp
+		TilesetFilenames:
+
+yaggun:
+	Inherits: ^Structure
+	Defaults:
+		Filename: ygggun.shp
+		TilesetFilenames:
+			SNOW: yaggun.shp
+		Offset: 0, -20, 20
+	idle:
+		Filename: ygggun.shp
+		TilesetFilenames:
+			SNOW: yaggun.shp
+		ShadowStart: 3
+	damaged-idle:
+		Filename: ygggun.shp
+		TilesetFilenames:
+			SNOW: yaggun.shp
+		Start: 1
+		ShadowStart: 4
+	make:
+		Filename: ygggunmk.shp
+		TilesetFilenames:
+			SNOW: yaggunmk.shp
+		Length: 13
+		ShadowStart: 13
+	icon:
+		Filename: bits/cameos/ggunicon.shp
+
+yatech:
+	Inherits: ^Structure
+	Defaults:
+		Filename: ygtech.shp
+		Offset: -15, -38, 38
+	idle:
+		Filename: ygtech.shp
+		TilesetFilenames:
+			SNOW: yatech.shp
+		ShadowStart: 3
+	damaged-idle:
+		Filename: ygtech.shp
+		TilesetFilenames:
+			SNOW: yatech.shp
+		Start: 1
+		ShadowStart: 4
+	idle-lift:
+		Filename: ygtech_a.shp
+		TilesetFilenames:
+			SNOW: yatech_a.shp
+		Length: 32
+		ShadowStart: 64
+		Tick: 80
+	damaged-idle-lift:
+		Filename: ygtech_a.shp
+		TilesetFilenames:
+			SNOW: yatech_a.shp
+		Start: 32
+		Length: 32
+		ShadowStart: 96
+		Tick: 80
+	make:
+		Filename: ygtechmk.shp
+		TilesetFilenames:
+			SNOW: yatechmk.shp
+		Length: 25
+		ShadowStart: 25
+	icon:
+		Filename: cameomd|ytchicon.shp
+
+yagrnd:
+	Inherits: ^Structure
+	Defaults:
+		Filename: yggrnd.shp
+		Offset: 0, -45, 45
+	idle:
+		Filename: yggrnd.shp
+		TilesetFilenames:
+			SNOW: yagrnd.shp
+		ShadowStart: 3
+	damaged-idle:
+		Filename: yggrnd.shp
+		TilesetFilenames:
+			SNOW: yagrnd.shp
+		Start: 1
+		ShadowStart: 4
+	grind:
+		Filename: yggrnd_b.shp
+		TilesetFilenames:
+			SNOW: yagrnd_b.shp
+		Length: 48
+		ShadowStart: 96
+	damaged-grind:
+		Filename: yggrnd_b.shp
+		TilesetFilenames:
+			SNOW: yagrnd_b.shp
+		Start: 48
+		Length: 48
+		ShadowStart: 144
+	make:
+		Filename: yggrndmk.shp
+		TilesetFilenames:
+			SNOW: yagrndmk.shp
+		Length: 30
+		ShadowStart: 30
+	icon:
+		Filename: cameomd|grndicon.shp
+
+yadept:
+	Inherits: ^Structure
+	Defaults:
+		Filename: bits/structures/ygdept_b.shp
+		Offset: -15, -53, 53
+	idle:
+		Filename: bits/structures/ygdept_b.shp
+		TilesetFilenames:
+			SNOW: bits/structures/yadept_b.shp
+		ShadowStart: 3
+	damaged-idle:
+		Filename: bits/structures/ygdept_b.shp
+		TilesetFilenames:
+			SNOW: bits/structures/yadept_b.shp
+		Start: 2
+		ShadowStart: 4
+	idle-normal:
+		Filename: bits/structures/ygdept.shp
+		TilesetFilenames:
+			SNOW: bits/structures/yadept.shp
+		ShadowStart: 3
+	damaged-idle-normal:
+		Filename: bits/structures/ygdept.shp
+		TilesetFilenames:
+			SNOW: bits/structures/yadept.shp
+		Start: 2
+		ShadowStart: 4
+	bib:
+		Filename: bits/structures/ygdeptbb.shp
+		TilesetFilenames:
+			SNOW: bits/structures/yadeptbb.shp
+		ShadowStart: 2
+		ZOffset: -512
+	damaged-bib:
+		Filename: bits/structures/ygdeptbb.shp
+		TilesetFilenames:
+			SNOW: bits/structures/yadeptbb.shp
+		Start: 1
+		ShadowStart: 3
+	repair:
+		Filename: bits/structures/ygdept_c.shp
+		TilesetFilenames:
+			SNOW: bits/structures/yadept_c.shp
+		Length: 23
+		ShadowStart: 46
+		Tick: 120
+	damaged-repair:
+		Filename: bits/structures/ygdept_c.shp
+		TilesetFilenames:
+			SNOW: bits/structures/yadept_c.shp
+		Start: 23
+		Length: 23
+		ShadowStart: 69
+		Tick: 120
+	make:
+		Filename: bits/structures/ygdeptmk.shp
+		TilesetFilenames:
+			SNOW: bits/structures/yadeptmk.shp
+		Length: 24
+		ShadowStart: 24
+	icon:
+		Filename: bits/cameos/yfixicon-cn.png
+
+yayard:
+	Inherits: ^Structure
+	Defaults:
+		Filename: ygyard.shp
+		Offset: 0, -60, 60
+	idle:
+		Filename: ygyard.shp
+		TilesetFilenames:
+			SNOW: yayard.shp
+		ShadowStart: 3
+	damaged-idle:
+		Filename: ygyard.shp
+		TilesetFilenames:
+			SNOW: yayard.shp
+		Start: 2
+		ShadowStart: 4
+	idle-crane:
+		Filename: ygyard_a.shp
+		TilesetFilenames:
+			SNOW: yayard_a.shp
+		Length: 15
+		ShadowStart: 32
+		Tick: 200
+	damaged-idle-crane:
+		Filename: ygyard_a.shp
+		TilesetFilenames:
+			SNOW: yayard_a.shp
+		Start: 16
+		Length: 15
+		ShadowStart: 48
+		Tick: 200
+	idle-waves:
+		Filename: ygyard_c.shp
+		TilesetFilenames:
+			SNOW: yayard_c.shp
+		Length: 15
+		ShadowStart: 30
+		Tick: 200
+	damaged-idle-waves:
+		Filename: ygyard_c.shp
+		TilesetFilenames:
+			SNOW: yayard_c.shp
+		Start: 16
+		Length: 15
+		ShadowStart: 32
+		Tick: 200
+	make:
+		Filename: ygyardmk.shp
+		TilesetFilenames:
+			SNOW: yayardmk.shp
+		Length: 25
+		ShadowStart: 25
+	icon:
+		Filename: cameomd|yyrdicon.shp
+
+yapsyt:
+	Inherits: ^Structure
+	Defaults:
+		Filename: ygpsyt.shp
+		Offset: 0, -15, 15
+	idle:
+		Filename: ygpsyt.shp
+		TilesetFilenames:
+			SNOW: yapsyt.shp
+		Length: 1
+		ShadowStart: 3
+	damaged-idle:
+		Filename: ygpsyt.shp
+		TilesetFilenames:
+			SNOW: yapsyt.shp
+		Start: 1
+		Length: 1
+		ShadowStart: 4
+	idle-top:
+		Filename: ygpsyt_a.shp
+		Length: 26
+		ShadowStart: 52
+	damaged-idle-top:
+		Filename: ygpsyt_a.shp
+		Start: 26
+		Length: 26
+		ShadowStart: 78
+	idle-full:
+		Filename: ygpsyt_b.shp
+		Length: 26
+		ShadowStart: 52
+	damaged-idle-full:
+		Filename: ygpsyt_b.shp
+		Start: 26
+		Length: 26
+		ShadowStart: 78
+	muzzle:
+		Filename: yuricntl.shp
+		Length: *
+	make:
+		Filename: ygpsytmk.shp
+		TilesetFilenames:
+			SNOW: yapsytmk.shp
+		Length: 31
+		ShadowStart: 31
+	icon:
+		Filename: cameomd|psyticon.shp
+
+natbnk:
+	Inherits: ^Structure
+	Defaults:
+		Filename: ngtbnkbb.shp
+		Offset: 0, -30, 30
+	idle:
+		Filename: ngtbnkbb.shp
+		TilesetFilenames:
+			SNOW: natbnkbb.shp
+		Length: 1
+		ShadowStart: 3
+	damaged-idle:
+		Filename: ngtbnkbb.shp
+		TilesetFilenames:
+			SNOW: natbnkbb.shp
+		Start: 1
+		Length: 1
+		ShadowStart: 4
+	make:
+		Filename: ngtbnkmk.shp
+		TilesetFilenames:
+			SNOW: natbnkmk.shp
+		Length: 10
+		ShadowStart: 10
+	icon:
+		Filename: cameomd|tbnkicon.shp
+
+yagntc:
+	Inherits: ^Structure
+	Defaults:
+		Filename: yggntc.shp
+		Offset: 0, -45, 45
+	idle:
+		Filename: yggntc.shp
+		TilesetFilenames:
+			SNOW: yagntc.shp
+		Length: 1
+		ShadowStart: 3
+		Tick: 150
+	damaged-idle:
+		Filename: yggntc.shp
+		TilesetFilenames:
+			SNOW: yagntc.shp
+		Start: 1
+		Length: 1
+		ShadowStart: 4
+		Tick: 150
+	idle-top:
+		Filename: yggntc_e.shp
+		TilesetFilenames:
+			SNOW: yagntc_e.shp
+		Length: 1
+		ShadowStart: 2
+		Tick: 150
+	damaged-idle-top:
+		Filename: yggntc_e.shp
+		TilesetFilenames:
+			SNOW: yagntc_e.shp
+		Start: 1
+		Length: 1
+		ShadowStart: 3
+		Tick: 150
+	make:
+		Filename: yggntcmk.shp
+		TilesetFilenames:
+			SNOW: yagntcmk.shp
+		Length: 26
+		ShadowStart: 26
+	charged:
+		Filename: yggntc_f.shp
+		TilesetFilenames:
+			SNOW: yagntc_f.shp
+		Length: 15
+		ShadowStart: 62
+		Tick: 50
+	damaged-charged:
+		Filename: yggntc_f.shp
+		TilesetFilenames:
+			SNOW: yagntc_f.shp
+		Start: 31
+		Length: 15
+		ShadowStart: 93
+		Tick: 50
+	loop:
+		Filename: yggntc_f.shp
+		TilesetFilenames:
+			SNOW: yagntc_f.shp
+		Start: 15
+		Length: 15
+		ShadowStart: 78
+		Tick: 50
+	damaged-loop:
+		Filename: yggntc_f.shp
+		TilesetFilenames:
+			SNOW: yagntc_f.shp
+		Start: 46
+		Length: 15
+		ShadowStart: 109
+		Tick: 50
+	end:
+		Filename: yggntc_f.shp
+		TilesetFilenames:
+			SNOW: yagntc_f.shp
+		Start: 15
+		Length: 1
+		ShadowStart: 78
+	damaged-end:
+		Filename: yggntc_f.shp
+		TilesetFilenames:
+			SNOW: yagntc_f.shp
+		Start: 46
+		Length: 1
+		ShadowStart: 109
+	icon:
+		Filename: bits/cameos/gtncicon.shp
+
+yappet:
+	Inherits: ^Structure
+	Defaults:
+		Filename: ygppet_e.shp
+		Offset: 0, -45, 45
+	idle:
+		Filename: ygppet_e.shp
+		TilesetFilenames:
+			SNOW: yappet_e.shp
+		Length: 1
+		ShadowStart: 2
+		Tick: 150
+	damaged-idle:
+		Filename: ygppet_e.shp
+		TilesetFilenames:
+			SNOW: yappet_e.shp
+		Start: 1
+		Length: 1
+		ShadowStart: 3
+		Tick: 150
+	make:
+		Filename: ygppetmk.shp
+		TilesetFilenames:
+			SNOW: yappetmk.shp
+		Length: 24
+		ShadowStart: 24
+	charged:
+		Filename: ygppet_f.shp
+		TilesetFilenames:
+			SNOW: yappet_f.shp
+		Length: 19
+		ShadowStart: 38
+		Tick: 150
+	damaged-charged:
+		Filename: ygppet_f.shp
+		TilesetFilenames:
+			SNOW: yappet_f.shp
+		Start: 19
+		Length: 19
+		ShadowStart: 57
+		Tick: 150
+	loop:
+		Filename: ygppet_g.shp
+		TilesetFilenames:
+			SNOW: yappet_g.shp
+		Length: 8
+		ShadowStart: 16
+		Tick: 150
+	damaged-loop:
+		Filename: ygppet_g.shp
+		TilesetFilenames:
+			SNOW: yappet_g.shp
+		Start: 8
+		Length: 8
+		ShadowStart: 24
+		Tick: 150
+	end:
+		Filename: ygppet_h.shp
+		TilesetFilenames:
+			SNOW: yappet_h.shp
+		Length: 19
+		ShadowStart: 38
+		Tick: 150
+	damaged-end:
+		Filename: ygppet_h.shp
+		TilesetFilenames:
+			SNOW: yappet_h.shp
+		Start: 19
+		Length: 19
+		ShadowStart: 57
+		Tick: 150
+	icon:
+		Filename: cameomd|pupticon.shp

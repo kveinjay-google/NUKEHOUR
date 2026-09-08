@@ -1,0 +1,10 @@
+#!/bin/sh
+set -eu
+
+if [ "${1:-}" = "-C" ] && [ "${3:-}" = "rev-parse" ] && [ "${4:-}" = "HEAD" ]; then
+	printf '%s\n' '8db6419f0b94b5341d3c21fe610595f923c2af76'
+	exit 0
+fi
+
+printf 'unexpected fake git invocation: %s\n' "$*" >&2
+exit 64

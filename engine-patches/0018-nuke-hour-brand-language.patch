@@ -1,0 +1,1841 @@
+diff -ruN a/OpenRA.Game/FluentProvider.cs b/OpenRA.Game/FluentProvider.cs
+--- a/OpenRA.Game/FluentProvider.cs	2026-08-28 11:08:58
++++ b/OpenRA.Game/FluentProvider.cs	2026-08-28 11:08:58
+@@ -21,9 +21,20 @@
+ 	{
+ 		// Ensure thread-safety.
+ 		static readonly object SyncObject = new();
++		static readonly object InitializeSyncObject = new();
+ 		static FluentBundle modFluentBundle;
+ 		static FluentBundle mapFluentBundle;
++		static string currentLanguage = LanguageSelectionPolicy.English;
+ 
++		public static string CurrentLanguage
++		{
++			get
++			{
++				lock (SyncObject)
++					return currentLanguage;
++			}
++		}
++
+ 		static string[] WithLanguageOverrides(string[] paths, string language, IReadOnlyFileSystem fileSystem)
+ 		{
+ 			if (paths == null || string.IsNullOrEmpty(language) || language == "en")
+@@ -47,12 +58,15 @@
+ 
+ 		public static void Initialize(ModData modData, IReadOnlyFileSystem fileSystem)
+ 		{
+-			lock (SyncObject)
++			lock (InitializeSyncObject)
+ 			{
+-				var language = Game.Settings?.Game?.Language;
+-				var culture = string.IsNullOrEmpty(language) ? modData.Manifest.FluentCulture : language;
+-				var paths = WithLanguageOverrides(modData.Manifest.FluentMessages, language, fileSystem);
+-				modFluentBundle = new FluentBundle(culture, paths, fileSystem);
++				var resolvedLanguage = LanguageSelectionPolicy.Resolve(
++					Game.Settings?.Game?.Language,
++					Game.Settings?.SystemLanguageTag);
++				var culture = resolvedLanguage;
++				var paths = WithLanguageOverrides(modData.Manifest.FluentMessages, resolvedLanguage, fileSystem);
++				var nextModFluentBundle = new FluentBundle(culture, paths, fileSystem);
++				FluentBundle nextMapFluentBundle = null;
+ 				if (fileSystem is Map map && map.FluentMessageDefinitions != null)
+ 				{
+ 					var files = Array.Empty<string>();
+@@ -70,7 +84,14 @@
+ 						text = builder.ToString();
+ 					}
+ 
+-					mapFluentBundle = new FluentBundle(culture, files, fileSystem, text);
++					nextMapFluentBundle = new FluentBundle(culture, files, fileSystem, text);
++				}
++
++				lock (SyncObject)
++				{
++					modFluentBundle = nextModFluentBundle;
++					mapFluentBundle = nextMapFluentBundle;
++					currentLanguage = resolvedLanguage;
+ 				}
+ 			}
+ 		}
+diff -ruN a/OpenRA.Game/LanguageSelectionPolicy.cs b/OpenRA.Game/LanguageSelectionPolicy.cs
+--- a/OpenRA.Game/LanguageSelectionPolicy.cs	1969-12-31 16:00:00
++++ b/OpenRA.Game/LanguageSelectionPolicy.cs	2026-08-28 11:08:58
+@@ -0,0 +1,117 @@
++#region Copyright & License Information
++/*
++ * Copyright (c) The OpenRA Developers and Contributors
++ * This file is part of OpenRA, which is free software. It is
++ * made available under the terms of the GNU General Public License
++ * as published by the Free Software Foundation, either version 3 of
++ * the License, or (at your option) any later version.
++ */
++#endregion
++
++using System;
++using System.Collections.Generic;
++
++namespace OpenRA
++{
++	public static class LanguageSelectionPolicy
++	{
++		public const string SystemPreference = "System";
++		public const string SimplifiedChinese = "zh-CN";
++		public const string English = "en";
++
++		public static IReadOnlyList<string> SupportedPreferences { get; } = Array.AsReadOnly(new[]
++		{
++			SystemPreference,
++			SimplifiedChinese,
++			English,
++		});
++
++		public static string NormalizePreference(string preference)
++		{
++			var normalized = preference?.Trim().Replace('_', '-');
++			if (string.Equals(normalized, SimplifiedChinese, StringComparison.OrdinalIgnoreCase))
++				return SimplifiedChinese;
++
++			if (string.Equals(normalized, English, StringComparison.OrdinalIgnoreCase))
++				return English;
++
++			return SystemPreference;
++		}
++
++		public static string Resolve(string preference, string systemLanguageTag)
++		{
++			var normalizedPreference = NormalizePreference(preference);
++			if (normalizedPreference != SystemPreference)
++				return normalizedPreference;
++
++			var normalizedSystemLanguage = systemLanguageTag?.Trim().Replace('_', '-');
++			if (string.IsNullOrEmpty(normalizedSystemLanguage) ||
++				!IsValidLanguageTag(normalizedSystemLanguage))
++				return English;
++
++			var separator = normalizedSystemLanguage.IndexOf('-');
++			var language = separator < 0 ?
++				normalizedSystemLanguage : normalizedSystemLanguage[..separator];
++			return string.Equals(language, "zh", StringComparison.OrdinalIgnoreCase) ?
++				SimplifiedChinese : English;
++		}
++
++		static bool IsValidLanguageTag(string languageTag)
++		{
++			var subtags = languageTag.Split('-');
++			if (subtags[0].Length < 2 || subtags[0].Length > 8 ||
++				!ContainsOnlyAsciiLetters(subtags[0]))
++				return false;
++
++			for (var i = 1; i < subtags.Length; i++)
++			{
++				if (subtags[i].Length < 1 || subtags[i].Length > 8)
++					return false;
++
++				foreach (var character in subtags[i])
++					if (!IsAsciiLetter(character) && (character < '0' || character > '9'))
++						return false;
++			}
++
++			return true;
++		}
++
++		static bool ContainsOnlyAsciiLetters(string value)
++		{
++			foreach (var character in value)
++				if (!IsAsciiLetter(character))
++					return false;
++
++			return true;
++		}
++
++		static bool IsAsciiLetter(char character)
++		{
++			return (character >= 'A' && character <= 'Z') ||
++				(character >= 'a' && character <= 'z');
++		}
++
++		public static string GetDisplayName(string preference, string uiLanguage)
++		{
++			var normalizedPreference = NormalizePreference(preference);
++			if (normalizedPreference == SimplifiedChinese)
++				return "简体中文";
++
++			if (normalizedPreference == English)
++				return "English";
++
++			return Resolve(SystemPreference, uiLanguage) == SimplifiedChinese ?
++				"自动（跟随系统）" : "Auto (System)";
++		}
++
++		public static bool RequiresReload(
++			string appliedLanguage,
++			string preference,
++			string systemLanguageTag)
++		{
++			var currentLanguage = Resolve(SystemPreference, appliedLanguage);
++			var targetLanguage = Resolve(preference, systemLanguageTag);
++			return currentLanguage != targetLanguage;
++		}
++	}
++}
+diff -ruN a/OpenRA.Game/Settings.cs b/OpenRA.Game/Settings.cs
+--- a/OpenRA.Game/Settings.cs	2026-08-28 11:08:58
++++ b/OpenRA.Game/Settings.cs	2026-08-28 11:08:58
+@@ -11,6 +11,7 @@
+ 
+ using System;
+ using System.Collections.Generic;
++using System.Globalization;
+ using System.IO;
+ using System.Linq;
+ using OpenRA.Primitives;
+@@ -258,26 +259,9 @@
+ 	{
+ 		public string Platform = "Default";
+ 
+-		[Desc("BCP 47 culture used for in-game text. Applies after restarting the game.")]
+-		public string Language = DefaultLanguage();
++		[Desc("Language preference for in-game text: System, zh-CN, or en.")]
++		public string Language = LanguageSelectionPolicy.SystemPreference;
+ 
+-		static string DefaultLanguage()
+-		{
+-			try
+-			{
+-				var name = System.Globalization.CultureInfo.CurrentUICulture.Name;
+-				if (!string.IsNullOrEmpty(name) &&
+-					name.StartsWith("zh", System.StringComparison.OrdinalIgnoreCase))
+-					return "zh-CN";
+-			}
+-			catch (System.Exception)
+-			{
+-				// Fall back to English if culture detection fails.
+-			}
+-
+-			return "en";
+-		}
+-
+ 		[Desc("Open a specific panel instead of the main menu on startup (skirmish, multiplayer, load, settings, replays, missions, editor, assetbrowser, credits, music, content). Cleared after use.")]
+ 		public string LaunchInto = "";
+ 
+@@ -339,6 +323,8 @@
+ 
+ 		public readonly Dictionary<string, object> Sections;
+ 
++		public string SystemLanguageTag { get; }
++
+ 		// A direct clone of the file loaded from disk.
+ 		// Any changed settings will be merged over this on save,
+ 		// allowing us to persist any unknown configuration keys
+@@ -347,6 +333,7 @@
+ 		public Settings(string file, Arguments args)
+ 		{
+ 			settingsFile = file;
++			SystemLanguageTag = ReadSystemLanguageTag(args);
+ 			Sections = new Dictionary<string, object>()
+ 			{
+ 				{ "Player", Player },
+@@ -390,6 +377,24 @@
+ 			{
+ 				FieldLoader.UnknownFieldAction = err1;
+ 				FieldLoader.InvalidValueAction = err2;
++			}
++
++			Game.Language = LanguageSelectionPolicy.NormalizePreference(Game.Language);
++		}
++
++		static string ReadSystemLanguageTag(Arguments args)
++		{
++			var systemLanguageTag = args.GetValue("Engine.SystemLanguage", null);
++			if (!string.IsNullOrWhiteSpace(systemLanguageTag))
++				return systemLanguageTag;
++
++			try
++			{
++				return CultureInfo.CurrentUICulture.Name;
++			}
++			catch (Exception)
++			{
++				return LanguageSelectionPolicy.English;
+ 			}
+ 		}
+ 
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/MainMenuLogic.cs b/OpenRA.Mods.Common/Widgets/Logic/MainMenuLogic.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/MainMenuLogic.cs	2026-08-28 11:08:58
++++ b/OpenRA.Mods.Common/Widgets/Logic/MainMenuLogic.cs	2026-08-28 11:08:58
+@@ -17,11 +17,87 @@
+ using System.Threading.Tasks;
+ using OpenRA.Mods.Common.FileSystem;
+ using OpenRA.Network;
++using OpenRA.Primitives;
+ using OpenRA.Support;
+ using OpenRA.Widgets;
+ 
+ namespace OpenRA.Mods.Common.Widgets.Logic
+ {
++	public readonly struct IosMainMenuLayout
++	{
++		const int DesktopPanelWidth = 320;
++		const int DesktopControlWidth = 264;
++		const int DesktopVerticalMarginPoints = 12;
++		const int PreferredPanelX = 72;
++
++		public WidgetBounds Panel { get; }
++		public WidgetBounds[] Controls { get; }
++
++		IosMainMenuLayout(WidgetBounds panel, WidgetBounds[] controls)
++		{
++			Panel = panel;
++			Controls = controls;
++		}
++
++		public static IosMainMenuLayout Create(IosMenuLayoutPolicy policy, int controlCount = 6)
++		{
++			if (policy == null)
++				throw new ArgumentNullException(nameof(policy));
++
++			var count = Math.Max(0, controlCount);
++			var content = policy.ContentBounds;
++			var desiredControlsWidth = policy.IsPhone ?
++				Math.Max(DesktopControlWidth, 4 * policy.MinimumTarget) : DesktopControlWidth;
++			var desiredPanelWidth = policy.IsPhone ?
++				Math.Max(DesktopPanelWidth, desiredControlsWidth + 2 * policy.Gap) : DesktopPanelWidth;
++			var panelWidth = Math.Min(content.Width,
++				Math.Max(policy.MinimumTarget, desiredPanelWidth));
++			var controlsWidth = Math.Min(
++				Math.Max(1, panelWidth - 2 * policy.Gap), desiredControlsWidth);
++			var controlsHeight = count * policy.MinimumTarget + Math.Max(0, count - 1) * policy.Gap;
++			var desiredPanelHeight = controlsHeight + 2 * Math.Max(
++				policy.Gap, Points(DesktopVerticalMarginPoints, policy));
++			var panelHeight = Math.Min(content.Height, desiredPanelHeight);
++			var panel = new WidgetBounds(
++				Math.Clamp(PreferredPanelX, content.X, content.Right - panelWidth),
++				content.Y + Math.Max(0, (content.Height - panelHeight) / 2),
++				panelWidth,
++				panelHeight);
++			var x = Math.Max(0, (panel.Width - controlsWidth) / 2);
++			var y = Math.Max(0, (panel.Height - controlsHeight) / 2);
++			var controls = new WidgetBounds[count];
++			for (var i = 0; i < count; i++)
++				controls[i] = new WidgetBounds(
++					x, y + i * (policy.MinimumTarget + policy.Gap), controlsWidth, policy.MinimumTarget);
++
++			return new IosMainMenuLayout(panel, controls);
++		}
++
++		public static bool MatchesAppliedBounds(
++			WidgetBounds expectedPanel,
++			WidgetBounds actualPanel,
++			IReadOnlyList<WidgetBounds> expectedControls,
++			IReadOnlyList<Widget> actualControls)
++		{
++			if (!SameBounds(expectedPanel, actualPanel) || expectedControls == null || actualControls == null ||
++				expectedControls.Count != actualControls.Count)
++				return false;
++
++			for (var i = 0; i < expectedControls.Count; i++)
++				if (!SameBounds(expectedControls[i], actualControls[i].Bounds))
++					return false;
++
++			return true;
++		}
++
++		static int Points(int points, IosMenuLayoutPolicy policy) =>
++			Math.Max(1, (int)Math.Ceiling(points * policy.LogicalPerPoint));
++
++		static bool SameBounds(WidgetBounds first, WidgetBounds second) =>
++			first.X == second.X && first.Y == second.Y &&
++			first.Width == second.Width && first.Height == second.Height;
++	}
++
+ 	public class MainMenuLogic : ChromeLogic
+ 	{
+ 		[FluentReference]
+@@ -49,6 +125,17 @@
+ 		readonly ModData modData;
+ 		readonly World world;
+ 		readonly ContentInstallerFileSystemLoader contentInstaller;
++		readonly Widget mainMenu;
++		readonly Widget[] mainMenuControls;
++		readonly DropDownButtonWidget languageDropdown;
++		readonly bool iosMainMenuLayoutEnabled;
++		Size lastIosResolution;
++		Size lastIosNativePointSize;
++		Rectangle lastIosSafeBounds;
++		int2 lastIosParentRenderOrigin;
++		WidgetBounds lastIosPanelBounds;
++		WidgetBounds[] lastIosControlBounds;
++		bool iosLayoutInitialized;
+ 
+ 		// Update news once per game launch
+ 		static bool fetchedNews;
+@@ -75,12 +162,14 @@
+ 			rootMenu = widget;
+ 
+ 			// Menu buttons
+-			var mainMenu = widget.Get("MAIN_MENU");
++			mainMenu = widget.Get("MAIN_MENU");
+ 			mainMenu.IsVisible = () => menuType == MenuType.Main;
+ 
+-			mainMenu.Get<ButtonWidget>("SINGLEPLAYER_BUTTON").OnClick = () => SwitchMenu(MenuType.Singleplayer);
++			var singleplayerButton = mainMenu.Get<ButtonWidget>("SINGLEPLAYER_BUTTON");
++			singleplayerButton.OnClick = () => SwitchMenu(MenuType.Singleplayer);
+ 
+-			mainMenu.Get<ButtonWidget>("MULTIPLAYER_BUTTON").OnClick = OpenMultiplayerPanel;
++			var multiplayerButton = mainMenu.Get<ButtonWidget>("MULTIPLAYER_BUTTON");
++			multiplayerButton.OnClick = OpenMultiplayerPanel;
+ 
+ 			var contentButton = mainMenu.GetOrNull<ButtonWidget>("CONTENT_BUTTON");
+ 			contentInstaller = modData.FileSystemLoader as ContentInstallerFileSystemLoader;
+@@ -101,10 +190,33 @@
+ 				};
+ 			}
+ 
+-			mainMenu.Get<ButtonWidget>("SETTINGS_BUTTON").OnClick = OpenSettingsPanel;
++			var settingsButton = mainMenu.Get<ButtonWidget>("SETTINGS_BUTTON");
++			settingsButton.OnClick = OpenSettingsPanel;
+ 
+-			mainMenu.Get<ButtonWidget>("QUIT_BUTTON").OnClick = Game.Exit;
++			var quitButton = mainMenu.Get<ButtonWidget>("QUIT_BUTTON");
++			quitButton.OnClick = Game.Exit;
+ 
++			languageDropdown = mainMenu.GetOrNull<DropDownButtonWidget>("LANGUAGE_DROPDOWN");
++			if (languageDropdown != null)
++			{
++				languageDropdown.GetText = () => LanguageSelectionPolicy.GetDisplayName(
++					Game.Settings.Game.Language, FluentProvider.CurrentLanguage);
++				languageDropdown.OnMouseDown = _ => ShowLanguageDropdown(languageDropdown);
++			}
++
++			var controls = new List<Widget> { singleplayerButton, multiplayerButton, settingsButton };
++			if (languageDropdown != null)
++				controls.Add(languageDropdown);
++
++			if (contentButton != null)
++				controls.Add(contentButton);
++
++			controls.Add(quitButton);
++			mainMenuControls = controls.ToArray();
++			iosMainMenuLayoutEnabled = languageDropdown != null && contentButton != null &&
++				mainMenuControls.Length == 6;
++			ApplyIosMainMenuLayout();
++
+ 			// Singleplayer menu
+ 			var singleplayerMenu = widget.Get("SINGLEPLAYER_MENU");
+ 			singleplayerMenu.IsVisible = () => menuType == MenuType.Singleplayer;
+@@ -227,6 +339,108 @@
+ 			Game.OnShellmapLoaded += OpenMenuBasedOnLastGame;
+ 
+ 			DiscordService.UpdateStatus(DiscordState.InMenu);
++		}
++
++		public static bool ApplyLanguageSelection(
++			GameSettings settings,
++			string systemLanguageTag,
++			string appliedLanguage,
++			string selectedPreference,
++			Action save,
++			Action scheduleReload)
++		{
++			if (settings == null)
++				throw new ArgumentNullException(nameof(settings));
++			if (save == null)
++				throw new ArgumentNullException(nameof(save));
++			if (scheduleReload == null)
++				throw new ArgumentNullException(nameof(scheduleReload));
++
++			settings.Language = LanguageSelectionPolicy.NormalizePreference(selectedPreference);
++			save();
++			var requiresReload = LanguageSelectionPolicy.RequiresReload(
++				appliedLanguage, settings.Language, systemLanguageTag);
++			if (requiresReload)
++				scheduleReload();
++
++			return requiresReload;
++		}
++
++		void ShowLanguageDropdown(DropDownButtonWidget dropdown)
++		{
++			var preferences = LanguageSelectionPolicy.SupportedPreferences;
++
++			ScrollItemWidget SetupItem(string preference, ScrollItemWidget itemTemplate)
++			{
++				var normalizedPreference = LanguageSelectionPolicy.NormalizePreference(preference);
++				var item = ScrollItemWidget.Setup(itemTemplate,
++					() => LanguageSelectionPolicy.NormalizePreference(Game.Settings.Game.Language) == normalizedPreference,
++					() =>
++					{
++						var currentMod = modData.Manifest.Id;
++						ApplyLanguageSelection(
++							Game.Settings.Game,
++							Game.Settings.SystemLanguageTag,
++							FluentProvider.CurrentLanguage,
++							normalizedPreference,
++							Game.Settings.Save,
++							() => Game.RunAfterTick(() => Game.InitializeMod(currentMod, new Arguments())));
++					});
++
++				item.Get<LabelWidget>("LABEL").GetText = () =>
++					LanguageSelectionPolicy.GetDisplayName(normalizedPreference, FluentProvider.CurrentLanguage);
++				return item;
++			}
++
++			dropdown.ShowDropDown("LABEL_DROPDOWN_TEMPLATE", 500, preferences, SetupItem);
++		}
++
++		void ApplyIosMainMenuLayout()
++		{
++			if (!Platform.IsIOS || !iosMainMenuLayoutEnabled)
++				return;
++
++			var resolution = Game.Renderer.Resolution;
++			var snapshot = IosScreenMetrics.SnapshotFor(resolution);
++			var policy = IosMenuLayoutPolicy.Create(true, snapshot);
++			var layout = IosMainMenuLayout.Create(policy);
++			languageDropdown.RemovePanel();
++			var parentRenderOrigin = mainMenu.Parent.RenderOrigin;
++			var relativePanel = IosTouchWidgetPolicy.RelativeToRoot(
++				layout.Panel.ToRectangle(), parentRenderOrigin);
++			mainMenu.Bounds = new WidgetBounds(
++				relativePanel.X, relativePanel.Y, relativePanel.Width, relativePanel.Height);
++			for (var i = 0; i < mainMenuControls.Length; i++)
++				mainMenuControls[i].Bounds = layout.Controls[i];
++
++			IosTouchMenuLogic.ApplyIosFonts(mainMenu);
++
++			lastIosResolution = resolution;
++			lastIosNativePointSize = snapshot.NativePointSize;
++			lastIosSafeBounds = snapshot.SafeBounds;
++			lastIosParentRenderOrigin = parentRenderOrigin;
++			lastIosPanelBounds = mainMenu.Bounds;
++			lastIosControlBounds = new WidgetBounds[mainMenuControls.Length];
++			for (var i = 0; i < mainMenuControls.Length; i++)
++				lastIosControlBounds[i] = mainMenuControls[i].Bounds;
++
++			iosLayoutInitialized = true;
++		}
++
++		public override void Tick()
++		{
++			if (!Platform.IsIOS || !iosMainMenuLayoutEnabled)
++				return;
++
++			var resolution = Game.Renderer.Resolution;
++			var snapshot = IosScreenMetrics.SnapshotFor(resolution);
++			if (!iosLayoutInitialized || resolution != lastIosResolution ||
++				snapshot.NativePointSize != lastIosNativePointSize || snapshot.SafeBounds != lastIosSafeBounds ||
++				mainMenu.Parent.RenderOrigin != lastIosParentRenderOrigin ||
++				!IosMainMenuLayout.MatchesAppliedBounds(
++					lastIosPanelBounds, mainMenu.Bounds,
++					lastIosControlBounds, mainMenuControls))
++				ApplyIosMainMenuLayout();
+ 		}
+ 
+ 		void LoadAndDisplayNews(WebServices webServices, Widget newsBG)
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/Settings/DisplaySettingsLogic.cs b/OpenRA.Mods.Common/Widgets/Logic/Settings/DisplaySettingsLogic.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/Settings/DisplaySettingsLogic.cs	2026-08-28 11:08:58
++++ b/OpenRA.Mods.Common/Widgets/Logic/Settings/DisplaySettingsLogic.cs	2026-08-28 11:08:58
+@@ -67,16 +67,30 @@
+ 
+ 		[FluentReference("fps")]
+ 		const string FrameLimiter = "checkbox-frame-limiter";
+-		static readonly int OriginalVideoDisplay;
+-		static readonly WindowMode OriginalGraphicsMode;
+-		static readonly int2 OriginalGraphicsWindowedSize;
+-		static readonly int2 OriginalGraphicsFullscreenSize;
+-		static readonly GLProfile OriginalGLProfile;
+-		static readonly string OriginalLanguage;
++		static class GraphicsBaseline
++		{
++			public static readonly int VideoDisplay;
++			public static readonly WindowMode Mode;
++			public static readonly int2 WindowedSize;
++			public static readonly int2 FullscreenSize;
++			public static readonly GLProfile GLProfile;
+ 
++			static GraphicsBaseline()
++			{
++				var original = Game.Settings.Graphics;
++				Mode = original.Mode;
++				VideoDisplay = original.VideoDisplay;
++				WindowedSize = original.WindowedSize;
++				FullscreenSize = original.FullscreenSize;
++				GLProfile = original.GLProfile;
++			}
++		}
++
+ 		readonly ModData modData;
+ 		readonly WorldRenderer worldRenderer;
+ 		readonly WorldViewportSizes viewportSizes;
++		readonly string originalLanguagePreference;
++		readonly string originalEffectiveLanguage;
+ 
+ 		readonly string showOnDamage;
+ 		readonly string alwaysShow;
+@@ -88,17 +102,6 @@
+ 		readonly string legacyFullscreen;
+ 		readonly string fullscreen;
+ 
+-		static DisplaySettingsLogic()
+-		{
+-			var original = Game.Settings;
+-			OriginalGraphicsMode = original.Graphics.Mode;
+-			OriginalVideoDisplay = original.Graphics.VideoDisplay;
+-			OriginalGraphicsWindowedSize = original.Graphics.WindowedSize;
+-			OriginalGraphicsFullscreenSize = original.Graphics.FullscreenSize;
+-			OriginalGLProfile = original.Graphics.GLProfile;
+-			OriginalLanguage = original.Game.Language;
+-		}
+-
+ 		[ObjectCreator.UseCtor]
+ 		public DisplaySettingsLogic(
+ 			Action<string, string, Func<Widget, Func<bool>>, Func<Widget, Action>> registerPanel,
+@@ -107,6 +110,8 @@
+ 			this.worldRenderer = worldRenderer;
+ 			this.modData = modData;
+ 			viewportSizes = modData.Manifest.Get<WorldViewportSizes>();
++			originalLanguagePreference = LanguageSelectionPolicy.NormalizePreference(Game.Settings.Game.Language);
++			originalEffectiveLanguage = FluentProvider.CurrentLanguage;
+ 
+ 			legacyFullscreen = FluentProvider.GetMessage(LegacyFullscreen);
+ 			fullscreen = FluentProvider.GetMessage(Fullscreen);
+@@ -186,7 +191,9 @@
+ 
+ 			var languageDropdown = panel.Get<DropDownButtonWidget>("LANGUAGE_DROPDOWN");
+ 			languageDropdown.OnMouseDown = _ => ShowLanguageDropdown(languageDropdown, gs);
+-			languageDropdown.GetText = () => LanguageName(gs.Language);
++			languageDropdown.GetText = () => LanguageSelectionPolicy.GetDisplayName(
++				string.IsNullOrWhiteSpace(gs.Language) ? originalLanguagePreference : gs.Language,
++				FluentProvider.CurrentLanguage);
+ 
+ 			var statusBarsDropDown = panel.Get<DropDownButtonWidget>("STATUS_BAR_DROPDOWN");
+ 			statusBarsDropDown.OnMouseDown = _ => ShowStatusBarsDropdown(statusBarsDropDown, gs);
+@@ -243,8 +250,10 @@
+ 			windowHeight.Text = ds.WindowedSize.Y.ToString(NumberFormatInfo.CurrentInfo);
+ 
+ 			var restartDesc = panel.Get("VIDEO_RESTART_REQUIRED_DESC");
+-			restartDesc.IsVisible = () => ds.Mode != OriginalGraphicsMode || ds.VideoDisplay != OriginalVideoDisplay || ds.GLProfile != OriginalGLProfile ||
+-				gs.Language != OriginalLanguage ||
++			restartDesc.IsVisible = () => ds.Mode != GraphicsBaseline.Mode ||
++				ds.VideoDisplay != GraphicsBaseline.VideoDisplay || ds.GLProfile != GraphicsBaseline.GLProfile ||
++				LanguageRequiresRestart(originalEffectiveLanguage,
++					gs.Language, Game.Settings.SystemLanguageTag) ||
+ 				(ds.Mode == WindowMode.Windowed && (origWidthText != windowWidth.Text || origHeightText != windowHeight.Text));
+ 
+ 			var frameLimitGamespeedCheckbox = panel.Get<CheckboxWidget>("FRAME_LIMIT_GAMESPEED_CHECKBOX");
+@@ -309,12 +318,13 @@
+ 				ds.WindowedSize = new int2(x, y);
+ 				nameTextfield.YieldKeyboardFocus();
+ 
+-				return ds.Mode != OriginalGraphicsMode ||
+-					ds.VideoDisplay != OriginalVideoDisplay ||
+-					ds.WindowedSize != OriginalGraphicsWindowedSize ||
+-					ds.FullscreenSize != OriginalGraphicsFullscreenSize ||
+-					ds.GLProfile != OriginalGLProfile ||
+-					gs.Language != OriginalLanguage;
++				return ds.Mode != GraphicsBaseline.Mode ||
++					ds.VideoDisplay != GraphicsBaseline.VideoDisplay ||
++					ds.WindowedSize != GraphicsBaseline.WindowedSize ||
++					ds.FullscreenSize != GraphicsBaseline.FullscreenSize ||
++					ds.GLProfile != GraphicsBaseline.GLProfile ||
++					LanguageRequiresRestart(originalEffectiveLanguage,
++						gs.Language, Game.Settings.SystemLanguageTag);
+ 			};
+ 		}
+ 
+@@ -381,38 +391,34 @@
+ 			dropdown.ShowDropDown("LABEL_DROPDOWN_TEMPLATE", 500, options.Keys, SetupItem);
+ 		}
+ 
+-		static readonly (string Culture, string NativeName)[] SupportedLanguages =
++		public static bool LanguageRequiresRestart(
++			string originalEffectiveLanguage,
++			string currentPreference,
++			string systemLanguageTag)
+ 		{
+-			("en", "English"),
+-			("zh-CN", "简体中文"),
+-		};
+-
+-		static string LanguageName(string culture)
+-		{
+-			foreach (var (c, name) in SupportedLanguages)
+-				if (c == culture)
+-					return name;
+-
+-			return culture;
++			return LanguageSelectionPolicy.RequiresReload(
++				originalEffectiveLanguage,
++				LanguageSelectionPolicy.NormalizePreference(currentPreference),
++				systemLanguageTag);
+ 		}
+ 
+ 		static void ShowLanguageDropdown(DropDownButtonWidget dropdown, GameSettings s)
+ 		{
+-			var options = new Dictionary<string, string>();
+-			foreach (var (culture, nativeName) in SupportedLanguages)
+-				options.Add(nativeName, culture);
++			var options = LanguageSelectionPolicy.SupportedPreferences;
+ 
+-			ScrollItemWidget SetupItem(string o, ScrollItemWidget itemTemplate)
++			ScrollItemWidget SetupItem(string preference, ScrollItemWidget itemTemplate)
+ 			{
++				var normalizedPreference = LanguageSelectionPolicy.NormalizePreference(preference);
+ 				var item = ScrollItemWidget.Setup(itemTemplate,
+-					() => s.Language == options[o],
+-					() => s.Language = options[o]);
++					() => LanguageSelectionPolicy.NormalizePreference(s.Language) == normalizedPreference,
++					() => s.Language = normalizedPreference);
+ 
+-				item.Get<LabelWidget>("LABEL").GetText = () => o;
++				item.Get<LabelWidget>("LABEL").GetText = () =>
++					LanguageSelectionPolicy.GetDisplayName(normalizedPreference, FluentProvider.CurrentLanguage);
+ 				return item;
+ 			}
+ 
+-			dropdown.ShowDropDown("LABEL_DROPDOWN_TEMPLATE", 500, options.Keys, SetupItem);
++			dropdown.ShowDropDown("LABEL_DROPDOWN_TEMPLATE", 500, options, SetupItem);
+ 		}
+ 
+ 		public static void BindTextNotificationPoolFilterSettings(Widget panel, GameSettings gs)
+diff -ruN a/OpenRA.Test/IosMenuLayoutPolicyTest.cs b/OpenRA.Test/IosMenuLayoutPolicyTest.cs
+--- a/OpenRA.Test/IosMenuLayoutPolicyTest.cs	2026-08-28 11:08:58
++++ b/OpenRA.Test/IosMenuLayoutPolicyTest.cs	2026-08-28 11:08:58
+@@ -8,10 +8,16 @@
+  */
+ #endregion
+ 
++using System;
++using System.Collections.Generic;
++using System.Globalization;
+ using System.IO;
+ using System.Linq;
++using System.Text.RegularExpressions;
+ using NUnit.Framework;
++using OpenRA.Graphics;
+ using OpenRA.Mods.Common.Widgets.Logic;
++using OpenRA.Platforms.Default;
+ using OpenRA.Primitives;
+ using OpenRA.Widgets;
+ 
+@@ -20,6 +26,211 @@
+ 	[TestFixture]
+ 	public sealed class IosMenuLayoutPolicyTest
+ 	{
++		[Test]
++		public void MainMenuLanguageSelectionSavesBeforeSchedulingAnEffectiveLanguageReload()
++		{
++			var settings = new GameSettings { Language = LanguageSelectionPolicy.SystemPreference };
++			var callbacks = new List<string>();
++
++			var reload = MainMenuLogic.ApplyLanguageSelection(
++				settings,
++				"zh-Hans",
++				LanguageSelectionPolicy.English,
++				LanguageSelectionPolicy.SimplifiedChinese,
++				() =>
++				{
++					Assert.That(settings.Language, Is.EqualTo(LanguageSelectionPolicy.SimplifiedChinese));
++					callbacks.Add("save");
++				},
++				() => callbacks.Add("reload"));
++
++			Assert.That(reload, Is.True);
++			Assert.That(callbacks, Is.EqualTo(new[] { "save", "reload" }));
++		}
++
++		[TestCase("zh-Hans", "System", "zh-CN")]
++		[TestCase("zh-Hans", "zh-CN", "System")]
++		public void MainMenuLanguageSelectionOnlySavesWhenTheEffectiveLanguageIsUnchanged(
++			string systemLanguageTag, string initialPreference, string selectedPreference)
++		{
++			var settings = new GameSettings { Language = initialPreference };
++			var callbacks = new List<string>();
++
++			var reload = MainMenuLogic.ApplyLanguageSelection(
++				settings,
++				systemLanguageTag,
++				LanguageSelectionPolicy.SimplifiedChinese,
++				selectedPreference,
++				() => callbacks.Add("save"),
++				() => callbacks.Add("reload"));
++
++			Assert.That(reload, Is.False);
++			Assert.That(settings.Language, Is.EqualTo(selectedPreference));
++			Assert.That(callbacks, Is.EqualTo(new[] { "save" }));
++		}
++
++		[Test]
++		public void Ra2MainMenuUsesOneAlignedSixControlDesktopGrid()
++		{
++			var yaml = File.ReadAllText(Path.Combine(RepositoryRoot(), "mods", "ra2", "chrome", "mainmenu.yaml"));
++			var ids = new[]
++			{
++				"SINGLEPLAYER_BUTTON", "MULTIPLAYER_BUTTON", "SETTINGS_BUTTON",
++				"LANGUAGE_DROPDOWN", "CONTENT_BUTTON", "QUIT_BUTTON"
++			};
++			var expectedY = new[] { 36, 92, 148, 204, 260, 316 };
++			var bounds = ids.Select(id => MainMenuControlBounds(yaml, id)).ToArray();
++
++			for (var i = 0; i < bounds.Length; i++)
++			{
++				Assert.That(bounds[i], Is.EqualTo(new WidgetBounds(28, expectedY[i], 264, 46)), ids[i]);
++				var body = MainMenuControlBody(yaml, ids[i]);
++				Assert.That(body, Does.Contain("VisualHeight: 0"), ids[i]);
++				Assert.That(body, Does.Contain("Background: menu-button"), ids[i]);
++				Assert.That(body, Does.Contain("Font: Bold"), ids[i]);
++				if (i > 0)
++					Assert.That(bounds[i].Y - bounds[i - 1].Bottom, Is.EqualTo(10), ids[i]);
++			}
++
++			Assert.That(bounds[^1].Bottom, Is.LessThanOrEqualTo(420));
++			Assert.That(yaml, Does.Contain("DropDownButton@LANGUAGE_DROPDOWN:"));
++			Assert.That(yaml, Does.Contain("Background: menu-button"));
++			Assert.That(yaml, Does.Contain("Font: Bold"));
++		}
++
++		[TestCase(1560, 720, 932, 430, 59, 0, 59, 21)]
++		[TestCase(1558, 720, 844, 390, 47, 0, 47, 21)]
++		[TestCase(1133, 744, 1133, 744, 0, 0, 0, 20)]
++		[TestCase(1024, 768, 1024, 768, 0, 0, 0, 20)]
++		[TestCase(1180, 820, 1180, 820, 0, 0, 0, 20)]
++		[TestCase(1366, 1024, 1366, 1024, 0, 0, 0, 20)]
++		public void IosMainMenuPlacesSixPhysicalTargetsInsideTheSafeContentWithoutOverlap(
++			int effectiveWidth, int effectiveHeight, int nativeWidth, int nativeHeight,
++			double safeLeft, double safeTop, double safeRight, double safeBottom)
++		{
++			var policy = IosMenuLayoutPolicy.Create(true,
++				Snapshot(effectiveWidth, effectiveHeight, nativeWidth, nativeHeight,
++					safeLeft, safeTop, safeRight, safeBottom));
++			var layout = IosMainMenuLayout.Create(policy);
++
++			Assert.That(policy.ContentBounds.ToRectangle().Contains(layout.Panel.ToRectangle()), Is.True);
++			Assert.That(layout.Panel.X, Is.EqualTo(Math.Clamp(
++				72, policy.ContentBounds.X, policy.ContentBounds.Right - layout.Panel.Width)));
++			Assert.That(layout.Controls, Has.Length.EqualTo(6));
++			for (var i = 0; i < layout.Controls.Length; i++)
++			{
++				var control = layout.Controls[i];
++				AssertPhysicalTarget(control, policy);
++				Assert.That(new Rectangle(0, 0, layout.Panel.Width, layout.Panel.Height)
++					.Contains(control.ToRectangle()), Is.True);
++				if (i > 0)
++					Assert.That(layout.Controls[i - 1].Bottom, Is.LessThanOrEqualTo(control.Y));
++			}
++		}
++
++		[Test]
++		public void IosMainMenuMeasuredLanguageLabelsFitTheButtonAndGenericPopupOnEveryDevice()
++		{
++			using var fonts = new ActualIosMenuFonts();
++			var labels = new[] { "Auto (System)", "自动（跟随系统）", "简体中文", "English" };
++			var snapshots = new[]
++			{
++				Snapshot(1560, 720, 932, 430, 59, 0, 59, 21),
++				Snapshot(1558, 720, 844, 390, 47, 0, 47, 21),
++				Snapshot(1133, 744, 1133, 744, 0, 0, 0, 20),
++				Snapshot(1024, 768, 1024, 768, 0, 0, 0, 20),
++				Snapshot(1180, 820, 1180, 820, 0, 0, 0, 20),
++				Snapshot(1366, 1024, 1366, 1024, 0, 0, 0, 20),
++			};
++			var dropdownTemplate = File.ReadAllText(Path.Combine(
++				RepositoryRoot(), "engine", "mods", "common", "chrome", "dropdowns.yaml"));
++			Assert.That(dropdownTemplate, Does.Contain("X: 10"));
++			Assert.That(dropdownTemplate, Does.Contain("Width: PARENT_WIDTH - 20"));
++
++			foreach (var snapshot in snapshots)
++			{
++				var policy = IosMenuLayoutPolicy.Create(true, snapshot);
++				var dropdown = IosMainMenuLayout.Create(policy).Controls[3];
++				var buttonUsableWidth = dropdown.Width - dropdown.Height;
++				var popupWidth = IosTouchWidgetPolicy.DropDownPanelWidth(
++					dropdown.Width, policy.MinimumTarget, snapshot.SafeBounds.Width);
++				var popupItem = IosTouchWidgetPolicy.DropDownContentBounds(
++					popupWidth, policy.MinimumTarget, 2);
++				var popupLabelWidth = Math.Max(0, popupItem.Width - 20);
++
++				foreach (var label in labels)
++				{
++					Assert.That(fonts.Bold.Measure(label).X, Is.LessThanOrEqualTo(buttonUsableWidth),
++						$"{snapshot.NativePointSize}: main-menu button truncates {label}.");
++					Assert.That(fonts.Regular.Measure(label).X, Is.LessThanOrEqualTo(popupLabelWidth),
++						$"{snapshot.NativePointSize}: generic popup truncates {label}.");
++				}
++
++				Assert.That(dropdown.Width, Is.EqualTo(policy.IsPhone ?
++					Math.Max(264, 4 * policy.MinimumTarget) : 264));
++			}
++		}
++
++		[Test]
++		public void MainMenuLogicOwnsIosRelayoutAndKeepsTheLanguageControlOptional()
++		{
++			var source = File.ReadAllText(Path.Combine(RepositoryRoot(), "engine", "OpenRA.Mods.Common",
++				"Widgets", "Logic", "MainMenuLogic.cs"));
++
++			Assert.That(source, Does.Contain("GetOrNull<DropDownButtonWidget>(\"LANGUAGE_DROPDOWN\")"));
++			Assert.That(source, Does.Contain("IosScreenMetrics.SnapshotFor"));
++			Assert.That(source, Does.Contain("IosTouchMenuLogic.ApplyIosFonts(mainMenu)"));
++			Assert.That(source, Does.Contain("IosTouchWidgetPolicy.RelativeToRoot"));
++			Assert.That(source, Does.Contain("mainMenu.Parent.RenderOrigin"));
++			Assert.That(source, Does.Contain("languageDropdown.RemovePanel();"));
++			Assert.That(source, Does.Not.Contain("menus.Bounds ="));
++			Assert.That(source, Does.Contain("public override void Tick()"));
++			var yaml = File.ReadAllText(Path.Combine(RepositoryRoot(), "mods", "ra2", "chrome", "mainmenu.yaml"));
++			Assert.That(yaml, Does.Not.Contain("Logic: MainMenuLogic, IosTouchMenuLogic"));
++		}
++
++		[Test]
++		public void IosMainMenuPanelConvertsFromScreenSpaceWithoutAssumingAZeroParentOrigin()
++		{
++			var policy = IosMenuLayoutPolicy.Create(true,
++				Snapshot(1558, 720, 844, 390, 47, 0, 47, 21));
++			var panel = IosMainMenuLayout.Create(policy).Panel.ToRectangle();
++			var parentOrigin = new int2(72, 200);
++			var relative = IosTouchWidgetPolicy.RelativeToRoot(panel, parentOrigin);
++
++			Assert.That(relative.X + parentOrigin.X, Is.EqualTo(panel.X));
++			Assert.That(relative.Y + parentOrigin.Y, Is.EqualTo(panel.Y));
++			Assert.That(relative.Size, Is.EqualTo(panel.Size));
++		}
++
++		[Test]
++		public void MainMenuTickDetectsWhenExternalLayoutRecalculationResetsAppliedBounds()
++		{
++			var policy = IosMenuLayoutPolicy.Create(true,
++				Snapshot(1558, 720, 844, 390, 47, 0, 47, 21));
++			var layout = IosMainMenuLayout.Create(policy);
++			var actualControls = layout.Controls.Select(bounds =>
++				(Widget)new ContainerWidget { Bounds = bounds }).ToArray();
++			Assert.That(IosMainMenuLayout.MatchesAppliedBounds(
++				layout.Panel, layout.Panel, layout.Controls, actualControls), Is.True);
++			var resetPanel = layout.Panel;
++			resetPanel.Y++;
++			Assert.That(IosMainMenuLayout.MatchesAppliedBounds(
++				layout.Panel, resetPanel, layout.Controls, actualControls), Is.False);
++			actualControls[2].Bounds.X++;
++			Assert.That(IosMainMenuLayout.MatchesAppliedBounds(
++				layout.Panel, layout.Panel, layout.Controls, actualControls), Is.False);
++
++			var source = File.ReadAllText(Path.Combine(RepositoryRoot(), "engine", "OpenRA.Mods.Common",
++				"Widgets", "Logic", "MainMenuLogic.cs"));
++
++			Assert.That(source, Does.Contain("WidgetBounds lastIosPanelBounds;"));
++			Assert.That(source, Does.Contain("WidgetBounds[] lastIosControlBounds;"));
++			Assert.That(source, Does.Contain("IosMainMenuLayout.MatchesAppliedBounds("));
++			Assert.That(source, Does.Contain("lastIosPanelBounds, mainMenu.Bounds"));
++			Assert.That(source, Does.Contain("lastIosControlBounds, mainMenuControls"));
++		}
++
+ 		[TestCase(1180, 820, false)]
+ 		[TestCase(844, 390, true)]
+ 		public void IosPolicyUsesLandscapeSafeAreaAndResponsiveBreakpoint(int width, int height, bool compact)
+@@ -528,6 +739,54 @@
+ 		{
+ 			Assert.That(outer.ToRectangle().Contains(inner.ToRectangle()), Is.True,
+ 				$"Expected {inner.ToRectangle()} inside {outer.ToRectangle()}.");
++		}
++
++		static WidgetBounds MainMenuControlBounds(string yaml, string id)
++		{
++			var body = MainMenuControlBody(yaml, id);
++			int Value(string key)
++			{
++				var value = Regex.Match(body, $@"(?m)^\s+{key}: (?<value>\d+)$");
++				Assert.That(value.Success, Is.True, $"Missing {key} for {id}.");
++				return int.Parse(value.Groups["value"].Value, CultureInfo.InvariantCulture);
++			}
++
++			return new WidgetBounds(Value("X"), Value("Y"), Value("Width"), Value("Height"));
++		}
++
++		static string MainMenuControlBody(string yaml, string id)
++		{
++			var match = Regex.Match(yaml,
++				$@"(?ms)^\s+(?:Button|DropDownButton)@{Regex.Escape(id)}:\s*\n(?<body>.*?)(?=^\s+(?:Button|DropDownButton|Background|Label|Container)@|\z)");
++			Assert.That(match.Success, Is.True, $"Missing main-menu control {id}.");
++			return match.Groups["body"].Value;
++		}
++
++		sealed class ActualIosMenuFonts : IDisposable
++		{
++			readonly SheetBuilder sheetBuilder;
++
++			public SpriteFont Regular { get; }
++			public SpriteFont Bold { get; }
++
++			public ActualIosMenuFonts()
++			{
++				Log.AddChannel("perf", null);
++				var root = RepositoryRoot();
++				var platform = new DefaultPlatform();
++				sheetBuilder = new SheetBuilder(SheetType.BGRA, 2048);
++				Regular = new SpriteFont(platform, "IosRegular", File.ReadAllBytes(Path.Combine(
++					root, "mods", "ra2", "fonts", "NotoSansCJKsc-Regular.otf")), 24, 19, 1f, sheetBuilder);
++				Bold = new SpriteFont(platform, "IosBold", File.ReadAllBytes(Path.Combine(
++					root, "mods", "ra2", "fonts", "NotoSansCJKsc-Bold.otf")), 26, 20, 1f, sheetBuilder);
++			}
++
++			public void Dispose()
++			{
++				Regular.Dispose();
++				Bold.Dispose();
++				sheetBuilder.Dispose();
++			}
+ 		}
+ 
+ 		static string RepositoryRoot()
+diff -ruN a/OpenRA.Test/IosSettingsLayoutTest.cs b/OpenRA.Test/IosSettingsLayoutTest.cs
+--- a/OpenRA.Test/IosSettingsLayoutTest.cs	2026-08-28 11:08:58
++++ b/OpenRA.Test/IosSettingsLayoutTest.cs	2026-08-28 11:08:58
+@@ -22,6 +22,44 @@
+ 	public sealed class IosSettingsLayoutTest
+ 	{
+ 		[Test]
++		public void DisplayLanguageRestartBaselineIsScopedToTheCurrentPanelSession()
++		{
++			Assert.That(DisplaySettingsLogic.LanguageRequiresRestart(
++				LanguageSelectionPolicy.English,
++				LanguageSelectionPolicy.English,
++				"en-US"), Is.False);
++			Assert.That(DisplaySettingsLogic.LanguageRequiresRestart(
++				LanguageSelectionPolicy.SimplifiedChinese,
++				LanguageSelectionPolicy.SimplifiedChinese,
++				"zh-Hans"), Is.False,
++				"A newly constructed panel after the main-menu reload must not inherit a stale language warning.");
++			Assert.That(DisplaySettingsLogic.LanguageRequiresRestart(
++				LanguageSelectionPolicy.SimplifiedChinese,
++				LanguageSelectionPolicy.English,
++				"zh-Hans"), Is.True);
++			Assert.That(DisplaySettingsLogic.LanguageRequiresRestart(
++				LanguageSelectionPolicy.English,
++				LanguageSelectionPolicy.SimplifiedChinese,
++				"zh-Hans"), Is.True,
++				"A saved preference still requires reload while Fluent is using the previous effective locale.");
++		}
++
++		[Test]
++		public void DisplaySettingsUsesPerInstanceLanguageBaselinesAndTheSharedPreferencePolicy()
++		{
++			var source = File.ReadAllText(Path.Combine(RepositoryRoot(), "engine", "OpenRA.Mods.Common",
++				"Widgets", "Logic", "Settings", "DisplaySettingsLogic.cs"));
++
++			Assert.That(source, Does.Not.Contain("static readonly string OriginalLanguage"));
++			Assert.That(source, Does.Contain("readonly string originalLanguagePreference;"));
++			Assert.That(source, Does.Contain("readonly string originalEffectiveLanguage;"));
++			Assert.That(source, Does.Contain("LanguageSelectionPolicy.SupportedPreferences"));
++			Assert.That(source, Does.Contain("LanguageSelectionPolicy.GetDisplayName"));
++			Assert.That(CountOccurrences(source, "LanguageRequiresRestart("), Is.EqualTo(3),
++				"The single helper must be declared once and used by both restart surfaces.");
++		}
++
++		[Test]
+ 		public void ScreenSnapshotConvertsNativeSafeAreaToEffectiveCoordinates()
+ 		{
+ 			var snapshot = new IosScreenSnapshot(
+diff -ruN a/OpenRA.Test/LanguageSelectionPolicyTest.cs b/OpenRA.Test/LanguageSelectionPolicyTest.cs
+--- a/OpenRA.Test/LanguageSelectionPolicyTest.cs	1969-12-31 16:00:00
++++ b/OpenRA.Test/LanguageSelectionPolicyTest.cs	2026-08-28 11:08:58
+@@ -0,0 +1,106 @@
++#region Copyright & License Information
++/*
++ * Copyright (c) The OpenRA Developers and Contributors
++ * This file is part of OpenRA, which is free software. It is
++ * made available under the terms of the GNU General Public License
++ * as published by the Free Software Foundation, either version 3 of
++ * the License, or (at your option) any later version.
++ */
++#endregion
++
++using System;
++using System.Collections.Generic;
++using NUnit.Framework;
++
++namespace OpenRA.Test
++{
++	[TestFixture]
++	public sealed class LanguageSelectionPolicyTest
++	{
++		[Test]
++		public void SupportedPreferencesAreImmutableAndInUiOrder()
++		{
++			CollectionAssert.AreEqual(new[] { "System", "zh-CN", "en" },
++				LanguageSelectionPolicy.SupportedPreferences);
++
++			if (LanguageSelectionPolicy.SupportedPreferences is IList<string> mutableView)
++			{
++				Assert.That(mutableView.IsReadOnly, Is.True);
++				Assert.Throws<NotSupportedException>(() => mutableView[0] = "en");
++			}
++		}
++
++		[TestCase(null, "System")]
++		[TestCase("", "System")]
++		[TestCase("   ", "System")]
++		[TestCase("System", "System")]
++		[TestCase("system", "System")]
++		[TestCase(" SYSTEM ", "System")]
++		[TestCase("zh-CN", "zh-CN")]
++		[TestCase("ZH-cn", "zh-CN")]
++		[TestCase(" zh_CN ", "zh-CN")]
++		[TestCase("en", "en")]
++		[TestCase("EN", "en")]
++		[TestCase(" en ", "en")]
++		[TestCase("zh", "System")]
++		[TestCase("fr", "System")]
++		[TestCase("unknown", "System")]
++		public void PreferencesNormalizeToCanonicalTokens(string preference, string expected)
++		{
++			Assert.That(LanguageSelectionPolicy.NormalizePreference(preference), Is.EqualTo(expected));
++		}
++
++		[TestCase(null, null, "en")]
++		[TestCase("", "zh", "zh-CN")]
++		[TestCase("   ", "zh-Hans", "zh-CN")]
++		[TestCase("System", "zh-Hant", "zh-CN")]
++		[TestCase("system", "zh_CN", "zh-CN")]
++		[TestCase("System", " ZH-hans-CN ", "zh-CN")]
++		[TestCase("System", "en-US", "en")]
++		[TestCase("System", "fr-FR", "en")]
++		[TestCase("System", "not-a-language", "en")]
++		[TestCase("System", "zh-", "en")]
++		[TestCase("System", "zh--CN", "en")]
++		[TestCase("System", "zh-中文", "en")]
++		[TestCase("System", "zh-123456789", "en")]
++		[TestCase("en", "zh-Hans", "en")]
++		[TestCase("EN", "zh-Hant", "en")]
++		[TestCase("zh-CN", "en-US", "zh-CN")]
++		[TestCase("ZH_cn", "fr-FR", "zh-CN")]
++		[TestCase("broken", "zh-Hant", "zh-CN")]
++		public void ResolvesPreferenceAgainstSystemLanguage(
++			string preference, string systemLanguageTag, string expected)
++		{
++			Assert.That(LanguageSelectionPolicy.Resolve(preference, systemLanguageTag), Is.EqualTo(expected));
++		}
++
++		[TestCase("System", "en", "Auto (System)")]
++		[TestCase("system", "en-US", "Auto (System)")]
++		[TestCase("System", "zh", "自动（跟随系统）")]
++		[TestCase("System", "zh-Hant", "自动（跟随系统）")]
++		[TestCase("zh-CN", "en", "简体中文")]
++		[TestCase("zh_cn", "zh-CN", "简体中文")]
++		[TestCase("en", "zh-CN", "English")]
++		[TestCase("EN", "en", "English")]
++		[TestCase("broken", "zh-Hans", "自动（跟随系统）")]
++		public void ReturnsExactLocalizedDisplayNames(string preference, string uiLanguage, string expected)
++		{
++			Assert.That(LanguageSelectionPolicy.GetDisplayName(preference, uiLanguage), Is.EqualTo(expected));
++		}
++
++		[TestCase("en", "System", "en-US", false)]
++		[TestCase("zh-CN", "System", "zh-Hant", false)]
++		[TestCase("zh-Hans", "System", "zh_CN", false)]
++		[TestCase("EN", "en", "zh-Hans", false)]
++		[TestCase("zh-CN", "zh_cn", "en-US", false)]
++		[TestCase("en", "System", "zh-", false)]
++		[TestCase("en", "zh-CN", "en-US", true)]
++		[TestCase("zh-CN", "en", "zh-Hans", true)]
++		public void ReloadsOnlyWhenTheEffectiveLanguageChanges(
++			string appliedLanguage, string preference, string systemLanguageTag, bool expected)
++		{
++			Assert.That(LanguageSelectionPolicy.RequiresReload(
++				appliedLanguage, preference, systemLanguageTag), Is.EqualTo(expected));
++		}
++	}
++}
+diff -ruN a/OpenRA.Test/PublicBrandingPolicyTest.cs b/OpenRA.Test/PublicBrandingPolicyTest.cs
+--- a/OpenRA.Test/PublicBrandingPolicyTest.cs	2026-08-28 11:08:58
++++ b/OpenRA.Test/PublicBrandingPolicyTest.cs	2026-08-28 11:08:58
+@@ -14,9 +14,11 @@
+ using System.Globalization;
+ using System.IO;
+ using System.Linq;
++using System.Security.Cryptography;
+ using System.Text.Json;
+ using System.Text.RegularExpressions;
+ using NUnit.Framework;
++using OpenRA.Mods.RA2.Content;
+ using OpenRA.Mods.RA2.Widgets;
+ using OpenRA.Primitives;
+ 
+@@ -34,34 +36,262 @@
+ 		}
+ 
+ 		[Test]
+-		public void PersonalIosBuildUsesNuclearCrisisNameEverywhere()
++		public void ChangedRa2BrandResourcesMatchBothPrivateInventoryEntriesExactly()
+ 		{
++			var root = Root();
++			using var manifest = JsonDocument.Parse(File.ReadAllText(
++				Path.Combine(root, "packaging", "public-content-manifest.json")));
++			using var sbom = JsonDocument.Parse(File.ReadAllText(
++				Path.Combine(root, "docs", "legal", "public-asset-sbom.json")));
++			foreach (var path in new[]
++			{
++				"mods/ra2/chrome/mainmenu.yaml",
++				"mods/ra2/fluent/chrome.ftl",
++				"mods/ra2/fluent/mod.ftl",
++				"mods/ra2/fluent/zh-CN/chrome.ftl",
++				"mods/ra2/fluent/zh-CN/mod.ftl",
++				"mods/ra2/icon.png",
++				"mods/ra2/mod.yaml"
++			})
++			{
++				var source = File.ReadAllBytes(Path.Combine(root, path));
++				var expectedHash = Convert.ToHexString(SHA256.HashData(source)).ToLowerInvariant();
++				var manifestEntry = InventoryEntry(manifest, path);
++				var sbomEntry = InventoryEntry(sbom, path);
++
++				foreach (var entry in new[] { manifestEntry, sbomEntry })
++				{
++					Assert.That(entry.GetProperty("sha256").GetString(), Is.EqualTo(expectedHash), path);
++					Assert.That(entry.GetProperty("size").GetInt64(), Is.EqualTo(source.LongLength), path);
++					Assert.That(entry.GetProperty("category").GetString(), Is.EqualTo("unknown-or-derivative"), path);
++					Assert.That(entry.GetProperty("license").GetString(), Is.EqualTo("Unreviewed"), path);
++					Assert.That(entry.GetProperty("public").GetBoolean(), Is.False, path);
++				}
++
++				Assert.That(sbomEntry.GetRawText(), Is.EqualTo(manifestEntry.GetRawText()), path);
++			}
++		}
++
++		[Test]
++		public void IosBuildModesUseUnifiedNukeHourIdentityAndStableIdentifiers()
++		{
+ 			var iosDirectory = Path.Combine(Root(), "ios", "OpenRA.iOS");
+ 			var project = File.ReadAllText(Path.Combine(iosDirectory, "OpenRA.iOS.csproj"));
+-			StringAssert.Contains("<ApplicationTitle>NUCLEAR CRISIS</ApplicationTitle>", project);
+-			StringAssert.Contains("<IpaPackageName>NUCLEAR CRISIS.ipa</IpaPackageName>", project);
++			Assert.That(Regex.Matches(project,
++				@"<ApplicationTitle>NUKE HOUR</ApplicationTitle>").Count, Is.EqualTo(2));
++			StringAssert.Contains("<IpaPackageName>NUKE HOUR.ipa</IpaPackageName>", project);
++			StringAssert.Contains("<IpaPackageName>NUKE HOUR-PublicClean.ipa</IpaPackageName>", project);
++			Assert.That(Regex.Matches(project,
++				@"<ApplicationId>com\.openra\.ipad\.personal</ApplicationId>").Count, Is.EqualTo(1));
++			StringAssert.DoesNotContain("NUCLEAR CRISIS", project);
++			StringAssert.DoesNotContain("OpenRTS Mobile", project);
+ 
+ 			var plist = File.ReadAllText(Path.Combine(iosDirectory, "Info.plist"));
+-			StringAssert.Contains("<string>NUCLEAR CRISIS</string>", plist);
++			Assert.That(Regex.Matches(plist, @"<string>NUKE HOUR</string>").Count, Is.EqualTo(2));
++			StringAssert.DoesNotContain("NUCLEAR CRISIS", plist);
+ 			StringAssert.DoesNotContain("OpenRA iPad", plist);
+ 
+ 			var viewController = File.ReadAllText(Path.Combine(iosDirectory, "ViewController.cs"));
++			StringAssert.DoesNotContain("NUCLEAR CRISIS", viewController);
+ 			StringAssert.DoesNotContain("OpenRA iPad", viewController);
++
++			var publicBuild = File.ReadAllText(Path.Combine(Root(), "ios", "scripts", "build-public-clean.sh"));
++			StringAssert.Contains("IPA=\"$ARTIFACT_DIR/NUKE HOUR-PublicClean.ipa\"", publicBuild);
++			StringAssert.Contains("$ARTIFACT_DIR/NUKE HOUR-PublicClean.ipa.sha256", publicBuild);
++			StringAssert.DoesNotContain("OpenRA-PublicClean.ipa", publicBuild);
+ 		}
+ 
+ 		[Test]
+-		public void PublicBuildUsesIndependentNameAndIcon()
++		public void PublicBuildUsesUnifiedNameAndIndependentIconCatalog()
+ 		{
+ 			var project = File.ReadAllText(Path.Combine(Root(), "ios", "OpenRA.iOS", "OpenRA.iOS.csproj"));
+-			StringAssert.Contains("<ApplicationTitle>OpenRTS Mobile</ApplicationTitle>", project);
++			Assert.That(Regex.Matches(project,
++				@"<ApplicationTitle>NUKE HOUR</ApplicationTitle>").Count, Is.EqualTo(2));
+ 			StringAssert.Contains("PublicAppIcon.appiconset", project);
+ 			Assert.That(File.Exists(Path.Combine(Root(), "ios", "OpenRA.iOS", "Assets.xcassets",
+-				"PublicAppIcon.appiconset", "AppIcon-1024.png")), Is.True);
++				"PublicAppIcon.appiconset", "NUKE-HOUR-1024.png")), Is.True);
+ 		}
+ 
+ 		[Test]
+-		public void NuclearCrisisIconCoversEveryPhoneTabletAndStoreSlot()
++		public void IosDeclaresExactEnglishAndSimplifiedChinesePermissionLocalizations()
+ 		{
++			var root = Root();
++			var iosDirectory = Path.Combine(root, "ios", "OpenRA.iOS");
++			var project = File.ReadAllText(Path.Combine(iosDirectory, "OpenRA.iOS.csproj"));
++			StringAssert.Contains(
++				"<BundleResource Include=\"en.lproj/InfoPlist.strings\" LogicalName=\"en.lproj/InfoPlist.strings\" Optimize=\"false\" />",
++				project);
++			StringAssert.Contains(
++				"<BundleResource Include=\"zh-Hans.lproj/InfoPlist.strings\" LogicalName=\"zh-Hans.lproj/InfoPlist.strings\" Optimize=\"false\" />",
++				project);
++			Assert.That(Regex.Matches(project, @"InfoPlist\.strings").Count, Is.EqualTo(4),
++				"The two exact resources each appear once as Include and once as LogicalName; no glob is allowed.");
++
++			var plist = File.ReadAllText(Path.Combine(iosDirectory, "Info.plist"));
++			StringAssert.Contains("<key>CFBundleDevelopmentRegion</key>\n  <string>en</string>", plist);
++			StringAssert.Contains(
++				"<key>CFBundleLocalizations</key>\n  <array>\n    <string>en</string>\n    <string>zh-Hans</string>\n  </array>",
++				plist);
++			StringAssert.Contains("用于发现并连接同一局域网、个人热点或附近设备上的多人游戏。", plist);
++
++			var englishPath = Path.Combine(iosDirectory, "en.lproj", "InfoPlist.strings");
++			var chinesePath = Path.Combine(iosDirectory, "zh-Hans.lproj", "InfoPlist.strings");
++			Assert.That(File.ReadAllText(englishPath), Is.EqualTo(
++				"\"NSLocalNetworkUsageDescription\" = \"Used to discover and connect to multiplayer games on the same local network, personal hotspot, or nearby devices.\";\n"));
++			Assert.That(File.ReadAllText(chinesePath), Is.EqualTo(
++				"\"NSLocalNetworkUsageDescription\" = \"用于发现并连接同一局域网、个人热点或附近设备上的多人游戏。\";\n"));
++
++			using var manifest = JsonDocument.Parse(File.ReadAllText(
++				Path.Combine(root, "packaging", "public-content-manifest.json")));
++			using var sbom = JsonDocument.Parse(File.ReadAllText(
++				Path.Combine(root, "docs", "legal", "public-asset-sbom.json")));
++			foreach (var entry in new[]
++			{
++				(Source: "ios/OpenRA.iOS/en.lproj/InfoPlist.strings", Bundle: "en.lproj/InfoPlist.strings"),
++				(Source: "ios/OpenRA.iOS/zh-Hans.lproj/InfoPlist.strings", Bundle: "zh-Hans.lproj/InfoPlist.strings"),
++			})
++			{
++				var source = File.ReadAllBytes(Path.Combine(root, entry.Source));
++				var expectedHash = Convert.ToHexString(SHA256.HashData(source)).ToLowerInvariant();
++				AssertPublicOriginalInventoryEntry(InventoryEntry(manifest, entry.Bundle), expectedHash,
++					source.LongLength, entry.Bundle);
++				AssertPublicOriginalInventoryEntry(InventoryEntry(sbom, entry.Source), expectedHash,
++					source.LongLength, entry.Source);
++			}
++		}
++
++		[Test]
++		public void IosResolvesNativeLanguageBeforeConstructingAnyPreFluentUi()
++		{
++			var iosDirectory = Path.Combine(Root(), "ios", "OpenRA.iOS");
++			var resolverPath = Path.Combine(iosDirectory, "IosNativeLanguage.cs");
++			Assert.That(File.Exists(resolverPath), Is.True);
++			var resolver = File.ReadAllText(resolverPath);
++			StringAssert.Contains("MiniYaml.FromFile", resolver);
++			StringAssert.Contains("NodeWithKeyOrDefault(\"Game\")", resolver);
++			StringAssert.Contains("NodeWithKeyOrDefault(\"Language\")", resolver);
++			StringAssert.Contains("LanguageSelectionPolicy.NormalizePreference", resolver);
++			StringAssert.Contains("LanguageSelectionPolicy.Resolve", resolver);
++			StringAssert.Contains("NSLocale.PreferredLanguages", resolver);
++			StringAssert.Contains("preferredLanguages[0]", resolver);
++			StringAssert.Contains("LanguageSelectionPolicy.SystemPreference", resolver);
++			StringAssert.Contains("LanguageSelectionPolicy.English", resolver);
++			StringAssert.DoesNotContain("new Settings(", resolver);
++
++			var appDelegate = File.ReadAllText(Path.Combine(iosDirectory, "AppDelegate.cs"));
++			var resolve = appDelegate.IndexOf("var nativeLanguage = IosNativeLanguage.Resolve(", StringComparison.Ordinal);
++			var table = appDelegate.IndexOf("var nativeStrings = IosNativeStrings.ForLanguage(", StringComparison.Ordinal);
++			var controller = appDelegate.IndexOf("new ViewController(nativeStrings)", StringComparison.Ordinal);
++			Assert.That(resolve, Is.GreaterThanOrEqualTo(0));
++			Assert.That(table, Is.GreaterThan(resolve));
++			Assert.That(controller, Is.GreaterThan(table));
++			StringAssert.Contains("Path.Combine(supportPath, \"settings.yaml\")", appDelegate);
++			StringAssert.Contains("Engine.SystemLanguage={nativeLanguage.SystemLanguageTag}", appDelegate);
++			StringAssert.DoesNotContain("Game.Language=", appDelegate);
++			Assert.That(Regex.IsMatch(appDelegate,
++				@"new IosContentImportCoordinator\([^;]*nativeStrings[^;]*\)", RegexOptions.Singleline), Is.True);
++		}
++
++		[Test]
++		public void IosNativeLanguageFailsSafeForEverySupportedMalformedSettingsShape()
++		{
++			var duplicate = new MiniYaml(string.Empty, MiniYaml.FromString(
++				"Game:\n\tLanguage: English\n\tLanguage: zh-CN\n", "duplicate-settings.yaml"));
++			var game = duplicate.NodeWithKeyOrDefault("Game");
++			Assert.Throws<InvalidDataException>(() => game.Value.NodeWithKeyOrDefault("Language"));
++			Assert.Throws<YamlException>(() => MiniYaml.FromString(
++				"Game:\n\t\tLanguage: English\n", "bad-indent-settings.yaml"));
++
++			var resolver = File.ReadAllText(Path.Combine(
++				Root(), "ios", "OpenRA.iOS", "IosNativeLanguage.cs"));
++			StringAssert.Contains("e is InvalidDataException", resolver);
++			StringAssert.Contains("e is IOException", resolver);
++			StringAssert.Contains("e is UnauthorizedAccessException", resolver);
++			StringAssert.Contains("e is YamlException", resolver);
++			var readPreference = resolver.Substring(
++				resolver.IndexOf("static string ReadPreference", StringComparison.Ordinal),
++				resolver.IndexOf("static string PreferredSystemLanguage", StringComparison.Ordinal) -
++				resolver.IndexOf("static string ReadPreference", StringComparison.Ordinal));
++			StringAssert.DoesNotContain("catch (Exception e)\n", readPreference,
++				"Only known non-fatal parsing and I/O failures may fall back to System.");
++			var preferredSystemLanguage = resolver.Substring(
++				resolver.IndexOf("static string PreferredSystemLanguage", StringComparison.Ordinal));
++			StringAssert.Contains("preferredLanguages is { Length: > 0 }", preferredSystemLanguage);
++			StringAssert.Contains("catch (Exception e)", preferredSystemLanguage,
++				"Foundation locale detection failures must not prevent application startup.");
++		}
++
++		[Test]
++		public void IosNativeCopyUsesOneInjectedTableAndHidesRawImporterDetails()
++		{
++			var iosDirectory = Path.Combine(Root(), "ios", "OpenRA.iOS");
++			var viewController = File.ReadAllText(Path.Combine(iosDirectory, "ViewController.cs"));
++			var coordinator = File.ReadAllText(Path.Combine(iosDirectory, "IosContentImportCoordinator.cs"));
++
++			StringAssert.Contains("public sealed class IosNativeStrings", viewController);
++			StringAssert.Contains("选择正版游戏文件", viewController);
++			StringAssert.Contains("导入基础游戏", viewController);
++			StringAssert.Contains("导入尤里的复仇", viewController);
++			StringAssert.Contains("查看许可证", viewController);
++			StringAssert.Contains("重试", viewController);
++			StringAssert.Contains("Choose Game Files", viewController);
++			StringAssert.Contains("Import Base Game", viewController);
++			StringAssert.Contains("Import Yuri's Revenge", viewController);
++			foreach (var error in Enum.GetNames<RetailImportError>())
++				StringAssert.Contains($"RetailImportError.{error}", viewController, error);
++			StringAssert.Contains("TitleLabel.Lines = 2", viewController);
++			StringAssert.Contains("UILineBreakMode.WordWrap", viewController);
++			StringAssert.Contains("StartupFailureMessage", viewController);
++			StringAssert.Contains("status.Text = $\"{strings.StartupFailureTitle}\\n\\n{strings.StartupFailureMessage}\"", viewController);
++			StringAssert.DoesNotContain("{message}", viewController,
++				"Raw startup exceptions can contain paths and stack frames and are diagnostic-only.");
++
++			StringAssert.Contains("readonly IosNativeStrings strings", coordinator);
++			StringAssert.Contains("strings.ImportError(result.Error)", coordinator);
++			StringAssert.Contains("Console.Error.WriteLine", coordinator);
++			StringAssert.Contains("result.Message", coordinator);
++			Assert.That(Regex.IsMatch(coordinator, @"Show\([^;]*result\.Message", RegexOptions.Singleline), Is.False,
++				"Raw importer messages can contain paths and are diagnostic-only.");
++			Assert.That(Regex.IsMatch(coordinator, @"[\u3400-\u9fff]"), Is.False,
++				"All user-visible Chinese copy belongs to the selected immutable table in ViewController.cs.");
++			StringAssert.DoesNotContain("OpenRTS Mobile", coordinator);
++		}
++
++		[Test]
++		public void IosApplicationBrandAuditRunsBeforeExistingBundleAuditsAndCodesign()
++		{
++			var project = File.ReadAllText(Path.Combine(Root(), "ios", "OpenRA.iOS", "OpenRA.iOS.csproj"));
++			Assert.That(Regex.IsMatch(project,
++				@"<Target Name=""AuditIosApplicationBrand""[^>]*AfterTargets=""_CreateAppBundle""[^>]*BeforeTargets=""_CodesignAppBundle""",
++				RegexOptions.Singleline), Is.True);
++			Assert.That(Regex.IsMatch(project,
++				@"<Target Name=""NormalizeIosAssetCatalogLogicalNames""[^>]*AfterTargets=""_CompileImageAssets""[^>]*BeforeTargets=""_ComputeBundleResourceOutputPaths""[^>]*Condition=""'\$\(UseArtifactsOutput\)' == 'true'""",
++				RegexOptions.Singleline), Is.True,
++				"External ArtifactsPath builds must normalize actool outputs before resource destinations are computed.");
++			StringAssert.Contains("$([System.IO.Path]::GetFullPath('$(DeviceSpecificIntermediateOutputPath)actool/bundle'))/", project);
++			StringAssert.Contains("%(_BundleResourceWithLogicalName.FullPath)", project);
++			StringAssert.Contains("@(_IosActoolBundleResource->Count()) != 3", project);
++			foreach (var output in new[] { "Assets.car", "AppIcon60x60@2x.png", "AppIcon76x76@2x~ipad.png" })
++			{
++				StringAssert.Contains(output, project);
++				StringAssert.Contains($"ACTool output is missing or duplicated: {output}", project);
++			}
++			StringAssert.Contains("<LogicalName>%(_BundleResourceWithLogicalName.Filename)%(_BundleResourceWithLogicalName.Extension)</LogicalName>",
++				project);
++			StringAssert.Contains(
++				"python3 &quot;$(MSBuildProjectDirectory)/../../packaging/ios_app_brand_audit.py&quot; &quot;$(AppBundleDir)&quot; --source-root &quot;$(MSBuildProjectDirectory)/../..&quot;",
++				project);
++			Assert.That(Regex.IsMatch(project,
++				@"<Target Name=""AuditPersonalIosLoadingBrandBundle""[^>]*DependsOnTargets=""AuditIosApplicationBrand""",
++				RegexOptions.Singleline), Is.True);
++			Assert.That(Regex.IsMatch(project,
++				@"<Target Name=""AuditPublicBundle""[^>]*DependsOnTargets=""AuditIosApplicationBrand""",
++				RegexOptions.Singleline), Is.True);
++		}
++
++		[Test]
++		public void NukeHourIconCoversEveryPhoneTabletAndStoreSlot()
++		{
+ 			var iconDirectory = Path.Combine(Root(), "ios", "OpenRA.iOS", "Assets.xcassets", "AppIcon.appiconset");
+ 			using var document = JsonDocument.Parse(File.ReadAllText(Path.Combine(iconDirectory, "Contents.json")));
+ 			var images = document.RootElement.GetProperty("images").EnumerateArray().ToArray();
+@@ -102,7 +332,7 @@
+ 				Assert.That(expected.TryGetValue(key, out var pixels), Is.True, $"Unexpected AppIcon slot {key}.");
+ 
+ 				var filename = image.GetProperty("filename").GetString()!;
+-				StringAssert.StartsWith("NUCLEAR-CRISIS-", filename);
++				StringAssert.StartsWith("NUKE-HOUR-", filename);
+ 				var path = Path.Combine(iconDirectory, filename);
+ 				Assert.That(File.Exists(path), Is.True, $"Missing AppIcon image {filename}.");
+ 				Assert.That(ReadPngDimensions(path), Is.EqualTo((pixels, pixels)), filename);
+@@ -133,19 +363,30 @@
+ 		}
+ 
+ 		[Test]
+-		public void PublicIconCatalogRemainsIndependentFromNuclearCrisisArtwork()
++		public void PersonalAndPublicIconCatalogsRemainSeparateButByteIdentical()
+ 		{
+ 			var assetDirectory = Path.Combine(Root(), "ios", "OpenRA.iOS", "Assets.xcassets");
+-			var personalContents = File.ReadAllText(Path.Combine(assetDirectory, "AppIcon.appiconset", "Contents.json"));
+-			var publicContents = File.ReadAllText(Path.Combine(assetDirectory, "PublicAppIcon.appiconset", "Contents.json"));
+-			StringAssert.Contains("NUCLEAR-CRISIS-1024.png", personalContents);
+-			StringAssert.DoesNotContain("NUCLEAR-CRISIS-", publicContents);
+-			Assert.That(File.ReadAllBytes(Path.Combine(assetDirectory, "AppIcon.appiconset", "NUCLEAR-CRISIS-1024.png")),
+-				Is.Not.EqualTo(File.ReadAllBytes(Path.Combine(assetDirectory, "PublicAppIcon.appiconset", "AppIcon-1024.png"))));
++			var personalDirectory = Path.Combine(assetDirectory, "AppIcon.appiconset");
++			var publicDirectory = Path.Combine(assetDirectory, "PublicAppIcon.appiconset");
++			Assert.That(File.ReadAllBytes(Path.Combine(personalDirectory, "Contents.json")),
++				Is.EqualTo(File.ReadAllBytes(Path.Combine(publicDirectory, "Contents.json"))));
++
++			var filenames = Directory.GetFiles(personalDirectory, "*.png")
++				.Select(Path.GetFileName).OrderBy(filename => filename).ToArray();
++			Assert.That(filenames, Has.Length.EqualTo(15));
++			Assert.That(filenames, Has.All.StartsWith("NUKE-HOUR-"));
++			Assert.That(Directory.GetFiles(publicDirectory, "*.png")
++				.Select(Path.GetFileName).OrderBy(filename => filename), Is.EqualTo(filenames));
++			foreach (var filename in filenames)
++				Assert.That(File.ReadAllBytes(Path.Combine(personalDirectory, filename!)),
++					Is.EqualTo(File.ReadAllBytes(Path.Combine(publicDirectory, filename!))), filename);
++
++			Assert.That(Directory.GetFiles(personalDirectory, "NUCLEAR-CRISIS-*.png"), Is.Empty);
++			Assert.That(Directory.GetFiles(publicDirectory, "AppIcon-*.png"), Is.Empty);
+ 		}
+ 
+ 		[Test]
+-		public void Ra2SettingsAndMenuUseNuclearCrisisBranding()
++		public void Ra2SettingsAndMenuUseNukeHourBrandingWithoutRepeatingTheProductNameInSettings()
+ 		{
+ 			var fluentDirectory = Path.Combine(Root(), "mods", "ra2", "fluent");
+ 			var englishChrome = File.ReadAllText(Path.Combine(fluentDirectory, "chrome.ftl"));
+@@ -153,15 +394,87 @@
+ 			var englishMod = File.ReadAllText(Path.Combine(fluentDirectory, "mod.ftl"));
+ 			var chineseMod = File.ReadAllText(Path.Combine(fluentDirectory, "zh-CN", "mod.ftl"));
+ 
+-			StringAssert.Contains("button-settings-title = NUCLEAR CRISIS SETTINGS", englishChrome);
+-			StringAssert.Contains("button-settings-title = NUCLEAR CRISIS 设置", chineseChrome);
+-			StringAssert.Contains("mod-title = NUCLEAR CRISIS", englishMod);
+-			StringAssert.Contains("mod-title = NUCLEAR CRISIS", chineseMod);
++			Assert.That(Regex.Matches(englishChrome,
++				@"(?m)^button-settings-title = GAME SETTINGS\r?$").Count, Is.EqualTo(1));
++			Assert.That(Regex.Matches(chineseChrome,
++				@"(?m)^button-settings-title = 游戏设置\r?$").Count, Is.EqualTo(1));
++			StringAssert.DoesNotContain("NUKE HOUR SETTINGS", englishChrome);
++			StringAssert.DoesNotContain("NUKE HOUR 设置", chineseChrome);
++			Assert.That(Regex.Matches(englishMod, @"(?m)^mod-title = NUKE HOUR\r?$").Count, Is.EqualTo(1));
++			Assert.That(Regex.Matches(englishMod, @"(?m)^mod-windowtitle = NUKE HOUR\r?$").Count, Is.EqualTo(1));
++			Assert.That(Regex.Matches(chineseMod, @"(?m)^mod-title = NUKE HOUR\r?$").Count, Is.EqualTo(1));
++			Assert.That(Regex.Matches(chineseMod, @"(?m)^mod-windowtitle = NUKE HOUR\r?$").Count, Is.EqualTo(1));
++			StringAssert.Contains("label-menu-subtitle = NUKE HOUR", englishChrome);
++			StringAssert.Contains("label-menu-subtitle = NUKE HOUR", chineseChrome);
++			StringAssert.Contains("label-mainmenu-prerelease-notification-prompt-title = NUKE HOUR developer preview",
++				englishChrome);
++			StringAssert.Contains("label-mainmenu-prerelease-notification-prompt-text-a = This pre-alpha build of NUKE HOUR",
++				englishChrome);
++			StringAssert.Contains("label-mainmenu-prerelease-notification-prompt-title = NUKE HOUR 开发者预览版", chineseChrome);
++			StringAssert.Contains("label-mainmenu-prerelease-notification-prompt-text-a = 这是 NUKE HOUR 的 pre-alpha 预览构建，",
++				chineseChrome);
+ 			StringAssert.DoesNotContain("OpenRA", englishChrome);
+ 			StringAssert.DoesNotContain("OpenRA", chineseChrome);
+ 		}
+ 
+ 		[Test]
++		public void ActiveRootModLoadScreenAndLegalCopyUseNukeHour()
++		{
++			var root = Root();
++			var readme = File.ReadAllText(Path.Combine(root, "README.md"));
++			Assert.That(readme.Split('\n')[0].TrimEnd('\r'), Is.EqualTo("# NUKE HOUR"));
++
++			var modManifest = File.ReadAllText(Path.Combine(root, "mods", "ra2", "mod.yaml"));
++			Assert.That(Regex.Matches(modManifest, @"(?m)^\tModTabTitle: NUKE HOUR\r?$").Count, Is.EqualTo(1));
++
++			var loadScreen = File.ReadAllText(Path.Combine(root, "OpenRA.Mods.RA2", "LoadScreens",
++				"BrandSplashLoadScreen.cs"));
++			StringAssert.Contains("const string BrandTitle = \"NUKE HOUR\";", loadScreen);
++
++			var publicLegal = File.ReadAllText(Path.Combine(root, "mods", "ra2-public", "fluent", "legal.ftl"));
++			var publicLegalChinese = File.ReadAllText(Path.Combine(root, "mods", "ra2-public", "fluent", "zh-CN",
++				"legal.ftl"));
++			StringAssert.Contains("public-legal-title = NUKE HOUR — Legal and content notice", publicLegal);
++			StringAssert.Contains("public-legal-disclaimer = NUKE HOUR is an independent open-source project.", publicLegal);
++			StringAssert.Contains("public-legal-title = NUKE HOUR — 许可证与资源说明", publicLegalChinese);
++			StringAssert.Contains("public-legal-disclaimer = NUKE HOUR 是独立的开源项目", publicLegalChinese);
++
++			var publicDistribution = File.ReadAllText(Path.Combine(root, "docs", "legal", "PUBLIC_DISTRIBUTION.md"));
++			var thirdPartyContent = File.ReadAllText(Path.Combine(root, "docs", "legal", "THIRD_PARTY_CONTENT.md"));
++			StringAssert.Contains("named **NUKE HOUR**", publicDistribution);
++			StringAssert.Contains("NUKE HOUR is an independent open-source project.", publicDistribution);
++			StringAssert.Contains("NUKE HOUR is an open-source engine shell.", thirdPartyContent);
++		}
++
++		[Test]
++		public void TaskFourProductionSourcesContainNoStaleVisibleProductName()
++		{
++			var root = Root();
++			foreach (var path in new[]
++			{
++				"README.md",
++				"mod.config",
++				"mods/ra2/mod.yaml",
++				"mods/ra2/fluent/chrome.ftl",
++				"mods/ra2/fluent/mod.ftl",
++				"mods/ra2/fluent/zh-CN/chrome.ftl",
++				"mods/ra2/fluent/zh-CN/mod.ftl",
++				"OpenRA.Mods.RA2/LoadScreens/BrandSplashLoadScreen.cs",
++				"mods/ra2-public/fluent/legal.ftl",
++				"mods/ra2-public/fluent/zh-CN/legal.ftl",
++				"docs/legal/PUBLIC_DISTRIBUTION.md",
++				"docs/legal/THIRD_PARTY_CONTENT.md"
++			})
++			{
++				var source = File.ReadAllText(Path.Combine(root, path));
++				var withoutInternalWallpaperNames = Regex.Replace(source,
++					@"NUCLEAR-CRISIS-BG-\d{2}\.png", "", RegexOptions.IgnoreCase);
++				Assert.That(Regex.IsMatch(withoutInternalWallpaperNames,
++					"NUCLEAR(?:-| )?CRISIS|OpenRTS Mobile", RegexOptions.IgnoreCase), Is.False, path);
++			}
++		}
++
++		[Test]
+ 		public void MainMenuIncludesEveryNuclearCrisisWallpaper()
+ 		{
+ 			var ra2Directory = Path.Combine(Root(), "mods", "ra2");
+@@ -302,6 +615,24 @@
+ 			Assert.That(header.Length, Is.GreaterThanOrEqualTo(26), path);
+ 			Assert.That(header.Take(8), Is.EqualTo(new byte[] { 137, 80, 78, 71, 13, 10, 26, 10 }), path);
+ 			return (ReadBigEndianInt32(header, 16), ReadBigEndianInt32(header, 20));
++		}
++
++		static JsonElement InventoryEntry(JsonDocument document, string path)
++		{
++			var entries = document.RootElement.GetProperty("files").EnumerateArray()
++				.Where(entry => entry.GetProperty("path").GetString() == path).ToArray();
++			Assert.That(entries, Has.Length.EqualTo(1), path);
++			return entries[0];
++		}
++
++		static void AssertPublicOriginalInventoryEntry(
++			JsonElement entry, string expectedHash, long expectedSize, string path)
++		{
++			Assert.That(entry.GetProperty("sha256").GetString(), Is.EqualTo(expectedHash), path);
++			Assert.That(entry.GetProperty("size").GetInt64(), Is.EqualTo(expectedSize), path);
++			Assert.That(entry.GetProperty("category").GetString(), Is.EqualTo("project-original"), path);
++			Assert.That(entry.GetProperty("license").GetString(), Is.EqualTo("Project original"), path);
++			Assert.That(entry.GetProperty("public").GetBoolean(), Is.True, path);
+ 		}
+ 
+ 		static bool PngHasAlpha(string path)
+diff -ruN a/OpenRA.Test/SettingsTest.cs b/OpenRA.Test/SettingsTest.cs
+--- a/OpenRA.Test/SettingsTest.cs	2026-08-28 11:08:58
++++ b/OpenRA.Test/SettingsTest.cs	2026-08-28 11:08:58
+@@ -9,6 +9,9 @@
+  */
+ #endregion
+ 
++using System;
++using System.Globalization;
++using System.IO;
+ using NUnit.Framework;
+ 
+ namespace OpenRA.Test
+@@ -16,13 +19,228 @@
+ 	[TestFixture]
+ 	public sealed class SettingsTest
+ 	{
++		string temporaryDirectory;
++		string settingsPath;
++
++		[SetUp]
++		public void SetUp()
++		{
++			temporaryDirectory = Path.Combine(Path.GetTempPath(), $"openra-settings-{Guid.NewGuid():N}");
++			Directory.CreateDirectory(temporaryDirectory);
++			settingsPath = Path.Combine(temporaryDirectory, "settings.yaml");
++		}
++
++		[TearDown]
++		public void TearDown()
++		{
++			if (Directory.Exists(temporaryDirectory))
++				Directory.Delete(temporaryDirectory, true);
++		}
++
+ 		[Test]
+ 		public void CommandLineCanEnableClassicMouseStyle()
+ 		{
+-			var settings = new Settings("missing-settings.yaml",
++			var settings = new Settings(settingsPath,
+ 				new Arguments("Game.UseClassicMouseStyle=true"));
+ 
+ 			Assert.That(settings.Game.UseClassicMouseStyle, Is.True);
++		}
++
++		[Test]
++		public void MissingSettingsUseSystemLanguagePreference()
++		{
++			var settings = new Settings(settingsPath, new Arguments());
++
++			Assert.That(settings.Game.Language, Is.EqualTo(LanguageSelectionPolicy.SystemPreference));
++			Assert.That(settings.SystemLanguageTag, Is.EqualTo(CultureInfo.CurrentUICulture.Name));
++		}
++
++		[Test]
++		public void InvalidStoredLanguageNormalizesToSystemAndUnknownYamlSurvivesSave()
++		{
++			File.WriteAllText(settingsPath,
++				"Game:\n" +
++				"\tLanguage: broken\n" +
++				"\tFutureSetting: keep-me\n");
++
++			var settings = new Settings(settingsPath, new Arguments());
++			Assert.That(settings.Game.Language, Is.EqualTo(LanguageSelectionPolicy.SystemPreference));
++
++			settings.Save();
++			var saved = File.ReadAllText(settingsPath);
++			StringAssert.DoesNotContain("Language:", saved);
++			StringAssert.Contains("FutureSetting: keep-me", saved);
++		}
++
++		[TestCase("en")]
++		[TestCase("zh-CN")]
++		public void ManualStoredLanguagePreferencesArePreserved(string preference)
++		{
++			File.WriteAllText(settingsPath, $"Game:\n\tLanguage: {preference}\n");
++
++			var settings = new Settings(settingsPath, new Arguments());
++
++			Assert.That(settings.Game.Language, Is.EqualTo(preference));
++		}
++
++		[TestCase("broken", "en", "System")]
++		[TestCase("ZH_cn", "broken", "zh-CN")]
++		[TestCase("EN", "zh-CN", "en")]
++		public void CommandLineLanguageIsCanonicalizedAfterFileLoading(
++			string commandLinePreference, string storedPreference, string expected)
++		{
++			File.WriteAllText(settingsPath, $"Game:\n\tLanguage: {storedPreference}\n");
++
++			var settings = new Settings(settingsPath,
++				new Arguments($"Game.Language={commandLinePreference}"));
++
++			Assert.That(settings.Game.Language, Is.EqualTo(expected));
++		}
++
++		[Test]
++		public void ExplicitSystemLanguageTagIsReadOnlyStartupState()
++		{
++			var settings = new Settings(settingsPath,
++				new Arguments("Engine.SystemLanguage=zh-Hans"));
++
++			Assert.That(settings.SystemLanguageTag, Is.EqualTo("zh-Hans"));
++			Assert.That(settings.Sections.ContainsKey("SystemLanguageTag"), Is.False);
++
++			settings.Save();
++			StringAssert.DoesNotContain("SystemLanguageTag", File.ReadAllText(settingsPath));
++		}
++
++		[TestCase("")]
++		[TestCase("   ")]
++		public void BlankSystemLanguageTagFallsBackToCurrentUiCulture(string systemLanguageTag)
++		{
++			var settings = new Settings(settingsPath,
++				new Arguments($"Engine.SystemLanguage={systemLanguageTag}"));
++
++			Assert.That(settings.SystemLanguageTag, Is.EqualTo(CultureInfo.CurrentUICulture.Name));
++		}
++
++		[TestCase("en", "en-US")]
++		[TestCase("zh-CN", "zh-Hans")]
++		public void ManualLanguageAlwaysRemainsSerialized(string preference, string systemLanguageTag)
++		{
++			var settings = new Settings(settingsPath, new Arguments(
++				$"Game.Language={preference}",
++				$"Engine.SystemLanguage={systemLanguageTag}"));
++
++			settings.Save();
++
++			StringAssert.Contains($"Language: {preference}", File.ReadAllText(settingsPath));
++		}
++
++		[Test]
++		public void SystemLanguagePreferenceIsOmittedAsTheDefault()
++		{
++			var settings = new Settings(settingsPath, new Arguments(
++				"Game.Language=System",
++				"Engine.SystemLanguage=zh-Hans"));
++
++			settings.Save();
++
++			StringAssert.DoesNotContain("Language:", File.ReadAllText(settingsPath));
++		}
++
++		[Test]
++		public void FluentInitializationIsSerializedAndInstallsBundlesTransactionally()
++		{
++			var source = File.ReadAllText(Path.Combine(RepositoryRoot(),
++				"engine", "OpenRA.Game", "FluentProvider.cs"));
++
++			StringAssert.Contains("static readonly object InitializeSyncObject = new();", source);
++			StringAssert.Contains(
++				"static string currentLanguage = LanguageSelectionPolicy.English;", source);
++			Assert.That(CountOccurrences(source, "LanguageSelectionPolicy.Resolve("), Is.EqualTo(1));
++			StringAssert.Contains("Game.Settings?.Game?.Language", source);
++			StringAssert.Contains("Game.Settings?.SystemLanguageTag", source);
++			StringAssert.Contains("var culture = resolvedLanguage;", source);
++			StringAssert.Contains(
++				"WithLanguageOverrides(modData.Manifest.FluentMessages, resolvedLanguage, fileSystem)", source);
++
++			var currentLanguageProperty = IndexOf(source, "public static string CurrentLanguage");
++			var currentLanguageLock = IndexOf(source, "lock (SyncObject)", currentLanguageProperty);
++			var currentLanguageReturn = IndexOf(source, "return currentLanguage;", currentLanguageLock);
++			var currentLanguagePropertyEnd = MatchingBraceEnd(source,
++				IndexOf(source, "{", currentLanguageProperty));
++			Assert.That(currentLanguageLock, Is.LessThan(currentLanguageReturn));
++			Assert.That(currentLanguageReturn, Is.LessThan(currentLanguagePropertyEnd));
++
++			var initialize = IndexOf(source, "public static void Initialize(");
++			var initializeSync = IndexOf(source, "lock (InitializeSyncObject)", initialize);
++			var initializeSyncEnd = MatchingBraceEnd(source, IndexOf(source, "{", initializeSync));
++			var resolve = IndexOf(source, "var resolvedLanguage = LanguageSelectionPolicy.Resolve(", initializeSync);
++			var buildMod = IndexOf(source, "var nextModFluentBundle = new FluentBundle(");
++			var buildMap = IndexOf(source, "nextMapFluentBundle = new FluentBundle(");
++			var installLock = IndexOf(source, "lock (SyncObject)", buildMap);
++			var installMod = IndexOf(source, "modFluentBundle = nextModFluentBundle;", installLock);
++			var installMap = IndexOf(source, "mapFluentBundle = nextMapFluentBundle;", installMod);
++			var installLanguage = IndexOf(source, "currentLanguage = resolvedLanguage;", installMap);
++			var installLockEnd = MatchingBraceEnd(source, IndexOf(source, "{", installLock));
++
++			Assert.That(initializeSync, Is.LessThan(resolve));
++			Assert.That(resolve, Is.LessThan(buildMod));
++			Assert.That(buildMod, Is.LessThan(buildMap));
++			Assert.That(buildMap, Is.LessThan(installLock));
++			Assert.That(installLock, Is.LessThan(installMod));
++			Assert.That(installMod, Is.LessThan(installMap));
++			Assert.That(installMap, Is.LessThan(installLanguage));
++			Assert.That(installLanguage, Is.LessThan(installLockEnd));
++			Assert.That(installLockEnd, Is.LessThan(initializeSyncEnd));
++		}
++
++		static int CountOccurrences(string source, string value)
++		{
++			var count = 0;
++			var index = 0;
++			while ((index = source.IndexOf(value, index, StringComparison.Ordinal)) >= 0)
++			{
++				count++;
++				index += value.Length;
++			}
++
++			return count;
++		}
++
++		static int IndexOf(string source, string value, int startIndex = 0)
++		{
++			var index = source.IndexOf(value, startIndex, StringComparison.Ordinal);
++			Assert.That(index, Is.GreaterThanOrEqualTo(0), $"Missing source contract: {value}");
++			return index;
++		}
++
++		static int MatchingBraceEnd(string source, int openingBrace)
++		{
++			var depth = 0;
++			for (var index = openingBrace; index < source.Length; index++)
++			{
++				if (source[index] == '{')
++					depth++;
++				else if (source[index] == '}' && --depth == 0)
++					return index;
++			}
++
++			Assert.Fail($"No matching closing brace for source index {openingBrace}.");
++			return -1;
++		}
++
++		static string RepositoryRoot()
++		{
++			var directory = new DirectoryInfo(TestContext.CurrentContext.TestDirectory);
++			while (directory != null)
++			{
++				var gitPath = Path.Combine(directory.FullName, ".git");
++				if ((Directory.Exists(gitPath) || File.Exists(gitPath)) &&
++					Directory.Exists(Path.Combine(directory.FullName, "engine", "OpenRA.Game")))
++					return directory.FullName;
++
++				directory = directory.Parent;
++			}
++
++			throw new InvalidOperationException("Could not locate the repository root.");
+ 		}
+ 	}
+ }

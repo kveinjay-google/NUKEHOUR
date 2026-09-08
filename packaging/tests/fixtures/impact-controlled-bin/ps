@@ -1,0 +1,82 @@
+#!/bin/sh
+set -eu
+
+if [ "${1:-}" = "-p" ] && [ -n "${2:-}" ] && [ "${3:-}" = "-o" ]; then
+	command_line="${FAKE_IMPACT_AUDIT_PS_DOTNET:-impact-audit-fake-dotnet.sh} bin/OpenRA.dll Game.LaunchInto=skirmish"
+	state=stable
+	if [ -n "${FAKE_IMPACT_AUDIT_PS_STATE_FILE:-}" ] && [ -f "$FAKE_IMPACT_AUDIT_PS_STATE_FILE" ]; then
+		state=$(sed -n '1p' "$FAKE_IMPACT_AUDIT_PS_STATE_FILE")
+	fi
+
+	identity_format=
+	if [ "${4:-}" = "lstart=" ] && [ "${5:-}" = "-o" ] && [ "${6:-}" = "command=" ]; then
+		identity_format=legacy
+	elif [ "${4:-}" = "ppid=" ] && [ "${5:-}" = "-o" ] &&
+		[ "${6:-}" = "lstart=" ] && [ "${7:-}" = "-o" ] && [ "${8:-}" = "command=" ]; then
+		identity_format=with-parent
+	fi
+
+	if [ -n "$identity_format" ]; then
+		if [ -n "${FAKE_IMPACT_AUDIT_PS_CAPTURE_LOG:-}" ]; then
+			printf '%s\n' "$*" >> "$FAKE_IMPACT_AUDIT_PS_CAPTURE_LOG"
+		fi
+
+		identity_call_count=1
+		if [ -n "${FAKE_IMPACT_AUDIT_PS_IDENTITY_CALL_COUNT_FILE:-}" ]; then
+			if [ -f "$FAKE_IMPACT_AUDIT_PS_IDENTITY_CALL_COUNT_FILE" ]; then
+				identity_call_count=$(sed -n '1p' "$FAKE_IMPACT_AUDIT_PS_IDENTITY_CALL_COUNT_FILE")
+				case "$identity_call_count" in
+					''|*[!0-9]*) exit 67 ;;
+				esac
+				identity_call_count=$((identity_call_count + 1))
+			fi
+			printf '%s\n' "$identity_call_count" > "$FAKE_IMPACT_AUDIT_PS_IDENTITY_CALL_COUNT_FILE"
+		fi
+
+		transient_count=${FAKE_IMPACT_AUDIT_PS_TRANSIENT_COUNT:-0}
+		case "$transient_count" in
+			''|*[!0-9]*) exit 68 ;;
+		esac
+		if [ "$identity_call_count" -le "$transient_count" ]; then
+			state=transient-command
+		fi
+		changed_start_after=${FAKE_IMPACT_AUDIT_PS_CHANGED_START_AFTER:-0}
+		case "$changed_start_after" in
+			''|*[!0-9]*) exit 69 ;;
+		esac
+		if [ "$changed_start_after" -gt 0 ] && [ "$identity_call_count" -gt "$changed_start_after" ]; then
+			state=changed-start
+		fi
+
+		# The runner supplies its PID to keep this deterministic even though the
+		# command substitution that invokes this fixture may add a subshell parent.
+		identity_parent=${OPENRA_IMPACT_EFFECT_AUDIT_RUNNER_PID:-$PPID}
+		identity_prefix=
+		if [ "$identity_format" = with-parent ]; then
+			identity_prefix="$identity_parent  "
+		fi
+		case "$state" in
+			stable) printf '%s%s  %s\n' "$identity_prefix" 'Mon Aug 25 12:00:00 2026' "$command_line" ;;
+			transient-command) printf '%s%s  %s\n' "$identity_prefix" 'Mon Aug 25 12:00:00 2026' '/bin/sh impact-audit-launch-wrapper' ;;
+			changed-start) printf '%s%s  %s\n' "$identity_prefix" 'Mon Aug 25 12:00:01 2026' "$command_line" ;;
+			changed-command) printf '%s%s  %s\n' "$identity_prefix" 'Mon Aug 25 12:00:00 2026' 'unrelated-process' ;;
+			*) exit 66 ;;
+		esac
+		exit 0
+	fi
+
+	if [ "${4:-}" = "command=" ]; then
+		case "$state" in
+			changed-command) printf '%s\n' 'unrelated-process' ;;
+			*) printf '%s\n' "$command_line" ;;
+		esac
+		exit 0
+	fi
+
+	if [ "${4:-}" = "stat=" ]; then
+		exec /bin/ps "$@"
+	fi
+fi
+
+printf 'unexpected fake ps invocation: %s\n' "$*" >&2
+exit 64

@@ -1,0 +1,22 @@
+From: local
+Subject: [PATCH] IngamePowerCounterLogic: use YAML TextColor instead of hard-coded white
+
+---
+ OpenRA.Mods.Common/Widgets/Logic/Ingame/IngamePowerCounterLogic.cs | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/OpenRA.Mods.Common/Widgets/Logic/Ingame/IngamePowerCounterLogic.cs b/OpenRA.Mods.Common/Widgets/Logic/Ingame/IngamePowerCounterLogic.cs
+index 1111111..2222222 100644
+--- a/OpenRA.Mods.Common/Widgets/Logic/Ingame/IngamePowerCounterLogic.cs
++++ b/OpenRA.Mods.Common/Widgets/Logic/Ingame/IngamePowerCounterLogic.cs
+@@ -35,7 +35,9 @@ namespace OpenRA.Mods.Common.Widgets.Logic
+ 			var unlimitedCapacity = FluentProvider.GetMessage(Infinite);
+ 
+ 			powerIcon.GetImageName = () => powerManager.ExcessPower < 0 ? "power-critical" : "power-normal";
+-			power.GetColor = () => powerManager.ExcessPower < 0 ? Color.Red : Color.White;
++			// Respect YAML TextColor for the normal state (RA2 uses gold); keep red when overloaded.
++			var normalColor = power.TextColor;
++			power.GetColor = () => powerManager.ExcessPower < 0 ? Color.Red : normalColor;
+ 			power.GetText = () => developerMode.UnlimitedPower ? unlimitedCapacity : powerManager.ExcessPower.ToString(NumberFormatInfo.CurrentInfo);
+ 
+ 			var tooltipTextCached = new CachedTransform<(int, int?), string>(((int Usage, int? Capacity) args) =>

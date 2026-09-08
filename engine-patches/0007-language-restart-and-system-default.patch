@@ -1,0 +1,75 @@
+diff -ruN a/OpenRA.Game/Settings.cs b/OpenRA.Game/Settings.cs
+--- a/OpenRA.Game/Settings.cs
++++ b/OpenRA.Game/Settings.cs
+@@ -255,9 +255,26 @@
+ 	public class GameSettings
+ 	{
+ 		public string Platform = "Default";
+ 
+ 		[Desc("BCP 47 culture used for in-game text. Applies after restarting the game.")]
+-		public string Language = "en";
++		public string Language = DefaultLanguage();
++
++		static string DefaultLanguage()
++		{
++			try
++			{
++				var name = System.Globalization.CultureInfo.CurrentUICulture.Name;
++				if (!string.IsNullOrEmpty(name) &&
++					name.StartsWith("zh", System.StringComparison.OrdinalIgnoreCase))
++					return "zh-CN";
++			}
++			catch (System.Exception)
++			{
++				// Fall back to English if culture detection fails.
++			}
++
++			return "en";
++		}
+ 
+ 		[Desc("Open a specific panel instead of the main menu on startup (skirmish, multiplayer, load, settings, replays, missions, editor, assetbrowser, credits, music, content). Cleared after use.")]
+ 		public string LaunchInto = "";
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/Settings/DisplaySettingsLogic.cs b/OpenRA.Mods.Common/Widgets/Logic/Settings/DisplaySettingsLogic.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/Settings/DisplaySettingsLogic.cs
++++ b/OpenRA.Mods.Common/Widgets/Logic/Settings/DisplaySettingsLogic.cs
+@@ -72,6 +72,7 @@
+ 		static readonly int2 OriginalGraphicsWindowedSize;
+ 		static readonly int2 OriginalGraphicsFullscreenSize;
+ 		static readonly GLProfile OriginalGLProfile;
++		static readonly string OriginalLanguage;
+ 
+ 		readonly ModData modData;
+ 		readonly WorldRenderer worldRenderer;
+@@ -95,6 +96,7 @@
+ 			OriginalGraphicsWindowedSize = original.Graphics.WindowedSize;
+ 			OriginalGraphicsFullscreenSize = original.Graphics.FullscreenSize;
+ 			OriginalGLProfile = original.Graphics.GLProfile;
++			OriginalLanguage = original.Game.Language;
+ 		}
+ 
+ 		[ObjectCreator.UseCtor]
+@@ -242,6 +244,7 @@
+ 
+ 			var restartDesc = panel.Get("VIDEO_RESTART_REQUIRED_DESC");
+ 			restartDesc.IsVisible = () => ds.Mode != OriginalGraphicsMode || ds.VideoDisplay != OriginalVideoDisplay || ds.GLProfile != OriginalGLProfile ||
++				gs.Language != OriginalLanguage ||
+ 				(ds.Mode == WindowMode.Windowed && (origWidthText != windowWidth.Text || origHeightText != windowHeight.Text));
+ 
+ 			var frameLimitGamespeedCheckbox = panel.Get<CheckboxWidget>("FRAME_LIMIT_GAMESPEED_CHECKBOX");
+@@ -310,7 +313,8 @@
+ 					ds.VideoDisplay != OriginalVideoDisplay ||
+ 					ds.WindowedSize != OriginalGraphicsWindowedSize ||
+ 					ds.FullscreenSize != OriginalGraphicsFullscreenSize ||
+-					ds.GLProfile != OriginalGLProfile;
++					ds.GLProfile != OriginalGLProfile ||
++					gs.Language != OriginalLanguage;
+ 			};
+ 		}
+ 
+@@ -348,5 +353,6 @@
+ 				ps.Name = dps.Name;
+ 
+ 				gs.TextNotificationPoolFilters = dgs.TextNotificationPoolFilters;
++				gs.Language = dgs.Language;
+ 			};
+ 		}

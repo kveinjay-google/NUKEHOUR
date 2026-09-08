@@ -1,0 +1,4535 @@
+diff -ruN a/OpenRA.Game/Map/MapPreview.cs b/OpenRA.Game/Map/MapPreview.cs
+--- a/OpenRA.Game/Map/MapPreview.cs	2026-08-28 02:02:43
++++ b/OpenRA.Game/Map/MapPreview.cs	2026-08-28 02:02:43
+@@ -568,7 +568,7 @@
+ 			if ((Status != MapStatus.DownloadError && Status != MapStatus.DownloadAvailable) || !Game.Settings.Game.AllowDownloading)
+ 				return;
+ 
+-			innerData.Status = MapStatus.Downloading;
++			BeginDownloadAttempt();
+ 			var installLocation = cache.MapLocations.FirstOrDefault(p => p.Value == MapClassification.User);
+ 			if (installLocation.Key is not IReadWritePackage mapInstallPackage)
+ 			{
+@@ -632,6 +632,13 @@
+ 					innerData.Status = MapStatus.DownloadError;
+ 				}
+ 			});
++		}
++
++		internal void BeginDownloadAttempt()
++		{
++			DownloadBytes = 0;
++			DownloadPercentage = 0;
++			innerData.Status = MapStatus.Downloading;
+ 		}
+ 
+ 		public void Invalidate()
+diff -ruN a/OpenRA.Game/Network/ClientMapReadiness.cs b/OpenRA.Game/Network/ClientMapReadiness.cs
+--- a/OpenRA.Game/Network/ClientMapReadiness.cs	1969-12-31 16:00:00
++++ b/OpenRA.Game/Network/ClientMapReadiness.cs	2026-08-28 02:02:43
+@@ -0,0 +1,294 @@
++#region Copyright & License Information
++/*
++ * Copyright (c) The OpenRA Developers and Contributors
++ * This file is part of OpenRA, which is free software. It is made
++ * available to you under the terms of the GNU General Public License
++ * as published by the Free Software Foundation, either version 3 of
++ * the License, or (at your option) any later version. For more
++ * information, see COPYING.
++ */
++#endregion
++
++using System;
++using System.Globalization;
++using System.Linq;
++
++namespace OpenRA.Network
++{
++	public readonly struct ClientMapReadinessReport : IEquatable<ClientMapReadinessReport>
++	{
++		public readonly string MapUid;
++		public readonly Session.ClientMapPhase Phase;
++		public readonly int Progress;
++
++		public ClientMapReadinessReport(string mapUid, Session.ClientMapPhase phase, int progress)
++		{
++			MapUid = mapUid;
++			Phase = phase;
++			Progress = progress;
++		}
++
++		internal static bool IsValidMapUid(string uid)
++		{
++			return !string.IsNullOrEmpty(uid) && !uid.Any(char.IsWhiteSpace);
++		}
++
++		public bool IsValidFor(string currentUid)
++		{
++			return IsValidMapUid(MapUid) &&
++				string.Equals(MapUid, currentUid, StringComparison.Ordinal) &&
++				ClientMapReadinessState.IsValidPhaseProgress(Phase, Progress);
++		}
++
++		public static bool TryParse(string command, out ClientMapReadinessReport report)
++		{
++			report = default;
++			if (string.IsNullOrWhiteSpace(command))
++				return false;
++
++			var tokens = command.Split(' ', StringSplitOptions.RemoveEmptyEntries);
++			if (tokens.Length != 4 || tokens[0] != "map_status" || !IsValidMapUid(tokens[1]) ||
++				!Enum.TryParse(tokens[2], false, out Session.ClientMapPhase phase) ||
++				!Enum.IsDefined(typeof(Session.ClientMapPhase), phase) ||
++				tokens[2] != phase.ToString() ||
++				!int.TryParse(tokens[3], NumberStyles.Integer, CultureInfo.InvariantCulture, out var progress) ||
++				!ClientMapReadinessState.IsValidPhaseProgress(phase, progress))
++				return false;
++
++			report = new ClientMapReadinessReport(tokens[1], phase, progress);
++			return true;
++		}
++
++		public string ToCommand()
++		{
++			if (!IsValidFor(MapUid))
++				throw new InvalidOperationException("Cannot serialize an invalid map readiness report.");
++
++			return $"map_status {MapUid} {Phase} {Progress.ToString(CultureInfo.InvariantCulture)}";
++		}
++
++		public bool Equals(ClientMapReadinessReport other)
++		{
++			return string.Equals(MapUid, other.MapUid, StringComparison.Ordinal) &&
++				Phase == other.Phase && Progress == other.Progress;
++		}
++
++		public override bool Equals(object obj)
++		{
++			return obj is ClientMapReadinessReport other && Equals(other);
++		}
++
++		public override int GetHashCode()
++		{
++			return HashCode.Combine(MapUid, Phase, Progress);
++		}
++
++		public static bool operator ==(ClientMapReadinessReport left, ClientMapReadinessReport right)
++		{
++			return left.Equals(right);
++		}
++
++		public static bool operator !=(ClientMapReadinessReport left, ClientMapReadinessReport right)
++		{
++			return !left.Equals(right);
++		}
++	}
++
++	public enum ClientMapReadinessApplyResult
++	{
++		Rejected,
++		Unchanged,
++		Changed,
++		BecameReady,
++		BecameUnready
++	}
++
++	public static class ClientMapReadinessState
++	{
++		public static bool IsValidPhaseProgress(Session.ClientMapPhase phase, int progress)
++		{
++			if (!Enum.IsDefined(typeof(Session.ClientMapPhase), phase))
++				return false;
++
++			return phase switch
++			{
++				Session.ClientMapPhase.Downloading => progress == -1 || progress is >= 0 and <= 99,
++				Session.ClientMapPhase.Ready => progress == 100,
++				_ => progress == -1
++			};
++		}
++
++		public static void Reset(Session.Client client, string mapUid)
++		{
++			if (client == null)
++				throw new ArgumentNullException(nameof(client));
++			if (!ClientMapReadinessReport.IsValidMapUid(mapUid))
++				throw new ArgumentException("Map UID must be a nonempty single token.", nameof(mapUid));
++
++			client.MapUid = mapUid;
++			client.MapPhase = Session.ClientMapPhase.Unknown;
++			client.MapProgress = -1;
++			client.State = Session.ClientState.Invalid;
++		}
++
++		public static ClientMapReadinessApplyResult Apply(
++			Session.Client client, string currentUid, ClientMapReadinessReport report)
++		{
++			if (client == null || !report.IsValidFor(currentUid))
++				return ClientMapReadinessApplyResult.Rejected;
++
++			var wasReady = client.IsMapReadyFor(currentUid);
++			var nextState = report.Phase == Session.ClientMapPhase.Ready ?
++				(client.State == Session.ClientState.Invalid ? Session.ClientState.NotReady : client.State) :
++				Session.ClientState.Invalid;
++			var changed = !string.Equals(client.MapUid, report.MapUid, StringComparison.Ordinal) ||
++				client.MapPhase != report.Phase || client.MapProgress != report.Progress || client.State != nextState;
++
++			client.MapUid = report.MapUid;
++			client.MapPhase = report.Phase;
++			client.MapProgress = report.Progress;
++			client.State = nextState;
++
++			var isReady = client.IsMapReadyFor(currentUid);
++			if (!wasReady && isReady)
++				return ClientMapReadinessApplyResult.BecameReady;
++			if (wasReady && !isReady)
++				return ClientMapReadinessApplyResult.BecameUnready;
++
++			return changed ? ClientMapReadinessApplyResult.Changed : ClientMapReadinessApplyResult.Unchanged;
++		}
++	}
++
++	public sealed class ClientMapReadinessUpdate
++	{
++		[FieldLoader.Require]
++		public int ClientIndex;
++
++		[FieldLoader.Require]
++		public string MapUid;
++
++		[FieldLoader.Require]
++		public Session.ClientMapPhase Phase = Session.ClientMapPhase.Unknown;
++
++		[FieldLoader.Require]
++		public int Progress = -1;
++
++		[FieldLoader.Require]
++		public Session.ClientState ClientState = Session.ClientState.Invalid;
++
++		bool IsStructurallyValid()
++		{
++			return ClientIndex >= 0 && IsValidClientStateForPhase() &&
++				new ClientMapReadinessReport(MapUid, Phase, Progress).IsValidFor(MapUid);
++		}
++
++		bool IsValidClientStateForPhase()
++		{
++			if (!Enum.IsDefined(typeof(Session.ClientState), ClientState) ||
++				ClientState == Session.ClientState.Disconnected)
++				return false;
++
++			return Phase == Session.ClientMapPhase.Ready ?
++				ClientState == Session.ClientState.NotReady || ClientState == Session.ClientState.Ready :
++				ClientState == Session.ClientState.Invalid;
++		}
++
++		static bool IsCanonicalEnumToken<T>(string rawToken) where T : struct, Enum
++		{
++			return !string.IsNullOrEmpty(rawToken) &&
++				Enum.TryParse(rawToken, false, out T value) &&
++				Enum.IsDefined(typeof(T), value) &&
++				string.Equals(rawToken, value.ToString(), StringComparison.Ordinal);
++		}
++
++		static bool HasExactlyOneOfEachField(MiniYaml data, out string phase, out string clientState)
++		{
++			const int AllFields = 0b1_1111;
++			phase = null;
++			clientState = null;
++			var seen = 0;
++			foreach (var node in data.Nodes)
++			{
++				var field = node.Key switch
++				{
++					nameof(ClientIndex) => 1 << 0,
++					nameof(MapUid) => 1 << 1,
++					nameof(Phase) => 1 << 2,
++					nameof(Progress) => 1 << 3,
++					nameof(ClientState) => 1 << 4,
++					_ => 0
++				};
++
++				if (field == 0 || (seen & field) != 0)
++					return false;
++
++				seen |= field;
++				if (field == 1 << 2)
++					phase = node.Value.Value;
++				else if (field == 1 << 4)
++					clientState = node.Value.Value;
++			}
++
++			return seen == AllFields;
++		}
++
++		public MiniYamlNode Serialize()
++		{
++			return new MiniYamlNode("ClientMapReadiness", FieldSaver.Save(this));
++		}
++
++		public static ClientMapReadinessUpdate Deserialize(MiniYaml data)
++		{
++			try
++			{
++				if (data == null || !HasExactlyOneOfEachField(data, out var phase, out var clientState) ||
++					!IsCanonicalEnumToken<Session.ClientMapPhase>(phase) ||
++					!IsCanonicalEnumToken<Session.ClientState>(clientState))
++					return null;
++
++				var update = FieldLoader.Load<ClientMapReadinessUpdate>(data);
++				return update.IsStructurallyValid() ? update : null;
++			}
++			catch (Exception)
++			{
++				// Lobby deltas are untrusted network input and must fail closed.
++				return null;
++			}
++		}
++
++		public static bool TryDeserialize(string data, string name, out ClientMapReadinessUpdate update)
++		{
++			update = null;
++			try
++			{
++				var nodes = MiniYaml.FromString(data, name);
++				if (nodes.Count != 1 || nodes[0].Key != "ClientMapReadiness")
++					return false;
++
++				update = Deserialize(nodes[0].Value);
++				return update != null;
++			}
++			catch (Exception)
++			{
++				return false;
++			}
++		}
++
++		public bool ApplyTo(Session session)
++		{
++			if (session == null || session.GlobalSettings == null || !IsStructurallyValid() ||
++				!string.Equals(MapUid, session.GlobalSettings.Map, StringComparison.Ordinal))
++				return false;
++
++			var client = session.ClientWithIndex(ClientIndex);
++			if (client == null)
++				return false;
++
++			client.MapUid = MapUid;
++			client.MapPhase = Phase;
++			client.MapProgress = Progress;
++			client.State = ClientState;
++			return true;
++		}
++	}
++}
+diff -ruN a/OpenRA.Game/Network/ClientMapReadinessPublisher.cs b/OpenRA.Game/Network/ClientMapReadinessPublisher.cs
+--- a/OpenRA.Game/Network/ClientMapReadinessPublisher.cs	1969-12-31 16:00:00
++++ b/OpenRA.Game/Network/ClientMapReadinessPublisher.cs	2026-08-28 02:02:43
+@@ -0,0 +1,81 @@
++#region Copyright & License Information
++/*
++ * Copyright (c) The OpenRA Developers and Contributors
++ * This file is part of OpenRA, which is free software. It is made
++ * available to you under the terms of the GNU General Public License
++ * as published by the Free Software Foundation, either version 3 of
++ * the License, or (at your option) any later version. For more
++ * information, see COPYING.
++ */
++#endregion
++
++using System;
++
++namespace OpenRA.Network
++{
++	public sealed class ClientMapReadinessPublisher
++	{
++		const long ProgressPublishIntervalMilliseconds = 250;
++
++		readonly Func<long> elapsedMilliseconds;
++		string lastMapUid;
++		ClientMapReadinessReport? lastPublishedReport;
++		long lastPublishedAt;
++
++		public ClientMapReadinessPublisher(Func<long> elapsedMilliseconds)
++		{
++			this.elapsedMilliseconds = elapsedMilliseconds ?? throw new ArgumentNullException(nameof(elapsedMilliseconds));
++		}
++
++		public ClientMapReadinessReport? Update(string mapUid, MapStatus status, int percentage)
++		{
++			var report = status switch
++			{
++				MapStatus.Searching => new ClientMapReadinessReport(mapUid, Session.ClientMapPhase.Searching, -1),
++				MapStatus.DownloadAvailable => new ClientMapReadinessReport(mapUid, Session.ClientMapPhase.WaitingForDownload, -1),
++				MapStatus.Downloading when percentage == 100 =>
++					new ClientMapReadinessReport(mapUid, Session.ClientMapPhase.InstallingOrVerifying, -1),
++				MapStatus.Downloading when percentage is >= 1 and <= 99 =>
++					new ClientMapReadinessReport(mapUid, Session.ClientMapPhase.Downloading, percentage),
++				MapStatus.Downloading => new ClientMapReadinessReport(mapUid, Session.ClientMapPhase.Downloading, -1),
++				MapStatus.Available => new ClientMapReadinessReport(mapUid, Session.ClientMapPhase.Ready, 100),
++				MapStatus.Unavailable => new ClientMapReadinessReport(mapUid, Session.ClientMapPhase.Unavailable, -1),
++				MapStatus.DownloadError => new ClientMapReadinessReport(mapUid, Session.ClientMapPhase.Error, -1),
++				_ => new ClientMapReadinessReport(mapUid, Session.ClientMapPhase.Unknown, -1)
++			};
++
++			return Publish(report);
++		}
++
++		public ClientMapReadinessReport? UpdateUnknown(string mapUid)
++		{
++			return Publish(new ClientMapReadinessReport(mapUid, Session.ClientMapPhase.Unknown, -1));
++		}
++
++		ClientMapReadinessReport? Publish(ClientMapReadinessReport report)
++		{
++			if (!report.IsValidFor(report.MapUid))
++				return null;
++
++			if (!string.Equals(lastMapUid, report.MapUid, StringComparison.Ordinal))
++			{
++				lastMapUid = report.MapUid;
++				lastPublishedReport = null;
++			}
++
++			if (lastPublishedReport == report)
++				return null;
++
++			var now = elapsedMilliseconds();
++			if (lastPublishedReport.HasValue &&
++				lastPublishedReport.Value.Phase == Session.ClientMapPhase.Downloading &&
++				report.Phase == Session.ClientMapPhase.Downloading &&
++				now - lastPublishedAt < ProgressPublishIntervalMilliseconds)
++				return null;
++
++			lastPublishedReport = report;
++			lastPublishedAt = now;
++			return report;
++		}
++	}
++}
+diff -ruN a/OpenRA.Game/Network/LobbyStartAvailability.cs b/OpenRA.Game/Network/LobbyStartAvailability.cs
+--- a/OpenRA.Game/Network/LobbyStartAvailability.cs	1969-12-31 16:00:00
++++ b/OpenRA.Game/Network/LobbyStartAvailability.cs	2026-08-28 02:02:43
+@@ -0,0 +1,285 @@
++#region Copyright & License Information
++/*
++ * Copyright (c) The OpenRA Developers and Contributors
++ * This file is part of OpenRA, which is free software. It is made
++ * available to you under the terms of the GNU General Public License
++ * as published by the Free Software Foundation, either version 3 of
++ * the License, or (at your option) any later version. For more
++ * information, see COPYING.
++ */
++#endregion
++
++using System;
++using System.Collections.Generic;
++using System.Globalization;
++using System.Linq;
++
++namespace OpenRA.Network
++{
++	public enum LobbyStartMode
++	{
++		SafeDirect,
++		ForceConfirmed,
++		Automatic
++	}
++
++	public struct LobbyStartInputs
++	{
++		public Session LobbyInfo { get; set; }
++		public LobbyStartMode Mode { get; set; }
++		public bool RequesterIsAdmin { get; set; }
++		public bool RequireCurrentMapReadiness { get; set; }
++		public bool InsufficientEnabledSpawnPoints { get; set; }
++	}
++
++	public readonly struct LobbyStartAvailability : IEquatable<LobbyStartAvailability>
++	{
++		public static readonly LobbyStartAvailability Allowed = new(
++			Session.LobbyStartBlockReason.None, -1, Session.ClientMapPhase.Unknown, -1, 0);
++
++		public bool CanStart => Reason == Session.LobbyStartBlockReason.None;
++		public Session.LobbyStartBlockReason Reason { get; }
++		public int ClientIndex { get; }
++		public Session.ClientMapPhase ClientMapPhase { get; }
++		public int Progress { get; }
++		public int AdditionalBlockingClientCount { get; }
++
++		LobbyStartAvailability(Session.LobbyStartBlockReason reason, int clientIndex,
++			Session.ClientMapPhase clientMapPhase, int progress, int additionalBlockingClientCount)
++		{
++			Reason = reason;
++			ClientIndex = clientIndex;
++			ClientMapPhase = clientMapPhase;
++			Progress = progress;
++			AdditionalBlockingClientCount = additionalBlockingClientCount;
++		}
++
++		static LobbyStartAvailability Blocked(Session.LobbyStartBlockReason reason)
++		{
++			return new LobbyStartAvailability(reason, -1, Session.ClientMapPhase.Unknown, -1, 0);
++		}
++
++		static LobbyStartAvailability Blocked(Session.LobbyStartBlockReason reason,
++			Session.Client client, int additionalBlockingClientCount)
++		{
++			return new LobbyStartAvailability(reason, client.Index, client.MapPhase,
++				client.MapProgress, additionalBlockingClientCount);
++		}
++
++		static (int Priority, Session.LobbyStartBlockReason Reason) MapBlocker(Session.Client client, string mapUid)
++		{
++			if (client.IsMapReadyFor(mapUid) && client.State != Session.ClientState.Invalid)
++				return (-1, Session.LobbyStartBlockReason.None);
++
++			return client.MapPhase switch
++			{
++				Session.ClientMapPhase.Error => (0, Session.LobbyStartBlockReason.ClientMapError),
++				Session.ClientMapPhase.Unavailable => (1, Session.LobbyStartBlockReason.ClientMapUnavailable),
++				Session.ClientMapPhase.InstallingOrVerifying =>
++					(2, Session.LobbyStartBlockReason.ClientMapInstallingOrVerifying),
++				Session.ClientMapPhase.Downloading => (3, Session.LobbyStartBlockReason.ClientMapDownloading),
++				Session.ClientMapPhase.Searching => (4, Session.LobbyStartBlockReason.ClientMapSearching),
++				Session.ClientMapPhase.WaitingForDownload =>
++					(5, Session.LobbyStartBlockReason.ClientMapWaitingForDownload),
++				_ => (6, Session.LobbyStartBlockReason.ClientMapUnknown)
++			};
++		}
++
++		public static LobbyStartAvailability EvaluateMapSafety(
++			Session lobbyInfo, bool requireCurrentMapReadiness)
++		{
++			if (lobbyInfo?.GlobalSettings == null)
++				return Blocked(Session.LobbyStartBlockReason.ServerMapNotPlayable);
++
++			var mapStatus = lobbyInfo.GlobalSettings.MapStatus;
++			if ((mapStatus & Session.MapStatus.Validating) != 0)
++				return Blocked(Session.LobbyStartBlockReason.ServerMapValidating);
++			if ((mapStatus & Session.MapStatus.Incompatible) != 0)
++				return Blocked(Session.LobbyStartBlockReason.ServerMapIncompatible);
++			if ((mapStatus & Session.MapStatus.Playable) == 0)
++				return Blocked(Session.LobbyStartBlockReason.ServerMapNotPlayable);
++
++			if (!requireCurrentMapReadiness)
++				return Allowed;
++
++			var currentMapUid = lobbyInfo.GlobalSettings.Map;
++			var blockers = lobbyInfo.NonBotClients
++				.Select(client => (Client: client, Blocker: MapBlocker(client, currentMapUid)))
++				.Where(entry => entry.Blocker.Priority >= 0)
++				.OrderBy(entry => entry.Blocker.Priority)
++				.ThenBy(entry => entry.Client.Index)
++				.ToArray();
++			if (blockers.Length == 0)
++				return Allowed;
++
++			return Blocked(blockers[0].Blocker.Reason, blockers[0].Client, blockers.Length - 1);
++		}
++
++		public static LobbyStartAvailability Evaluate(LobbyStartInputs inputs)
++		{
++			var lobbyInfo = inputs.LobbyInfo;
++			var mapSafety = EvaluateMapSafety(lobbyInfo, inputs.RequireCurrentMapReadiness);
++			if (!mapSafety.CanStart)
++				return mapSafety;
++
++			if (!inputs.RequesterIsAdmin)
++				return Blocked(Session.LobbyStartBlockReason.RequesterNotAdmin);
++
++			if (lobbyInfo.Slots.Any(slot => slot.Value.Required && lobbyInfo.ClientInSlot(slot.Key) == null))
++				return Blocked(Session.LobbyStartBlockReason.RequiredSlotEmpty);
++
++			if (lobbyInfo.Slots.All(slot => lobbyInfo.ClientInSlot(slot.Key) == null))
++				return Blocked(Session.LobbyStartBlockReason.NoPlayers);
++
++			if (!lobbyInfo.GlobalSettings.EnableSingleplayer && lobbyInfo.NonBotPlayers.Count() < 2)
++				return Blocked(Session.LobbyStartBlockReason.InsufficientHumans);
++
++			if (inputs.Mode == LobbyStartMode.Automatic)
++			{
++				var requiredReadyClients = lobbyInfo.NonBotPlayers
++					.Concat(lobbyInfo.NonBotClients.Where(client => client.IsAdmin))
++					.GroupBy(client => client.Index)
++					.Select(group => group.First())
++					.Where(client => client.State != Session.ClientState.Ready)
++					.OrderBy(client => client.Index)
++					.ToArray();
++				if (requiredReadyClients.Length != 0)
++					return Blocked(Session.LobbyStartBlockReason.ClientGameNotReady,
++						requiredReadyClients[0], requiredReadyClients.Length - 1);
++			}
++
++			if (inputs.InsufficientEnabledSpawnPoints)
++				return Blocked(Session.LobbyStartBlockReason.InsufficientSpawnPoints);
++
++			return Allowed;
++		}
++
++		public LobbyStartAvailability ApplyLocalMapAvailability(bool localMapAvailable)
++		{
++			return CanStart && !localMapAvailable ?
++				Blocked(Session.LobbyStartBlockReason.SelectedMapUnavailable) : this;
++		}
++
++		public LobbyStartRejection ToRejection(string expectedMapUid)
++		{
++			if (CanStart)
++				throw new InvalidOperationException("An allowed start cannot be serialized as a rejection.");
++
++			return new LobbyStartRejection(Reason, ClientIndex, ClientMapPhase, Progress, expectedMapUid);
++		}
++
++		public bool Equals(LobbyStartAvailability other)
++		{
++			return Reason == other.Reason && ClientIndex == other.ClientIndex &&
++				ClientMapPhase == other.ClientMapPhase && Progress == other.Progress &&
++				AdditionalBlockingClientCount == other.AdditionalBlockingClientCount;
++		}
++
++		public override bool Equals(object obj)
++		{
++			return obj is LobbyStartAvailability other && Equals(other);
++		}
++
++		public override int GetHashCode()
++		{
++			return HashCode.Combine(Reason, ClientIndex, ClientMapPhase, Progress,
++				AdditionalBlockingClientCount);
++		}
++
++		public static bool operator ==(LobbyStartAvailability left, LobbyStartAvailability right) => left.Equals(right);
++		public static bool operator !=(LobbyStartAvailability left, LobbyStartAvailability right) => !left.Equals(right);
++	}
++
++	public sealed class LobbyStartRejection
++	{
++		public Session.LobbyStartBlockReason Reason { get; }
++		public int ClientIndex { get; }
++		public Session.ClientMapPhase ClientMapPhase { get; }
++		public int Progress { get; }
++		public string ExpectedMapUid { get; }
++
++		public LobbyStartRejection(Session.LobbyStartBlockReason reason, int clientIndex,
++			Session.ClientMapPhase clientMapPhase, int progress, string expectedMapUid)
++		{
++			Reason = reason;
++			ClientIndex = clientIndex;
++			ClientMapPhase = clientMapPhase;
++			Progress = progress;
++			ExpectedMapUid = expectedMapUid;
++			if (!IsValid())
++				throw new ArgumentException("Invalid lobby start rejection.");
++		}
++
++		bool IsValid()
++		{
++			if (!Enum.IsDefined(typeof(Session.LobbyStartBlockReason), Reason) ||
++				Reason == Session.LobbyStartBlockReason.None || ClientIndex < -1 ||
++				string.IsNullOrEmpty(ExpectedMapUid) || ExpectedMapUid.Any(char.IsWhiteSpace) ||
++				!ClientMapReadinessState.IsValidPhaseProgress(ClientMapPhase, Progress))
++				return false;
++
++			if (ClientIndex < 0)
++				return ClientMapPhase == Session.ClientMapPhase.Unknown && Progress == -1;
++
++			return Reason switch
++			{
++				Session.LobbyStartBlockReason.ClientMapUnknown => ClientMapPhase == Session.ClientMapPhase.Unknown,
++				Session.LobbyStartBlockReason.ClientMapSearching => ClientMapPhase == Session.ClientMapPhase.Searching,
++				Session.LobbyStartBlockReason.ClientMapWaitingForDownload =>
++					ClientMapPhase == Session.ClientMapPhase.WaitingForDownload,
++				Session.LobbyStartBlockReason.ClientMapDownloading => ClientMapPhase == Session.ClientMapPhase.Downloading,
++				Session.LobbyStartBlockReason.ClientMapInstallingOrVerifying =>
++					ClientMapPhase == Session.ClientMapPhase.InstallingOrVerifying,
++				Session.LobbyStartBlockReason.ClientMapUnavailable => ClientMapPhase == Session.ClientMapPhase.Unavailable,
++				Session.LobbyStartBlockReason.ClientMapError => ClientMapPhase == Session.ClientMapPhase.Error,
++				Session.LobbyStartBlockReason.ClientGameNotReady => ClientMapPhase == Session.ClientMapPhase.Ready,
++				_ => false
++			};
++		}
++
++		public string Serialize()
++		{
++			return new List<MiniYamlNode>
++			{
++				new(nameof(Reason), Reason.ToString()),
++				new(nameof(ClientIndex), ClientIndex.ToString(CultureInfo.InvariantCulture)),
++				new(nameof(ClientMapPhase), ClientMapPhase.ToString()),
++				new(nameof(Progress), Progress.ToString(CultureInfo.InvariantCulture)),
++				new(nameof(ExpectedMapUid), ExpectedMapUid)
++			}.WriteToString();
++		}
++
++		public static LobbyStartRejection Deserialize(string data)
++		{
++			try
++			{
++				var nodes = MiniYaml.FromString(data, "lobby-start-rejection");
++				var expected = new[]
++				{
++					nameof(Reason), nameof(ClientIndex), nameof(ClientMapPhase), nameof(Progress), nameof(ExpectedMapUid)
++				};
++				if (nodes.Count != expected.Length || expected.Any(key => nodes.Count(node => node.Key == key) != 1) ||
++					nodes.Any(node => !expected.Contains(node.Key)))
++					return null;
++
++				var values = nodes.ToDictionary(node => node.Key, node => node.Value.Value);
++				if (!Enum.TryParse(values[nameof(Reason)], false, out Session.LobbyStartBlockReason reason) ||
++					values[nameof(Reason)] != reason.ToString() ||
++					!int.TryParse(values[nameof(ClientIndex)], NumberStyles.Integer,
++						CultureInfo.InvariantCulture, out var clientIndex) ||
++					!Enum.TryParse(values[nameof(ClientMapPhase)], false, out Session.ClientMapPhase phase) ||
++					values[nameof(ClientMapPhase)] != phase.ToString() ||
++					!int.TryParse(values[nameof(Progress)], NumberStyles.Integer,
++						CultureInfo.InvariantCulture, out var progress))
++					return null;
++
++				return new LobbyStartRejection(reason, clientIndex, phase, progress,
++					values[nameof(ExpectedMapUid)]);
++			}
++			catch (Exception)
++			{
++				return null;
++			}
++		}
++	}
++}
+diff -ruN a/OpenRA.Game/Network/OrderManager.cs b/OpenRA.Game/Network/OrderManager.cs
+--- a/OpenRA.Game/Network/OrderManager.cs	2026-08-28 02:02:43
++++ b/OpenRA.Game/Network/OrderManager.cs	2026-08-28 02:02:43
+@@ -26,6 +26,8 @@
+ 		const string DesyncCompareLogs = "notification-desync-compare-logs";
+ 
+ 		readonly SyncReport syncReport;
++		readonly ClientMapReadinessPublisher mapReadinessPublisher;
++		readonly Func<string, MapPreview> mapPreviewResolver;
+ 		readonly Dictionary<int, Queue<(int Frame, OrderPacket Orders)>> pendingOrders = new();
+ 		readonly Dictionary<int, (int SyncHash, ulong DefeatState)> syncForFrame = new();
+ 
+@@ -33,6 +35,8 @@
+ 
+ 		/// <summary>Null when watching a replay.</summary>
+ 		public Session.Client LocalClient => LobbyInfo.ClientWithIndex(Connection.LocalClientId);
++		public event Action<int> ClientMapReadinessChanged = _ => { };
++		public event Action<LobbyStartRejection> SafeStartRejected = _ => { };
+ 		public World World;
+ 		public int OrderQueueLength => pendingOrders.Count > 0 ? pendingOrders.Min(q => q.Value.Count) : 0;
+ 
+@@ -119,13 +123,26 @@
+ 		}
+ 
+ 		public OrderManager(IConnection conn)
++			: this(conn, () => Game.RunTime, ResolveMapPreview)
+ 		{
+-			Connection = conn;
++		}
++
++		public OrderManager(IConnection conn, Func<long> elapsedMilliseconds, Func<string, MapPreview> mapPreviewResolver)
++		{
++			Connection = conn ?? throw new ArgumentNullException(nameof(conn));
++			this.mapPreviewResolver = mapPreviewResolver ?? throw new ArgumentNullException(nameof(mapPreviewResolver));
++			mapReadinessPublisher = new ClientMapReadinessPublisher(elapsedMilliseconds);
+ 			syncReport = new SyncReport(this);
+ 
+ 			LastTickTime = new TickTime(() => SuggestedTimestep, Game.RunTime);
+ 		}
+ 
++		static MapPreview ResolveMapPreview(string uid)
++		{
++			return Game.ModData?.MapCache?.FirstOrDefault(
++				preview => string.Equals(preview.Uid, uid, StringComparison.Ordinal));
++		}
++
+ 		public void IssueOrders(Order[] orders)
+ 		{
+ 			foreach (var order in orders)
+@@ -140,6 +157,16 @@
+ 				localOrders.Add(order);
+ 		}
+ 
++		internal void NotifyClientMapReadinessChanged(int clientIndex)
++		{
++			ClientMapReadinessChanged(clientIndex);
++		}
++
++		internal void NotifySafeStartRejected(LobbyStartRejection rejection)
++		{
++			SafeStartRejected(rejection);
++		}
++
+ 		void SendImmediateOrders()
+ 		{
+ 			if (localImmediateOrders.Count != 0 && GameSaveLastFrame < NetFrameNumber)
+@@ -147,6 +174,22 @@
+ 			localImmediateOrders.Clear();
+ 		}
+ 
++		void PublishCurrentMapReadiness()
++		{
++			if (GameStarted || LocalClient == null)
++				return;
++
++			var uid = LobbyInfo.GlobalSettings?.Map;
++			if (string.IsNullOrEmpty(uid) || uid.Any(char.IsWhiteSpace))
++				return;
++
++			var preview = mapPreviewResolver(uid);
++			var report = preview == null ? mapReadinessPublisher.UpdateUnknown(uid) :
++				mapReadinessPublisher.Update(uid, preview.Status, preview.DownloadPercentage);
++			if (report.HasValue)
++				IssueOrder(Order.Command(report.Value.ToCommand()));
++		}
++
+ 		public void ReceiveDisconnect(int clientId, int frame)
+ 		{
+ 			// All clients must process the disconnect on the same world tick to allow synced actions to run deterministically.
+@@ -295,6 +338,8 @@
+ 
+ 		public void TickImmediate()
+ 		{
++			PublishCurrentMapReadiness();
++
+ 			using (DiagnosticTrace.Scope(DiagnosticSubsystem.Network, "SendImmediateOrders"))
+ 				SendImmediateOrders();
+ 
+diff -ruN a/OpenRA.Game/Network/Session.cs b/OpenRA.Game/Network/Session.cs
+--- a/OpenRA.Game/Network/Session.cs	2026-08-28 02:02:43
++++ b/OpenRA.Game/Network/Session.cs	2026-08-28 02:02:43
+@@ -115,7 +115,41 @@
+ 		}
+ 
+ 		public enum ClientState { NotReady, Invalid, Ready, Disconnected = 1000 }
++		public enum ClientMapPhase
++		{
++			Unknown,
++			Searching,
++			WaitingForDownload,
++			Downloading,
++			InstallingOrVerifying,
++			Ready,
++			Unavailable,
++			Error
++		}
+ 
++		public enum LobbyStartBlockReason
++		{
++			None,
++			RequesterNotAdmin,
++			StaleMap,
++			ServerMapValidating,
++			ServerMapIncompatible,
++			ServerMapNotPlayable,
++			SelectedMapUnavailable,
++			ClientMapUnknown,
++			ClientMapSearching,
++			ClientMapWaitingForDownload,
++			ClientMapDownloading,
++			ClientMapInstallingOrVerifying,
++			ClientMapUnavailable,
++			ClientMapError,
++			RequiredSlotEmpty,
++			NoPlayers,
++			InsufficientHumans,
++			InsufficientSpawnPoints,
++			ClientGameNotReady
++		}
++
+ 		public enum ConnectionQuality { Good, Moderate, Poor }
+ 
+ 		public class Client
+@@ -141,6 +175,9 @@
+ 			public ConnectionQuality ConnectionQuality = ConnectionQuality.Good;
+ 
+ 			public ClientState State = ClientState.Invalid;
++			public string MapUid;
++			public ClientMapPhase MapPhase = ClientMapPhase.Unknown;
++			public int MapProgress = -1;
+ 			public int Team;
+ 			public int Handicap;
+ 			public string Slot; // Slot ID, or null for observer
+@@ -149,6 +186,9 @@
+ 			public bool IsAdmin;
+ 			public bool IsReady => State == ClientState.Ready;
+ 			public bool IsInvalid => State == ClientState.Invalid;
++			public bool IsMapReadyFor(string uid) => !string.IsNullOrEmpty(uid) &&
++				string.Equals(MapUid, uid, StringComparison.Ordinal) &&
++				MapPhase == ClientMapPhase.Ready && MapProgress == 100;
+ 			public bool IsObserver => Slot == null;
+ 			public bool IsBot => Bot != null;
+ 
+diff -ruN a/OpenRA.Game/Network/UnitOrders.cs b/OpenRA.Game/Network/UnitOrders.cs
+--- a/OpenRA.Game/Network/UnitOrders.cs	2026-08-28 02:02:43
++++ b/OpenRA.Game/Network/UnitOrders.cs	2026-08-28 02:02:43
+@@ -366,6 +366,32 @@
+ 					break;
+ 				}
+ 
++				case "SyncClientMapReadiness":
++				{
++					if (OrderNotFromServerOrWorldIsReplay(clientId, world) ||
++						!ClientMapReadinessUpdate.TryDeserialize(order.TargetString, order.OrderString, out var update))
++						break;
++
++					if (update.ApplyTo(orderManager.LobbyInfo))
++						orderManager.NotifyClientMapReadinessChanged(update.ClientIndex);
++
++					break;
++				}
++
++				case "SafeStartRejected":
++				{
++					if (OrderNotFromServerOrWorldIsReplay(clientId, world))
++						break;
++
++					var rejection = LobbyStartRejection.Deserialize(order.TargetString);
++					if (rejection == null)
++						System.Diagnostics.Debug.WriteLine("Ignoring malformed SafeStartRejected order.");
++					else
++						orderManager.NotifySafeStartRejected(rejection);
++
++					break;
++				}
++
+ 				case "SyncConnectionQuality":
+ 				{
+ 					var nodes = MiniYaml.FromString(order.TargetString, order.OrderString);
+diff -ruN a/OpenRA.Game/Server/ProtocolVersion.cs b/OpenRA.Game/Server/ProtocolVersion.cs
+--- a/OpenRA.Game/Server/ProtocolVersion.cs	2026-08-28 02:02:43
++++ b/OpenRA.Game/Server/ProtocolVersion.cs	2026-08-28 02:02:43
+@@ -77,6 +77,7 @@
+ 		// The protocol for server and world orders
+ 		// This applies after the handshake has completed, and is provided to support
+ 		// alternative server implementations that wish to support multiple versions in parallel
+-		public const int Orders = 21;
++		// 22: current-map readiness and iOS safe-start orders.
++		public const int Orders = 22;
+ 	}
+ }
+diff -ruN a/OpenRA.Game/Server/Server.cs b/OpenRA.Game/Server/Server.cs
+--- a/OpenRA.Game/Server/Server.cs	2026-08-28 02:02:43
++++ b/OpenRA.Game/Server/Server.cs	2026-08-28 02:02:43
+@@ -1265,6 +1265,16 @@
+ 			}
+ 		}
+ 
++		public void SyncClientMapReadiness(ClientMapReadinessUpdate update)
++		{
++			if (State != ServerState.WaitingPlayers || update == null)
++				return;
++
++			lock (LobbyInfo)
++				DispatchServerOrdersToClients(Order.FromTargetString(
++					"SyncClientMapReadiness", new[] { update.Serialize() }.WriteToString(), true));
++		}
++
+ 		public void SyncLobbySlots()
+ 		{
+ 			if (State != ServerState.WaitingPlayers)
+@@ -1302,6 +1312,10 @@
+ 		{
+ 			lock (LobbyInfo)
+ 			{
++				if (IsMultiplayer && !LobbyStartAvailability.EvaluateMapSafety(
++					LobbyInfo, requireCurrentMapReadiness: true).CanStart)
++					return;
++
+ 				WriteLineWithTimeStamp(FluentProvider.GetMessage(GameStarted));
+ 
+ 				// Drop any players who are not ready
+diff -ruN a/OpenRA.Game/Support/IosMultiplayerSmoke.cs b/OpenRA.Game/Support/IosMultiplayerSmoke.cs
+--- a/OpenRA.Game/Support/IosMultiplayerSmoke.cs	2026-08-28 02:02:43
++++ b/OpenRA.Game/Support/IosMultiplayerSmoke.cs	2026-08-28 02:02:43
+@@ -578,6 +578,12 @@
+ 			string lastIssuedIdentityFrame;
+ 			int localIdentityFrameIndex;
+ 			int localIdentityFrameHoldTicks;
++			int blockedClientIndex = -1;
++			bool mapBlockIssued;
++			bool mapBlockObserved;
++			bool mapReadyRestoreIssued;
++			bool blockedStartIssued;
++			bool blockedStartRejected;
+ 			bool readyIssued;
+ 			bool startIssued;
+ 			bool terminal;
+@@ -640,7 +646,8 @@
+ 				settings.QueryMapRepository = false;
+ 				settings.EnableSyncReports = true;
+ 				settings.Map = map.Uid;
+-				orderManager = Game.JoinServer(Game.CreateServer(settings), string.Empty, recordReplay: false);
++				AttachOrderManager(Game.JoinServer(
++					Game.CreateServer(settings), string.Empty, recordReplay: false));
+ 			}
+ 
+ 			void StartClient()
+@@ -701,7 +708,7 @@
+ 				if (orderManager != null)
+ 					return;
+ 
+-				orderManager = Game.JoinServer(target, string.Empty, recordReplay: false);
++				AttachOrderManager(Game.JoinServer(target, string.Empty, recordReplay: false));
+ 				connectedAddress = address;
+ 				discoveryStage = stage;
+ 				discoveryElapsedMs = elapsed.ElapsedMilliseconds;
+@@ -711,6 +718,29 @@
+ 				Write("CONNECTING", string.Empty);
+ 			}
+ 
++			void AttachOrderManager(OrderManager manager)
++			{
++				orderManager = manager;
++				orderManager.SafeStartRejected += HandleSafeStartRejected;
++			}
++
++			void HandleSafeStartRejected(LobbyStartRejection rejection)
++			{
++				if (terminal || config.Role != IosMultiplayerSmokeRole.Host || !blockedStartIssued)
++					return;
++
++				var currentMapUid = orderManager?.LobbyInfo.GlobalSettings.Map;
++				if (blockedStartRejected || rejection.Reason != Session.LobbyStartBlockReason.ClientMapDownloading ||
++					rejection.ClientIndex != blockedClientIndex || rejection.Progress != 42 ||
++					!string.Equals(rejection.ExpectedMapUid, currentMapUid, StringComparison.Ordinal))
++				{
++					Fail("Safe-start blocker did not identify the expected remote 42% map download.");
++					return;
++				}
++
++				blockedStartRejected = true;
++			}
++
+ 			void Poll()
+ 			{
+ 				if (terminal)
+@@ -746,6 +776,7 @@
+ 
+ 					var humans = orderManager.LobbyInfo.Clients.Where(c => !c.IsBot).ToArray();
+ 					var localClient = orderManager.LocalClient;
++					Session.Client remoteClient = null;
+ 					if (localClient != null)
+ 						PublishLocalIdentityFrame(localClient.Name);
+ 
+@@ -758,7 +789,7 @@
+ 					remoteIdentityCurrentlyValid = false;
+ 					if (localClient != null && humans.Length == 2)
+ 					{
+-						var remoteClient = humans.Single(client => client.Index != localClient.Index);
++						remoteClient = humans.Single(client => client.Index != localClient.Index);
+ 						CaptureRemoteIdentityFrame(remoteClient.Name);
+ 					}
+ 
+@@ -768,10 +799,57 @@
+ 						return;
+ 					}
+ 
+-					var canIssueReady = localClient != null && IosMultiplayerSmokeReadiness.CanIssueReady(
++					var currentMapUid = orderManager.LobbyInfo.GlobalSettings.Map;
++					var selectedMap = Game.ModData.MapCache.FirstOrDefault(map => map.Uid == currentMapUid);
++					var localMapAvailable = selectedMap != null && selectedMap.Status == MapStatus.Available;
++					var serverMapPlayable = orderManager.LobbyInfo.GlobalSettings.MapStatus
++						.HasFlag(Session.MapStatus.Playable);
++					var identityReady = localClient != null && IosMultiplayerSmokeReadiness.CanIssueReady(
+ 						remoteIdentityVerified, remoteAcknowledgedLocalIdentity,
+ 						remoteIdentityCurrentlyValid, localClient.Name,
+ 						lastIssuedIdentityFrame, localAcknowledgementFrame);
++
++					if (config.Role == IosMultiplayerSmokeRole.Client && identityReady &&
++						!mapBlockIssued && localMapAvailable && serverMapPlayable &&
++						localClient.IsMapReadyFor(currentMapUid))
++					{
++						mapBlockIssued = true;
++						var report = new ClientMapReadinessReport(
++							currentMapUid, Session.ClientMapPhase.Downloading, 42);
++						orderManager.IssueOrder(Order.Command(report.ToCommand()));
++					}
++
++					if (config.Role == IosMultiplayerSmokeRole.Client && mapBlockIssued &&
++						localClient?.MapUid == currentMapUid &&
++						localClient.MapPhase == Session.ClientMapPhase.Downloading &&
++						localClient.MapProgress == 42)
++						mapBlockObserved = true;
++
++					if (config.Role == IosMultiplayerSmokeRole.Host && !blockedStartIssued &&
++						identityReady && localMapAvailable && serverMapPlayable &&
++						localClient.IsMapReadyFor(currentMapUid) && remoteClient != null &&
++						remoteClient.MapUid == currentMapUid &&
++						remoteClient.MapPhase == Session.ClientMapPhase.Downloading &&
++						remoteClient.MapProgress == 42)
++					{
++						blockedClientIndex = remoteClient.Index;
++						blockedStartIssued = true;
++						orderManager.IssueOrder(Order.Command($"startgame_safe {currentMapUid}"));
++					}
++
++					if (config.Role == IosMultiplayerSmokeRole.Client && mapBlockObserved &&
++						!mapReadyRestoreIssued && remoteClient?.State == Session.ClientState.Ready)
++					{
++						mapReadyRestoreIssued = true;
++						var report = new ClientMapReadinessReport(
++							currentMapUid, Session.ClientMapPhase.Ready, 100);
++						orderManager.IssueOrder(Order.Command(report.ToCommand()));
++					}
++
++					var blockedPhaseComplete = config.Role == IosMultiplayerSmokeRole.Host ?
++						blockedStartRejected : mapReadyRestoreIssued;
++					var canIssueReady = identityReady && blockedPhaseComplete && localMapAvailable &&
++						serverMapPlayable && localClient.IsMapReadyFor(currentMapUid);
+ 					if (canIssueReady && localClient != null && !readyIssued &&
+ 						localClient.State != Session.ClientState.Ready)
+ 					{
+@@ -779,12 +857,13 @@
+ 						orderManager.IssueOrder(Order.Command($"state {Session.ClientState.Ready}"));
+ 					}
+ 
+-					if (config.Role == IosMultiplayerSmokeRole.Host && !startIssued &&
++					if (config.Role == IosMultiplayerSmokeRole.Host && blockedStartRejected && !startIssued &&
+ 						remoteIdentityVerified && remoteIdentityCurrentlyValid && localClient?.IsAdmin == true &&
+-						humans.Length == 2 && humans.All(c => c.State == Session.ClientState.Ready))
++						humans.Length == 2 && humans.All(c => c.State == Session.ClientState.Ready) &&
++						humans.All(c => c.IsMapReadyFor(currentMapUid)))
+ 					{
+ 						startIssued = true;
+-						orderManager.IssueOrder(Order.Command("startgame"));
++						orderManager.IssueOrder(Order.Command($"startgame_safe {currentMapUid}"));
+ 					}
+ 
+ 					if (orderManager.IsOutOfSync)
+@@ -910,6 +989,7 @@
+ 			void Pass()
+ 			{
+ 				terminal = true;
++				DetachOrderManagerEvents();
+ 				StopNearbyDiscovery();
+ 				Write("PASSED", string.Empty);
+ 			}
+@@ -917,6 +997,7 @@
+ 			void Fail(string detail)
+ 			{
+ 				terminal = true;
++				DetachOrderManagerEvents();
+ 				StopNearbyDiscovery();
+ 				Write("FAILED", detail);
+ 				Console.WriteLine($"OpenRA iOS multiplayer smoke failed ({config.Role}): {detail}");
+@@ -949,6 +1030,11 @@
+ 					$"  \"observedRemoteSessionGuid\": \"{Escape(observedRemoteSessionGuid)}\",\n" +
+ 					$"  \"remoteIdentityVerified\": {(remoteIdentityVerified ? "true" : "false")},\n" +
+ 					$"  \"remoteAcknowledgedLocalIdentity\": {(remoteAcknowledgedLocalIdentity ? "true" : "false")},\n" +
++					$"  \"mapBlockIssued\": {(mapBlockIssued ? "true" : "false")},\n" +
++					$"  \"mapBlockObserved\": {(mapBlockObserved ? "true" : "false")},\n" +
++					$"  \"blockedStartIssued\": {(blockedStartIssued ? "true" : "false")},\n" +
++					$"  \"blockedStartRejected\": {(blockedStartRejected ? "true" : "false")},\n" +
++					$"  \"mapReadyRestoreIssued\": {(mapReadyRestoreIssued ? "true" : "false")},\n" +
+ 					$"  \"processStartedUtc\": \"{processStartedUtc:O}\",\n" +
+ 					$"  \"connectionState\": \"{Escape(connectionState)}\",\n" +
+ 					$"  \"clients\": {clients},\n" +
+@@ -964,6 +1050,12 @@
+ 				var temporary = journalPath + ".tmp";
+ 				File.WriteAllText(temporary, content);
+ 				File.Move(temporary, journalPath, true);
++			}
++
++			void DetachOrderManagerEvents()
++			{
++				if (orderManager != null)
++					orderManager.SafeStartRejected -= HandleSafeStartRejected;
+ 			}
+ 
+ 			void StopNearbyDiscovery()
+diff -ruN a/OpenRA.Mods.Common/ServerTraits/ClientMapReadinessThrottle.cs b/OpenRA.Mods.Common/ServerTraits/ClientMapReadinessThrottle.cs
+--- a/OpenRA.Mods.Common/ServerTraits/ClientMapReadinessThrottle.cs	1969-12-31 16:00:00
++++ b/OpenRA.Mods.Common/ServerTraits/ClientMapReadinessThrottle.cs	2026-08-28 02:02:43
+@@ -0,0 +1,120 @@
++#region Copyright & License Information
++/*
++ * Copyright (c) The OpenRA Developers and Contributors
++ * This file is part of OpenRA, which is free software. It is made
++ * available to you under the terms of the GNU General Public License
++ * as published by the Free Software Foundation, either version 3 of
++ * the License, or (at your option) any later version. For more
++ * information, see COPYING.
++ */
++#endregion
++
++using System;
++using System.Collections.Generic;
++using System.Linq;
++using OpenRA.Network;
++
++namespace OpenRA.Mods.Common.Server
++{
++	public sealed class ClientMapReadinessThrottle
++	{
++		sealed class ClientState
++		{
++			public ClientMapReadinessUpdate LastBroadcast;
++			public ClientMapReadinessUpdate Pending;
++			public long LastBroadcastAt;
++		}
++
++		readonly long minimumIntervalMilliseconds;
++		readonly Dictionary<int, ClientState> clients = new();
++
++		public ClientMapReadinessThrottle(long minimumIntervalMilliseconds)
++		{
++			if (minimumIntervalMilliseconds <= 0)
++				throw new ArgumentOutOfRangeException(nameof(minimumIntervalMilliseconds));
++
++			this.minimumIntervalMilliseconds = minimumIntervalMilliseconds;
++		}
++
++		static ClientMapReadinessUpdate Copy(ClientMapReadinessUpdate update)
++		{
++			return new ClientMapReadinessUpdate
++			{
++				ClientIndex = update.ClientIndex,
++				MapUid = update.MapUid,
++				Phase = update.Phase,
++				Progress = update.Progress,
++				ClientState = update.ClientState
++			};
++		}
++
++		static bool Equal(ClientMapReadinessUpdate a, ClientMapReadinessUpdate b)
++		{
++			return a != null && b != null && a.ClientIndex == b.ClientIndex &&
++				string.Equals(a.MapUid, b.MapUid, StringComparison.Ordinal) &&
++				a.Phase == b.Phase && a.Progress == b.Progress && a.ClientState == b.ClientState;
++		}
++
++		public void Submit(ClientMapReadinessUpdate update, long now)
++		{
++			if (update == null)
++				throw new ArgumentNullException(nameof(update));
++			if (update.ClientIndex < 0)
++				throw new ArgumentOutOfRangeException(nameof(update));
++
++			if (!clients.TryGetValue(update.ClientIndex, out var state))
++				clients.Add(update.ClientIndex, state = new ClientState());
++
++			var snapshot = Copy(update);
++			if (Equal(state.Pending, snapshot))
++				return;
++
++			if (Equal(state.LastBroadcast, snapshot))
++			{
++				state.Pending = null;
++				return;
++			}
++
++			state.Pending = snapshot;
++		}
++
++		public IReadOnlyList<ClientMapReadinessUpdate> Drain(long now)
++		{
++			var updates = new List<ClientMapReadinessUpdate>();
++			foreach (var pair in clients.OrderBy(pair => pair.Key))
++			{
++				var state = pair.Value;
++				if (state.Pending == null || (state.LastBroadcast != null &&
++					now - state.LastBroadcastAt < minimumIntervalMilliseconds))
++					continue;
++
++				state.LastBroadcast = Copy(state.Pending);
++				state.Pending = null;
++				state.LastBroadcastAt = now;
++				updates.Add(Copy(state.LastBroadcast));
++			}
++
++			return updates;
++		}
++
++		public void Remove(int clientIndex)
++		{
++			clients.Remove(clientIndex);
++		}
++
++		public void Retain(IEnumerable<int> clientIndexes)
++		{
++			if (clientIndexes == null)
++				throw new ArgumentNullException(nameof(clientIndexes));
++
++			var retained = new HashSet<int>(clientIndexes);
++			foreach (var clientIndex in clients.Keys.Where(index => !retained.Contains(index)).ToArray())
++				clients.Remove(clientIndex);
++		}
++
++		public void Reset()
++		{
++			clients.Clear();
++		}
++	}
++}
+diff -ruN a/OpenRA.Mods.Common/ServerTraits/LobbyCommands.cs b/OpenRA.Mods.Common/ServerTraits/LobbyCommands.cs
+--- a/OpenRA.Mods.Common/ServerTraits/LobbyCommands.cs	2026-08-28 02:02:43
++++ b/OpenRA.Mods.Common/ServerTraits/LobbyCommands.cs	2026-08-28 02:02:43
+@@ -45,6 +45,9 @@
+ 		[FluentReference]
+ 		const string InsufficientEnabledSpawnPoints = "notification-insufficient-enabled-spawn-points";
+ 
++		[FluentReference]
++		const string MapNotReady = "notification-map-not-ready";
++
+ 		[FluentReference("command")]
+ 		const string MalformedCommand = "notification-malformed-command";
+ 
+@@ -117,6 +120,9 @@
+ 		[FluentReference]
+ 		const string MapBotsDisabled = "notification-map-bots-disabled";
+ 
++		[FluentReference]
++		const string MapChangeNoSlot = "notification-map-change-no-slot";
++
+ 		[FluentReference("player", "name", "value")]
+ 		const string ValueChanged = "notification-option-changed";
+ 
+@@ -156,11 +162,22 @@
+ 		[FluentReference]
+ 		const string VoteKickDisabled = "notification-vote-kick-disabled";
+ 
+-		readonly IDictionary<string, Func<S, Connection, Session.Client, string, bool>> commandHandlers =
+-			new Dictionary<string, Func<S, Connection, Session.Client, string, bool>>
++		const long ReadinessLogIntervalMilliseconds = 5000;
++
++		readonly IDictionary<string, Func<S, Connection, Session.Client, string, bool>> commandHandlers;
++		readonly ClientMapReadinessThrottle mapReadinessThrottle = new(250);
++		readonly Stopwatch mapReadinessClock = Stopwatch.StartNew();
++		int rejectedMapReadinessReports;
++		long lastReadinessLogAt;
++
++		public LobbyCommands()
++		{
++			commandHandlers = new Dictionary<string, Func<S, Connection, Session.Client, string, bool>>
+ 			{
+ 				{ "state", State },
++				{ "map_status", MapReadiness },
+ 				{ "startgame", StartGame },
++				{ "startgame_safe", StartGameSafe },
+ 				{ "slot", Slot },
+ 				{ "slot_close", SlotClose },
+ 				{ "slot_open", SlotOpen },
+@@ -181,6 +198,7 @@
+ 				{ "color", PlayerColor },
+ 				{ "sync_lobby", SyncLobby }
+ 			};
++		}
+ 
+ 		static bool ValidateSlotCommand(S server, Connection conn, Session.Client client, string arg, bool requiresHost)
+ 		{
+@@ -202,6 +220,31 @@
+ 			}
+ 		}
+ 
++		public static string CommandName(string command)
++		{
++			if (string.IsNullOrWhiteSpace(command))
++				return string.Empty;
++
++			var separator = command.IndexOf(' ');
++			return separator < 0 ? command : command[..separator];
++		}
++
++		public static bool IsAllowedWhileReady(string commandName)
++		{
++			return commandName == "state" || commandName == "startgame" ||
++				commandName == "startgame_safe" || commandName == "map_status";
++		}
++
++		public static bool TryParseSafeStartMapUid(string value, out string mapUid)
++		{
++			mapUid = null;
++			if (string.IsNullOrEmpty(value) || value.Any(char.IsWhiteSpace))
++				return false;
++
++			mapUid = value;
++			return true;
++		}
++
+ 		public static bool ValidateCommand(S server, Connection conn, Session.Client client, string command)
+ 		{
+ 			lock (server.LobbyInfo)
+@@ -215,7 +258,7 @@
+ 					server.SendFluentMessageTo(conn, StateUnchangedGameStarted, new object[] { "command", command });
+ 					return false;
+ 				}
+-				else if (client.State == Session.ClientState.Ready && !(command.StartsWith("state", StringComparison.Ordinal) || command == "startgame"))
++				else if (client.State == Session.ClientState.Ready && !IsAllowedWhileReady(CommandName(command)))
+ 				{
+ 					server.SendFluentMessageTo(conn, StateUnchangedReady);
+ 					return false;
+@@ -239,57 +282,197 @@
+ 			return a(server, conn, client, cmdValue);
+ 		}
+ 
+-		static void CheckAutoStart(S server)
++		public static bool TryParseMapReadiness(
++			string value, string currentMapUid, out ClientMapReadinessReport report)
+ 		{
+-			lock (server.LobbyInfo)
++			return ClientMapReadinessReport.TryParse($"map_status {value}", out report) &&
++				report.IsValidFor(currentMapUid);
++		}
++
++		public static ClientMapReadinessApplyResult ApplyMapReadiness(
++			Session.Client client, string currentMapUid, string value, out ClientMapReadinessUpdate update)
++		{
++			update = null;
++			if (!TryParseMapReadiness(value, currentMapUid, out var report))
++				return ClientMapReadinessApplyResult.Rejected;
++
++			var result = ClientMapReadinessState.Apply(client, currentMapUid, report);
++			if (result == ClientMapReadinessApplyResult.Rejected ||
++				result == ClientMapReadinessApplyResult.Unchanged)
++				return result;
++
++			update = new ClientMapReadinessUpdate
+ 			{
+-				var nonBotPlayers = server.LobbyInfo.NonBotPlayers;
++				ClientIndex = client.Index,
++				MapUid = client.MapUid,
++				Phase = client.MapPhase,
++				Progress = client.MapProgress,
++				ClientState = client.State
++			};
+ 
+-				// Are all players and admin (could be spectating) ready?
+-				if (nonBotPlayers.Any(c => c.State != Session.ClientState.Ready) ||
+-					server.LobbyInfo.Clients.First(c => c.IsAdmin).State != Session.ClientState.Ready)
+-					return;
++			return result;
++		}
+ 
+-				// Does server have at least 2 human players?
+-				if (!server.LobbyInfo.GlobalSettings.EnableSingleplayer && nonBotPlayers.Count() < 2)
+-					return;
++		public static bool IsClientStateTransitionAllowed(
++			bool requireMapReadiness, Session.Client client, string currentMapUid, Session.ClientState requestedState)
++		{
++			if (client == null || (requestedState != Session.ClientState.NotReady &&
++				requestedState != Session.ClientState.Ready))
++				return false;
+ 
+-				// Are the map conditions satisfied?
+-				if (server.LobbyInfo.Slots.Any(sl => sl.Value.Required && server.LobbyInfo.ClientInSlot(sl.Key) == null))
+-					return;
++			return !requireMapReadiness || client.IsMapReadyFor(currentMapUid);
++		}
+ 
+-				// Don't start without any players
+-				if (server.LobbyInfo.Slots.All(sl => server.LobbyInfo.ClientInSlot(sl.Key) == null))
+-					return;
++		public static void InitializeClientMapReadiness(Session.Client client, string currentMapUid)
++		{
++			if (client == null)
++				throw new ArgumentNullException(nameof(client));
+ 
+-				// Does the host have the map installed?
+-				if (server.Type != ServerType.Dedicated && server.ModData.MapCache[server.Map.Uid].Status != MapStatus.Available)
+-				{
+-					// Client 0 will always be the Host
+-					// In some cases client 0 doesn't exist, so we untick all players
+-					var host = server.LobbyInfo.Clients.FirstOrDefault(c => c.Index == 0);
+-					if (host != null)
+-						host.State = Session.ClientState.NotReady;
+-					else
+-						foreach (var client in server.LobbyInfo.Clients)
+-							client.State = Session.ClientState.NotReady;
++			if (client.Bot == null)
++				ClientMapReadinessState.Reset(client, currentMapUid);
++		}
+ 
+-					server.SyncLobbyClients();
+-					return;
++		public static bool ResetClientMapReadinessForMapChange(
++			IEnumerable<Session.Client> clients, string previousMapUid, string currentMapUid)
++		{
++			if (clients == null)
++				throw new ArgumentNullException(nameof(clients));
++			if (string.Equals(previousMapUid, currentMapUid, StringComparison.Ordinal))
++				return false;
++
++			var humanClients = clients.Where(client => client.Bot == null).ToArray();
++			if (!new ClientMapReadinessReport(currentMapUid, Session.ClientMapPhase.Unknown, -1)
++				.IsValidFor(currentMapUid))
++				throw new ArgumentException("Map UID must be a nonempty single token.", nameof(currentMapUid));
++
++			foreach (var client in humanClients)
++				ClientMapReadinessState.Reset(client, currentMapUid);
++
++			return true;
++		}
++
++		public static IReadOnlyList<int> DisplacedHumanClientIndexes(
++			IEnumerable<Session.Client> clients, bool mapUidChanged)
++		{
++			if (clients == null)
++				throw new ArgumentNullException(nameof(clients));
++
++			return mapUidChanged ? clients
++				.Where(client => client.Bot == null && client.Slot == null)
++				.Select(client => client.Index)
++				.ToArray() : Array.Empty<int>();
++		}
++
++		static ClientMapReadinessUpdate ReadinessSnapshot(Session.Client client)
++		{
++			return new ClientMapReadinessUpdate
++			{
++				ClientIndex = client.Index,
++				MapUid = client.MapUid,
++				Phase = client.MapPhase,
++				Progress = client.MapProgress,
++				ClientState = client.State
++			};
++		}
++
++		void SubmitReadinessSnapshot(Session.Client client)
++		{
++			if (client?.Bot == null && !string.IsNullOrEmpty(client.MapUid))
++				mapReadinessThrottle.Submit(ReadinessSnapshot(client), mapReadinessClock.ElapsedMilliseconds);
++		}
++
++		void MarkClientsNotReadyForConfiguration(S server)
++		{
++			var currentMapUid = server.LobbyInfo.GlobalSettings.Map;
++			foreach (var client in server.LobbyInfo.Clients)
++			{
++				client.State = !server.IsMultiplayer || client.Bot != null || client.IsMapReadyFor(currentMapUid) ?
++					Session.ClientState.NotReady : Session.ClientState.Invalid;
++				SubmitReadinessSnapshot(client);
++			}
++		}
++
++		bool MapReadiness(S server, Connection conn, Session.Client client, string value)
++		{
++			lock (server.LobbyInfo)
++			{
++				var result = ApplyMapReadiness(client, server.LobbyInfo.GlobalSettings.Map, value, out var update);
++				if (result == ClientMapReadinessApplyResult.Rejected)
++				{
++					rejectedMapReadinessReports++;
++					return true;
+ 				}
+ 
+-				if (LobbyUtils.InsufficientEnabledSpawnPoints(server.Map, server.LobbyInfo))
++				if (update != null)
++					mapReadinessThrottle.Submit(update, mapReadinessClock.ElapsedMilliseconds);
++
++				return true;
++			}
++		}
++
++		static LobbyStartAvailability EvaluateStartAvailability(
++			S server, LobbyStartMode mode, bool requesterIsAdmin)
++		{
++			return LobbyStartAvailability.Evaluate(new LobbyStartInputs
++			{
++				LobbyInfo = server.LobbyInfo,
++				Mode = mode,
++				RequesterIsAdmin = requesterIsAdmin,
++				RequireCurrentMapReadiness = server.IsMultiplayer,
++				InsufficientEnabledSpawnPoints = LobbyUtils.InsufficientEnabledSpawnPoints(
++					server.Map, server.LobbyInfo)
++			});
++		}
++
++		static void SendStartBlocker(S server, Connection conn, LobbyStartAvailability availability)
++		{
++			switch (availability.Reason)
++			{
++				case Session.LobbyStartBlockReason.RequesterNotAdmin:
++					server.SendFluentMessageTo(conn, OnlyHostStartGame);
++					break;
++				case Session.LobbyStartBlockReason.RequiredSlotEmpty:
++					server.SendFluentMessageTo(conn, NoStartUntilRequiredSlotsFull);
++					break;
++				case Session.LobbyStartBlockReason.NoPlayers:
++					server.SendOrderTo(conn, "Message", NoStartWithoutPlayers);
++					break;
++				case Session.LobbyStartBlockReason.InsufficientHumans:
++					server.SendFluentMessageTo(conn, TwoHumansRequired);
++					break;
++				case Session.LobbyStartBlockReason.InsufficientSpawnPoints:
++					server.SendFluentMessageTo(conn, InsufficientEnabledSpawnPoints);
++					break;
++				default:
++					server.SendFluentMessageTo(conn, MapNotReady);
++					break;
++			}
++		}
++
++		static void SendSafeStartRejection(S server, Connection conn,
++			LobbyStartAvailability availability, string expectedMapUid)
++		{
++			server.SendOrderTo(conn, "SafeStartRejected", availability.ToRejection(expectedMapUid).Serialize());
++		}
++
++		static void CheckAutoStart(S server)
++		{
++			lock (server.LobbyInfo)
++			{
++				if (!EvaluateStartAvailability(server, LobbyStartMode.Automatic, true).CanStart)
+ 					return;
+ 
+ 				server.StartGame();
+ 			}
+ 		}
+ 
+-		static bool State(S server, Connection conn, Session.Client client, string s)
++		bool State(S server, Connection conn, Session.Client client, string s)
+ 		{
+ 			lock (server.LobbyInfo)
+ 			{
+-				if (!Enum<Session.ClientState>.TryParse(s, false, out var state))
++				if (!Enum<Session.ClientState>.TryParse(s, false, out var state) ||
++					state.ToString() != s || !IsClientStateTransitionAllowed(
++						server.IsMultiplayer, client, server.LobbyInfo.GlobalSettings.Map, state))
+ 				{
+ 					server.SendFluentMessageTo(conn, MalformedCommand, new object[] { "command", "state" });
+ 
+@@ -297,6 +480,7 @@
+ 				}
+ 
+ 				client.State = state;
++				SubmitReadinessSnapshot(client);
+ 				Log.Write("server", $"Player @{conn.EndPoint} is {client.State}");
+ 
+ 				server.SyncLobbyClients();
+@@ -310,38 +494,62 @@
+ 		{
+ 			lock (server.LobbyInfo)
+ 			{
+-				if (!client.IsAdmin)
++				var availability = EvaluateStartAvailability(
++					server, LobbyStartMode.ForceConfirmed, client.IsAdmin);
++				if (!availability.CanStart)
+ 				{
+-					server.SendFluentMessageTo(conn, OnlyHostStartGame);
++					SendStartBlocker(server, conn, availability);
+ 					return true;
+ 				}
+ 
+-				if (server.LobbyInfo.Slots.Any(sl => sl.Value.Required && server.LobbyInfo.ClientInSlot(sl.Key) == null))
++				server.StartGame();
++
++				return true;
++			}
++		}
++
++		static bool StartGameSafe(S server, Connection conn, Session.Client client, string value)
++		{
++			lock (server.LobbyInfo)
++			{
++				var currentMapUid = server.LobbyInfo.GlobalSettings.Map;
++				if (!TryParseSafeStartMapUid(value, out var expectedMapUid))
+ 				{
+-					server.SendFluentMessageTo(conn, NoStartUntilRequiredSlotsFull);
++					server.SendFluentMessageTo(conn, MalformedCommand,
++						new object[] { "command", "startgame_safe" });
+ 					return true;
+ 				}
+ 
+-				if (server.LobbyInfo.Slots.All(sl => server.LobbyInfo.ClientInSlot(sl.Key) == null))
++				if (!client.IsAdmin)
+ 				{
+-					server.SendOrderTo(conn, "Message", NoStartWithoutPlayers);
++					server.SendOrderTo(conn, "SafeStartRejected", new LobbyStartRejection(
++						Session.LobbyStartBlockReason.RequesterNotAdmin,
++						-1,
++						Session.ClientMapPhase.Unknown,
++						-1,
++						currentMapUid).Serialize());
+ 					return true;
+ 				}
+ 
+-				if (!server.LobbyInfo.GlobalSettings.EnableSingleplayer && server.LobbyInfo.NonBotPlayers.Count() < 2)
++				if (!string.Equals(expectedMapUid, currentMapUid, StringComparison.Ordinal))
+ 				{
+-					server.SendFluentMessageTo(conn, TwoHumansRequired);
++					server.SendOrderTo(conn, "SafeStartRejected", new LobbyStartRejection(
++						Session.LobbyStartBlockReason.StaleMap,
++						-1,
++						Session.ClientMapPhase.Unknown,
++						-1,
++						currentMapUid).Serialize());
+ 					return true;
+ 				}
+ 
+-				if (LobbyUtils.InsufficientEnabledSpawnPoints(server.Map, server.LobbyInfo))
++				var availability = EvaluateStartAvailability(server, LobbyStartMode.SafeDirect, true);
++				if (!availability.CanStart)
+ 				{
+-					server.SendFluentMessageTo(conn, InsufficientEnabledSpawnPoints);
++					SendSafeStartRejection(server, conn, availability, currentMapUid);
+ 					return true;
+ 				}
+ 
+ 				server.StartGame();
+-
+ 				return true;
+ 			}
+ 		}
+@@ -515,7 +723,7 @@
+ 			}
+ 		}
+ 
+-		static bool Map(S server, Connection conn, Session.Client client, string s)
++		bool Map(S server, Connection conn, Session.Client client, string s)
+ 		{
+ 			lock (server.LobbyInfo)
+ 			{
+@@ -540,6 +748,7 @@
+ 						if (server.LobbyInfo.GlobalSettings.Map != lastMap)
+ 							return;
+ 
++						var mapUidChanged = !string.Equals(lastMap, map.Uid, StringComparison.Ordinal);
+ 						server.LobbyInfo.GlobalSettings.Map = map.Uid;
+ 
+ 						var oldSlots = server.LobbyInfo.Slots.Keys.ToArray();
+@@ -559,10 +768,15 @@
+ 							.Select(f => f.InternalName)
+ 							.ToList();
+ 
++						if (ResetClientMapReadinessForMapChange(
++							server.LobbyInfo.Clients, lastMap, map.Uid))
++							mapReadinessThrottle.Reset();
++
+ 						foreach (var c in server.LobbyInfo.Clients)
+ 						{
+ 							c.Faction = SanitizePlayerFaction(server, c.Faction, selectableFactions);
+-							c.State = Session.ClientState.Invalid;
++							if (mapUidChanged && c.Bot != null)
++								c.State = Session.ClientState.Invalid;
+ 						}
+ 
+ 						// Reassign players into new slots based on their old slots:
+@@ -594,6 +808,18 @@
+ 								c.Color = Color.White;
+ 						}
+ 
++						var displacedClientIndexes = DisplacedHumanClientIndexes(
++							server.LobbyInfo.Clients, mapUidChanged).ToHashSet();
++						var displacedConnections = server.Conns
++							.Where(displaced => displacedClientIndexes.Contains(displaced.PlayerIndex))
++							.ToArray();
++						foreach (var displaced in displacedConnections)
++						{
++							server.SendOrderTo(displaced, "ServerError", MapChangeNoSlot);
++							mapReadinessThrottle.Remove(displaced.PlayerIndex);
++							server.DropClient(displaced);
++						}
++
+ 						// Validate if color is allowed and get an alternative if it isn't
+ 						foreach (var c in server.LobbyInfo.Clients)
+ 							if (c.Slot != null && !server.LobbyInfo.Slots[c.Slot].LockColor)
+@@ -644,7 +870,7 @@
+ 			void QueryFailed() => server.SendFluentMessageTo(conn, UnknownMap);
+ 		}
+ 
+-		static bool Option(S server, Connection conn, Session.Client client, string s)
++		bool Option(S server, Connection conn, Session.Client client, string s)
+ 		{
+ 			lock (server.LobbyInfo)
+ 			{
+@@ -692,8 +918,7 @@
+ 				server.SyncLobbyGlobalSettings();
+ 				server.SendFluentMessage(ValueChanged, "player", client.Name, "name", option.Name, "value", option.Label(split[1]));
+ 
+-				foreach (var c in server.LobbyInfo.Clients)
+-					c.State = Session.ClientState.NotReady;
++				MarkClientsNotReadyForConfiguration(server);
+ 
+ 				server.SyncLobbyClients();
+ 
+@@ -701,7 +926,7 @@
+ 			}
+ 		}
+ 
+-		static bool ResetOptions(S server, Connection conn, Session.Client client, string s)
++		bool ResetOptions(S server, Connection conn, Session.Client client, string s)
+ 		{
+ 			lock (server.LobbyInfo)
+ 			{
+@@ -735,8 +960,7 @@
+ 				server.LobbyInfo.GlobalSettings.LobbyOptions = options;
+ 				server.SyncLobbyGlobalSettings();
+ 
+-				foreach (var c in server.LobbyInfo.Clients)
+-					c.State = Session.ClientState.NotReady;
++				MarkClientsNotReadyForConfiguration(server);
+ 
+ 				server.SyncLobbyClients();
+ 
+@@ -900,8 +1124,32 @@
+ 			}
+ 		}
+ 
+-		void OpenRA.Server.ITick.Tick(S server) => server.VoteKickTracker.Tick();
++		void OpenRA.Server.ITick.Tick(S server)
++		{
++			server.VoteKickTracker.Tick();
++			var now = mapReadinessClock.ElapsedMilliseconds;
++			lock (server.LobbyInfo)
++			{
++				mapReadinessThrottle.Retain(server.LobbyInfo.Clients
++					.Where(client => client.Bot == null)
++					.Select(client => client.Index));
+ 
++				foreach (var pending in mapReadinessThrottle.Drain(now))
++				{
++					var client = server.LobbyInfo.ClientWithIndex(pending.ClientIndex);
++					if (client?.Bot == null && client.MapUid == server.LobbyInfo.GlobalSettings.Map)
++						server.SyncClientMapReadiness(ReadinessSnapshot(client));
++				}
++
++				if (rejectedMapReadinessReports > 0 && now - lastReadinessLogAt >= ReadinessLogIntervalMilliseconds)
++				{
++					Log.Write("server", $"Rejected {rejectedMapReadinessReports} invalid map readiness reports.");
++					rejectedMapReadinessReports = 0;
++					lastReadinessLogAt = now;
++				}
++			}
++		}
++
+ 		static bool MakeAdmin(S server, Connection conn, Session.Client client, string s)
+ 		{
+ 			lock (server.LobbyInfo)
+@@ -1173,10 +1421,21 @@
+ 			}
+ 		}
+ 
++		public static bool CanSyncLobby(ServerType serverType)
++		{
++			return serverType is ServerType.Local or ServerType.Skirmish;
++		}
++
+ 		static bool SyncLobby(S server, Connection conn, Session.Client client, string s)
+ 		{
+ 			lock (server.LobbyInfo)
+ 			{
++				if (!CanSyncLobby(server.Type))
++				{
++					server.SendFluentMessageTo(conn, InvalidLobbyInfo);
++					return true;
++				}
++
+ 				if (!client.IsAdmin)
+ 				{
+ 					server.SendFluentMessageTo(conn, AdminLobbyInfo);
+@@ -1374,6 +1633,8 @@
+ 					server.SendOrderTo(conn, "SyncMapPool", FieldSaver.FormatValue(server.MapPool));
+ 
+ 				var client = server.GetClient(conn);
++				mapReadinessThrottle.Remove(client.Index);
++				InitializeClientMapReadiness(client, server.LobbyInfo.GlobalSettings.Map);
+ 
+ 				// Validate whether color is allowed and get an alternative if it isn't
+ 				if (client.Slot != null && !server.LobbyInfo.Slots[client.Slot].LockColor)
+@@ -1392,6 +1653,9 @@
+ 		{
+ 			lock (server.LobbyInfo)
+ 			{
++				mapReadinessThrottle.Reset();
++				rejectedMapReadinessReports = 0;
++
+ 				// Expire any temporary bans
+ 				server.TempBans.Clear();
+ 
+diff -ruN a/OpenRA.Mods.Common/Widgets/DropDownButtonWidget.cs b/OpenRA.Mods.Common/Widgets/DropDownButtonWidget.cs
+--- a/OpenRA.Mods.Common/Widgets/DropDownButtonWidget.cs	2026-08-28 02:02:43
++++ b/OpenRA.Mods.Common/Widgets/DropDownButtonWidget.cs	2026-08-28 02:02:43
+@@ -205,11 +205,18 @@
+ 		public void ShowDropDown<T>(
+ 			string panelTemplate, int height, Dictionary<string, IEnumerable<T>> groups, Func<T, ScrollItemWidget, ScrollItemWidget> setupItem)
+ 		{
++			ShowDropDown(panelTemplate, height, groups, setupItem, IosDropDownLayout.Default);
++		}
++
++		public void ShowDropDown<T>(
++			string panelTemplate, int height, Dictionary<string, IEnumerable<T>> groups,
++			Func<T, ScrollItemWidget, ScrollItemWidget> setupItem, IosDropDownLayout iosLayout)
++		{
+ 			var substitutions = new Dictionary<string, int>() { { "DROPDOWN_WIDTH", Bounds.Width } };
+ 			var panel = (ScrollPanelWidget)Ui.LoadWidget(panelTemplate, null, new WidgetArgs() { { "substitutions", substitutions } });
+ 			var snapshot = Platform.IsIOS ? IosScreenMetrics.SnapshotFor(Game.Renderer.Resolution) : default;
+ 			if (Platform.IsIOS)
+-				AdaptIosDropDownPanel(panel, snapshot);
++				AdaptIosDropDownPanel(panel, snapshot, iosLayout);
+ 
+ 			var headerTemplate = panel.GetOrNull<ScrollItemWidget>("HEADER");
+ 			var itemTemplate = panel.Get<ScrollItemWidget>("TEMPLATE");
+@@ -218,23 +225,25 @@
+ 			foreach (var kv in groups)
+ 			{
+ 				var group = kv.Key;
+-				if (group.Length > 0 && headerTemplate != null)
++				var options = kv.Value.ToArray();
++				if (group.Length > 0 && headerTemplate != null &&
++					IosTouchWidgetPolicy.ShowDropDownGroupHeader(options.Length, Platform.IsIOS, iosLayout))
+ 				{
+ 					var header = ScrollItemWidget.Setup(headerTemplate, () => false, () => { });
+ 					if (Platform.IsIOS)
+-						AdaptIosDropDownItem(header, panel, snapshot, true);
++						AdaptIosDropDownItem(header, panel, snapshot, true, iosLayout);
+ 
+ 					header.Get<LabelWidget>("LABEL").GetText = () => group;
+ 					panel.AddChild(header);
+ 				}
+ 
+-				foreach (var option in kv.Value)
++				foreach (var option in options)
+ 				{
+ 					var o = option;
+ 
+ 					var item = setupItem(o, itemTemplate);
+ 					if (Platform.IsIOS)
+-						AdaptIosDropDownItem(item, panel, snapshot, false);
++						AdaptIosDropDownItem(item, panel, snapshot, false, iosLayout);
+ 
+ 					var onClick = item.OnClick;
+ 					item.OnClick = () => { onClick(); RemovePanel(); };
+@@ -243,9 +252,9 @@
+ 				}
+ 			}
+ 
+-			var effectiveHeight = Platform.IsIOS ?
+-				IosTouchWidgetPolicy.MaximumPopupHeight(
+-					Math.Max(height, 2 * panel.ScrollbarWidth), snapshot) : height;
++			var effectiveHeight = Platform.IsIOS ? IosTouchWidgetPolicy.DropDownMaximumHeight(
++				Math.Max(height, 2 * panel.ScrollbarWidth), panel.ScrollbarWidth,
++				snapshot.SafeBounds.Height, iosLayout.MaximumHeightTargets) : height;
+ 			panel.Bounds.Height = Platform.IsIOS ?
+ 				IosTouchWidgetPolicy.DropDownPopupHeight(
+ 					panel.ContentHeight, effectiveHeight, panel.ScrollbarWidth) :
+@@ -253,42 +262,75 @@
+ 			AttachPanel(panel);
+ 		}
+ 
+-		static void AdaptIosDropDownPanel(ScrollPanelWidget panel, IosScreenSnapshot snapshot)
++		static void AdaptIosDropDownPanel(
++			ScrollPanelWidget panel, IosScreenSnapshot snapshot,
++			IosDropDownLayout iosLayout = default)
+ 		{
++			if (iosLayout.MinimumWidthTargets == 0)
++				iosLayout = IosDropDownLayout.Default;
++
+ 			var minimumTouchHeight = IosTouchWidgetPolicy.EnsureMinimumTouchHeight(0, snapshot);
+ 			panel.Bounds.Width = IosTouchWidgetPolicy.DropDownPanelWidth(
+-				panel.Bounds.Width, minimumTouchHeight, snapshot.SafeBounds.Width);
++				panel.Bounds.Width, minimumTouchHeight, snapshot.SafeBounds.Width,
++				iosLayout.MinimumWidthTargets);
+ 			panel.ScrollbarWidth = minimumTouchHeight;
+ 			panel.EnableContentDragging = true;
+ 			panel.ContentDragThreshold = IosTouchWidgetPolicy.ContentDragThreshold(snapshot.LogicalPerPoint);
++			if (iosLayout.OmitSingletonHeaders)
++				panel.TopBottomSpacing = 0;
+ 
+ 			var headerTemplate = panel.GetOrNull<ScrollItemWidget>("HEADER");
+ 			if (headerTemplate != null)
+-				AdaptIosDropDownItem(headerTemplate, panel, snapshot, true);
++				AdaptIosDropDownItem(headerTemplate, panel, snapshot, true, iosLayout);
+ 
+ 			var itemTemplate = panel.GetOrNull<ScrollItemWidget>("TEMPLATE");
+ 			if (itemTemplate != null)
+-				AdaptIosDropDownItem(itemTemplate, panel, snapshot, false);
++				AdaptIosDropDownItem(itemTemplate, panel, snapshot, false, iosLayout);
+ 		}
+ 
+ 		static void AdaptIosDropDownItem(
+-			ScrollItemWidget item, ScrollPanelWidget panel, IosScreenSnapshot snapshot, bool header)
++			ScrollItemWidget item, ScrollPanelWidget panel, IosScreenSnapshot snapshot, bool header,
++			IosDropDownLayout iosLayout = default)
+ 		{
++			if (iosLayout.MinimumWidthTargets == 0)
++				iosLayout = IosDropDownLayout.Default;
++
+ 			var contentBounds = IosTouchWidgetPolicy.DropDownContentBounds(
+ 				panel.Bounds.Width,
+ 				panel.ScrollbarWidth,
+ 				2);
+ 			item.Bounds.X = contentBounds.X;
+ 			item.Bounds.Width = contentBounds.Width;
+-			item.Bounds.Height = IosTouchWidgetPolicy.EnsureMinimumTouchHeight(item.Bounds.Height, snapshot);
++			item.Bounds.Height = header && iosLayout.HeaderHeightPoints > 0 ?
++				Math.Max(1, (int)Math.Ceiling(iosLayout.HeaderHeightPoints * snapshot.LogicalPerPoint)) :
++				IosTouchWidgetPolicy.EnsureMinimumTouchHeight(item.Bounds.Height, snapshot);
+ 			var font = header ? "IosBold" : "IosRegular";
+ 			item.Font = font;
++			var flag = !header && iosLayout.ItemImagePoints.Width > 0 ?
++				item.Children.OfType<ImageWidget>().FirstOrDefault(child => child.Id == "FLAG") : null;
++			var labelX = -1;
++			if (flag != null)
++			{
++				var flagWidth = Math.Max(1,
++					(int)Math.Ceiling(iosLayout.ItemImagePoints.Width * snapshot.LogicalPerPoint));
++				var flagHeight = Math.Max(1,
++					(int)Math.Ceiling(iosLayout.ItemImagePoints.Height * snapshot.LogicalPerPoint));
++				flagWidth = Math.Min(flagWidth, item.Bounds.Width);
++				flagHeight = Math.Min(flagHeight, item.Bounds.Height);
++				flag.Bounds = new WidgetBounds(
++					0, Math.Max(0, item.Bounds.Height - flagHeight) / 2, flagWidth, flagHeight);
++				flag.StretchToFit = true;
++				labelX = Math.Min(item.Bounds.Width,
++					flag.Bounds.Right + IosMenuLayoutPolicy.Create(true, snapshot).Gap);
++			}
+ 
+ 			foreach (var label in item.Children.OfType<LabelWidget>())
+ 			{
++				if (labelX >= 0)
++					label.Bounds.X = labelX;
+ 				label.Bounds.Y = 0;
+ 				label.Bounds.Height = item.Bounds.Height;
+-				var rightPadding = label.Bounds.X > 0 ? label.Bounds.X : 0;
++				var rightPadding = labelX >= 0 ? 0 : label.Bounds.X > 0 ? label.Bounds.X : 0;
+ 				label.Bounds.Width = Math.Max(0, item.Bounds.Width - label.Bounds.X - rightPadding);
+ 				label.Font = font;
+ 			}
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/IosTouchWidgetPolicy.cs b/OpenRA.Mods.Common/Widgets/Logic/IosTouchWidgetPolicy.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/IosTouchWidgetPolicy.cs	2026-08-28 02:02:43
++++ b/OpenRA.Mods.Common/Widgets/Logic/IosTouchWidgetPolicy.cs	2026-08-28 02:02:43
+@@ -14,6 +14,29 @@
+ 
+ namespace OpenRA.Mods.Common.Widgets.Logic
+ {
++	public readonly struct IosDropDownLayout
++	{
++		public static IosDropDownLayout Default { get; } = new(3, 0, 0, default, false);
++		public static IosDropDownLayout FactionPicker { get; } = new(5, 6, 24, new Size(40, 20), true);
++
++		public int MinimumWidthTargets { get; }
++		public int MaximumHeightTargets { get; }
++		public int HeaderHeightPoints { get; }
++		public Size ItemImagePoints { get; }
++		public bool OmitSingletonHeaders { get; }
++
++		IosDropDownLayout(
++			int minimumWidthTargets, int maximumHeightTargets, int headerHeightPoints,
++			Size itemImagePoints, bool omitSingletonHeaders)
++		{
++			MinimumWidthTargets = minimumWidthTargets;
++			MaximumHeightTargets = maximumHeightTargets;
++			HeaderHeightPoints = headerHeightPoints;
++			ItemImagePoints = itemImagePoints;
++			OmitSingletonHeaders = omitSingletonHeaders;
++		}
++	}
++
+ 	public enum TouchStepperSegment
+ 	{
+ 		Decrement,
+@@ -139,9 +162,32 @@
+ 
+ 		public static int DropDownPanelWidth(int requestedWidth, int minimumTouchSize, int safeWidth)
+ 		{
++			return DropDownPanelWidth(requestedWidth, minimumTouchSize, safeWidth, 3);
++		}
++
++		public static int DropDownPanelWidth(
++			int requestedWidth, int minimumTouchSize, int safeWidth, int minimumWidthTargets)
++		{
+ 			var availableWidth = Math.Max(1, safeWidth);
+-			var minimumUsableWidth = Math.Min(availableWidth, Math.Max(1, minimumTouchSize) * 3);
++			var minimumUsableWidth = Math.Min(availableWidth,
++				Math.Max(1, minimumTouchSize) * Math.Max(1, minimumWidthTargets));
+ 			return Math.Min(availableWidth, Math.Max(Math.Max(1, requestedWidth), minimumUsableWidth));
++		}
++
++		public static int DropDownMaximumHeight(
++			int requestedHeight, int minimumTouchSize, int safeHeight, int maximumHeightTargets)
++		{
++			if (maximumHeightTargets <= 0)
++				return Math.Min(Math.Max(0, requestedHeight), Math.Max(0, safeHeight));
++
++			return Math.Min(Math.Max(0, safeHeight),
++				Math.Max(1, minimumTouchSize) * maximumHeightTargets);
++		}
++
++		public static bool ShowDropDownGroupHeader(
++			int optionCount, bool isIos, IosDropDownLayout layout)
++		{
++			return !isIos || !layout.OmitSingletonHeaders || optionCount != 1;
+ 		}
+ 
+ 		public static int DropDownPopupHeight(int contentHeight, int maximumHeight, int minimumTouchSize)
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/Lobby/IosLobbyLayout.cs b/OpenRA.Mods.Common/Widgets/Logic/Lobby/IosLobbyLayout.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/Lobby/IosLobbyLayout.cs	2026-08-28 02:02:43
++++ b/OpenRA.Mods.Common/Widgets/Logic/Lobby/IosLobbyLayout.cs	2026-08-28 02:02:43
+@@ -70,7 +70,7 @@
+ 				Math.Max(minimumChatHeight, preferredUtilityHeight));
+ 			var upperHeight = Math.Max(0, mainHeight - utilityHeight - (utilityHeight > 0 ? Gap : 0));
+ 
+-			var minimumPlayerWidth = 7 * policy.MinimumTarget;
++			var minimumPlayerWidth = 10 * policy.MinimumTarget;
+ 			var maximumMapWidth = Math.Max(policy.MinimumTarget,
+ 				width - Gap - minimumPlayerWidth - Gap);
+ 			var mapWidth = Math.Min(maximumMapWidth, Math.Max(2 * policy.MinimumTarget, width / 4));
+@@ -147,19 +147,24 @@
+ 
+ 		static WidgetBounds[] PlayerColumns(int width, int minimumTarget)
+ 		{
++			var minimumUnits = new[] { 2, 1, 3, 1, 1, 1, 1 };
+ 			var weights = new[] { 3, 1, 2, 1, 1, 1, 1 };
+-			var required = weights.Length * minimumTarget;
++			const int TotalMinimumUnits = 10;
++			var required = TotalMinimumUnits * minimumTarget;
+ 			var extra = Math.Max(0, width - required);
+ 			const int TotalWeight = 10;
+ 			var columns = new WidgetBounds[weights.Length];
+ 			var x = 0;
++			var distributedMinimumUnits = 0;
+ 			var distributedWeight = 0;
+ 			for (var i = 0; i < weights.Length; i++)
+ 			{
++				distributedMinimumUnits += minimumUnits[i];
+ 				distributedWeight += weights[i];
+-				var right = Math.Min(width,
+-					required > width ? (int)((long)(i + 1) * width / weights.Length) :
+-					(i + 1) * minimumTarget + (int)((long)extra * distributedWeight / TotalWeight));
++				var right = i == weights.Length - 1 ? width : Math.Min(width,
++					required > width ? (int)((long)distributedMinimumUnits * width / TotalMinimumUnits) :
++					distributedMinimumUnits * minimumTarget +
++					(int)((long)extra * distributedWeight / TotalWeight));
+ 				columns[i] = new WidgetBounds(x, 0, Math.Max(0, right - x), minimumTarget);
+ 				x = right;
+ 			}
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/Lobby/IosLobbyMapStatusPresentation.cs b/OpenRA.Mods.Common/Widgets/Logic/Lobby/IosLobbyMapStatusPresentation.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/Lobby/IosLobbyMapStatusPresentation.cs	1969-12-31 16:00:00
++++ b/OpenRA.Mods.Common/Widgets/Logic/Lobby/IosLobbyMapStatusPresentation.cs	2026-08-28 02:02:43
+@@ -0,0 +1,49 @@
++#region Copyright & License Information
++/*
++ * Copyright (c) The OpenRA Developers and Contributors
++ * This file is part of OpenRA, which is free software. It is made
++ * available to you under the terms of the GNU General Public License
++ * as published by the Free Software Foundation, either version 3 of
++ * the License, or (at your option) any later version.
++ * For more information, see COPYING.
++ */
++#endregion
++
++using System;
++using OpenRA.Network;
++
++namespace OpenRA.Mods.Common.Widgets.Logic
++{
++	public readonly struct IosLobbyMapStatusPresentation
++	{
++		public bool ShowMapStatus { get; }
++		public string Text { get; }
++		public string Icon { get; }
++		public bool ShowReady => !ShowMapStatus;
++
++		IosLobbyMapStatusPresentation(bool showMapStatus, string text, string icon)
++		{
++			ShowMapStatus = showMapStatus;
++			Text = text;
++			Icon = icon;
++		}
++
++		public static IosLobbyMapStatusPresentation For(
++			Session.Client client, string currentMapUid, bool isIos)
++		{
++			if (!isIos || client == null || client.Bot != null ||
++				!string.Equals(client.MapUid, currentMapUid, StringComparison.Ordinal) ||
++				client.MapPhase == Session.ClientMapPhase.Ready)
++				return new IosLobbyMapStatusPresentation(false, string.Empty, string.Empty);
++
++			return client.MapPhase switch
++			{
++				Session.ClientMapPhase.Error or Session.ClientMapPhase.Unavailable =>
++					new IosLobbyMapStatusPresentation(true, string.Empty, "!"),
++				Session.ClientMapPhase.Downloading when client.MapProgress >= 0 =>
++					new IosLobbyMapStatusPresentation(true, $"{client.MapProgress}%", string.Empty),
++				_ => new IosLobbyMapStatusPresentation(true, "…", string.Empty)
++			};
++		}
++	}
++}
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/Lobby/IosLobbyStartStatus.cs b/OpenRA.Mods.Common/Widgets/Logic/Lobby/IosLobbyStartStatus.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/Lobby/IosLobbyStartStatus.cs	1969-12-31 16:00:00
++++ b/OpenRA.Mods.Common/Widgets/Logic/Lobby/IosLobbyStartStatus.cs	2026-08-28 02:02:43
+@@ -0,0 +1,138 @@
++#region Copyright & License Information
++/*
++ * Copyright (c) The OpenRA Developers and Contributors
++ * This file is part of OpenRA, which is free software. It is made
++ * available to you under the terms of the GNU General Public License
++ * as published by the Free Software Foundation, either version 3 of
++ * the License, or (at your option) any later version.
++ * For more information, see COPYING.
++ */
++#endregion
++
++using System;
++using OpenRA.Graphics;
++using OpenRA.Network;
++
++namespace OpenRA.Mods.Common.Widgets.Logic
++{
++	public static class IosLobbyStartStatus
++	{
++		[FluentReference]
++		const string Validating = "button-ios-lobby-start-validating";
++		[FluentReference]
++		const string MapUnavailable = "button-ios-lobby-start-map-unavailable";
++		[FluentReference("player")]
++		const string ClientFailed = "button-ios-lobby-start-client-failed";
++		[FluentReference("count")]
++		const string ClientsFailed = "button-ios-lobby-start-clients-failed";
++		[FluentReference("player")]
++		const string ClientVerifying = "button-ios-lobby-start-client-verifying";
++		[FluentReference("count")]
++		const string ClientsVerifying = "button-ios-lobby-start-clients-verifying";
++		[FluentReference("player", "progress")]
++		const string ClientDownloading = "button-ios-lobby-start-client-downloading";
++		[FluentReference("count", "progress")]
++		const string ClientsDownloading = "button-ios-lobby-start-clients-downloading";
++		[FluentReference("player")]
++		const string ClientWaiting = "button-ios-lobby-start-client-waiting";
++		[FluentReference("count")]
++		const string ClientsWaiting = "button-ios-lobby-start-clients-waiting";
++		[FluentReference("status", "count")]
++		const string ClientAndOthers = "button-ios-lobby-start-client-and-others";
++		[FluentReference("count")]
++		const string ClientsNotReady = "button-ios-lobby-start-clients-not-ready";
++		[FluentReference]
++		const string RequiredSlot = "button-ios-lobby-start-required-slot";
++		[FluentReference]
++		const string NoPlayers = "button-ios-lobby-start-no-players";
++		[FluentReference]
++		const string TwoPlayers = "button-ios-lobby-start-two-players";
++		[FluentReference]
++		const string Spawns = "button-ios-lobby-start-spawns";
++		[FluentReference]
++		const string Waiting = "button-ios-lobby-start-waiting";
++
++		public static string Format(LobbyStartAvailability availability, int width, SpriteFont font,
++			Func<int, string> clientName, Func<string, object[], string> localize)
++		{
++			if (font == null)
++				throw new ArgumentNullException(nameof(font));
++			if (clientName == null)
++				throw new ArgumentNullException(nameof(clientName));
++			if (localize == null)
++				throw new ArgumentNullException(nameof(localize));
++
++			return availability.Reason switch
++			{
++				Session.LobbyStartBlockReason.None => string.Empty,
++				Session.LobbyStartBlockReason.ServerMapValidating =>
++					localize(Validating, Array.Empty<object>()),
++				Session.LobbyStartBlockReason.ServerMapIncompatible or
++				Session.LobbyStartBlockReason.ServerMapNotPlayable or
++				Session.LobbyStartBlockReason.SelectedMapUnavailable =>
++					localize(MapUnavailable, Array.Empty<object>()),
++				Session.LobbyStartBlockReason.ClientMapError or
++				Session.LobbyStartBlockReason.ClientMapUnavailable => ClientStatus(
++					availability, width, font, clientName, localize,
++					ClientFailed, ClientsFailed),
++				Session.LobbyStartBlockReason.ClientMapInstallingOrVerifying => ClientStatus(
++					availability, width, font, clientName, localize,
++					ClientVerifying, ClientsVerifying),
++				Session.LobbyStartBlockReason.ClientMapDownloading when availability.Progress >= 0 => ClientStatus(
++					availability, width, font, clientName, localize,
++					ClientDownloading, ClientsDownloading,
++					"progress", availability.Progress),
++				Session.LobbyStartBlockReason.ClientMapDownloading or
++				Session.LobbyStartBlockReason.ClientMapSearching or
++				Session.LobbyStartBlockReason.ClientMapWaitingForDownload or
++				Session.LobbyStartBlockReason.ClientMapUnknown or
++				Session.LobbyStartBlockReason.ClientGameNotReady => ClientStatus(
++					availability, width, font, clientName, localize,
++					ClientWaiting, ClientsWaiting),
++				Session.LobbyStartBlockReason.RequiredSlotEmpty =>
++					localize(RequiredSlot, Array.Empty<object>()),
++				Session.LobbyStartBlockReason.NoPlayers =>
++					localize(NoPlayers, Array.Empty<object>()),
++				Session.LobbyStartBlockReason.InsufficientHumans =>
++					localize(TwoPlayers, Array.Empty<object>()),
++				Session.LobbyStartBlockReason.InsufficientSpawnPoints =>
++					localize(Spawns, Array.Empty<object>()),
++				_ => localize(Waiting, Array.Empty<object>())
++			};
++		}
++
++		static string ClientStatus(LobbyStartAvailability availability, int width, SpriteFont font,
++			Func<int, string> clientName, Func<string, object[], string> localize,
++			string namedKey, string aggregateKey, params object[] extraArguments)
++		{
++			var name = availability.ClientIndex >= 0 ? clientName(availability.ClientIndex) : string.Empty;
++			var namedArguments = new object[extraArguments.Length + 2];
++			namedArguments[0] = "player";
++			namedArguments[1] = name;
++			Array.Copy(extraArguments, 0, namedArguments, 2, extraArguments.Length);
++			var named = localize(namedKey, namedArguments);
++			var count = availability.AdditionalBlockingClientCount + 1;
++			if (count == 1)
++			{
++				if (font.Measure(named).X <= Math.Max(0, width))
++					return named;
++
++				var aggregateArguments = new object[extraArguments.Length + 2];
++				aggregateArguments[0] = "count";
++				aggregateArguments[1] = count;
++				Array.Copy(extraArguments, 0, aggregateArguments, 2, extraArguments.Length);
++				return localize(aggregateKey, aggregateArguments);
++			}
++
++			var namedAndOthers = localize(ClientAndOthers, new object[]
++			{
++				"status", named,
++				"count", availability.AdditionalBlockingClientCount
++			});
++			if (font.Measure(namedAndOthers).X <= Math.Max(0, width))
++				return namedAndOthers;
++
++			return localize(ClientsNotReady, new object[] { "count", count });
++		}
++	}
++}
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/Lobby/LobbyLogic.cs b/OpenRA.Mods.Common/Widgets/Logic/Lobby/LobbyLogic.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/Lobby/LobbyLogic.cs	2026-08-28 02:02:43
++++ b/OpenRA.Mods.Common/Widgets/Logic/Lobby/LobbyLogic.cs	2026-08-28 02:02:43
+@@ -101,6 +101,11 @@
+ 		bool teamChat;
+ 		bool updateDiscordStatus = true;
+ 		bool resetOptionsButtonEnabled;
++		bool safeStartPending;
++		long safeStartRequestIdentity;
++		int startStatusRevision;
++		int cachedStartStatusRevision = -1;
++		LobbyStartAvailability cachedStartAvailability;
+ 		Dictionary<int, SpawnOccupant> spawnOccupants = new();
+ 
+ 		readonly string chatLineSound;
+@@ -115,11 +120,73 @@
+ 
+ 		bool MapIsPlayable => (mapStatus & Session.MapStatus.Playable) == Session.MapStatus.Playable;
+ 
++		void InvalidateStartStatus()
++		{
++			startStatusRevision++;
++		}
++
++		void ClientMapReadinessChanged(int clientIndex)
++		{
++			InvalidateStartStatus();
++		}
++
++		void SafeStartRejected(LobbyStartRejection rejection)
++		{
++			ClearSafeStartPending();
++		}
++
++		void ClearSafeStartPending()
++		{
++			if (!safeStartPending)
++				return;
++
++			safeStartPending = false;
++			safeStartRequestIdentity++;
++			InvalidateStartStatus();
++		}
++
++		LobbyStartAvailability CurrentStartAvailability()
++		{
++			if (cachedStartStatusRevision == startStatusRevision)
++				return cachedStartAvailability;
++
++			cachedStartAvailability = LobbyStartAvailability.Evaluate(new LobbyStartInputs
++			{
++				LobbyInfo = orderManager.LobbyInfo,
++				Mode = LobbyStartMode.SafeDirect,
++				RequesterIsAdmin = Game.IsHost,
++				RequireCurrentMapReadiness = !skirmishMode,
++				InsufficientEnabledSpawnPoints = insufficientPlayerSpawns
++			}).ApplyLocalMapAvailability(map.Status == MapStatus.Available);
++			cachedStartStatusRevision = startStatusRevision;
++			return cachedStartAvailability;
++		}
++
++		void BeginSafeStart()
++		{
++			var availability = CurrentStartAvailability();
++			if (!availability.CanStart || safeStartPending)
++				return;
++
++			var currentMapUid = orderManager.LobbyInfo.GlobalSettings.Map;
++			safeStartPending = true;
++			var requestIdentity = ++safeStartRequestIdentity;
++			InvalidateStartStatus();
++			Game.RunAfterDelay(5000, () =>
++			{
++				if (!disposed && safeStartPending && safeStartRequestIdentity == requestIdentity)
++					ClearSafeStartPending();
++			});
++			orderManager.IssueOrder(Order.Command($"startgame_safe {currentMapUid}"));
++		}
++
+ 		// Listen for connection failures
+ 		void ConnectionStateChanged(OrderManager om, string password, NetworkConnection connection)
+ 		{
+ 			if (connection.ConnectionState == ConnectionState.NotConnected)
+ 			{
++				ClearSafeStartPending();
++
+ 				// Show connection failed dialog
+ 				Ui.CloseWindow();
+ 
+@@ -171,8 +238,11 @@
+ 			Game.LobbyInfoChanged += UpdateDiscordStatus;
+ 			Game.LobbyInfoChanged += UpdateSpawnOccupants;
+ 			Game.LobbyInfoChanged += UpdateOptions;
++			Game.LobbyInfoChanged += InvalidateStartStatus;
+ 			Game.BeforeGameStart += OnGameStart;
+ 			Game.ConnectionStateChanged += ConnectionStateChanged;
++			orderManager.ClientMapReadinessChanged += ClientMapReadinessChanged;
++			orderManager.SafeStartRejected += SafeStartRejected;
+ 
+ 			ChromeMetrics.TryGet("ChatLineSound", out chatLineSound);
+ 			ChromeMetrics.TryGet("PlayerJoinedSound", out playerJoinedSound);
+@@ -451,10 +521,44 @@
+ 			var startGameButton = lobby.GetOrNull<ButtonWidget>("START_GAME_BUTTON");
+ 			if (startGameButton != null)
+ 			{
+-				startGameButton.IsDisabled = () => configurationDisabled() || StartDisabled();
++				bool IosConfigurationDisabled() =>
++					!Game.IsHost || gameStarting || safeStartPending ||
++					panel == PanelType.ForceStart || panel == PanelType.Kick ||
++					orderManager.LocalClient == null;
+ 
++				startGameButton.IsDisabled = () => Platform.IsIOS
++					? IosConfigurationDisabled() || !CurrentStartAvailability().CanStart
++					: configurationDisabled() || StartDisabled();
++
++				var originalStartText = startGameButton.GetText;
++				startGameButton.GetText = () =>
++				{
++					if (!Platform.IsIOS || !Game.IsHost)
++						return originalStartText();
++
++					if (safeStartPending)
++						return FluentProvider.GetMessage("button-ios-lobby-start-waiting");
++
++					var availability = CurrentStartAvailability();
++					if (availability.CanStart)
++						return originalStartText();
++
++					var width = Math.Max(0,
++						startGameButton.Bounds.Width - startGameButton.LeftMargin - startGameButton.RightMargin);
++					var font = Game.Renderer.Fonts[startGameButton.Font];
++					return IosLobbyStartStatus.Format(availability, width, font,
++						index => orderManager.LobbyInfo.ClientWithIndex(index)?.Name ?? string.Empty,
++						(key, args) => FluentProvider.GetMessage(key, args));
++				};
++
+ 				startGameButton.OnClick = () =>
+ 				{
++					if (Platform.IsIOS)
++					{
++						BeginSafeStart();
++						return;
++					}
++
+ 					// Bots and admins don't count
+ 					if (orderManager.LobbyInfo.Clients.Any(c => c.Slot != null && !c.IsAdmin && c.Bot == null && !c.IsReady))
+ 						panel = PanelType.ForceStart;
+@@ -686,10 +790,10 @@
+ 			{
+ 				editablePlayerTemplate, nonEditablePlayerTemplate, emptySlotTemplate
+ 			})
+-				LayoutIosPlayerRow(row, layout);
++				LayoutIosPlayerRow(row, layout, policy);
+ 
+ 			foreach (var row in players.Children)
+-				LayoutIosPlayerRow(row, layout);
++				LayoutIosPlayerRow(row, layout, policy);
+ 
+ 			players.Layout.AdjustChildren();
+ 		}
+@@ -710,7 +814,8 @@
+ 			}
+ 		}
+ 
+-		static void LayoutIosPlayerRow(Widget row, IosLobbyLayout layout)
++		static void LayoutIosPlayerRow(
++			Widget row, IosLobbyLayout layout, IosMenuLayoutPolicy policy)
+ 		{
+ 			row.Bounds.X = layout.PlayerRow.X;
+ 			row.Bounds.Width = layout.PlayerRow.Width;
+@@ -726,7 +831,10 @@
+ 				SetDirectBounds(row, id, layout.PlayerHandicap);
+ 			foreach (var id in new[] { "SPAWN", "SPAWN_DROPDOWN" })
+ 				SetDirectBounds(row, id, layout.PlayerSpawn);
+-			foreach (var id in new[] { "STATUS_CHECKBOX", "STATUS_IMAGE" })
++			foreach (var id in new[]
++			{
++				"STATUS_CHECKBOX", "STATUS_IMAGE", "IOS_MAP_STATUS_TEXT", "IOS_MAP_STATUS_ICON"
++			})
+ 				SetDirectBounds(row, id, layout.PlayerReady);
+ 
+ 			var actionBounds = new WidgetBounds(layout.PlayerColor.X, 0,
+@@ -747,14 +855,27 @@
+ 			if (faction != null)
+ 			{
+ 				var flag = DirectChild(faction, "FACTIONFLAG");
+-				var flagWidth = Math.Min(layout.PlayerFaction.Height, layout.PlayerFaction.Width / 3);
++				var flagWidth = Math.Max(1, (int)Math.Ceiling(40 * policy.LogicalPerPoint));
++				var flagHeight = Math.Max(1, (int)Math.Ceiling(20 * policy.LogicalPerPoint));
++				flagWidth = Math.Min(flagWidth, faction.Bounds.Width);
++				flagHeight = Math.Min(flagHeight, faction.Bounds.Height);
+ 				if (flag != null)
+-					flag.Bounds = new WidgetBounds(0, 0, flagWidth, layout.PlayerFaction.Height);
++				{
++					flag.Bounds = new WidgetBounds(
++						0, Math.Max(0, faction.Bounds.Height - flagHeight) / 2, flagWidth, flagHeight);
++					if (flag is ImageWidget image)
++						image.StretchToFit = true;
++				}
+ 
+ 				var name = DirectChild(faction, "FACTIONNAME");
+ 				if (name != null)
+-					name.Bounds = new WidgetBounds(flagWidth, 0,
+-						Math.Max(0, layout.PlayerFaction.Width - flagWidth), layout.PlayerFaction.Height);
++				{
++					var nameX = Math.Min(faction.Bounds.Width, flagWidth + policy.Gap);
++					var usableWidth = faction is DropDownButtonWidget dropdown ?
++						dropdown.UsableWidth : faction.Bounds.Width;
++					name.Bounds = new WidgetBounds(nameX, 0,
++						Math.Max(0, usableWidth - nameX), faction.Bounds.Height);
++				}
+ 			}
+ 		}
+ 
+@@ -815,8 +936,11 @@
+ 				Game.LobbyInfoChanged -= UpdatePlayerList;
+ 				Game.LobbyInfoChanged -= UpdateDiscordStatus;
+ 				Game.LobbyInfoChanged -= UpdateSpawnOccupants;
++				Game.LobbyInfoChanged -= InvalidateStartStatus;
+ 				Game.BeforeGameStart -= OnGameStart;
+ 				Game.ConnectionStateChanged -= ConnectionStateChanged;
++				orderManager.ClientMapReadinessChanged -= ClientMapReadinessChanged;
++				orderManager.SafeStartRejected -= SafeStartRejected;
+ 			}
+ 
+ 			base.Dispose(disposing);
+@@ -903,12 +1027,9 @@
+ 
+ 			map = modData.MapCache[uid];
+ 
+-			// Tell the server that we have the map
+-			if (map.Status == MapStatus.Available)
+-				orderManager.IssueOrder(Order.Command($"state {Session.ClientState.NotReady}"));
+-
+ 			// We don't have the map
+-			else if (map.Status != MapStatus.DownloadAvailable && Game.Settings.Game.AllowDownloading)
++			if (map.Status != MapStatus.Available && map.Status != MapStatus.DownloadAvailable &&
++				Game.Settings.Game.AllowDownloading)
+ 				modData.MapCache.QueryRemoteMapDetails(services.MapRepository, new[] { uid });
+ 		}
+ 
+@@ -983,7 +1104,8 @@
+ 					LobbyUtils.SetupEditableTeamWidget(template, slot, client, orderManager, map);
+ 					LobbyUtils.SetupEditableHandicapWidget(template, slot, client, orderManager);
+ 					LobbyUtils.SetupEditableSpawnWidget(template, slot, client, orderManager, map);
+-					LobbyUtils.SetupEditableReadyWidget(template, client, orderManager, map, MapIsPlayable);
++					LobbyUtils.SetupEditableReadyWidget(template, client, orderManager, map, MapIsPlayable,
++						orderManager.LobbyInfo.GlobalSettings.Map, Platform.IsIOS);
+ 				}
+ 				else
+ 				{
+@@ -1011,7 +1133,8 @@
+ 						LobbyUtils.SetupSpawnWidget(template, client);
+ 					}
+ 
+-					LobbyUtils.SetupReadyWidget(template, client);
++					LobbyUtils.SetupReadyWidget(template, client,
++						orderManager.LobbyInfo.GlobalSettings.Map, Platform.IsIOS);
+ 				}
+ 
+ 				template.IsVisible = () => true;
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/Lobby/LobbyUtils.cs b/OpenRA.Mods.Common/Widgets/Logic/Lobby/LobbyUtils.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/Lobby/LobbyUtils.cs	2026-08-28 02:02:43
++++ b/OpenRA.Mods.Common/Widgets/Logic/Lobby/LobbyUtils.cs	2026-08-28 02:02:43
+@@ -240,8 +240,9 @@
+ 				var faction = factions[factionId];
+ 
+ 				var label = item.Get<LabelWidget>("LABEL");
+-				var labelText = WidgetUtils.TruncateText(FluentProvider.GetMessage(faction.Name), label.Bounds.Width, Game.Renderer.Fonts[label.Font]);
+-				label.GetText = () => labelText;
++				var fullName = FluentProvider.GetMessage(faction.Name);
++				label.GetText = () => WidgetUtils.TruncateText(
++					fullName, label.Bounds.Width, Game.Renderer.Fonts[label.Font]);
+ 
+ 				var flag = item.Get<ImageWidget>("FLAG");
+ 				flag.GetImageCollection = () => "flags";
+@@ -258,7 +259,8 @@
+ 			var options = factions.Where(f => f.Value.Selectable).GroupBy(f => f.Value.Side)
+ 				.ToDictionary(g => g.Key != null ? FluentProvider.GetMessage(g.Key) : "", g => g.Select(f => FluentProvider.GetMessage(f.Key)));
+ 
+-			dropdown.ShowDropDown("FACTION_DROPDOWN_TEMPLATE", 154, options, SetupItem);
++			dropdown.ShowDropDown(
++				"FACTION_DROPDOWN_TEMPLATE", 154, options, SetupItem, IosDropDownLayout.FactionPicker);
+ 		}
+ 
+ 		public static void SelectSpawnPoint(OrderManager orderManager, MapPreviewWidget mapPreview, MapPreview preview, MouseInput mi)
+@@ -692,7 +694,8 @@
+ 			HideChildWidget(parent, "SPAWN_DROPDOWN");
+ 		}
+ 
+-		public static void SetupEditableReadyWidget(Widget parent, Session.Client c, OrderManager orderManager, MapPreview map, bool isEnabled)
++		public static void SetupEditableReadyWidget(Widget parent, Session.Client c, OrderManager orderManager,
++			MapPreview map, bool isEnabled, string currentMapUid, bool isIos)
+ 		{
+ 			var status = parent.Get<CheckboxWidget>("STATUS_CHECKBOX");
+ 			status.IsVisible = () => true;
+@@ -710,17 +713,52 @@
+ 			}
+ 			else
+ 				status.IsChecked = () => true;
++
++			SetupIosMapStatusWidgets(parent, c, currentMapUid, isIos, "STATUS_CHECKBOX");
+ 		}
+ 
+-		public static void SetupReadyWidget(Widget parent, Session.Client c)
++		public static void SetupReadyWidget(
++			Widget parent, Session.Client c, string currentMapUid, bool isIos)
+ 		{
+ 			parent.Get<ImageWidget>("STATUS_IMAGE").IsVisible = () => c.IsReady || c.Bot != null;
++			SetupIosMapStatusWidgets(parent, c, currentMapUid, isIos, "STATUS_IMAGE");
+ 		}
+ 
++		public static void SetupIosMapStatusWidgets(
++			Widget parent, Session.Client c, string currentMapUid, bool isIos, string readyWidgetId)
++		{
++			var statusText = parent.GetOrNull<LabelWidget>("IOS_MAP_STATUS_TEXT");
++			var statusIcon = parent.GetOrNull<LabelWidget>("IOS_MAP_STATUS_ICON");
++			var ready = parent.GetOrNull(readyWidgetId);
++			if (statusText == null || statusIcon == null || ready == null)
++				return;
++
++			IosLobbyMapStatusPresentation Presentation() =>
++				IosLobbyMapStatusPresentation.For(c, currentMapUid, isIos);
++
++			statusText.GetText = () => Presentation().Text;
++			statusText.IsVisible = () =>
++			{
++				var presentation = Presentation();
++				return presentation.ShowMapStatus && !string.IsNullOrEmpty(presentation.Text);
++			};
++			statusIcon.GetText = () => Presentation().Icon;
++			statusIcon.IsVisible = () =>
++			{
++				var presentation = Presentation();
++				return presentation.ShowMapStatus && !string.IsNullOrEmpty(presentation.Icon);
++			};
++
++			var originalReadyVisible = ready.IsVisible;
++			ready.IsVisible = () => originalReadyVisible() && Presentation().ShowReady;
++		}
++
+ 		public static void HideReadyWidgets(Widget parent)
+ 		{
+ 			HideChildWidget(parent, "STATUS_CHECKBOX");
+ 			HideChildWidget(parent, "STATUS_IMAGE");
++			HideChildWidget(parent, "IOS_MAP_STATUS_TEXT");
++			HideChildWidget(parent, "IOS_MAP_STATUS_ICON");
+ 		}
+ 
+ 		static void HideChildWidget(Widget parent, string widgetId)
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/Lobby/MapPreviewLogic.cs b/OpenRA.Mods.Common/Widgets/Logic/Lobby/MapPreviewLogic.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/Lobby/MapPreviewLogic.cs	2026-08-28 02:02:43
++++ b/OpenRA.Mods.Common/Widgets/Logic/Lobby/MapPreviewLogic.cs	2026-08-28 02:02:43
+@@ -64,6 +64,8 @@
+ 		readonly ButtonWidget retryButton;
+ 		bool mapUpdateAvailable = false;
+ 
++		static void OnMapInstallSucceeded() { }
++
+ 		[ObjectCreator.UseCtor]
+ 		internal MapPreviewLogic(Widget widget, ModData modData, OrderManager orderManager, Func<(MapPreview Map, Session.MapStatus Status)> getMap,
+ 			Action<MapPreviewWidget, MapPreview, MouseInput> onMouseDown, Func<Dictionary<int, SpawnOccupant>> getSpawnOccupants,
+@@ -71,6 +73,7 @@
+ 		{
+ 			this.widget = widget;
+ 			this.getMap = getMap;
++			_ = orderManager;
+ 
+ 			Widget SetupMapPreview(Widget parent)
+ 			{
+@@ -122,11 +125,7 @@
+ 				button.IsHighlighted = () => blink;
+ 				button.OnClick = () =>
+ 				{
+-					getMap().Map.Install(mapRepository, () =>
+-					{
+-						if (orderManager != null)
+-							Game.RunAfterTick(() => orderManager.IssueOrder(Order.Command($"state {Session.ClientState.NotReady}")));
+-					});
++					getMap().Map.Install(mapRepository, OnMapInstallSucceeded);
+ 				};
+ 
+ 				return parent;
+@@ -175,13 +174,7 @@
+ 				mapUpdateAvailable = mapUpdatesEnabled && uid != null && map.Uid != uid;
+ 
+ 				if (map.Status == MapStatus.DownloadError)
+-				{
+-					map.Install(mapRepository, () =>
+-					{
+-						if (orderManager != null)
+-							Game.RunAfterTick(() => orderManager.IssueOrder(Order.Command($"state {Session.ClientState.NotReady}")));
+-					});
+-				}
++					map.Install(mapRepository, OnMapInstallSucceeded);
+ 				else if (map.Status == MapStatus.Unavailable)
+ 					modData.MapCache.QueryRemoteMapDetails(mapRepository, new[] { map.Uid });
+ 			};
+diff -ruN a/OpenRA.Test/IosLobbyMapReadinessTest.cs b/OpenRA.Test/IosLobbyMapReadinessTest.cs
+--- a/OpenRA.Test/IosLobbyMapReadinessTest.cs	1969-12-31 16:00:00
++++ b/OpenRA.Test/IosLobbyMapReadinessTest.cs	2026-08-28 02:02:43
+@@ -0,0 +1,796 @@
++using System;
++using System.Collections.Generic;
++using System.Linq;
++using System.Reflection;
++using NUnit.Framework;
++using OpenRA.Mods.Common.Server;
++using OpenRA.Network;
++using OpenRA.Server;
++
++namespace OpenRA.Test
++{
++	[TestFixture]
++	[NonParallelizable]
++	public sealed class IosLobbyMapReadinessTest
++	{
++		sealed class RecordingConnection : IConnection
++		{
++			public int LocalClientId { get; set; } = 1;
++			public readonly List<Order> ImmediateOrders = new();
++
++			public void StartGame() { }
++			public void Send(int frame, IEnumerable<Order> orders) { }
++			public void SendImmediate(IEnumerable<Order> orders) => ImmediateOrders.AddRange(orders);
++			public void SendSync(int frame, int syncHash, ulong defeatState) { }
++			public void Receive(OrderManager orderManager) { }
++			public void Dispose() { }
++		}
++
++		static MapPreview Preview(string uid, MapStatus status)
++		{
++			var preview = new MapPreview(null, uid, MapGridType.Rectangular, null);
++			preview.UpdateRemoteSearch(status, null, null);
++			return preview;
++		}
++
++		static void AssertReport(ClientMapReadinessReport? actual, string uid,
++			Session.ClientMapPhase phase, int progress)
++		{
++			Assert.That(actual.HasValue, Is.True);
++			Assert.That(actual.Value, Is.EqualTo(new ClientMapReadinessReport(uid, phase, progress)));
++		}
++
++		static Order ReadinessOrder(ClientMapReadinessUpdate update)
++		{
++			return Order.FromTargetString("SyncClientMapReadiness",
++				new[] { update.Serialize() }.WriteToString(), true);
++		}
++
++		static MiniYaml ReadinessUpdateYaml(string phase, int progress, string clientState)
++		{
++			return new MiniYaml(null, MiniYaml.FromString(
++				$"ClientIndex: 5\nMapUid: map-a\nPhase: {phase}\nProgress: {progress}\nClientState: {clientState}\n",
++				"client-map-readiness"));
++		}
++
++		static ClientMapReadinessUpdate ReadinessUpdate(int clientIndex, Session.ClientMapPhase phase,
++			int progress, Session.ClientState clientState = Session.ClientState.Invalid)
++		{
++			return new ClientMapReadinessUpdate
++			{
++				ClientIndex = clientIndex,
++				MapUid = "map-a",
++				Phase = phase,
++				Progress = progress,
++				ClientState = clientState
++			};
++		}
++
++		static void ProcessUnitOrder(OrderManager orderManager, int clientId, Order order)
++		{
++			var processOrder = typeof(UnitOrders).GetMethod("ProcessOrder",
++				BindingFlags.Static | BindingFlags.NonPublic);
++			Assert.That(processOrder, Is.Not.Null);
++			processOrder!.Invoke(null, new object[] { orderManager, null, clientId, order });
++		}
++
++		[Test]
++		public void SessionClientMapReadinessRoundTripsAndLegacyDefaultsAreSafe()
++		{
++			var client = new Session.Client
++			{
++				Index = 7,
++				Name = "Current",
++				MapUid = "map-a",
++				MapPhase = Session.ClientMapPhase.Downloading,
++				MapProgress = 42
++			};
++
++			var roundTrip = Session.Client.Deserialize(client.Serialize().Value);
++			Assert.That(roundTrip.MapUid, Is.EqualTo("map-a"));
++			Assert.That(roundTrip.MapPhase, Is.EqualTo(Session.ClientMapPhase.Downloading));
++			Assert.That(roundTrip.MapProgress, Is.EqualTo(42));
++			Assert.That(roundTrip.IsMapReadyFor("map-a"), Is.False);
++
++			var legacyYaml = new MiniYaml(null, MiniYaml.FromString("Index: 8\nName: Legacy\n", "legacy-client"));
++			var legacy = Session.Client.Deserialize(legacyYaml);
++			Assert.That(legacy.MapUid, Is.Null);
++			Assert.That(legacy.MapPhase, Is.EqualTo(Session.ClientMapPhase.Unknown));
++			Assert.That(legacy.MapProgress, Is.EqualTo(-1));
++			Assert.That(legacy.IsMapReadyFor("map-a"), Is.False);
++		}
++
++		[Test]
++		public void PhaseProgressInvariantAcceptsExactlyTheLegalCombinations()
++		{
++			foreach (var phase in Enum.GetValues<Session.ClientMapPhase>())
++			foreach (var progress in Enumerable.Range(-2, 104))
++			{
++				var expected = phase switch
++				{
++					Session.ClientMapPhase.Downloading => progress == -1 || progress is >= 0 and <= 99,
++					Session.ClientMapPhase.Ready => progress == 100,
++					_ => progress == -1
++				};
++
++				Assert.That(ClientMapReadinessState.IsValidPhaseProgress(phase, progress), Is.EqualTo(expected),
++					$"Unexpected validity for {phase}/{progress}");
++			}
++
++			Assert.That(ClientMapReadinessState.IsValidPhaseProgress(
++				(Session.ClientMapPhase)int.MaxValue, -1), Is.False);
++		}
++
++		[Test]
++		public void ClientMapPhaseWireNamesAndOrderAreStable()
++		{
++			Assert.That(Enum.GetNames<Session.ClientMapPhase>(), Is.EqualTo(new[]
++			{
++				"Unknown",
++				"Searching",
++				"WaitingForDownload",
++				"Downloading",
++				"InstallingOrVerifying",
++				"Ready",
++				"Unavailable",
++				"Error"
++			}));
++		}
++
++		[Test]
++		public void ReportParsingUsesOneRawUidTokenAndTheCanonicalCommand()
++		{
++			var report = new ClientMapReadinessReport("map-a", Session.ClientMapPhase.Downloading, 42);
++			Assert.That(report.IsValidFor("map-a"), Is.True);
++			Assert.That(report.IsValidFor("MAP-A"), Is.False);
++			Assert.That(report.ToCommand(), Is.EqualTo("map_status map-a Downloading 42"));
++
++			Assert.That(ClientMapReadinessReport.TryParse(report.ToCommand(), out var parsed), Is.True);
++			Assert.That(parsed, Is.EqualTo(report));
++			Assert.That(ClientMapReadinessReport.TryParse("map_status map a Ready 100", out _), Is.False);
++			Assert.That(ClientMapReadinessReport.TryParse("map_status map-a Ready -1", out _), Is.False);
++			Assert.That(ClientMapReadinessReport.TryParse("map_status map-a ready 100", out _), Is.False);
++			Assert.That(ClientMapReadinessReport.TryParse("map_status map-a 3 42", out _), Is.False);
++			Assert.That(ClientMapReadinessReport.TryParse("map_status map-a Ready 100 trailing", out _), Is.False);
++		}
++
++		[Test]
++		public void PublisherDeduplicatesAndCapsDownloadingProgressAtFourHertz()
++		{
++			var now = 0L;
++			var publisher = new ClientMapReadinessPublisher(() => now);
++
++			AssertReport(publisher.Update("map-a", MapStatus.Searching, 0), "map-a",
++				Session.ClientMapPhase.Searching, -1);
++			Assert.That(publisher.Update("map-a", MapStatus.Searching, 0), Is.Null);
++
++			AssertReport(publisher.Update("map-a", MapStatus.Downloading, 42), "map-a",
++				Session.ClientMapPhase.Downloading, 42);
++			Assert.That(publisher.Update("map-a", MapStatus.Downloading, 42), Is.Null);
++
++			now = 249;
++			Assert.That(publisher.Update("map-a", MapStatus.Downloading, 43), Is.Null);
++			now = 250;
++			AssertReport(publisher.Update("map-a", MapStatus.Downloading, 43), "map-a",
++				Session.ClientMapPhase.Downloading, 43);
++
++			AssertReport(publisher.Update("map-b", MapStatus.Downloading, 43), "map-b",
++				Session.ClientMapPhase.Downloading, 43);
++		}
++
++		[Test]
++		public void PublisherMapsAllPreviewStatesAndPublishesPhaseChangesImmediately()
++		{
++			var now = 0L;
++			var publisher = new ClientMapReadinessPublisher(() => now);
++
++			AssertReport(publisher.Update("map-a", MapStatus.Downloading, -1), "map-a",
++				Session.ClientMapPhase.Downloading, -1);
++			Assert.That(publisher.Update("map-a", MapStatus.Downloading, 0), Is.Null,
++				"Zero callback data represents the same unknown-length download state.");
++			now = 1;
++			AssertReport(publisher.Update("map-a", MapStatus.DownloadAvailable, 0), "map-a",
++				Session.ClientMapPhase.WaitingForDownload, -1);
++			AssertReport(publisher.Update("map-a", MapStatus.Downloading, 100), "map-a",
++				Session.ClientMapPhase.InstallingOrVerifying, -1);
++			AssertReport(publisher.Update("map-a", MapStatus.Available, 100), "map-a",
++				Session.ClientMapPhase.Ready, 100);
++			AssertReport(publisher.Update("map-a", MapStatus.Unavailable, 100), "map-a",
++				Session.ClientMapPhase.Unavailable, -1);
++			AssertReport(publisher.Update("map-a", MapStatus.DownloadError, 100), "map-a",
++				Session.ClientMapPhase.Error, -1);
++			AssertReport(publisher.Update("map-a", MapStatus.Searching, 100), "map-a",
++				Session.ClientMapPhase.Searching, -1);
++		}
++
++		[Test]
++		public void StateApplyPreservesGameReadyOnlyForRepeatedReadyReports()
++		{
++			var client = new Session.Client { Index = 4, State = Session.ClientState.Invalid };
++			ClientMapReadinessState.Reset(client, "map-a");
++			Assert.That(client.MapUid, Is.EqualTo("map-a"));
++			Assert.That(client.MapPhase, Is.EqualTo(Session.ClientMapPhase.Unknown));
++			Assert.That(client.MapProgress, Is.EqualTo(-1));
++			Assert.That(client.State, Is.EqualTo(Session.ClientState.Invalid));
++
++			var ready = new ClientMapReadinessReport("map-a", Session.ClientMapPhase.Ready, 100);
++			Assert.That(ClientMapReadinessState.Apply(client, "map-a", ready),
++				Is.EqualTo(ClientMapReadinessApplyResult.BecameReady));
++			Assert.That(client.State, Is.EqualTo(Session.ClientState.NotReady));
++
++			client.State = Session.ClientState.Ready;
++			Assert.That(ClientMapReadinessState.Apply(client, "map-a", ready),
++				Is.EqualTo(ClientMapReadinessApplyResult.Unchanged));
++			Assert.That(client.State, Is.EqualTo(Session.ClientState.Ready));
++
++			var downloading = new ClientMapReadinessReport("map-a", Session.ClientMapPhase.Downloading, 42);
++			Assert.That(ClientMapReadinessState.Apply(client, "map-a", downloading),
++				Is.EqualTo(ClientMapReadinessApplyResult.BecameUnready));
++			Assert.That(client.State, Is.EqualTo(Session.ClientState.Invalid));
++
++			var before = client.Serialize().Value.Nodes.WriteToString();
++			var wrongMap = new ClientMapReadinessReport("map-b", Session.ClientMapPhase.Ready, 100);
++			Assert.That(ClientMapReadinessState.Apply(client, "map-a", wrongMap),
++				Is.EqualTo(ClientMapReadinessApplyResult.Rejected));
++			Assert.That(client.Serialize().Value.Nodes.WriteToString(), Is.EqualTo(before));
++		}
++
++		[TestCase(null)]
++		[TestCase("")]
++		[TestCase(" ")]
++		[TestCase("map a")]
++		public void ResetRejectsInvalidMapUidBeforeMutation(string invalidMapUid)
++		{
++			var client = new Session.Client
++			{
++				Index = 4,
++				MapUid = "map-a",
++				MapPhase = Session.ClientMapPhase.Ready,
++				MapProgress = 100,
++				State = Session.ClientState.Ready
++			};
++			var snapshot = client.Serialize().Value.Nodes.WriteToString();
++
++			Assert.Throws<ArgumentException>(() => ClientMapReadinessState.Reset(client, invalidMapUid));
++			Assert.That(client.Serialize().Value.Nodes.WriteToString(), Is.EqualTo(snapshot));
++		}
++
++		[Test]
++		public void ReadinessUpdateRoundTripsAndFailsClosedBeforeMutation()
++		{
++			var session = new Session { GlobalSettings = { Map = "map-a" } };
++			var client = new Session.Client { Index = 5, State = Session.ClientState.Invalid };
++			session.Clients.Add(client);
++
++			var update = new ClientMapReadinessUpdate
++			{
++				ClientIndex = 5,
++				MapUid = "map-a",
++				Phase = Session.ClientMapPhase.Ready,
++				Progress = 100,
++				ClientState = Session.ClientState.NotReady
++			};
++
++			var serialized = update.Serialize();
++			var roundTrip = ClientMapReadinessUpdate.Deserialize(serialized.Value);
++			Assert.That(roundTrip, Is.Not.Null);
++			Assert.That(roundTrip.ApplyTo(session), Is.True);
++			Assert.That(client.IsMapReadyFor("map-a"), Is.True);
++			Assert.That(client.State, Is.EqualTo(Session.ClientState.NotReady));
++
++			var validSnapshot = client.Serialize().Value.Nodes.WriteToString();
++			void AssertMalformedDoesNotMutate(string yaml, string name)
++			{
++				Assert.That(ClientMapReadinessUpdate.Deserialize(
++					new MiniYaml(null, MiniYaml.FromString(yaml, name))), Is.Null);
++				Assert.That(client.Serialize().Value.Nodes.WriteToString(), Is.EqualTo(validSnapshot));
++			}
++
++			var malformed = ClientMapReadinessUpdate.Deserialize(
++				new MiniYaml(null, MiniYaml.FromString("ClientIndex: nope\n", "malformed-readiness")));
++			Assert.That(malformed, Is.Null);
++			Assert.That(client.Serialize().Value.Nodes.WriteToString(), Is.EqualTo(validSnapshot));
++			var missingState = ClientMapReadinessUpdate.Deserialize(new MiniYaml(null, MiniYaml.FromString(
++				"ClientIndex: 5\nMapUid: map-a\nPhase: Ready\nProgress: 100\n", "missing-readiness-state")));
++			Assert.That(missingState, Is.Null, "Every authoritative readiness delta field is required.");
++			var duplicateIndex = ClientMapReadinessUpdate.Deserialize(new MiniYaml(null, MiniYaml.FromString(
++				"ClientIndex: 5\nClientIndex: 6\nMapUid: map-a\nPhase: Ready\nProgress: 100\nClientState: NotReady\n",
++				"duplicate-readiness-index")));
++			Assert.That(duplicateIndex, Is.Null);
++			var unknownField = ClientMapReadinessUpdate.Deserialize(new MiniYaml(null, MiniYaml.FromString(
++				"ClientIndex: 5\nMapUid: map-a\nPhase: Ready\nProgress: 100\nClientState: NotReady\nUnexpected: nope\n",
++				"unknown-readiness-field")));
++			Assert.That(unknownField, Is.Null);
++			Assert.That(client.Serialize().Value.Nodes.WriteToString(), Is.EqualTo(validSnapshot));
++			AssertMalformedDoesNotMutate(
++				"ClientIndex: 5\nMapUid: map-a\nPhase: Bogus\nProgress: -1\nClientState: Invalid\n",
++				"malformed-readiness-phase");
++			AssertMalformedDoesNotMutate(
++				"ClientIndex: 5\nMapUid: map-a\nPhase: Downloading\nProgress: 42\nClientState: Bogus\n",
++				"malformed-readiness-client-state");
++			AssertMalformedDoesNotMutate(
++				"ClientIndex: 5\nMapUid: map-a\nPhase: Downloading\nProgress: 100\nClientState: Invalid\n",
++				"illegal-readiness-progress");
++
++			update.ClientIndex = 99;
++			Assert.That(update.ApplyTo(session), Is.False);
++			update.ClientIndex = 5;
++			update.MapUid = "map-b";
++			Assert.That(update.ApplyTo(session), Is.False);
++			Assert.That(client.Serialize().Value.Nodes.WriteToString(), Is.EqualTo(validSnapshot));
++		}
++
++		[TestCase(Session.ClientMapPhase.Downloading, 42, Session.ClientState.Ready)]
++		[TestCase(Session.ClientMapPhase.Downloading, 42, Session.ClientState.NotReady)]
++		[TestCase(Session.ClientMapPhase.Ready, 100, Session.ClientState.Invalid)]
++		[TestCase(Session.ClientMapPhase.Ready, 100, Session.ClientState.Disconnected)]
++		public void ReadinessUpdateRejectsIncoherentPhaseAndClientStateBeforeMutation(
++			Session.ClientMapPhase phase, int progress, Session.ClientState clientState)
++		{
++			var session = new Session { GlobalSettings = { Map = "map-a" } };
++			var client = new Session.Client
++			{
++				Index = 5,
++				MapUid = "map-a",
++				MapPhase = Session.ClientMapPhase.Ready,
++				MapProgress = 100,
++				State = Session.ClientState.Ready
++			};
++			session.Clients.Add(client);
++			var snapshot = client.Serialize().Value.Nodes.WriteToString();
++
++			var deserialized = ClientMapReadinessUpdate.Deserialize(
++				ReadinessUpdateYaml(phase.ToString(), progress, clientState.ToString()));
++			var applied = deserialized?.ApplyTo(session) ?? false;
++
++			Assert.Multiple(() =>
++			{
++				Assert.That(deserialized, Is.Null,
++					$"{phase}/{progress}/{clientState} must be rejected as an authoritative readiness delta.");
++				Assert.That(applied, Is.False);
++				Assert.That(client.Serialize().Value.Nodes.WriteToString(), Is.EqualTo(snapshot));
++			});
++
++			var directUpdate = new ClientMapReadinessUpdate
++			{
++				ClientIndex = 5,
++				MapUid = "map-a",
++				Phase = phase,
++				Progress = progress,
++				ClientState = clientState
++			};
++
++			Assert.That(directUpdate.ApplyTo(session), Is.False);
++			Assert.That(client.Serialize().Value.Nodes.WriteToString(), Is.EqualTo(snapshot));
++		}
++
++		[TestCase("ready", "NotReady")]
++		[TestCase("5", "NotReady")]
++		[TestCase("Ready", "notready")]
++		[TestCase("Ready", "0")]
++		public void ReadinessUpdateRejectsNonCanonicalRawEnumTokensBeforeMutation(
++			string phaseToken, string clientStateToken)
++		{
++			var session = new Session { GlobalSettings = { Map = "map-a" } };
++			var client = new Session.Client
++			{
++				Index = 5,
++				MapUid = "map-a",
++				MapPhase = Session.ClientMapPhase.Ready,
++				MapProgress = 100,
++				State = Session.ClientState.Ready
++			};
++			session.Clients.Add(client);
++			var snapshot = client.Serialize().Value.Nodes.WriteToString();
++
++			var deserialized = ClientMapReadinessUpdate.Deserialize(
++				ReadinessUpdateYaml(phaseToken, 100, clientStateToken));
++			var applied = deserialized?.ApplyTo(session) ?? false;
++
++			Assert.Multiple(() =>
++			{
++				Assert.That(deserialized, Is.Null,
++					$"Phase={phaseToken} ClientState={clientStateToken} must use canonical enum tokens.");
++				Assert.That(applied, Is.False);
++				Assert.That(client.Serialize().Value.Nodes.WriteToString(), Is.EqualTo(snapshot));
++			});
++		}
++
++		[Test]
++		public void AuthoritativeReadinessDeltaAppliesInPlaceAndFiresOnlyTheNarrowEvent()
++		{
++			var connection = new RecordingConnection();
++			using var orderManager = new OrderManager(connection, () => 0, _ => null);
++			orderManager.LobbyInfo.GlobalSettings.Map = "map-a";
++			var client = new Session.Client
++			{
++				Index = 5,
++				MapUid = "map-a",
++				MapPhase = Session.ClientMapPhase.Downloading,
++				MapProgress = 41,
++				State = Session.ClientState.Invalid
++			};
++			orderManager.LobbyInfo.Clients.Add(client);
++
++			var narrowCount = 0;
++			var changedClientIndex = -1;
++			var fullLobbyCount = 0;
++			orderManager.ClientMapReadinessChanged += clientIndex =>
++			{
++				narrowCount++;
++				changedClientIndex = clientIndex;
++			};
++			void OnLobbyInfoChanged() => fullLobbyCount++;
++			Game.LobbyInfoChanged += OnLobbyInfoChanged;
++			try
++			{
++				ProcessUnitOrder(orderManager, 0, ReadinessOrder(new ClientMapReadinessUpdate
++				{
++					ClientIndex = 5,
++					MapUid = "map-a",
++					Phase = Session.ClientMapPhase.Downloading,
++					Progress = 42,
++					ClientState = Session.ClientState.Invalid
++				}));
++			}
++			finally
++			{
++				Game.LobbyInfoChanged -= OnLobbyInfoChanged;
++			}
++
++			Assert.That(client.MapProgress, Is.EqualTo(42));
++			Assert.That(narrowCount, Is.EqualTo(1));
++			Assert.That(changedClientIndex, Is.EqualTo(5));
++			Assert.That(fullLobbyCount, Is.Zero,
++				"A percentage-only delta must not trigger the full lobby refresh path.");
++		}
++
++		[Test]
++		public void RejectedReadinessDeltasDoNotMutateOrFireLobbyEvents()
++		{
++			var connection = new RecordingConnection();
++			using var orderManager = new OrderManager(connection, () => 0, _ => null);
++			orderManager.LobbyInfo.GlobalSettings.Map = "map-a";
++			var client = new Session.Client
++			{
++				Index = 5,
++				MapUid = "map-a",
++				MapPhase = Session.ClientMapPhase.Downloading,
++				MapProgress = 41,
++				State = Session.ClientState.Invalid
++			};
++			orderManager.LobbyInfo.Clients.Add(client);
++			var snapshot = client.Serialize().Value.Nodes.WriteToString();
++			var narrowCount = 0;
++			var fullLobbyCount = 0;
++			orderManager.ClientMapReadinessChanged += _ => narrowCount++;
++			void OnLobbyInfoChanged() => fullLobbyCount++;
++			Game.LobbyInfoChanged += OnLobbyInfoChanged;
++			try
++			{
++				var valid = new ClientMapReadinessUpdate
++				{
++					ClientIndex = 5,
++					MapUid = "map-a",
++					Phase = Session.ClientMapPhase.Downloading,
++					Progress = 42,
++					ClientState = Session.ClientState.Invalid
++				};
++				ProcessUnitOrder(orderManager, 5, ReadinessOrder(valid));
++				ProcessUnitOrder(orderManager, 0, Order.FromTargetString(
++					"SyncClientMapReadiness", "ClientMapReadiness:\n\tClientIndex: nope\n", true));
++				valid.MapUid = "map-b";
++				ProcessUnitOrder(orderManager, 0, ReadinessOrder(valid));
++				valid.MapUid = "map-a";
++				valid.ClientIndex = 99;
++				ProcessUnitOrder(orderManager, 0, ReadinessOrder(valid));
++			}
++			finally
++			{
++				Game.LobbyInfoChanged -= OnLobbyInfoChanged;
++			}
++
++			Assert.That(client.Serialize().Value.Nodes.WriteToString(), Is.EqualTo(snapshot));
++			Assert.That(narrowCount, Is.Zero);
++			Assert.That(fullLobbyCount, Is.Zero);
++		}
++
++		[Test]
++		public void OrderManagerAlwaysResolvesAndPublishesOnlyTheCurrentMap()
++		{
++			var now = 0L;
++			var connection = new RecordingConnection();
++			var mapA = Preview("map-a", MapStatus.Searching);
++			var mapB = Preview("map-b", MapStatus.Searching);
++			var resolvedUids = new List<string>();
++			var previews = new Dictionary<string, MapPreview> { ["map-a"] = mapA, ["map-b"] = mapB };
++			using var orderManager = new OrderManager(connection, () => now, uid =>
++			{
++				resolvedUids.Add(uid);
++				return previews.TryGetValue(uid, out var preview) ? preview : null;
++			});
++
++			orderManager.LobbyInfo.Clients.Add(new Session.Client { Index = 1 });
++			orderManager.LobbyInfo.GlobalSettings.Map = "map-a";
++			orderManager.TickImmediate();
++			Assert.That(connection.ImmediateOrders.Select(o => o.TargetString),
++				Is.EqualTo(new[] { "map_status map-a Searching -1" }));
++
++			orderManager.LobbyInfo.GlobalSettings.Map = "map-b";
++			orderManager.TickImmediate();
++			Assert.That(connection.ImmediateOrders.Select(o => o.TargetString), Is.EqualTo(new[]
++			{
++				"map_status map-a Searching -1",
++				"map_status map-b Searching -1"
++			}));
++
++			mapA.UpdateRemoteSearch(MapStatus.DownloadError, null, null);
++			now = 1000;
++			orderManager.TickImmediate();
++			Assert.That(connection.ImmediateOrders, Has.Count.EqualTo(2),
++				"An update from the old preview must not publish after the lobby switches maps.");
++			Assert.That(resolvedUids, Is.EqualTo(new[] { "map-a", "map-b", "map-b" }));
++		}
++
++		[Test]
++		public void OrderManagerPublishesUnknownForMissingCurrentPreview()
++		{
++			var connection = new RecordingConnection();
++			using var orderManager = new OrderManager(connection, () => 0, _ => null);
++			orderManager.LobbyInfo.Clients.Add(new Session.Client { Index = 1 });
++			orderManager.LobbyInfo.GlobalSettings.Map = "missing-map";
++
++			orderManager.TickImmediate();
++
++			Assert.That(connection.ImmediateOrders.Single().TargetString,
++				Is.EqualTo("map_status missing-map Unknown -1"));
++		}
++
++		[Test]
++		public void OrderManagerDoesNotPublishWithoutALocalClient()
++		{
++			var connection = new RecordingConnection();
++			using var orderManager = new OrderManager(connection, () => 0,
++				uid => Preview(uid, MapStatus.Searching));
++			orderManager.LobbyInfo.GlobalSettings.Map = "map-a";
++
++			orderManager.TickImmediate();
++
++			Assert.That(connection.ImmediateOrders, Is.Empty);
++		}
++
++		[Test]
++		public void OrderManagerDoesNotPublishAfterGameStart()
++		{
++			var connection = new RecordingConnection();
++			using var orderManager = new OrderManager(connection, () => 0,
++				uid => Preview(uid, MapStatus.Searching));
++			orderManager.LobbyInfo.Clients.Add(new Session.Client { Index = connection.LocalClientId });
++			orderManager.LobbyInfo.GlobalSettings.Map = "map-a";
++			orderManager.StartGame();
++
++			orderManager.TickImmediate();
++
++			Assert.That(connection.ImmediateOrders, Is.Empty);
++		}
++
++		[Test]
++		public void ServerReadinessThrottlePublishesOnlyTheLatestSnapshotAtFourHertz()
++		{
++			var throttle = new ClientMapReadinessThrottle(250);
++			var first = ReadinessUpdate(5, Session.ClientMapPhase.Downloading, 41);
++			throttle.Submit(first, 0);
++			first.Progress = 99;
++
++			var initial = throttle.Drain(0).Single();
++			Assert.That(initial.Progress, Is.EqualTo(41), "Submit must retain an immutable snapshot.");
++
++			throttle.Submit(ReadinessUpdate(5, Session.ClientMapPhase.Downloading, 42), 100);
++			throttle.Submit(ReadinessUpdate(5, Session.ClientMapPhase.Downloading, 43), 200);
++			Assert.That(throttle.Drain(249), Is.Empty);
++			Assert.That(throttle.Drain(250).Single().Progress, Is.EqualTo(43));
++
++			throttle.Submit(ReadinessUpdate(5, Session.ClientMapPhase.Ready, 100,
++				Session.ClientState.NotReady), 251);
++			Assert.That(throttle.Drain(499), Is.Empty, "Phase changes are also capped at four hertz.");
++			var ready = throttle.Drain(500).Single();
++			Assert.That(ready.Phase, Is.EqualTo(Session.ClientMapPhase.Ready));
++			Assert.That(ready.Progress, Is.EqualTo(100));
++			Assert.That(ready.ClientState, Is.EqualTo(Session.ClientState.NotReady));
++
++			throttle.Submit(ReadinessUpdate(5, Session.ClientMapPhase.Ready, 100,
++				Session.ClientState.NotReady), 600);
++			Assert.That(throttle.Drain(750), Is.Empty, "An already broadcast snapshot must be deduplicated.");
++		}
++
++		[Test]
++		public void ServerReadinessThrottleRemovesDisconnectedClientsAndResetsOnMapChange()
++		{
++			var throttle = new ClientMapReadinessThrottle(250);
++			throttle.Submit(ReadinessUpdate(1, Session.ClientMapPhase.Downloading, 10), 0);
++			throttle.Submit(ReadinessUpdate(2, Session.ClientMapPhase.Downloading, 20), 0);
++			throttle.Remove(1);
++
++			Assert.That(throttle.Drain(0).Select(update => update.ClientIndex), Is.EqualTo(new[] { 2 }));
++
++			throttle.Submit(ReadinessUpdate(2, Session.ClientMapPhase.Downloading, 21), 100);
++			throttle.Reset();
++			Assert.That(throttle.Drain(1000), Is.Empty);
++
++			throttle.Submit(ReadinessUpdate(1, Session.ClientMapPhase.Downloading, 10), 2000);
++			throttle.Submit(ReadinessUpdate(2, Session.ClientMapPhase.Downloading, 20), 2000);
++			throttle.Retain(new[] { 2 });
++			Assert.That(throttle.Drain(2000).Select(update => update.ClientIndex), Is.EqualTo(new[] { 2 }));
++		}
++
++		[Test]
++		public void ServerMapReadinessParsingRejectsStaleMalformedAndIllegalReports()
++		{
++			Assert.That(LobbyCommands.TryParseMapReadiness(
++				"map-a Downloading 42", "map-a", out var accepted), Is.True);
++			Assert.That(accepted, Is.EqualTo(new ClientMapReadinessReport(
++				"map-a", Session.ClientMapPhase.Downloading, 42)));
++
++			Assert.That(LobbyCommands.TryParseMapReadiness("map-old Ready 100", "map-a", out _), Is.False);
++			Assert.That(LobbyCommands.TryParseMapReadiness("map-a Ready -1", "map-a", out _), Is.False);
++			Assert.That(LobbyCommands.TryParseMapReadiness("map-a Error 100", "map-a", out _), Is.False);
++			Assert.That(LobbyCommands.TryParseMapReadiness("map-a Downloading 100", "map-a", out _), Is.False);
++			Assert.That(LobbyCommands.TryParseMapReadiness("5 map-a Ready 100", "map-a", out _), Is.False,
++				"A client must never be able to target another client index.");
++			Assert.That(LobbyCommands.TryParseMapReadiness("map-a Ready 100 trailing", "map-a", out _), Is.False);
++		}
++
++		[Test]
++		public void ServerAppliesAuthoritativeReadinessBeforeThrottleDrain()
++		{
++			var client = new Session.Client
++			{
++				Index = 5,
++				MapUid = "map-a",
++				MapPhase = Session.ClientMapPhase.Ready,
++				MapProgress = 100,
++				State = Session.ClientState.Ready
++			};
++
++			var result = LobbyCommands.ApplyMapReadiness(
++				client, "map-a", "map-a Downloading 42", out var downloading);
++			Assert.Multiple(() =>
++			{
++				Assert.That(result, Is.EqualTo(ClientMapReadinessApplyResult.BecameUnready));
++				Assert.That(client.State, Is.EqualTo(Session.ClientState.Invalid),
++					"Authoritative state must change before the broadcast throttle drains.");
++				Assert.That(client.MapPhase, Is.EqualTo(Session.ClientMapPhase.Downloading));
++				Assert.That(client.MapProgress, Is.EqualTo(42));
++				Assert.That(downloading.ClientIndex, Is.EqualTo(5));
++				Assert.That(downloading.ClientState, Is.EqualTo(Session.ClientState.Invalid));
++			});
++
++			result = LobbyCommands.ApplyMapReadiness(client, "map-a", "map-a Ready 100", out var ready);
++			Assert.Multiple(() =>
++			{
++				Assert.That(result, Is.EqualTo(ClientMapReadinessApplyResult.BecameReady));
++				Assert.That(client.State, Is.EqualTo(Session.ClientState.NotReady));
++				Assert.That(client.IsMapReadyFor("map-a"), Is.True);
++				Assert.That(ready.ClientState, Is.EqualTo(Session.ClientState.NotReady));
++			});
++
++			result = LobbyCommands.ApplyMapReadiness(client, "map-a", "map-a Ready 100", out var duplicate);
++			Assert.That(result, Is.EqualTo(ClientMapReadinessApplyResult.Unchanged));
++			Assert.That(duplicate, Is.Null);
++		}
++
++		[TestCase(true, false, Session.ClientState.NotReady, false)]
++		[TestCase(true, false, Session.ClientState.Ready, false)]
++		[TestCase(true, true, Session.ClientState.NotReady, true)]
++		[TestCase(true, true, Session.ClientState.Ready, true)]
++		[TestCase(false, false, Session.ClientState.NotReady, true)]
++		[TestCase(false, false, Session.ClientState.Ready, true)]
++		[TestCase(false, true, Session.ClientState.Invalid, false)]
++		[TestCase(false, true, Session.ClientState.Disconnected, false)]
++		public void StateTransitionAdmissionDependsOnServerTypeAndMapReadiness(
++			bool requireMapReadiness, bool mapReady, Session.ClientState requestedState, bool expected)
++		{
++			var client = new Session.Client
++			{
++				Index = 5,
++				MapUid = "map-a",
++				MapPhase = mapReady ? Session.ClientMapPhase.Ready : Session.ClientMapPhase.Downloading,
++				MapProgress = mapReady ? 100 : 42,
++				State = mapReady ? Session.ClientState.NotReady : Session.ClientState.Invalid
++			};
++
++			Assert.That(LobbyCommands.IsClientStateTransitionAllowed(
++				requireMapReadiness, client, "map-a", requestedState), Is.EqualTo(expected));
++		}
++
++		[Test]
++		public void MapLifecycleResetsOnlyTheNewJoinerOrAChangedMapUid()
++		{
++			var existing = new Session.Client
++			{
++				Index = 1,
++				MapUid = "map-a",
++				MapPhase = Session.ClientMapPhase.Ready,
++				MapProgress = 100,
++				State = Session.ClientState.Ready
++			};
++			var newcomer = new Session.Client { Index = 2 };
++
++			LobbyCommands.InitializeClientMapReadiness(newcomer, "map-a");
++			Assert.Multiple(() =>
++			{
++				Assert.That(existing.IsMapReadyFor("map-a"), Is.True,
++					"Joining must not reset an existing client's deduplicated Ready report.");
++				Assert.That(newcomer.MapUid, Is.EqualTo("map-a"));
++				Assert.That(newcomer.MapPhase, Is.EqualTo(Session.ClientMapPhase.Unknown));
++				Assert.That(newcomer.State, Is.EqualTo(Session.ClientState.Invalid));
++			});
++
++			Assert.That(LobbyCommands.ResetClientMapReadinessForMapChange(
++				new[] { existing, newcomer }, "map-a", "map-a"), Is.False);
++			Assert.That(existing.IsMapReadyFor("map-a"), Is.True,
++				"Same-map slot, team, faction, and admin mutations must preserve readiness.");
++
++			Assert.That(LobbyCommands.ResetClientMapReadinessForMapChange(
++				new[] { existing, newcomer }, "map-a", "map-b"), Is.True);
++			foreach (var client in new[] { existing, newcomer })
++			{
++				Assert.That(client.MapUid, Is.EqualTo("map-b"));
++				Assert.That(client.MapPhase, Is.EqualTo(Session.ClientMapPhase.Unknown));
++				Assert.That(client.MapProgress, Is.EqualTo(-1));
++				Assert.That(client.State, Is.EqualTo(Session.ClientState.Invalid));
++			}
++		}
++
++		[Test]
++		public void ChangedMapIdentifiesOnlyHiddenHumanClientsWithoutSlots()
++		{
++			var hiddenHuman = new Session.Client { Index = 1 };
++			var slottedHuman = new Session.Client { Index = 2, Slot = "PlayerReference@1" };
++			var hiddenBot = new Session.Client { Index = 3, Bot = "normal" };
++
++			Assert.That(LobbyCommands.DisplacedHumanClientIndexes(
++				new[] { hiddenHuman, slottedHuman, hiddenBot }, false), Is.Empty);
++			Assert.That(LobbyCommands.DisplacedHumanClientIndexes(
++				new[] { hiddenHuman, slottedHuman, hiddenBot }, true), Is.EqualTo(new[] { 1 }));
++		}
++
++		[TestCase("state Ready", true)]
++		[TestCase("startgame", true)]
++		[TestCase("startgame_safe map-a", true)]
++		[TestCase("map_status map-a Ready 100", true)]
++		[TestCase("stateevil Ready", false)]
++		[TestCase("map_status_extra map-a Ready 100", false)]
++		[TestCase("slot PlayerReference@1", false)]
++		public void ReadyClientCommandAdmissionUsesExactCommandNames(string command, bool expected)
++		{
++			Assert.That(LobbyCommands.IsAllowedWhileReady(
++				LobbyCommands.CommandName(command)), Is.EqualTo(expected));
++		}
++
++		[Test]
++		public void BeginningDownloadAttemptSynchronouslyClearsRetryProgress()
++		{
++			var preview = Preview("map-a", MapStatus.DownloadError);
++			typeof(MapPreview).GetField("<DownloadBytes>k__BackingField",
++				BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(preview, 1234L);
++			typeof(MapPreview).GetField("<DownloadPercentage>k__BackingField",
++				BindingFlags.Instance | BindingFlags.NonPublic)!.SetValue(preview, 87);
++
++			var beginAttempt = typeof(MapPreview).GetMethod("BeginDownloadAttempt",
++				BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
++			Assert.That(beginAttempt, Is.Not.Null, "MapPreview must expose one download-attempt reset seam.");
++			beginAttempt!.Invoke(preview, null);
++
++			Assert.That(preview.DownloadBytes, Is.Zero);
++			Assert.That(preview.DownloadPercentage, Is.Zero);
++			Assert.That(preview.Status, Is.EqualTo(MapStatus.Downloading));
++		}
++
++		[Test]
++		public void OrdersProtocolIncludesCurrentMapReadiness()
++		{
++			Assert.That(ProtocolVersion.Orders, Is.EqualTo(22));
++		}
++	}
++}
+diff -ruN a/OpenRA.Test/IosLobbyResponsiveLayoutTest.cs b/OpenRA.Test/IosLobbyResponsiveLayoutTest.cs
+--- a/OpenRA.Test/IosLobbyResponsiveLayoutTest.cs	2026-08-28 02:02:43
++++ b/OpenRA.Test/IosLobbyResponsiveLayoutTest.cs	2026-08-28 02:02:43
+@@ -18,6 +18,7 @@
+ using OpenRA.Graphics;
+ using OpenRA.Mods.Common.Widgets;
+ using OpenRA.Mods.Common.Widgets.Logic;
++using OpenRA.Network;
+ using OpenRA.Platforms.Default;
+ using OpenRA.Primitives;
+ using OpenRA.Widgets;
+@@ -28,6 +29,40 @@
+ 	[NonParallelizable]
+ 	public sealed class IosLobbyResponsiveLayoutTest
+ 	{
++		static LobbyStartAvailability StartAvailability(
++			Session.LobbyStartBlockReason reason,
++			int clientIndex = -1,
++			Session.ClientMapPhase phase = Session.ClientMapPhase.Unknown,
++			int progress = -1,
++			int additionalBlockingClients = 0)
++		{
++			var constructor = typeof(LobbyStartAvailability).GetConstructor(
++				BindingFlags.Instance | BindingFlags.NonPublic,
++				null,
++				new[]
++				{
++					typeof(Session.LobbyStartBlockReason), typeof(int),
++					typeof(Session.ClientMapPhase), typeof(int), typeof(int)
++				},
++				null);
++			Assert.That(constructor, Is.Not.Null);
++			return (LobbyStartAvailability)constructor!.Invoke(new object[]
++			{
++				reason, clientIndex, phase, progress, additionalBlockingClients
++			});
++		}
++
++		static string LocalizeStart(string locale, string key, object[] arguments)
++		{
++			var value = FluentValue(locale, "chrome.ftl", key);
++			for (var i = 0; i < arguments.Length; i += 2)
++				value = value.Replace("{ $" + arguments[i] + " }",
++					Convert.ToString(arguments[i + 1], System.Globalization.CultureInfo.InvariantCulture),
++					StringComparison.Ordinal);
++
++			return value;
++		}
++
+ 		static IEnumerable<TestCaseData> SupportedDevices()
+ 		{
+ 			yield return Device("iPhone-932", 1560, 720, 932, 430, 59, 0, 59, 21);
+@@ -63,7 +98,257 @@
+ 			}
+ 		}
+ 
++		[TestCaseSource(nameof(PhoneLocales))]
++		public void IosStartBlockersUseCompleteMeasuredLocalizedText(
++			IosScreenSnapshot snapshot, string locale)
++		{
++			using var fonts = new ActualIosFontRenderer();
++			var policy = IosMenuLayoutPolicy.Create(true, snapshot);
++			var layout = IosLobbyLayout.Create(policy.ContentBounds.Width, policy.ContentBounds.Height, policy);
++			var font = Game.Renderer.Fonts["IosBold"];
++			var width = layout.Start.Width - 10;
++			var names = new Dictionary<int, string> { { 1, "Kevin" }, { 2, new string('W', 80) } };
++			string Format(LobbyStartAvailability availability) => IosLobbyStartStatus.Format(
++				availability, width, font, index => names[index],
++				(key, args) => LocalizeStart(locale, key, args));
++
++			string[] expected;
++			if (locale == "zh-CN")
++				expected = new[]
++				{
++					"地图校验中…", "地图不可用", "Kevin 下载失败", "Kevin 校验中…",
++					"Kevin 下载 42%", "等待 Kevin 下载", "Kevin 下载 42% · 另 1 人",
++					"2 人地图未就绪",
++					"请填满必需位置", "请加入玩家", "至少需要 2 人", "出生点不足"
++				};
++			else
++				expected = new[]
++				{
++					"Validating map…", "Map unavailable", "Kevin failed", "Kevin verifying…",
++					"Kevin 42%", "Waiting for Kevin", "Kevin 42% · +1",
++					"2 maps not ready",
++					"Fill required slots", "Add a player", "Need 2 players", "Enable more spawns"
++				};
++			var actual = new[]
++			{
++				Format(StartAvailability(Session.LobbyStartBlockReason.ServerMapValidating)),
++				Format(StartAvailability(Session.LobbyStartBlockReason.SelectedMapUnavailable)),
++				Format(StartAvailability(Session.LobbyStartBlockReason.ClientMapError,
++					1, Session.ClientMapPhase.Error)),
++				Format(StartAvailability(Session.LobbyStartBlockReason.ClientMapInstallingOrVerifying,
++					1, Session.ClientMapPhase.InstallingOrVerifying)),
++				Format(StartAvailability(Session.LobbyStartBlockReason.ClientMapDownloading,
++					1, Session.ClientMapPhase.Downloading, 42)),
++				Format(StartAvailability(Session.LobbyStartBlockReason.ClientMapUnknown, 1)),
++				Format(StartAvailability(Session.LobbyStartBlockReason.ClientMapDownloading,
++					1, Session.ClientMapPhase.Downloading, 42, 1)),
++				Format(StartAvailability(Session.LobbyStartBlockReason.ClientMapDownloading,
++					2, Session.ClientMapPhase.Downloading, 42, 1)),
++				Format(StartAvailability(Session.LobbyStartBlockReason.RequiredSlotEmpty)),
++				Format(StartAvailability(Session.LobbyStartBlockReason.NoPlayers)),
++				Format(StartAvailability(Session.LobbyStartBlockReason.InsufficientHumans)),
++				Format(StartAvailability(Session.LobbyStartBlockReason.InsufficientSpawnPoints))
++			};
++
++			Assert.That(actual, Is.EqualTo(expected));
++			foreach (var value in actual)
++			{
++				Assert.That(value, Does.Not.Contain("..."));
++				Assert.That(font.Measure(value).X, Is.LessThanOrEqualTo(width),
++					$"{locale} '{value}' must fit the narrowest iPhone Start button.");
++			}
++		}
++
++		[Test]
++		public void IosMapStatusPresentationIsCurrentUidHumanOnlyAndTruthful()
++		{
++			var client = new Session.Client { MapUid = "map-a", Bot = null };
++			var cases = new[]
++			{
++				(Session.ClientMapPhase.Unknown, -1, "…", ""),
++				(Session.ClientMapPhase.Searching, -1, "…", ""),
++				(Session.ClientMapPhase.WaitingForDownload, -1, "…", ""),
++				(Session.ClientMapPhase.Downloading, -1, "…", ""),
++				(Session.ClientMapPhase.Downloading, 42, "42%", ""),
++				(Session.ClientMapPhase.InstallingOrVerifying, -1, "…", ""),
++				(Session.ClientMapPhase.Unavailable, -1, "", "!"),
++				(Session.ClientMapPhase.Error, -1, "", "!")
++			};
++
++			foreach (var (phase, progress, text, icon) in cases)
++			{
++				client.MapPhase = phase;
++				client.MapProgress = progress;
++				var presentation = IosLobbyMapStatusPresentation.For(client, "map-a", true);
++				Assert.Multiple(() =>
++				{
++					Assert.That(presentation.ShowMapStatus, Is.True, phase.ToString());
++					Assert.That(presentation.Text, Is.EqualTo(text), phase.ToString());
++					Assert.That(presentation.Icon, Is.EqualTo(icon), phase.ToString());
++					Assert.That(presentation.ShowReady, Is.False, phase.ToString());
++				});
++			}
++
++			client.MapPhase = Session.ClientMapPhase.Ready;
++			client.MapProgress = 100;
++			Assert.That(IosLobbyMapStatusPresentation.For(client, "map-a", true).ShowReady, Is.True);
++			Assert.That(IosLobbyMapStatusPresentation.For(client, "map-b", true).ShowReady, Is.True);
++			Assert.That(IosLobbyMapStatusPresentation.For(client, "map-a", false).ShowReady, Is.True);
++			client.Bot = "normal";
++			Assert.That(IosLobbyMapStatusPresentation.For(client, "map-a", true).ShowReady, Is.True);
++		}
++
++		[Test]
++		public void LobbyPlayerTemplatesDeclareHiddenIosMapStatusWidgets()
++		{
++			var source = File.ReadAllText(Path.Combine(RepositoryRoot(), "engine", "mods", "common",
++				"chrome", "lobby-players.yaml"));
++
++			Assert.Multiple(() =>
++			{
++				Assert.That(source.Split("Label@IOS_MAP_STATUS_TEXT:").Length - 1, Is.EqualTo(2));
++				Assert.That(source.Split("Label@IOS_MAP_STATUS_ICON:").Length - 1, Is.EqualTo(2));
++				Assert.That(source.Split("Font: IosBold").Length - 1, Is.GreaterThanOrEqualTo(4));
++			});
++		}
++
+ 		[TestCaseSource(nameof(SupportedDevices))]
++		public void IosMapStatusWidgetsReuseTheReadyCellWithoutChangingRowHeight(IosScreenSnapshot snapshot)
++		{
++			var policy = IosMenuLayoutPolicy.Create(true, snapshot);
++			var layout = IosLobbyLayout.Create(policy.ContentBounds.Width, policy.ContentBounds.Height, policy);
++			var ready = BareWidget<CheckboxWidget>("STATUS_CHECKBOX");
++			var readyImage = BareWidget<ImageWidget>("STATUS_IMAGE");
++			var statusText = Label("IOS_MAP_STATUS_TEXT");
++			var statusIcon = Label("IOS_MAP_STATUS_ICON");
++			var row = Container("TEMPLATE_EDITABLE_PLAYER", ready, readyImage, statusText, statusIcon);
++
++			ApplyIosPlayerRowLayout(row, layout, policy);
++			ApplyIosPlayerRowLayout(row, layout, policy);
++
++			Assert.Multiple(() =>
++			{
++				Assert.That(row.Bounds.Height, Is.EqualTo(layout.PlayerRow.Height));
++				Assert.That(ready.Bounds, Is.EqualTo(layout.PlayerReady));
++				Assert.That(readyImage.Bounds, Is.EqualTo(layout.PlayerReady));
++				Assert.That(statusText.Bounds, Is.EqualTo(layout.PlayerReady));
++				Assert.That(statusIcon.Bounds, Is.EqualTo(layout.PlayerReady));
++				AssertPhysicalTarget(statusText.Bounds, policy);
++				AssertPhysicalTarget(statusIcon.Bounds, policy);
++			});
++		}
++
++		[TestCaseSource(nameof(SupportedDevices))]
++		public void IosFactionButtonUsesRealThreeTargetBoundsAndAspectFitFlag(IosScreenSnapshot snapshot)
++		{
++			var policy = IosMenuLayoutPolicy.Create(true, snapshot);
++			var layout = IosLobbyLayout.Create(policy.ContentBounds.Width, policy.ContentBounds.Height, policy);
++			var flag = BareWidget<ImageWidget>("FACTIONFLAG");
++			var name = Label("FACTIONNAME");
++			var faction = BareWidget<DropDownButtonWidget>("FACTION");
++			faction.AddChild(flag);
++			faction.AddChild(name);
++			var row = Container("TEMPLATE_EDITABLE_PLAYER", faction);
++
++			ApplyIosPlayerRowLayout(row, layout, policy);
++			ApplyIosPlayerRowLayout(row, layout, policy);
++
++			Assert.Multiple(() =>
++			{
++				Assert.That(faction.Bounds, Is.EqualTo(layout.PlayerFaction));
++				Assert.That(faction.Bounds.Width / policy.LogicalPerPoint, Is.GreaterThanOrEqualTo(144));
++				Assert.That(faction.Bounds.Height / policy.LogicalPerPoint, Is.GreaterThanOrEqualTo(48));
++				Assert.That(flag.StretchToFit, Is.True);
++				Assert.That(flag.Bounds.Width / policy.LogicalPerPoint, Is.GreaterThanOrEqualTo(40));
++				Assert.That(flag.Bounds.Height / policy.LogicalPerPoint, Is.GreaterThanOrEqualTo(20));
++				Assert.That(flag.Bounds.Width, Is.EqualTo(2 * flag.Bounds.Height).Within(1));
++				Assert.That(name.Bounds.X, Is.GreaterThanOrEqualTo(flag.Bounds.Right + layout.Gap));
++				Assert.That(name.Bounds.Right, Is.LessThanOrEqualTo(faction.UsableWidth));
++			});
++		}
++
++		[Test]
++		public void LiveMapStatusBindingsAreMutuallyExclusiveAndDesktopSafe()
++		{
++			var client = new Session.Client
++			{
++				MapUid = "map-a",
++				MapPhase = Session.ClientMapPhase.Downloading,
++				MapProgress = 42
++			};
++			var ready = BareWidget<CheckboxWidget>("STATUS_CHECKBOX");
++			ready.IsVisible = () => true;
++			var statusText = Label("IOS_MAP_STATUS_TEXT");
++			var statusIcon = Label("IOS_MAP_STATUS_ICON");
++			var row = Container("TEMPLATE_EDITABLE_PLAYER", ready, statusText, statusIcon);
++
++			LobbyUtils.SetupIosMapStatusWidgets(row, client, "map-a", true, "STATUS_CHECKBOX");
++			Assert.Multiple(() =>
++			{
++				Assert.That(statusText.IsVisible(), Is.True);
++				Assert.That(statusText.GetText(), Is.EqualTo("42%"));
++				Assert.That(statusIcon.IsVisible(), Is.False);
++				Assert.That(ready.IsVisible(), Is.False);
++			});
++
++			client.MapPhase = Session.ClientMapPhase.Error;
++			client.MapProgress = -1;
++			Assert.Multiple(() =>
++			{
++				Assert.That(statusText.IsVisible(), Is.False);
++				Assert.That(statusIcon.IsVisible(), Is.True);
++				Assert.That(statusIcon.GetText(), Is.EqualTo("!"));
++			});
++
++			client.MapPhase = Session.ClientMapPhase.Ready;
++			client.MapProgress = 100;
++			Assert.Multiple(() =>
++			{
++				Assert.That(statusText.IsVisible(), Is.False);
++				Assert.That(statusIcon.IsVisible(), Is.False);
++				Assert.That(ready.IsVisible(), Is.True);
++			});
++
++			client.MapPhase = Session.ClientMapPhase.Downloading;
++			client.MapProgress = 42;
++			var desktopReady = BareWidget<CheckboxWidget>("STATUS_CHECKBOX");
++			desktopReady.IsVisible = () => true;
++			var desktopText = Label("IOS_MAP_STATUS_TEXT");
++			var desktopIcon = Label("IOS_MAP_STATUS_ICON");
++			var desktopRow = Container("TEMPLATE_EDITABLE_PLAYER", desktopReady, desktopText, desktopIcon);
++			LobbyUtils.SetupIosMapStatusWidgets(desktopRow, client, "map-a", false, "STATUS_CHECKBOX");
++			Assert.Multiple(() =>
++			{
++				Assert.That(desktopText.IsVisible(), Is.False);
++				Assert.That(desktopIcon.IsVisible(), Is.False);
++				Assert.That(desktopReady.IsVisible(), Is.True);
++			});
++		}
++
++		[Test]
++		public void IosStartUsesOneSafeRequestWhileDesktopKeepsForceConfirmation()
++		{
++			var source = File.ReadAllText(Path.Combine(RepositoryRoot(), "engine", "OpenRA.Mods.Common",
++				"Widgets", "Logic", "Lobby", "LobbyLogic.cs"));
++
++			Assert.Multiple(() =>
++			{
++				StringAssert.Contains("startGameButton.IsDisabled = () => Platform.IsIOS", source);
++				StringAssert.Contains("Order.Command($\"startgame_safe {currentMapUid}\")", source);
++				StringAssert.Contains("Game.RunAfterDelay(5000", source);
++				StringAssert.Contains("safeStartRequestIdentity", source);
++				StringAssert.Contains("panel = PanelType.ForceStart;", source,
++					"Desktop must retain the upstream force-start confirmation.");
++				StringAssert.Contains(
++					"orderManager.ClientMapReadinessChanged += ClientMapReadinessChanged;", source);
++				StringAssert.Contains("orderManager.SafeStartRejected += SafeStartRejected;", source);
++				StringAssert.Contains(
++					"orderManager.ClientMapReadinessChanged -= ClientMapReadinessChanged;", source);
++				StringAssert.Contains("orderManager.SafeStartRejected -= SafeStartRejected;", source);
++			});
++		}
++
++		[TestCaseSource(nameof(SupportedDevices))]
+ 		public void PlayableMapUsesAFullWidthPreviewBandAndSeparatedMetadata(IosScreenSnapshot snapshot)
+ 		{
+ 			var policy = IosMenuLayoutPolicy.Create(true, snapshot);
+@@ -1465,6 +1750,16 @@
+ 			Assert.That(method, Is.Not.Null,
+ 				"The live lobby chat tree must share the responsive offset-input layout.");
+ 			method!.Invoke(null, new object[] { chat, layout, policy });
++		}
++
++		static void ApplyIosPlayerRowLayout(
++			Widget row, IosLobbyLayout layout, IosMenuLayoutPolicy policy)
++		{
++			var method = typeof(LobbyLogic).GetMethod(
++				"LayoutIosPlayerRow", BindingFlags.Static | BindingFlags.NonPublic);
++			Assert.That(method, Is.Not.Null,
++				"The live lobby row must share the tested iOS status-cell layout.");
++			method!.Invoke(null, new object[] { row, layout, policy });
+ 		}
+ 
+ 		static TestCaseData Device(
+diff -ruN a/OpenRA.Test/IosLobbyStartAvailabilityTest.cs b/OpenRA.Test/IosLobbyStartAvailabilityTest.cs
+--- a/OpenRA.Test/IosLobbyStartAvailabilityTest.cs	1969-12-31 16:00:00
++++ b/OpenRA.Test/IosLobbyStartAvailabilityTest.cs	2026-08-28 02:02:43
+@@ -0,0 +1,388 @@
++#region Copyright & License Information
++/*
++ * Copyright (c) The OpenRA Developers and Contributors
++ * This file is part of OpenRA, which is free software. It is made
++ * available to you under the terms of the GNU General Public License
++ * as published by the Free Software Foundation, either version 3 of
++ * the License, or (at your option) any later version. For more
++ * information, see COPYING.
++ */
++#endregion
++
++using System;
++using System.Collections;
++using System.Collections.Generic;
++using System.IO;
++using System.Linq;
++using System.Reflection;
++using NUnit.Framework;
++using OpenRA.Mods.Common.Server;
++using OpenRA.Network;
++using OpenRA.Server;
++
++namespace OpenRA.Test
++{
++	[TestFixture]
++	public sealed class IosLobbyStartAvailabilityTest
++	{
++		static string RepositoryRoot()
++		{
++			var directory = new DirectoryInfo(TestContext.CurrentContext.TestDirectory);
++			while (directory != null && !File.Exists(Path.Combine(
++				directory.FullName, "engine", "OpenRA.Game", "Game.cs")))
++				directory = directory.Parent;
++
++			Assert.That(directory, Is.Not.Null);
++			return directory!.FullName;
++		}
++
++		static string MethodBody(string source, string signature)
++		{
++			var signatureStart = source.IndexOf(signature, StringComparison.Ordinal);
++			Assert.That(signatureStart, Is.GreaterThanOrEqualTo(0), $"Missing method '{signature}'.");
++			var bodyStart = source.IndexOf('{', signatureStart);
++			Assert.That(bodyStart, Is.GreaterThan(signatureStart));
++
++			var depth = 0;
++			for (var i = bodyStart; i < source.Length; i++)
++			{
++				if (source[i] == '{')
++					depth++;
++				else if (source[i] == '}' && --depth == 0)
++					return source.Substring(bodyStart, i - bodyStart + 1);
++			}
++
++			Assert.Fail($"Unterminated method '{signature}'.");
++			return string.Empty;
++		}
++
++		sealed class RecordingConnection : IConnection
++		{
++			public int LocalClientId { get; set; } = 1;
++			public void StartGame() { }
++			public void Send(int frame, IEnumerable<Order> orders) { }
++			public void SendImmediate(IEnumerable<Order> orders) { }
++			public void SendSync(int frame, int syncHash, ulong defeatState) { }
++			public void Receive(OrderManager orderManager) { }
++			public void Dispose() { }
++		}
++
++		static void ProcessUnitOrder(OrderManager orderManager, int clientId, Order order)
++		{
++			var processOrder = typeof(UnitOrders).GetMethod("ProcessOrder",
++				BindingFlags.Static | BindingFlags.NonPublic);
++			Assert.That(processOrder, Is.Not.Null);
++			processOrder!.Invoke(null, new object[] { orderManager, null, clientId, order });
++		}
++
++		static Session.Client Human(int index, string slot = null,
++			Session.ClientMapPhase phase = Session.ClientMapPhase.Ready, int progress = 100,
++			Session.ClientState state = Session.ClientState.NotReady, bool admin = false)
++		{
++			return new Session.Client
++			{
++				Index = index,
++				Name = $"Player {index}",
++				Slot = slot,
++				MapUid = "map-a",
++				MapPhase = phase,
++				MapProgress = progress,
++				State = state,
++				IsAdmin = admin
++			};
++		}
++
++		static Session PlayableSession()
++		{
++			var session = new Session
++			{
++				GlobalSettings =
++				{
++					Map = "map-a",
++					MapStatus = Session.MapStatus.Playable,
++					EnableSingleplayer = true
++				}
++			};
++			session.Slots.Add("P1", new Session.Slot { PlayerReference = "P1", Required = true });
++			session.Clients.Add(Human(1, "P1", admin: true));
++			return session;
++		}
++
++		static LobbyStartInputs Inputs(Session session, LobbyStartMode mode = LobbyStartMode.SafeDirect)
++		{
++			return new LobbyStartInputs
++			{
++				LobbyInfo = session,
++				Mode = mode,
++				RequesterIsAdmin = true,
++				RequireCurrentMapReadiness = true,
++				InsufficientEnabledSpawnPoints = false
++			};
++		}
++
++		[Test]
++		public void LocalMapAvailabilityIsAConservativeOverlay()
++		{
++			var allowed = LobbyStartAvailability.Evaluate(Inputs(PlayableSession()));
++			var identity = allowed.ApplyLocalMapAvailability(true);
++			var unavailable = allowed.ApplyLocalMapAvailability(false);
++
++			Assert.Multiple(() =>
++			{
++				Assert.That(allowed.CanStart, Is.True);
++				Assert.That(identity, Is.EqualTo(allowed));
++				Assert.That(unavailable.CanStart, Is.False);
++				Assert.That(unavailable.Reason, Is.EqualTo(Session.LobbyStartBlockReason.SelectedMapUnavailable));
++			});
++
++			var blockedSession = PlayableSession();
++			blockedSession.GlobalSettings.MapStatus = Session.MapStatus.Validating;
++			var blocked = LobbyStartAvailability.Evaluate(Inputs(blockedSession));
++			var overlaid = blocked.ApplyLocalMapAvailability(false);
++			Assert.Multiple(() =>
++			{
++				Assert.That(overlaid.Reason, Is.EqualTo(blocked.Reason));
++				Assert.That(overlaid.ClientIndex, Is.EqualTo(blocked.ClientIndex));
++				Assert.That(overlaid.ClientMapPhase, Is.EqualTo(blocked.ClientMapPhase));
++				Assert.That(overlaid.Progress, Is.EqualTo(blocked.Progress));
++				Assert.That(overlaid.AdditionalBlockingClientCount,
++					Is.EqualTo(blocked.AdditionalBlockingClientCount));
++			});
++		}
++
++		[TestCase(Session.MapStatus.Validating, Session.LobbyStartBlockReason.ServerMapValidating)]
++		[TestCase(Session.MapStatus.Incompatible, Session.LobbyStartBlockReason.ServerMapIncompatible)]
++		[TestCase(Session.MapStatus.Unknown, Session.LobbyStartBlockReason.ServerMapNotPlayable)]
++		public void ServerMapStatusBlocksBeforeClientAndLobbyRules(
++			Session.MapStatus status, Session.LobbyStartBlockReason expected)
++		{
++			var session = PlayableSession();
++			session.GlobalSettings.MapStatus = status;
++			session.Clients[0].MapPhase = Session.ClientMapPhase.Error;
++			session.Clients[0].MapProgress = -1;
++			session.Slots["P1"].Required = true;
++			session.Clients[0].Slot = null;
++
++			var result = LobbyStartAvailability.Evaluate(Inputs(session));
++
++			Assert.That(result.Reason, Is.EqualTo(expected));
++		}
++
++		[Test]
++		public void ClientMapBlockersUseStablePriorityAndIncludeNoSlotHumans()
++		{
++			var session = PlayableSession();
++			session.Clients.Add(Human(2, null, Session.ClientMapPhase.Downloading, 42));
++			session.Clients.Add(Human(3, "P2", Session.ClientMapPhase.InstallingOrVerifying, -1));
++			session.Clients.Add(Human(4, "P3", Session.ClientMapPhase.Error, -1));
++			session.Clients.Add(new Session.Client
++			{
++				Index = 5,
++				Slot = "P4",
++				Bot = "normal",
++				MapPhase = Session.ClientMapPhase.Error,
++				MapProgress = -1,
++				State = Session.ClientState.Invalid
++			});
++
++			var result = LobbyStartAvailability.EvaluateMapSafety(session, true);
++
++			Assert.Multiple(() =>
++			{
++				Assert.That(result.Reason, Is.EqualTo(Session.LobbyStartBlockReason.ClientMapError));
++				Assert.That(result.ClientIndex, Is.EqualTo(4));
++				Assert.That(result.ClientMapPhase, Is.EqualTo(Session.ClientMapPhase.Error));
++				Assert.That(result.Progress, Is.EqualTo(-1));
++				Assert.That(result.AdditionalBlockingClientCount, Is.EqualTo(2));
++			});
++
++			session.Clients.RemoveAll(client => client.Index is 3 or 4);
++			result = LobbyStartAvailability.EvaluateMapSafety(session, true);
++			Assert.That(result.ClientIndex, Is.EqualTo(2), "A transient no-slot human must still block safe start.");
++			Assert.That(result.Progress, Is.EqualTo(42));
++		}
++
++		[Test]
++		public void LobbyRulesFollowMapSafetyInStableOrder()
++		{
++			var session = PlayableSession();
++			session.Clients[0].Slot = null;
++			var result = LobbyStartAvailability.Evaluate(Inputs(session));
++			Assert.That(result.Reason, Is.EqualTo(Session.LobbyStartBlockReason.RequiredSlotEmpty));
++
++			session.Slots["P1"].Required = false;
++			result = LobbyStartAvailability.Evaluate(Inputs(session));
++			Assert.That(result.Reason, Is.EqualTo(Session.LobbyStartBlockReason.NoPlayers));
++
++			session.Clients[0].Slot = "P1";
++			session.GlobalSettings.EnableSingleplayer = false;
++			result = LobbyStartAvailability.Evaluate(Inputs(session));
++			Assert.That(result.Reason, Is.EqualTo(Session.LobbyStartBlockReason.InsufficientHumans));
++
++			session.Clients.Add(Human(2, "P2"));
++			var spawnInputs = Inputs(session);
++			spawnInputs.InsufficientEnabledSpawnPoints = true;
++			result = LobbyStartAvailability.Evaluate(spawnInputs);
++			Assert.That(result.Reason, Is.EqualTo(Session.LobbyStartBlockReason.InsufficientSpawnPoints));
++		}
++
++		[Test]
++		public void DirectAndConfirmedModesIgnoreOnlyOrdinaryGameNotReady()
++		{
++			var session = PlayableSession();
++			Assert.That(session.Clients.Single().State, Is.EqualTo(Session.ClientState.NotReady));
++			Assert.That(LobbyStartAvailability.Evaluate(Inputs(session, LobbyStartMode.SafeDirect)).CanStart, Is.True);
++			Assert.That(LobbyStartAvailability.Evaluate(Inputs(session, LobbyStartMode.ForceConfirmed)).CanStart, Is.True);
++
++			var automatic = LobbyStartAvailability.Evaluate(Inputs(session, LobbyStartMode.Automatic));
++			Assert.That(automatic.Reason, Is.EqualTo(Session.LobbyStartBlockReason.ClientGameNotReady));
++
++			session.Clients[0].State = Session.ClientState.Ready;
++			Assert.That(LobbyStartAvailability.Evaluate(Inputs(session, LobbyStartMode.Automatic)).CanStart, Is.True);
++
++			session.Clients[0].MapPhase = Session.ClientMapPhase.Downloading;
++			session.Clients[0].MapProgress = 42;
++			session.Clients[0].State = Session.ClientState.Invalid;
++			foreach (var mode in new[] { LobbyStartMode.SafeDirect, LobbyStartMode.ForceConfirmed, LobbyStartMode.Automatic })
++				Assert.That(LobbyStartAvailability.Evaluate(Inputs(session, mode)).CanStart, Is.False,
++					$"{mode} must not bypass current-map readiness.");
++		}
++
++		[Test]
++		public void RequesterAndReadinessRequirementRemainExplicitInputs()
++		{
++			var session = PlayableSession();
++			var inputs = Inputs(session);
++			inputs.RequesterIsAdmin = false;
++			Assert.That(LobbyStartAvailability.Evaluate(inputs).Reason,
++				Is.EqualTo(Session.LobbyStartBlockReason.RequesterNotAdmin));
++
++			session.Clients[0].MapPhase = Session.ClientMapPhase.Unknown;
++			session.Clients[0].MapProgress = -1;
++			session.Clients[0].State = Session.ClientState.Invalid;
++			inputs = Inputs(session);
++			inputs.RequireCurrentMapReadiness = false;
++			Assert.That(LobbyStartAvailability.Evaluate(inputs).CanStart, Is.True,
++				"Local and Skirmish must keep their trusted state path without a network handshake.");
++		}
++
++		[Test]
++		public void StructuredRejectionRoundTripsAndFailsClosed()
++		{
++			var rejection = new LobbyStartRejection(
++				Session.LobbyStartBlockReason.ClientMapDownloading,
++				5,
++				Session.ClientMapPhase.Downloading,
++				42,
++				"map-a");
++			var serialized = rejection.Serialize();
++			var roundTrip = LobbyStartRejection.Deserialize(serialized);
++
++			Assert.Multiple(() =>
++			{
++				Assert.That(roundTrip, Is.Not.Null);
++				Assert.That(roundTrip.Reason, Is.EqualTo(rejection.Reason));
++				Assert.That(roundTrip.ClientIndex, Is.EqualTo(5));
++				Assert.That(roundTrip.ClientMapPhase, Is.EqualTo(Session.ClientMapPhase.Downloading));
++				Assert.That(roundTrip.Progress, Is.EqualTo(42));
++				Assert.That(roundTrip.ExpectedMapUid, Is.EqualTo("map-a"));
++			});
++
++			Assert.That(LobbyStartRejection.Deserialize(serialized + "Unexpected: value\n"), Is.Null);
++			Assert.That(LobbyStartRejection.Deserialize(serialized.Replace("Downloading", "downloading")), Is.Null);
++			Assert.That(LobbyStartRejection.Deserialize(serialized.Replace("Progress: 42", "Progress: 100")), Is.Null);
++		}
++
++		[TestCase("map-a", true)]
++		[TestCase("map a", false)]
++		[TestCase("map-a trailing", false)]
++		[TestCase("", false)]
++		public void SafeStartRequestContainsExactlyOneRawMapUid(string value, bool expected)
++		{
++			Assert.That(LobbyCommands.TryParseSafeStartMapUid(value, out var uid), Is.EqualTo(expected));
++			Assert.That(expected ? uid : null, Is.EqualTo(expected ? "map-a" : null));
++		}
++
++		[Test]
++		public void StructuredSafeStartRejectionIsAcceptedOnlyFromServer()
++		{
++			using var orderManager = new OrderManager(new RecordingConnection(), () => 0, _ => null);
++			var rejection = new LobbyStartRejection(
++				Session.LobbyStartBlockReason.ClientMapDownloading,
++				5,
++				Session.ClientMapPhase.Downloading,
++				42,
++				"map-a");
++			var received = new List<LobbyStartRejection>();
++			orderManager.SafeStartRejected += received.Add;
++
++			var order = Order.FromTargetString("SafeStartRejected", rejection.Serialize(), true);
++			ProcessUnitOrder(orderManager, 5, order);
++			ProcessUnitOrder(orderManager, 0, Order.FromTargetString("SafeStartRejected", "Reason: nope\n", true));
++			Assert.That(received, Is.Empty);
++
++			ProcessUnitOrder(orderManager, 0, order);
++			Assert.Multiple(() =>
++			{
++				Assert.That(received, Has.Count.EqualTo(1));
++				Assert.That(received[0].Reason,
++					Is.EqualTo(Session.LobbyStartBlockReason.ClientMapDownloading));
++				Assert.That(received[0].Progress, Is.EqualTo(42));
++			});
++		}
++
++		[Test]
++		public void LobbyCommandsRegistersReadinessAndBothStartCommands()
++		{
++			var commands = new LobbyCommands();
++			var handlers = typeof(LobbyCommands).GetField("commandHandlers",
++				BindingFlags.Instance | BindingFlags.NonPublic)?.GetValue(commands) as IDictionary;
++
++			Assert.That(handlers, Is.Not.Null);
++			Assert.Multiple(() =>
++			{
++				Assert.That(handlers!.Contains("map_status"), Is.True);
++				Assert.That(handlers.Contains("startgame"), Is.True);
++				Assert.That(handlers.Contains("startgame_safe"), Is.True);
++			});
++		}
++
++		[TestCase(ServerType.Local, true)]
++		[TestCase(ServerType.Skirmish, true)]
++		[TestCase(ServerType.Multiplayer, false)]
++		[TestCase(ServerType.Dedicated, false)]
++		public void OnlyTrustedLocalServersMayReplaceTheWholeLobbySnapshot(
++			ServerType serverType, bool expected)
++		{
++			Assert.That(LobbyCommands.CanSyncLobby(serverType), Is.EqualTo(expected));
++		}
++
++		[Test]
++		public void EveryMultiplayerStartEntryUsesTheSharedSafetyPolicy()
++		{
++			var root = RepositoryRoot();
++			var lobbyCommands = File.ReadAllText(Path.Combine(root, "engine",
++				"OpenRA.Mods.Common", "ServerTraits", "LobbyCommands.cs"));
++			var server = File.ReadAllText(Path.Combine(root, "engine", "OpenRA.Game", "Server", "Server.cs"));
++
++			var automatic = MethodBody(lobbyCommands, "static void CheckAutoStart(");
++			var legacy = MethodBody(lobbyCommands, "static bool StartGame(");
++			var safe = MethodBody(lobbyCommands, "static bool StartGameSafe(");
++			var central = MethodBody(server, "public void StartGame()");
++
++			Assert.Multiple(() =>
++			{
++				StringAssert.Contains("EvaluateStartAvailability(server, LobbyStartMode.Automatic", automatic);
++				StringAssert.Contains("EvaluateStartAvailability(", legacy);
++				StringAssert.Contains("LobbyStartMode.ForceConfirmed", legacy);
++				StringAssert.Contains("EvaluateStartAvailability(server, LobbyStartMode.SafeDirect", safe);
++				StringAssert.Contains("if (IsMultiplayer &&", central,
++					"Only trusted Local/Skirmish servers may bypass the network map handshake.");
++				StringAssert.Contains("LobbyStartAvailability.EvaluateMapSafety(", central);
++				Assert.That(central.IndexOf("LobbyStartAvailability.EvaluateMapSafety(", StringComparison.Ordinal),
++					Is.LessThan(central.IndexOf("DropClient(c)", StringComparison.Ordinal)),
++					"The fail-closed map guard must run before the legacy Invalid-client drop loop.");
++			});
++		}
++	}
++}
+diff -ruN a/OpenRA.Test/IosMenuLayoutPolicyTest.cs b/OpenRA.Test/IosMenuLayoutPolicyTest.cs
+--- a/OpenRA.Test/IosMenuLayoutPolicyTest.cs	2026-08-28 02:02:43
++++ b/OpenRA.Test/IosMenuLayoutPolicyTest.cs	2026-08-28 02:02:43
+@@ -199,6 +199,7 @@
+ 		[TestCase(1560, 720, 932, 430, 59, 0, 59, 21)]
+ 		[TestCase(1558, 720, 844, 390, 47, 0, 47, 21)]
+ 		[TestCase(1133, 744, 1133, 744, 0, 0, 0, 20)]
++		[TestCase(1024, 768, 1024, 768, 0, 0, 0, 20)]
+ 		[TestCase(1180, 820, 1180, 820, 0, 0, 0, 20)]
+ 		[TestCase(1366, 1024, 1366, 1024, 0, 0, 0, 20)]
+ 		public void LobbyGeometryKeepsAllSurfacesAndPlayerColumnsUsable(
+@@ -247,14 +248,21 @@
+ 				layout.PlayerName, layout.PlayerColor, layout.PlayerFaction, layout.PlayerTeam,
+ 				layout.PlayerHandicap, layout.PlayerSpawn, layout.PlayerReady
+ 			};
+-			foreach (var column in columns)
++			var minimumUnits = new[] { 2, 1, 3, 1, 1, 1, 1 };
++			Assert.That(layout.PlayerRow.Width, Is.GreaterThanOrEqualTo(10 * policy.MinimumTarget));
++			for (var i = 0; i < columns.Length; i++)
+ 			{
++				var column = columns[i];
+ 				AssertContained(new WidgetBounds(0, 0, layout.PlayerRow.Width, layout.PlayerRow.Height), column);
+-				Assert.That(column.Width / policy.LogicalPerPoint, Is.GreaterThanOrEqualTo(48));
++				Assert.That(column.Width, Is.GreaterThanOrEqualTo(minimumUnits[i] * policy.MinimumTarget));
++				Assert.That(column.Width, Is.GreaterThan(0));
+ 			}
+ 
+ 			for (var i = 1; i < columns.Length; i++)
+ 				Assert.That(columns[i - 1].Right, Is.LessThanOrEqualTo(columns[i].X));
++
++			if (nativeWidth == 844)
++				Assert.That(layout.PlayerRow.Width - 10 * policy.MinimumTarget, Is.GreaterThan(0));
+ 		}
+ 
+ 		[TestCase(1560, 720, 932, 430, 59, 0, 59, 21)]
+diff -ruN a/OpenRA.Test/IosMultiplayerPolicyTest.cs b/OpenRA.Test/IosMultiplayerPolicyTest.cs
+--- a/OpenRA.Test/IosMultiplayerPolicyTest.cs	2026-08-28 02:02:43
++++ b/OpenRA.Test/IosMultiplayerPolicyTest.cs	2026-08-28 02:02:43
+@@ -438,5 +438,25 @@
+ 			StringAssert.Contains(
+ 				"remoteIdentityVerified && remoteIdentityCurrentlyValid && humans.Length == 2", source);
+ 		}
++
++		[Test]
++		public void MultiplayerSmokeExercisesBlockedThenOneTapSafeStart()
++		{
++			var source = File.ReadAllText(Path.Combine(RepositoryRoot(), "engine",
++				"OpenRA.Game", "Support", "IosMultiplayerSmoke.cs"));
++
++			StringAssert.Contains("selectedMap.Status == MapStatus.Available", source,
++				"Game Ready must wait for the selected map to be locally readable.");
++			StringAssert.Contains("localClient.IsMapReadyFor(currentMapUid)", source,
++				"The smoke must observe the server-accepted current-UID handshake before Ready.");
++			StringAssert.Contains("Session.ClientMapPhase.Downloading, 42", source,
++				"One participant must expose a deterministic 42% blocker.");
++			StringAssert.Contains("orderManager.SafeStartRejected += HandleSafeStartRejected", source);
++			StringAssert.Contains("Session.LobbyStartBlockReason.ClientMapDownloading", source);
++			StringAssert.Contains("Order.Command($\"startgame_safe {currentMapUid}\")", source,
++				"Both the blocked probe and accepted launch must use the iOS one-tap command.");
++			StringAssert.DoesNotContain("Order.Command(\"startgame\")", source,
++				"The smoke must not bypass the new safe-start protocol with the legacy command.");
++		}
+ 	}
+ }
+diff -ruN a/OpenRA.Test/IosTouchWidgetPolicyTest.cs b/OpenRA.Test/IosTouchWidgetPolicyTest.cs
+--- a/OpenRA.Test/IosTouchWidgetPolicyTest.cs	2026-08-28 02:02:43
++++ b/OpenRA.Test/IosTouchWidgetPolicyTest.cs	2026-08-28 02:02:43
+@@ -11,6 +11,7 @@
+ using System;
+ using System.Collections.Generic;
+ using System.IO;
++using System.Linq;
+ using System.Reflection;
+ using System.Runtime.Serialization;
+ using NUnit.Framework;
+@@ -607,6 +608,100 @@
+ 		}
+ 
+ 		[TestCase(1558, 720, 844, 390, 47, 0, 47, 21)]
++		[TestCase(1560, 720, 932, 430, 59, 0, 59, 21)]
++		[TestCase(1024, 768, 1024, 768, 0, 0, 0, 20)]
++		public void FactionPickerUsesFiveBySixTargetViewport(
++			int effectiveWidth, int effectiveHeight, int nativeWidth, int nativeHeight,
++			double safeLeft, double safeTop, double safeRight, double safeBottom)
++		{
++			var snapshot = Snapshot(effectiveWidth, effectiveHeight, nativeWidth, nativeHeight,
++				safeLeft, safeTop, safeRight, safeBottom);
++			var layout = IosDropDownLayout.FactionPicker;
++			var target = IosTouchWidgetPolicy.EnsureMinimumTouchHeight(0, snapshot);
++			var width = IosTouchWidgetPolicy.DropDownPanelWidth(
++				180, target, snapshot.SafeBounds.Width, layout.MinimumWidthTargets);
++			var height = IosTouchWidgetPolicy.DropDownMaximumHeight(
++				154, target, snapshot.SafeBounds.Height, layout.MaximumHeightTargets);
++			var content = IosTouchWidgetPolicy.DropDownContentBounds(width, target, 2);
++
++			Assert.Multiple(() =>
++			{
++				Assert.That(layout.MinimumWidthTargets, Is.EqualTo(5));
++				Assert.That(layout.MaximumHeightTargets, Is.EqualTo(6));
++				Assert.That(layout.HeaderHeightPoints, Is.EqualTo(24));
++				Assert.That(layout.ItemImagePoints, Is.EqualTo(new Size(40, 20)));
++				Assert.That(layout.OmitSingletonHeaders, Is.True);
++				Assert.That(width, Is.EqualTo(Math.Min(snapshot.SafeBounds.Width, Math.Max(180, 5 * target))));
++				Assert.That(height, Is.EqualTo(Math.Min(snapshot.SafeBounds.Height, 6 * target)));
++				Assert.That(target / snapshot.LogicalPerPoint, Is.GreaterThanOrEqualTo(48));
++				Assert.That(content.Right, Is.LessThanOrEqualTo(width - target));
++			});
++
++			if (nativeWidth == 844)
++				Assert.That(content.Width / snapshot.LogicalPerPoint, Is.GreaterThanOrEqualTo(190));
++		}
++
++		[Test]
++		public void Ra2FactionViewportShowsFiveSelectableRowsAndDesktopKeepsEveryHeader()
++		{
++			var layout = IosDropDownLayout.FactionPicker;
++			const int Target = 48;
++			const int PanelHeight = 6 * Target;
++			var headerHeight = layout.HeaderHeightPoints;
++			var y = 0;
++			var visibleOptions = 0;
++			var groups = new[] { 3, 1, 5, 4 };
++
++			foreach (var optionCount in groups)
++			{
++				if (IosTouchWidgetPolicy.ShowDropDownGroupHeader(optionCount, true, layout))
++					y += headerHeight;
++
++				for (var option = 0; option < optionCount; option++)
++				{
++					var bounds = new WidgetBounds(0, y, 5 * Target, Target);
++					if (bounds.Bottom <= PanelHeight)
++						visibleOptions++;
++					y = bounds.Bottom;
++				}
++			}
++
++			Assert.That(visibleOptions, Is.GreaterThanOrEqualTo(5));
++			Assert.That(groups.All(count =>
++				IosTouchWidgetPolicy.ShowDropDownGroupHeader(count, false, layout)), Is.True);
++		}
++
++		[Test]
++		public void DesktopFactionPickerYamlBaselineRemainsUnchanged()
++		{
++			var root = RepositoryRoot();
++			var source = File.ReadAllText(Path.Combine(
++				root, "engine", "mods", "common", "chrome", "lobby-players.yaml"));
++			var scrollPanel = File.ReadAllText(Path.Combine(
++				root, "engine", "OpenRA.Mods.Common", "Widgets", "ScrollPanelWidget.cs"));
++			var mainStart = source.IndexOf("DropDownButton@FACTION:", StringComparison.Ordinal);
++			var mainEnd = source.IndexOf("DropDownButton@TEAM_DROPDOWN:", mainStart, StringComparison.Ordinal);
++			var main = source[mainStart..mainEnd];
++			var templateStart = source.IndexOf("ScrollPanel@FACTION_DROPDOWN_TEMPLATE:", StringComparison.Ordinal);
++			var template = source[templateStart..];
++
++			Assert.Multiple(() =>
++			{
++				Assert.That(main, Does.Contain("Width: 140"));
++				Assert.That(main, Does.Contain("Height: 25"));
++				Assert.That(main, Does.Contain("Image@FACTIONFLAG:"));
++				Assert.That(main, Does.Contain("Width: 30"));
++				Assert.That(main, Does.Contain("Height: 15"));
++				Assert.That(main, Does.Not.Contain("StretchToFit"));
++				Assert.That(template, Does.Match(@"ScrollItem@HEADER:[\s\S]*?Height: 13"));
++				Assert.That(template, Does.Match(@"ScrollItem@TEMPLATE:[\s\S]*?Height: 25"));
++				Assert.That(template, Does.Match(@"Image@FLAG:[\s\S]*?Width: 30[\s\S]*?Height: 15"));
++				Assert.That(template, Does.Not.Contain("StretchToFit"));
++				Assert.That(scrollPanel, Does.Contain("public int TopBottomSpacing = 2"));
++			});
++		}
++
++		[TestCase(1558, 720, 844, 390, 47, 0, 47, 21)]
+ 		[TestCase(1180, 820, 1180, 820, 0, 0, 0, 20)]
+ 		public void DynamicDropdownMaximumHeightCannotExceedTheSafeArea(
+ 			int effectiveWidth, int effectiveHeight, int nativeWidth, int nativeHeight,
+@@ -667,6 +762,8 @@
+ 		{
+ 			var root = RepositoryRoot();
+ 			var dropdown = File.ReadAllText(Path.Combine(root, "engine", "OpenRA.Mods.Common", "Widgets", "DropDownButtonWidget.cs"));
++			var lobbyUtils = File.ReadAllText(Path.Combine(
++				root, "engine", "OpenRA.Mods.Common", "Widgets", "Logic", "Lobby", "LobbyUtils.cs"));
+ 
+ 			Assert.That(dropdown, Does.Contain("if (Platform.IsIOS)"));
+ 			Assert.That(dropdown, Does.Contain("AdaptIosDropDownPanel"));
+@@ -682,6 +779,13 @@
+ 			Assert.That(dropdown, Does.Contain("IosTouchWidgetPolicy.PlacePopup"));
+ 			Assert.That(dropdown, Does.Contain("IosTouchWidgetPolicy.RelativeToRoot"));
+ 			Assert.That(dropdown, Does.Contain("IosTouchWidgetPolicy.MaximumPopupHeight"));
++			Assert.That(dropdown, Does.Contain("IosDropDownLayout.Default"));
++			Assert.That(dropdown, Does.Contain("iosLayout.OmitSingletonHeaders"));
++			Assert.That(dropdown, Does.Contain("panel.TopBottomSpacing = 0"));
++			Assert.That(dropdown, Does.Contain("flag.StretchToFit = true"));
++			Assert.That(lobbyUtils, Does.Contain("IosDropDownLayout.FactionPicker"));
++			Assert.That(lobbyUtils, Does.Contain("label.GetText = () => WidgetUtils.TruncateText("));
++			Assert.That(lobbyUtils, Does.Not.Contain("var labelText = WidgetUtils.TruncateText("));
+ 			Assert.That(dropdown, Does.Contain("panelY + oldBounds.Height > Game.Renderer.Resolution.Height"),
+ 				"Desktop popup placement must retain its original path.");
+ 		}
+diff -ruN a/mods/common/chrome/lobby-players.yaml b/mods/common/chrome/lobby-players.yaml
+--- a/mods/common/chrome/lobby-players.yaml	2026-08-28 02:02:43
++++ b/mods/common/chrome/lobby-players.yaml	2026-08-28 02:02:43
+@@ -172,6 +172,26 @@
+ 							ImageCollection: checkmark-tick
+ 							ImageName: checked
+ 							Visible: false
++						Label@IOS_MAP_STATUS_TEXT:
++							X: 617
++							Y: 2
++							Width: 20
++							Height: 20
++							Visible: false
++							IgnoreMouseOver: true
++							Align: Center
++							VAlign: Middle
++							Font: IosBold
++						Label@IOS_MAP_STATUS_ICON:
++							X: 617
++							Y: 2
++							Width: 20
++							Height: 20
++							Visible: false
++							IgnoreMouseOver: true
++							Align: Center
++							VAlign: Middle
++							Font: IosBold
+ 				Container@TEMPLATE_NONEDITABLE_PLAYER:
+ 					X: 5
+ 					Width: 475
+@@ -292,6 +312,26 @@
+ 							ImageCollection: checkmark-tick
+ 							ImageName: checked
+ 							Visible: false
++						Label@IOS_MAP_STATUS_TEXT:
++							X: 619
++							Y: 4
++							Width: 20
++							Height: 20
++							Visible: false
++							IgnoreMouseOver: true
++							Align: Center
++							VAlign: Middle
++							Font: IosBold
++						Label@IOS_MAP_STATUS_ICON:
++							X: 619
++							Y: 4
++							Width: 20
++							Height: 20
++							Visible: false
++							IgnoreMouseOver: true
++							Align: Center
++							VAlign: Middle
++							Font: IosBold
+ 				Container@TEMPLATE_EMPTY:
+ 					X: 5
+ 					Width: 475
+diff -ruN a/mods/common/fluent/chrome.ftl b/mods/common/fluent/chrome.ftl
+--- a/mods/common/fluent/chrome.ftl	2026-08-28 02:02:43
++++ b/mods/common/fluent/chrome.ftl	2026-08-28 02:02:43
+@@ -552,3 +552,20 @@
+ ## gamesave-loading.yaml
+ label-gamesave-loading-screen-title = Loading Saved Game
+ label-gamesave-loading-screen-desc = Press Escape to cancel loading and return to the main menu
++button-ios-lobby-start-validating = Validating map…
++button-ios-lobby-start-map-unavailable = Map unavailable
++button-ios-lobby-start-client-failed = { $player } failed
++button-ios-lobby-start-clients-failed = { $count } failed
++button-ios-lobby-start-client-verifying = { $player } verifying…
++button-ios-lobby-start-clients-verifying = { $count } verifying…
++button-ios-lobby-start-client-downloading = { $player } { $progress }%
++button-ios-lobby-start-clients-downloading = { $count } downloading · { $progress }%
++button-ios-lobby-start-client-waiting = Waiting for { $player }
++button-ios-lobby-start-clients-waiting = Waiting for { $count } players
++button-ios-lobby-start-client-and-others = { $status } · +{ $count }
++button-ios-lobby-start-clients-not-ready = { $count } maps not ready
++button-ios-lobby-start-required-slot = Fill required slots
++button-ios-lobby-start-no-players = Add a player
++button-ios-lobby-start-two-players = Need 2 players
++button-ios-lobby-start-spawns = Enable more spawns
++button-ios-lobby-start-waiting = Please wait…
+diff -ruN a/mods/common/fluent/common.ftl b/mods/common/fluent/common.ftl
+--- a/mods/common/fluent/common.ftl	2026-08-28 02:02:43
++++ b/mods/common/fluent/common.ftl	2026-08-28 02:02:43
+@@ -80,6 +80,8 @@
+ notification-requires-authentication = Server requires players to have an OpenRA forum account.
+ notification-no-permission-to-join = You do not have permission to join this server.
+ notification-slot-closed = Your slot was closed by the host.
++notification-map-change-no-slot = The selected map has fewer player slots, so you were removed from the lobby.
++notification-map-not-ready = The selected map is still downloading or being validated.
+ 
+ ## LobbySettingsNotification
+ notification-lobby-option = { $name }: { $value }.
+diff -ruN a/mods/common/fluent/zh-CN/chrome.ftl b/mods/common/fluent/zh-CN/chrome.ftl
+--- a/mods/common/fluent/zh-CN/chrome.ftl	2026-08-28 02:02:43
++++ b/mods/common/fluent/zh-CN/chrome.ftl	2026-08-28 02:02:43
+@@ -552,3 +552,20 @@
+ ## gamesave-loading.yaml
+ label-gamesave-loading-screen-title = 正在载入存档
+ label-gamesave-loading-screen-desc = 按 Esc 取消载入并返回主菜单
++button-ios-lobby-start-validating = 地图校验中…
++button-ios-lobby-start-map-unavailable = 地图不可用
++button-ios-lobby-start-client-failed = { $player } 下载失败
++button-ios-lobby-start-clients-failed = { $count } 人下载失败
++button-ios-lobby-start-client-verifying = { $player } 校验中…
++button-ios-lobby-start-clients-verifying = { $count } 人校验中…
++button-ios-lobby-start-client-downloading = { $player } 下载 { $progress }%
++button-ios-lobby-start-clients-downloading = { $count } 人下载 · { $progress }%
++button-ios-lobby-start-client-waiting = 等待 { $player } 下载
++button-ios-lobby-start-clients-waiting = 等待 { $count } 人下载
++button-ios-lobby-start-client-and-others = { $status } · 另 { $count } 人
++button-ios-lobby-start-clients-not-ready = { $count } 人地图未就绪
++button-ios-lobby-start-required-slot = 请填满必需位置
++button-ios-lobby-start-no-players = 请加入玩家
++button-ios-lobby-start-two-players = 至少需要 2 人
++button-ios-lobby-start-spawns = 出生点不足
++button-ios-lobby-start-waiting = 请稍候…
+diff -ruN a/mods/common/fluent/zh-CN/common.ftl b/mods/common/fluent/zh-CN/common.ftl
+--- a/mods/common/fluent/zh-CN/common.ftl	2026-08-28 02:02:43
++++ b/mods/common/fluent/zh-CN/common.ftl	2026-08-28 02:02:43
+@@ -79,6 +79,8 @@
+ notification-requires-authentication = 服务器要求玩家拥有 OpenRA 论坛账号。
+ notification-no-permission-to-join = 你没有加入此服务器的权限。
+ notification-slot-closed = 你的位置已被主机关闭。
++notification-map-change-no-slot = 所选地图的玩家位置不足，你已被移出大厅。
++notification-map-not-ready = 所选地图仍在下载或校验中。
+ 
+ ## LobbySettingsNotification
+ notification-lobby-option = { $name }：{ $value }。

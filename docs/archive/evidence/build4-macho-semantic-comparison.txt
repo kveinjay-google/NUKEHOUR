@@ -1,0 +1,309 @@
+REFERENCE=artifacts/build4-binary-reference/OpenRA.iOS
+REBUILT=ios/OpenRA.iOS/bin/Release/net8.0-ios/ios-arm64/OpenRA.iOS.app/OpenRA.iOS
+d2ffd8b9740e26b039a45cf0fccb845fd51e190d8c027569b06f536f6be97a32  artifacts/build4-binary-reference/OpenRA.iOS
+6ef6067b3e3bb9ffd7e614669842d6404754244fb2e792df6ad7b021c4015b7f  ios/OpenRA.iOS/bin/Release/net8.0-ios/ios-arm64/OpenRA.iOS.app/OpenRA.iOS
+artifacts/build4-binary-reference/OpenRA.iOS:                              Mach-O 64-bit executable arm64
+ios/OpenRA.iOS/bin/Release/net8.0-ios/ios-arm64/OpenRA.iOS.app/OpenRA.iOS: Mach-O 64-bit executable arm64
+REFERENCE_ARCH=arm64
+REBUILT_ARCH=arm64
+REFERENCE_UUID=EB6E80CE-FF46-344A-B4BE-0182AA5E2946
+REBUILT_UUID=5F4C41B3-16B7-31A2-969B-93DABCC3A75D
+LINKED_LIBRARIES_EQUAL=YES
+LINKED_LIBRARIES_BEGIN
+	/System/Library/Frameworks/MetricKit.framework/MetricKit (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/Foundation.framework/Foundation (compatibility version 300.0.0, current version 5026.5.4)
+	/System/Library/Frameworks/AVFoundation.framework/AVFoundation (compatibility version 1.0.0, current version 2.0.0)
+	/System/Library/Frameworks/AudioToolbox.framework/AudioToolbox (compatibility version 1.0.0, current version 1000.0.0)
+	/System/Library/Frameworks/CoreAudio.framework/CoreAudio (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/CoreBluetooth.framework/CoreBluetooth (compatibility version 1.0.0, current version 195.7.1)
+	/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics (compatibility version 64.0.0, current version 1965.5.1)
+	/System/Library/Frameworks/CoreHaptics.framework/CoreHaptics (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/CoreMotion.framework/CoreMotion (compatibility version 1.0.0, current version 3075.0.8)
+	/System/Library/Frameworks/GameController.framework/GameController (compatibility version 1.0.0, current version 13.5.1)
+	/System/Library/Frameworks/Metal.framework/Metal (compatibility version 1.0.0, current version 373.2.0)
+	/System/Library/Frameworks/OpenGLES.framework/OpenGLES (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/QuartzCore.framework/QuartzCore (compatibility version 1.2.0, current version 1195.14.4)
+	/System/Library/Frameworks/UIKit.framework/UIKit (compatibility version 1.0.0, current version 9126.5.5)
+	/System/Library/Frameworks/Accelerate.framework/Accelerate (compatibility version 1.0.0, current version 4.0.0)
+	/System/Library/Frameworks/Accessibility.framework/Accessibility (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/Accounts.framework/Accounts (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/AddressBook.framework/AddressBook (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/AddressBookUI.framework/AddressBookUI (compatibility version 1.0.0, current version 33.0.0)
+	/System/Library/Frameworks/AdServices.framework/AdServices (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/AdSupport.framework/AdSupport (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/AppClip.framework/AppClip (compatibility version 1.0.0, current version 0.0.0)
+	/System/Library/Frameworks/AppTrackingTransparency.framework/AppTrackingTransparency (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/ARKit.framework/ARKit (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/AuthenticationServices.framework/AuthenticationServices (compatibility version 1.0.0, current version 624.2.5)
+	/System/Library/Frameworks/AutomaticAssessmentConfiguration.framework/AutomaticAssessmentConfiguration (compatibility version 0.0.0, current version 0.0.0)
+	/System/Library/Frameworks/AVKit.framework/AVKit (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/BackgroundTasks.framework/BackgroundTasks (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/BusinessChat.framework/BusinessChat (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/CallKit.framework/CallKit (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/CarPlay.framework/CarPlay (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/CFNetwork.framework/CFNetwork (compatibility version 1.0.0, current version 3860.255.12)
+	/System/Library/Frameworks/ClassKit.framework/ClassKit (compatibility version 1.0.0, current version 151.5.0)
+	/System/Library/Frameworks/CloudKit.framework/CloudKit (compatibility version 1.0.0, current version 2360.120.2)
+	/System/Library/Frameworks/Contacts.framework/Contacts (compatibility version 0.0.0, current version 3804.255.21)
+	/System/Library/Frameworks/ContactsUI.framework/ContactsUI (compatibility version 1.0.0, current version 1424.255.21)
+	/System/Library/Frameworks/CoreAudioKit.framework/CoreAudioKit (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/CoreData.framework/CoreData (compatibility version 1.0.0, current version 1526.0.0)
+	/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation (compatibility version 150.0.0, current version 5026.5.4)
+	/System/Library/Frameworks/CoreImage.framework/CoreImage (compatibility version 1.0.0, current version 7.0.0)
+	/System/Library/Frameworks/CoreLocation.framework/CoreLocation (compatibility version 1.0.0, current version 3075.0.8)
+	/System/Library/Frameworks/CoreLocationUI.framework/CoreLocationUI (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/CoreMedia.framework/CoreMedia (compatibility version 1.0.0, current version 3320.8.1)
+	/System/Library/Frameworks/CoreMIDI.framework/CoreMIDI (compatibility version 1.0.0, current version 69.0.0)
+	/System/Library/Frameworks/CoreML.framework/CoreML (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/CoreSpotlight.framework/CoreSpotlight (compatibility version 1.0.0, current version 2418.5.9)
+	/System/Library/Frameworks/CoreTelephony.framework/CoreTelephony (compatibility version 1.0.0, current version 0.0.0)
+	/System/Library/Frameworks/CoreText.framework/CoreText (compatibility version 1.0.0, current version 877.4.0)
+	/System/Library/Frameworks/CoreVideo.framework/CoreVideo (compatibility version 1.2.0, current version 734.4.0)
+	/System/Library/Frameworks/CryptoTokenKit.framework/CryptoTokenKit (compatibility version 0.0.0, current version 805.120.2)
+	/System/Library/Frameworks/DeviceCheck.framework/DeviceCheck (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/EventKit.framework/EventKit (compatibility version 1.0.0, current version 1934.4.9)
+	/System/Library/Frameworks/EventKitUI.framework/EventKitUI (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/ExternalAccessory.framework/ExternalAccessory (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/FileProvider.framework/FileProvider (compatibility version 1.0.0, current version 4018.120.24)
+	/System/Library/Frameworks/FileProviderUI.framework/FileProviderUI (compatibility version 1.0.0, current version 56.4.1)
+	/System/Library/Frameworks/GameKit.framework/GameKit (compatibility version 1.0.0, current version 820.5.18)
+	/System/Library/Frameworks/GameplayKit.framework/GameplayKit (compatibility version 1.0.0, current version 101.4.1)
+	/System/Library/Frameworks/GLKit.framework/GLKit (compatibility version 1.0.0, current version 129.0.0)
+	/System/Library/Frameworks/HealthKit.framework/HealthKit (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/HealthKitUI.framework/HealthKitUI (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/HomeKit.framework/HomeKit (compatibility version 1.0.0, current version 1418.6.20)
+	/System/Library/Frameworks/IdentityLookup.framework/IdentityLookup (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/IdentityLookupUI.framework/IdentityLookupUI (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/ImageIO.framework/ImageIO (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/Intents.framework/Intents (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/IntentsUI.framework/IntentsUI (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/IOSurface.framework/IOSurface (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/JavaScriptCore.framework/JavaScriptCore (compatibility version 1.0.0, current version 624.2.5)
+	/System/Library/Frameworks/LinkPresentation.framework/LinkPresentation (compatibility version 1.0.0, current version 296.11.0)
+	/System/Library/Frameworks/LocalAuthentication.framework/LocalAuthentication (compatibility version 1.0.0, current version 2005.120.18)
+	/System/Library/Frameworks/MapKit.framework/MapKit (compatibility version 1.0.0, current version 14.0.0)
+	/System/Library/Frameworks/MediaAccessibility.framework/MediaAccessibility (compatibility version 1.0.0, current version 62.0.0)
+	/System/Library/Frameworks/MediaPlayer.framework/MediaPlayer (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/MediaSetup.framework/MediaSetup (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/MediaToolbox.framework/MediaToolbox (compatibility version 1.0.0, current version 3320.8.1)
+	/System/Library/Frameworks/Messages.framework/Messages (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/MessageUI.framework/MessageUI (compatibility version 1.0.0, current version 3864.255.51)
+	/System/Library/Frameworks/MetalKit.framework/MetalKit (compatibility version 1.0.0, current version 173.7.0)
+	/System/Library/Frameworks/MetalPerformanceShaders.framework/MetalPerformanceShaders (compatibility version 1.0.0, current version 129.5.1)
+	/System/Library/Frameworks/MetalPerformanceShadersGraph.framework/MetalPerformanceShadersGraph (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/MLCompute.framework/MLCompute (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/MobileCoreServices.framework/MobileCoreServices (compatibility version 1.0.0, current version 1226.0.0)
+	/System/Library/Frameworks/ModelIO.framework/ModelIO (compatibility version 1.0.0, current version 268.2.2)
+	/System/Library/Frameworks/MultipeerConnectivity.framework/MultipeerConnectivity (compatibility version 1.0.0, current version 179.255.1)
+	/System/Library/Frameworks/NaturalLanguage.framework/NaturalLanguage (compatibility version 1.0.0, current version 114.0.0)
+	/System/Library/Frameworks/NearbyInteraction.framework/NearbyInteraction (compatibility version 0.0.0, current version 0.0.0)
+	/System/Library/Frameworks/Network.framework/Network (compatibility version 1.0.0, current version 5812.122.1)
+	/System/Library/Frameworks/NetworkExtension.framework/NetworkExtension (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/NotificationCenter.framework/NotificationCenter (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/OSLog.framework/OSLog (compatibility version 1.0.0, current version 1861.120.4)
+	/System/Library/Frameworks/PassKit.framework/PassKit (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/PDFKit.framework/PDFKit (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/PencilKit.framework/PencilKit (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/PHASE.framework/PHASE (compatibility version 1.0.0, current version 349.255.0)
+	/System/Library/Frameworks/Photos.framework/Photos (compatibility version 1.0.0, current version 852.0.102)
+	/System/Library/Frameworks/PhotosUI.framework/PhotosUI (compatibility version 1.0.0, current version 852.0.102)
+	/System/Library/Frameworks/PushKit.framework/PushKit (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/QuickLook.framework/QuickLook (compatibility version 1.0.0, current version 1016.206.3)
+	/System/Library/Frameworks/QuickLookThumbnailing.framework/QuickLookThumbnailing (compatibility version 1.0.0, current version 0.0.0)
+	/System/Library/Frameworks/ReplayKit.framework/ReplayKit (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/SafariServices.framework/SafariServices (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/SceneKit.framework/SceneKit (compatibility version 1.0.0, current version 608.255.0)
+	/System/Library/Frameworks/ScreenTime.framework/ScreenTime (compatibility version 1.0.0, current version 605.5.10)
+	/System/Library/Frameworks/Security.framework/Security (compatibility version 1.0.0, current version 61901.120.67)
+	/System/Library/Frameworks/ShazamKit.framework/ShazamKit (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/Social.framework/Social (compatibility version 1.0.0, current version 87.0.0)
+	/System/Library/Frameworks/SoundAnalysis.framework/SoundAnalysis (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/Speech.framework/Speech (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/SpriteKit.framework/SpriteKit (compatibility version 1.0.0, current version 52.4.1)
+	/System/Library/Frameworks/StoreKit.framework/StoreKit (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/SystemConfiguration.framework/SystemConfiguration (compatibility version 1.0.0, current version 1405.120.5)
+	/System/Library/Frameworks/ThreadNetwork.framework/ThreadNetwork (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/Twitter.framework/Twitter (compatibility version 1.0.0, current version 164.0.0)
+	/System/Library/Frameworks/UniformTypeIdentifiers.framework/UniformTypeIdentifiers (compatibility version 1.0.0, current version 709.0.0)
+	/System/Library/Frameworks/UserNotifications.framework/UserNotifications (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/UserNotificationsUI.framework/UserNotificationsUI (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/VideoSubscriberAccount.framework/VideoSubscriberAccount (compatibility version 1.0.0, current version 593.50.1)
+	/System/Library/Frameworks/VideoToolbox.framework/VideoToolbox (compatibility version 1.0.0, current version 3320.8.1)
+	/System/Library/Frameworks/Vision.framework/Vision (compatibility version 1.0.0, current version 9.5.4)
+	/System/Library/Frameworks/VisionKit.framework/VisionKit (compatibility version 1.0.0, current version 1.0.0)
+	/System/Library/Frameworks/WatchConnectivity.framework/WatchConnectivity (compatibility version 1.0.0, current version 222.0.0)
+	/System/Library/Frameworks/WebKit.framework/WebKit (compatibility version 1.0.0, current version 624.2.5)
+	/System/Library/Frameworks/AccessorySetupKit.framework/AccessorySetupKit (compatibility version 1.0.0, current version 1.0.0, weak)
+	/System/Library/Frameworks/AVRouting.framework/AVRouting (compatibility version 1.0.0, current version 1.0.0, weak)
+	/System/Library/Frameworks/BackgroundAssets.framework/BackgroundAssets (compatibility version 1.0.0, current version 1.0.0, weak)
+	/System/Library/Frameworks/Cinematic.framework/Cinematic (compatibility version 1.0.0, current version 1.0.0, weak)
+	/System/Library/Frameworks/CoreNFC.framework/CoreNFC (compatibility version 1.0.0, current version 1.0.0, weak)
+	/System/Library/Frameworks/DeviceDiscoveryExtension.framework/DeviceDiscoveryExtension (compatibility version 1.0.0, current version 1.0.0, weak)
+	/System/Library/Frameworks/MetalFX.framework/MetalFX (compatibility version 1.0.0, current version 1.0.0, weak)
+	/System/Library/Frameworks/PushToTalk.framework/PushToTalk (compatibility version 1.0.0, current version 1.0.0, weak)
+	/System/Library/Frameworks/SafetyKit.framework/SafetyKit (compatibility version 0.0.0, current version 0.0.0, weak)
+	/System/Library/Frameworks/SensitiveContentAnalysis.framework/SensitiveContentAnalysis (compatibility version 1.0.0, current version 1.0.0, weak)
+	/System/Library/Frameworks/SensorKit.framework/SensorKit (compatibility version 1.0.0, current version 1.0.0, weak)
+	/System/Library/Frameworks/SharedWithYou.framework/SharedWithYou (compatibility version 1.0.0, current version 1.0.0, weak)
+	/System/Library/Frameworks/SharedWithYouCore.framework/SharedWithYouCore (compatibility version 1.0.0, current version 1.0.0, weak)
+	/System/Library/Frameworks/Symbols.framework/Symbols (compatibility version 1.0.0, current version 190.4.0, weak)
+	/System/Library/Frameworks/GSS.framework/GSS (compatibility version 1.0.0, current version 1.0.0)
+	/usr/lib/libcompression.dylib (compatibility version 1.0.0, current version 1.0.0)
+	/usr/lib/libz.1.dylib (compatibility version 1.0.0, current version 1.2.12)
+	/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)
+	/usr/lib/libobjc.A.dylib (compatibility version 1.0.0, current version 228.0.0)
+	/usr/lib/libc++.1.dylib (compatibility version 1.0.0, current version 2100.43.0)
+	/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1356.0.0)
+	/System/Library/Frameworks/AVFAudio.framework/AVFAudio (compatibility version 1.0.0, current version 1.0.0)
+LINKED_LIBRARIES_END
+REFERENCE_EXPORTED_SYMBOL_COUNT=1417
+REBUILT_EXPORTED_SYMBOL_COUNT=1417
+EXPORTED_SYMBOLS_EQUAL=YES
+REFERENCE_ALL_SYMBOL_COUNT=2376
+REBUILT_ALL_SYMBOL_COUNT=2376
+ALL_SYMBOL_NAMES_AND_TYPES_EQUAL=YES
+LOAD_COMMAND_KINDS_EQUAL=YES
+BUILD_VERSION_BEGIN
+      cmd LC_BUILD_VERSION
+  cmdsize 32
+ platform 2
+    minos 15.0
+      sdk 26.5
+   ntools 1
+     tool 3
+  version 1267.0
+Load command 12
+BUILD_VERSION_END
+REFERENCE_CODE_SIGNATURE_BEGIN
+Identifier=com.openra.ipad.personal
+Format=app bundle with Mach-O thin (arm64)
+Hash type=sha256 size=32
+CDHash=2a4d769837c9b79918d4f68db74a5adbc5b589f5
+Signature size=4785
+Signed Time=Sep 5, 2026 at 09:33:01
+TeamIdentifier=267KQ4A3N4
+      cmd LC_CODE_SIGNATURE
+  cmdsize 16
+  dataoff 145646864
+ datasize 1157216
+REFERENCE_CODE_SIGNATURE_END
+REBUILT_CODE_SIGNATURE_BEGIN
+Identifier=com.openra.ipad.personal
+Format=app bundle with Mach-O thin (arm64)
+Hash type=sha256 size=32
+CDHash=fd975733e5cf039e332469cfd112b80f0828d757
+Signature size=4785
+Signed Time=Sep 8, 2026 at 06:40:13
+TeamIdentifier=267KQ4A3N4
+      cmd LC_CODE_SIGNATURE
+  cmdsize 16
+  dataoff 145646864
+ datasize 1157216
+REBUILT_CODE_SIGNATURE_END
+SECTION_SIZES_REFERENCE_BEGIN
+__TEXT:__text=0x0000000007b470d4
+__TEXT:__stubs=0x0000000000001dac
+__TEXT:__objc_stubs=0x00000000000044e0
+__TEXT:__init_offsets=0x0000000000000008
+__TEXT:__objc_methlist=0x0000000000025b6c
+__TEXT:__cstring=0x000000000005a89d
+__TEXT:__objc_classname=0x000000000000f3bd
+__TEXT:__objc_methname=0x00000000000fd2d5
+__TEXT:__objc_methtype=0x000000000001f8a4
+__TEXT:__const=0x0000000000622848
+__TEXT:__gcc_except_tab=0x0000000000000420
+__TEXT:__ustring=0x0000000000001358
+__TEXT:__unwind_info=0x00000000000085a8
+__TEXT:__eh_frame=0x00000000000008dc
+__TEXT:__oslogstring=0x0000000000000036
+__DATA_CONST:__got=0x0000000000001ab8
+__DATA_CONST:__const=0x00000000005aa558
+__DATA_CONST:__cfstring=0x0000000000002400
+__DATA_CONST:__objc_classlist=0x0000000000001b18
+__DATA_CONST:__objc_catlist=0x0000000000000008
+__DATA_CONST:__objc_protolist=0x0000000000001e50
+__DATA_CONST:__objc_imageinfo=0x0000000000000008
+__DATA_CONST:__objc_intobj=0x0000000000000090
+__DATA_CONST:__objc_arraydata=0x00000000000005f0
+__DATA_CONST:__objc_dictobj=0x0000000000000028
+__DATA:__objc_const=0x0000000000049c58
+__DATA:__objc_selrefs=0x0000000000039088
+__DATA:__objc_protorefs=0x0000000000001e28
+__DATA:__objc_classrefs=0x0000000000000410
+__DATA:__objc_superrefs=0x0000000000000098
+__DATA:__objc_ivar=0x0000000000000584
+__DATA:__objc_data=0x0000000000010ef0
+__DATA:__data=0x000000000004f808
+__DATA:__thread_vars=0x0000000000000018
+__DATA:__thread_bss=0x0000000000000004
+__DATA:__bss=0x00000000004421b0
+__DATA:__common=0x0000000000005098
+SECTION_SIZES_REFERENCE_END
+SECTION_SIZES_REBUILT_BEGIN
+__TEXT:__text=0x0000000007b46ef4
+__TEXT:__stubs=0x0000000000001dac
+__TEXT:__objc_stubs=0x00000000000044e0
+__TEXT:__init_offsets=0x0000000000000008
+__TEXT:__objc_methlist=0x0000000000025b6c
+__TEXT:__cstring=0x000000000005a89d
+__TEXT:__objc_classname=0x000000000000f3bd
+__TEXT:__objc_methname=0x00000000000fd2d5
+__TEXT:__objc_methtype=0x000000000001f8a4
+__TEXT:__const=0x0000000000623688
+__TEXT:__gcc_except_tab=0x0000000000000420
+__TEXT:__ustring=0x0000000000001358
+__TEXT:__unwind_info=0x00000000000085a8
+__TEXT:__eh_frame=0x00000000000008dc
+__TEXT:__oslogstring=0x0000000000000036
+__DATA_CONST:__got=0x0000000000001ab8
+__DATA_CONST:__const=0x00000000005aa558
+__DATA_CONST:__cfstring=0x0000000000002400
+__DATA_CONST:__objc_classlist=0x0000000000001b18
+__DATA_CONST:__objc_catlist=0x0000000000000008
+__DATA_CONST:__objc_protolist=0x0000000000001e50
+__DATA_CONST:__objc_imageinfo=0x0000000000000008
+__DATA_CONST:__objc_intobj=0x0000000000000090
+__DATA_CONST:__objc_arraydata=0x00000000000005f0
+__DATA_CONST:__objc_dictobj=0x0000000000000028
+__DATA:__objc_const=0x0000000000049c58
+__DATA:__objc_selrefs=0x0000000000039088
+__DATA:__objc_protorefs=0x0000000000001e28
+__DATA:__objc_classrefs=0x0000000000000410
+__DATA:__objc_superrefs=0x0000000000000098
+__DATA:__objc_ivar=0x0000000000000584
+__DATA:__objc_data=0x0000000000010ef0
+__DATA:__data=0x000000000004f808
+__DATA:__thread_vars=0x0000000000000018
+__DATA:__thread_bss=0x0000000000000004
+__DATA:__bss=0x0000000000442180
+__DATA:__common=0x0000000000005098
+SECTION_SIZES_REBUILT_END
+SECTION_SIZE_DIFFERENCES_BEGIN
+--- /dev/fd/12	2026-09-08 07:36:37
++++ /dev/fd/13	2026-09-08 07:36:37
+@@ -1,4 +1,4 @@
+-__TEXT:__text=0x0000000007b470d4
++__TEXT:__text=0x0000000007b46ef4
+ __TEXT:__stubs=0x0000000000001dac
+ __TEXT:__objc_stubs=0x00000000000044e0
+ __TEXT:__init_offsets=0x0000000000000008
+@@ -7,7 +7,7 @@
+ __TEXT:__objc_classname=0x000000000000f3bd
+ __TEXT:__objc_methname=0x00000000000fd2d5
+ __TEXT:__objc_methtype=0x000000000001f8a4
+-__TEXT:__const=0x0000000000622848
++__TEXT:__const=0x0000000000623688
+ __TEXT:__gcc_except_tab=0x0000000000000420
+ __TEXT:__ustring=0x0000000000001358
+ __TEXT:__unwind_info=0x00000000000085a8
+@@ -33,5 +33,5 @@
+ __DATA:__data=0x000000000004f808
+ __DATA:__thread_vars=0x0000000000000018
+ __DATA:__thread_bss=0x0000000000000004
+-__DATA:__bss=0x00000000004421b0
++__DATA:__bss=0x0000000000442180
+ __DATA:__common=0x0000000000005098
+SECTION_SIZE_DIFFERENCES_END
+CLASSIFICATION=NONDETERMINISTIC_BUILD_METADATA
+SEMANTIC_SOURCE_MAPPING=VERIFIED
+BIT_FOR_BIT_REPRODUCIBLE=NO

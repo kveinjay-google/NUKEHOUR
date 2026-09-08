@@ -1,0 +1,2946 @@
+# -----------------------------------------------------------------------------------
+# Allies
+# -----------------------------------------------------------------------------------
+
+sidebar-allies:
+	Image: chrome.png
+	Regions:
+		background-top: 0, 0, 234, 275
+		background-iconrow: 0, 275, 234, 50
+		background-bottom: 0, 325, 234, 66
+		background-supportoverlay: 250, 20, 64, 48
+		background-commandbar: 559, 278, 459, 31
+
+# These coordinates point to an empty area of the chrome.png file to make the background of these buttons empty
+sidebar-button-allies:
+	Image: chrome.png
+	PanelRegion: 5370, 15, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+sidebar-button-allies-hover:
+	Image: chrome.png
+	PanelRegion: 5370, 15, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+sidebar-button-allies-pressed:
+	Image: chrome.png
+	PanelRegion: 5370, 15, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+sidebar-button-allies-highlighted:
+	Image: chrome.png
+	PanelRegion: 5370, 15, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+sidebar-button-allies-highlighted-hover:
+	Image: chrome.png
+	PanelRegion: 5370, 15, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+sidebar-button-allies-highlighted-pressed:
+	Image: chrome.png
+	PanelRegion: 5370, 15, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+sidebar-button-allies-highlighted-disabled:
+	Image: chrome.png
+	PanelRegion: 5370, 15, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+sidebar-button-allies-disabled:
+	Image: chrome.png
+	PanelRegion: 5370, 15, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+
+scrollup-buttons-allies:
+	Image: chrome.png
+	PanelRegion: 117, 395, 0, 0, 77, 27, 0, 0
+	PanelSides: Center
+scrollup-buttons-allies-hover:
+	Image: chrome.png
+	PanelRegion: 117, 422, 0, 0, 77, 27, 0, 0
+	PanelSides: Center
+scrollup-buttons-allies-pressed:
+	Image: chrome.png
+	PanelRegion: 117, 449, 0, 0, 77, 27, 0, 0
+	PanelSides: Center
+scrollup-buttons-allies-highlighted:
+	Image: chrome.png
+	PanelRegion: 117, 422, 0, 0, 77, 27, 0, 0
+	PanelSides: Center
+scrollup-buttons-allies-highlighted-hover:
+	Image: chrome.png
+	PanelRegion: 117, 422, 0, 0, 77, 27, 0, 0
+	PanelSides: Center
+scrollup-buttons-allies-highlighted-pressed:
+	Image: chrome.png
+	PanelRegion: 117, 422, 0, 0, 77, 27, 0, 0
+	PanelSides: Center
+scrollup-button-allies-highlighted-disabled:
+	Image: chrome.png
+	PanelRegion: 117, 476, 0, 0, 77, 27, 0, 0
+	PanelSides: Center
+scrollup-buttons-allies-disabled:
+	Image: chrome.png
+	PanelRegion: 117, 476, 0, 0, 77, 27, 0, 0
+	PanelSides: Center
+
+scrolldown-buttons-allies:
+	Image: chrome.png
+	PanelRegion: 40, 395, 0, 0, 77, 27, 0, 0
+	PanelSides: Center
+scrolldown-buttons-allies-hover:
+	Image: chrome.png
+	PanelRegion: 40, 422, 0, 0, 77, 27, 0, 0
+	PanelSides: Center
+scrolldown-buttons-allies-pressed:
+	Image: chrome.png
+	PanelRegion: 40, 449, 0, 0, 77, 27, 0, 0
+	PanelSides: Center
+scrolldown-buttons-allies-highlighted:
+	Image: chrome.png
+	PanelRegion: 40, 422, 0, 0, 77, 27, 0, 0
+	PanelSides: Center
+scrolldown-buttons-allies-highlighted-hover:
+	Image: chrome.png
+	PanelRegion: 40, 422, 0, 0, 77, 27, 0, 0
+	PanelSides: Center
+scrolldown-buttons-allies-highlighted-pressed:
+	Image: chrome.png
+	PanelRegion: 40, 422, 0, 0, 77, 27, 0, 0
+	PanelSides: Center
+scrolldown-button-allies-highlighted-disabled:
+	Image: chrome.png
+	PanelRegion: 40, 476, 0, 0, 77, 27, 0, 0
+	PanelSides: Center
+scrolldown-buttons-allies-disabled:
+	Image: chrome.png
+	PanelRegion: 40, 476, 0, 0, 77, 27, 0, 0
+	PanelSides: Center
+
+radar-allies:
+	Image: chrome.png
+	Regions:
+		insignia: 340, 335, 202, 157
+
+repair-button-allies:
+	Image: chrome.png
+	PanelRegion: 580, 15, 0, 0, 44, 34, 0, 0
+	PanelSides: Center
+repair-button-allies-hover:
+	Image: chrome.png
+	PanelRegion: 580, 49, 0, 0, 44, 34, 0, 0
+	PanelSides: Center
+repair-button-allies-pressed:
+	Image: chrome.png
+	PanelRegion: 580, 83, 0, 0, 44, 34, 0, 0
+	PanelSides: Center
+repair-button-allies-highlighted:
+	Image: chrome.png
+	PanelRegion: 580, 117, 0, 0, 44, 34, 0, 0
+	PanelSides: Center
+repair-button-allies-highlighted-hover:
+	Image: chrome.png
+	PanelRegion: 580, 151, 0, 0, 44, 34, 0, 0
+	PanelSides: Center
+repair-button-allies-highlighted-pressed:
+	Image: chrome.png
+	PanelRegion: 580, 185, 0, 0, 44, 34, 0, 0
+	PanelSides: Center
+repair-button-allies-disabled:
+	Image: chrome.png
+	PanelRegion: 580, 219, 0, 0, 44, 34, 0, 0
+	PanelSides: Center
+repair-button-allies-highlighted-disabled:
+	Image: chrome.png
+	PanelRegion: 580, 219, 0, 0, 44, 34, 0, 0
+	PanelSides: Center
+
+power-button-allies:
+	Image: chrome.png
+	PanelRegion: 624, 15, 0, 0, 41, 34, 0, 0
+	PanelSides: Center
+power-button-allies-hover:
+	Image: chrome.png
+	PanelRegion: 624, 49, 0, 0, 41, 34, 0, 0
+	PanelSides: Center
+power-button-allies-pressed:
+	Image: chrome.png
+	PanelRegion: 624, 83, 0, 0, 41, 34, 0, 0
+	PanelSides: Center
+power-button-allies-highlighted:
+	Image: chrome.png
+	PanelRegion: 624, 117, 0, 0, 41, 34, 0, 0
+	PanelSides: Center
+power-button-allies-highlighted-hover:
+	Image: chrome.png
+	PanelRegion: 624, 151, 0, 0, 41, 34, 0, 0
+	PanelSides: Center
+power-button-allies-highlighted-pressed:
+	Image: chrome.png
+	PanelRegion: 624, 185, 0, 0, 41, 34, 0, 0
+	PanelSides: Center
+power-button-allies-disabled:
+	Image: chrome.png
+	PanelRegion: 624, 219, 0, 0, 41, 34, 0, 0
+	PanelSides: Center
+power-button-allies-highlighted-disabled:
+	Image: chrome.png
+	PanelRegion: 624, 219, 0, 0, 41, 34, 0, 0
+	PanelSides: Center
+
+beacon-button-allies:
+	Image: chrome.png
+	PanelRegion: 665, 15, 0, 0, 41, 34, 0, 0
+	PanelSides: Center
+beacon-button-allies-hover:
+	Image: chrome.png
+	PanelRegion: 665, 49, 0, 0, 41, 34, 0, 0
+	PanelSides: Center
+beacon-button-allies-pressed:
+	Image: chrome.png
+	PanelRegion: 665, 83, 0, 0, 41, 34, 0, 0
+	PanelSides: Center
+beacon-button-allies-highlighted:
+	Image: chrome.png
+	PanelRegion: 665, 117, 0, 0, 41, 34, 0, 0
+	PanelSides: Center
+beacon-button-allies-highlighted-hover:
+	Image: chrome.png
+	PanelRegion: 665, 151, 0, 0, 41, 34, 0, 0
+	PanelSides: Center
+beacon-button-allies-highlighted-pressed:
+	Image: chrome.png
+	PanelRegion: 665, 185, 0, 0, 41, 34, 0, 0
+	PanelSides: Center
+beacon-button-allies-disabled:
+	Image: chrome.png
+	PanelRegion: 665, 219, 0, 0, 41, 34, 0, 0
+	PanelSides: Center
+beacon-button-allies-highlighted-disabled:
+	Image: chrome.png
+	PanelRegion: 665, 219, 0, 0, 41, 34, 0, 0
+	PanelSides: Center
+
+sell-button-allies:
+	Image: chrome.png
+	PanelRegion: 706, 15, 0, 0, 43, 34, 0, 0
+	PanelSides: Center
+sell-button-allies-hover:
+	Image: chrome.png
+	PanelRegion: 706, 49, 0, 0, 43, 34, 0, 0
+	PanelSides: Center
+sell-button-allies-pressed:
+	Image: chrome.png
+	PanelRegion: 706, 83, 0, 0, 43, 34, 0, 0
+	PanelSides: Center
+sell-button-allies-highlighted:
+	Image: chrome.png
+	PanelRegion: 706, 117, 0, 0, 43, 34, 0, 0
+	PanelSides: Center
+sell-button-allies-highlighted-hover:
+	Image: chrome.png
+	PanelRegion: 706, 151, 0, 0, 43, 34, 0, 0
+	PanelSides: Center
+sell-button-allies-highlighted-pressed:
+	Image: chrome.png
+	PanelRegion: 706, 185, 0, 0, 43, 34, 0, 0
+	PanelSides: Center
+sell-button-allies-disabled:
+	Image: chrome.png
+	PanelRegion: 706, 219, 0, 0, 43, 34, 0, 0
+	PanelSides: Center
+sell-button-allies-highlighted-disabled:
+	Image: chrome.png
+	PanelRegion: 706, 219, 0, 0, 43, 34, 0, 0
+	PanelSides: Center
+
+buildings-button-allies:
+	Image: chrome.png
+	PanelRegion: 340, 15, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+buildings-button-allies-hover:
+	Image: chrome.png
+	PanelRegion: 340, 47, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+buildings-button-allies-pressed:
+	Image: chrome.png
+	PanelRegion: 340, 79, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+buildings-button-allies-highlighted:
+	Image: chrome.png
+	PanelRegion: 340, 111, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+buildings-button-allies-highlighted-hover:
+	Image: chrome.png
+	PanelRegion: 340, 143, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+buildings-button-allies-highlighted-pressed:
+	Image: chrome.png
+	PanelRegion: 340, 175, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+buildings-button-allies-disabled:
+	Image: chrome.png
+	PanelRegion: 340, 207, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+buildings-button-allies-highlighted-disabled:
+	Image: chrome.png
+	PanelRegion: 340, 207, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+
+support-button-allies:
+	Image: chrome.png
+	PanelRegion: 370, 15, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+support-button-allies-hover:
+	Image: chrome.png
+	PanelRegion: 370, 47, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+support-button-allies-pressed:
+	Image: chrome.png
+	PanelRegion: 370, 79, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+support-button-allies-highlighted:
+	Image: chrome.png
+	PanelRegion: 370, 111, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+support-button-allies-highlighted-hover:
+	Image: chrome.png
+	PanelRegion: 370, 143, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+support-button-allies-highlighted-pressed:
+	Image: chrome.png
+	PanelRegion: 370, 175, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+support-button-allies-disabled:
+	Image: chrome.png
+	PanelRegion: 370, 207, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+support-button-allies-highlighted-disabled:
+	Image: chrome.png
+	PanelRegion: 370, 207, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+
+infantry-button-allies:
+	Image: chrome.png
+	PanelRegion: 400, 15, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+infantry-button-allies-hover:
+	Image: chrome.png
+	PanelRegion: 400, 47, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+infantry-button-allies-pressed:
+	Image: chrome.png
+	PanelRegion: 400, 79, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+infantry-button-allies-highlighted:
+	Image: chrome.png
+	PanelRegion: 400, 111, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+infantry-button-allies-highlighted-hover:
+	Image: chrome.png
+	PanelRegion: 400, 143, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+infantry-button-allies-highlighted-pressed:
+	Image: chrome.png
+	PanelRegion: 400, 175, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+infantry-button-allies-disabled:
+	Image: chrome.png
+	PanelRegion: 400, 207, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+infantry-button-allies-highlighted-disabled:
+	Image: chrome.png
+	PanelRegion: 400, 207, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+
+vehicles-button-allies:
+	Image: chrome.png
+	PanelRegion: 430, 15, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+vehicles-button-allies-hover:
+	Image: chrome.png
+	PanelRegion: 430, 47, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+vehicles-button-allies-pressed:
+	Image: chrome.png
+	PanelRegion: 430, 79, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+vehicles-button-allies-highlighted:
+	Image: chrome.png
+	PanelRegion: 430, 111, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+vehicles-button-allies-highlighted-hover:
+	Image: chrome.png
+	PanelRegion: 430, 143, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+vehicles-button-allies-highlighted-pressed:
+	Image: chrome.png
+	PanelRegion: 430, 175, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+vehicles-button-allies-highlighted-disabled:
+	Image: chrome.png
+	PanelRegion: 430, 207, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+vehicles-button-allies-disabled:
+	Image: chrome.png
+	PanelRegion: 430, 207, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+
+aircrafts-button-allies:
+	Image: chrome.png
+	PanelRegion: 460, 15, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+aircrafts-button-allies-hover:
+	Image: chrome.png
+	PanelRegion: 460, 47, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+aircrafts-button-allies-pressed:
+	Image: chrome.png
+	PanelRegion: 460, 79, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+aircrafts-button-allies-highlighted:
+	Image: chrome.png
+	PanelRegion: 460, 111, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+aircrafts-button-allies-highlighted-hover:
+	Image: chrome.png
+	PanelRegion: 460, 143, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+aircrafts-button-allies-highlighted-pressed:
+	Image: chrome.png
+	PanelRegion: 460, 175, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+aircrafts-button-allies-highlighted-disabled:
+	Image: chrome.png
+	PanelRegion: 460, 207, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+aircrafts-button-allies-disabled:
+	Image: chrome.png
+	PanelRegion: 460, 207, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+
+ships-button-allies:
+	Image: chrome.png
+	PanelRegion: 490, 15, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+ships-button-allies-hover:
+	Image: chrome.png
+	PanelRegion: 490, 47, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+ships-button-allies-pressed:
+	Image: chrome.png
+	PanelRegion: 490, 79, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+ships-button-allies-highlighted:
+	Image: chrome.png
+	PanelRegion: 490, 111, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+ships-button-allies-highlighted-hover:
+	Image: chrome.png
+	PanelRegion: 490, 143, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+ships-button-allies-highlighted-pressed:
+	Image: chrome.png
+	PanelRegion: 490, 175, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+ships-button-allies-highlighted-disabled:
+	Image: chrome.png
+	PanelRegion: 490, 207, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+ships-button-allies-disabled:
+	Image: chrome.png
+	PanelRegion: 490, 207, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+
+power-icons-allies:
+	Image: chrome.png
+	Regions:
+		power-normal: 326, 300, 19, 19
+		power-critical: 307, 300, 19, 19
+
+cash-icons-allies:
+	Image: chrome.png
+	Regions:
+		cash-normal: 326, 281, 19, 19
+		cash-critical: 307, 281, 19, 19
+
+diplomacy-button-allies:
+	Image: chrome.png
+	PanelRegion: 550, 335, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+diplomacy-button-allies-hover:
+	Image: chrome.png
+	PanelRegion: 550, 358, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+diplomacy-button-allies-pressed:
+	Image: chrome.png
+	PanelRegion: 550, 381, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+diplomacy-button-allies-highlighted:
+	Image: chrome.png
+	PanelRegion: 550, 404, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+diplomacy-button-allies-highlighted-hover:
+	Image: chrome.png
+	PanelRegion: 550, 427, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+diplomacy-button-allies-highlighted-pressed:
+	Image: chrome.png
+	PanelRegion: 550, 450, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+diplomacy-button-allies-highlighted-disabled:
+	Image: chrome.png
+	PanelRegion: 550, 473, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+diplomacy-button-allies-disabled:
+	Image: chrome.png
+	PanelRegion: 550, 473, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+
+debug-button-allies:
+	Image: chrome.png
+	PanelRegion: 619, 335, 0, 0, 62, 23, 0, 0
+	PanelSides: Center
+debug-button-allies-hover:
+	Image: chrome.png
+	PanelRegion: 619, 358, 0, 0, 62, 23, 0, 0
+	PanelSides: Center
+debug-button-allies-pressed:
+	Image: chrome.png
+	PanelRegion: 619, 381, 0, 0, 62, 23, 0, 0
+	PanelSides: Center
+debug-button-allies-highlighted:
+	Image: chrome.png
+	PanelRegion: 619, 404, 0, 0, 62, 23, 0, 0
+	PanelSides: Center
+debug-button-allies-highlighted-hover:
+	Image: chrome.png
+	PanelRegion: 619, 427, 0, 0, 62, 23, 0, 0
+	PanelSides: Center
+debug-button-allies-highlighted-pressed:
+	Image: chrome.png
+	PanelRegion: 619, 450, 0, 0, 62, 23, 0, 0
+	PanelSides: Center
+debug-button-allies-highlighted-disabled:
+	Image: chrome.png
+	PanelRegion: 619, 473, 0, 0, 62, 23, 0, 0
+	PanelSides: Center
+debug-button-allies-disabled:
+	Image: chrome.png
+	PanelRegion: 619, 473, 0, 0, 62, 23, 0, 0
+	PanelSides: Center
+
+options-button-allies:
+	Image: chrome.png
+	PanelRegion: 681, 335, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+options-button-allies-hover:
+	Image: chrome.png
+	PanelRegion: 681, 358, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+options-button-allies-pressed:
+	Image: chrome.png
+	PanelRegion: 681, 381, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+options-button-allies-highlighted:
+	Image: chrome.png
+	PanelRegion: 681, 404, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+options-button-allies-highlighted-hover:
+	Image: chrome.png
+	PanelRegion: 681, 427, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+options-button-allies-highlighted-pressed:
+	Image: chrome.png
+	PanelRegion: 681, 450, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+options-button-allies-highlighted-disabled:
+	Image: chrome.png
+	PanelRegion: 681, 473, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+options-button-allies-disabled:
+	Image: chrome.png
+	PanelRegion: 681, 473, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+
+# Alias of diplomacy-button (left top slot); used historically as "stats".
+stats-button-allies:
+	Image: chrome.png
+	PanelRegion: 550, 335, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+stats-button-allies-hover:
+	Image: chrome.png
+	PanelRegion: 550, 358, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+stats-button-allies-pressed:
+	Image: chrome.png
+	PanelRegion: 550, 381, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+stats-button-allies-highlighted:
+	Image: chrome.png
+	PanelRegion: 550, 404, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+stats-button-allies-highlighted-hover:
+	Image: chrome.png
+	PanelRegion: 550, 427, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+stats-button-allies-highlighted-pressed:
+	Image: chrome.png
+	PanelRegion: 550, 450, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+stats-button-allies-highlighted-disabled:
+	Image: chrome.png
+	PanelRegion: 550, 473, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+stats-button-allies-disabled:
+	Image: chrome.png
+	PanelRegion: 550, 473, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+
+# Category tabs always show the normal/alert glyphs (ClassicProductionLogic no longer uses *-disabled).
+# The *-disabled regions remain for compatibility / other UI that still references them.
+production-icons-allies:
+	Image: chrome.png
+	Regions:
+		building: 5250, 110, 19, 19
+		building-disabled: 5269, 110, 19, 19
+		building-alert: 5288, 110, 19, 19
+		support: 5250, 129, 19, 19
+		support-disabled: 5269, 129, 19, 19
+		support-alert: 5288, 129, 19, 19
+		infantry: 5250, 148, 19, 19
+		infantry-disabled: 5269, 148, 19, 19
+		infantry-alert: 5288, 148, 19, 19
+		vehicle: 5250, 167, 19, 19
+		vehicle-disabled: 5269, 167, 19, 19
+		vehicle-alert: 5288, 167, 19, 19
+		aircraft: 5250, 186, 19, 19
+		aircraft-disabled: 5269, 186, 19, 19
+		aircraft-alert: 5288, 186, 19, 19
+		ship: 5250, 205, 19, 19
+		ship-disabled: 5269, 205, 19, 19
+		ship-alert: 5288, 205, 19, 19
+
+command-icons-allies:
+	Image: chrome.png
+	Regions:
+		attack-move: 783, 335, 33, 26
+		attack-move-disabled: 783, 361, 33, 26
+		attack-move-active: 783, 387, 33, 26
+		attack-move-hover: 783, 413, 33, 26
+		attack-move-active-hover: 783, 439, 33, 26
+		force-move: 816, 335, 26, 26
+		force-move-disabled: 816, 361, 26, 26
+		force-move-active: 816, 387, 26, 26
+		force-move-hover: 816, 413, 26, 26
+		force-move-active-hover: 816, 439, 26, 26
+		force-attack: 842, 335, 26, 26
+		force-attack-disabled: 842, 361, 26, 26
+		force-attack-active: 842, 387, 26, 26
+		force-attack-hover: 842, 413, 26, 26
+		force-attack-active-hover: 842, 439, 26, 26
+		guard: 868, 335, 29, 26
+		guard-disabled: 868, 361, 29, 26
+		guard-active: 868, 387, 29, 26
+		guard-hover: 868, 413, 29, 26
+		guard-active-hover: 868, 439, 29, 26
+		deploy: 897, 335, 27, 26
+		deploy-disabled: 897, 361, 27, 26
+		deploy-active: 897, 387, 27, 26
+		deploy-hover: 897, 413, 27, 26
+		deploy-active-hover: 897, 439, 27, 26
+		scatter: 924, 335, 29, 26
+		scatter-disabled: 924, 361, 29, 26
+		scatter-active: 924, 387, 29, 26
+		scatter-hover: 924, 413, 29, 26
+		scatter-active-hover: 924, 439, 29, 26
+		stop: 953, 335, 22, 26
+		stop-disabled: 953, 361, 22, 26
+		stop-active: 953, 387, 22, 26
+		stop-hover: 953, 413, 22, 26
+		stop-active-hover: 953, 439, 22, 26
+		queue-orders: 975, 335, 35, 26
+		queue-orders-disabled: 975, 361, 35, 26
+		queue-orders-active: 975, 387, 35, 26
+		queue-orders-hover: 975, 413, 35, 26
+		queue-orders-active-hover: 975, 439, 35, 26
+
+commandbar-panel:
+	Image: commandbar-bar-v2.png
+	PanelRegion: 0, 0, 12, 12, 104, 40, 12, 12
+
+commandbar-panel-compact:
+	Image: commandbar-bar-v2.png
+	PanelRegion: 128, 0, 12, 12, 104, 40, 12, 12
+
+commandbar-button-allies:
+	Image: commandbar-chrome.png
+	PanelRegion: 0, 0, 0, 0, 48, 52, 0, 0
+	PanelSides: Center
+commandbar-button-allies-hover:
+	Image: commandbar-chrome.png
+	PanelRegion: 48, 0, 0, 0, 48, 52, 0, 0
+	PanelSides: Center
+commandbar-button-allies-pressed:
+	Image: commandbar-chrome.png
+	PanelRegion: 96, 0, 0, 0, 48, 52, 0, 0
+	PanelSides: Center
+commandbar-button-allies-highlighted:
+	Image: commandbar-chrome.png
+	PanelRegion: 144, 0, 0, 0, 48, 52, 0, 0
+	PanelSides: Center
+commandbar-button-allies-highlighted-hover:
+	Image: commandbar-chrome.png
+	PanelRegion: 192, 0, 0, 0, 48, 52, 0, 0
+	PanelSides: Center
+commandbar-button-allies-highlighted-pressed:
+	Image: commandbar-chrome.png
+	PanelRegion: 240, 0, 0, 0, 48, 52, 0, 0
+	PanelSides: Center
+commandbar-button-allies-disabled:
+	Image: commandbar-chrome.png
+	PanelRegion: 288, 0, 0, 0, 48, 52, 0, 0
+	PanelSides: Center
+commandbar-button-allies-highlighted-disabled:
+	Image: commandbar-chrome.png
+	PanelRegion: 336, 0, 0, 0, 48, 52, 0, 0
+	PanelSides: Center
+commandbar-button-soviets:
+	Image: commandbar-chrome.png
+	PanelRegion: 0, 52, 0, 0, 48, 52, 0, 0
+	PanelSides: Center
+commandbar-button-soviets-hover:
+	Image: commandbar-chrome.png
+	PanelRegion: 48, 52, 0, 0, 48, 52, 0, 0
+	PanelSides: Center
+commandbar-button-soviets-pressed:
+	Image: commandbar-chrome.png
+	PanelRegion: 96, 52, 0, 0, 48, 52, 0, 0
+	PanelSides: Center
+commandbar-button-soviets-highlighted:
+	Image: commandbar-chrome.png
+	PanelRegion: 144, 52, 0, 0, 48, 52, 0, 0
+	PanelSides: Center
+commandbar-button-soviets-highlighted-hover:
+	Image: commandbar-chrome.png
+	PanelRegion: 192, 52, 0, 0, 48, 52, 0, 0
+	PanelSides: Center
+commandbar-button-soviets-highlighted-pressed:
+	Image: commandbar-chrome.png
+	PanelRegion: 240, 52, 0, 0, 48, 52, 0, 0
+	PanelSides: Center
+commandbar-button-soviets-disabled:
+	Image: commandbar-chrome.png
+	PanelRegion: 288, 52, 0, 0, 48, 52, 0, 0
+	PanelSides: Center
+commandbar-button-soviets-highlighted-disabled:
+	Image: commandbar-chrome.png
+	PanelRegion: 336, 52, 0, 0, 48, 52, 0, 0
+	PanelSides: Center
+
+ios-joystick-command-icons:
+	Image: ios-joystick-command-icons.png
+	Regions:
+		ios-stop: 0, 0, 56, 56
+		ios-stop-disabled: 0, 64, 56, 56
+		ios-stop-hover: 0, 128, 56, 56
+		ios-stop-pressed: 0, 192, 56, 56
+		ios-stop-active: 0, 256, 56, 56
+		ios-stop-active-hover: 0, 320, 56, 56
+		ios-deploy: 56, 0, 56, 56
+		ios-deploy-disabled: 56, 64, 56, 56
+		ios-deploy-hover: 56, 128, 56, 56
+		ios-deploy-pressed: 56, 192, 56, 56
+		ios-deploy-active: 56, 256, 56, 56
+		ios-deploy-active-hover: 56, 320, 56, 56
+		ios-select-type: 112, 0, 56, 56
+		ios-select-type-disabled: 112, 64, 56, 56
+		ios-select-type-hover: 112, 128, 56, 56
+		ios-select-type-pressed: 112, 192, 56, 56
+		ios-force-attack: 168, 0, 56, 56
+		ios-force-attack-disabled: 168, 64, 56, 56
+		ios-force-attack-hover: 168, 128, 56, 56
+		ios-force-attack-pressed: 168, 192, 56, 56
+		ios-force-attack-active: 168, 256, 56, 56
+		ios-force-attack-active-hover: 168, 320, 56, 56
+		ios-return-base: 224, 0, 56, 56
+		ios-return-base-disabled: 224, 64, 56, 56
+		ios-return-base-hover: 224, 128, 56, 56
+		ios-return-base-pressed: 224, 192, 56, 56
+
+ios-joystick-command-icons-highlighted:
+	Inherits: ios-joystick-command-icons
+	Regions:
+		ios-stop: 0, 256, 56, 56
+		ios-stop-hover: 0, 320, 56, 56
+		ios-stop-pressed: 0, 384, 56, 56
+		ios-deploy: 56, 256, 56, 56
+		ios-deploy-hover: 56, 320, 56, 56
+		ios-deploy-pressed: 56, 384, 56, 56
+		ios-select-type: 112, 256, 56, 56
+		ios-select-type-hover: 112, 320, 56, 56
+		ios-select-type-pressed: 112, 384, 56, 56
+		ios-force-attack: 168, 256, 56, 56
+		ios-force-attack-hover: 168, 320, 56, 56
+		ios-force-attack-pressed: 168, 384, 56, 56
+		ios-return-base: 224, 256, 56, 56
+		ios-return-base-hover: 224, 320, 56, 56
+		ios-return-base-pressed: 224, 384, 56, 56
+
+production-x5-icon:
+	Image: production-x5-icon.png
+	Regions:
+		production-x5: 3, 3, 26, 26
+
+commandbar-toggle-icons:
+	Image: commandbar-toggle-icons.png
+	Regions:
+		collapse: 3, 3, 26, 26
+		expand: 35, 3, 26, 26
+
+ios-commandbar-icons-v2:
+	Image: ios-commandbar-icons-v2.png
+	Regions:
+		group-1: 3, 3, 26, 26
+		group-1-disabled: 3, 35, 26, 26
+		group-1-hover: 3, 67, 26, 26
+		group-1-active: 3, 99, 26, 26
+		group-1-active-hover: 3, 99, 26, 26
+		group-2: 35, 3, 26, 26
+		group-2-disabled: 35, 35, 26, 26
+		group-2-hover: 35, 67, 26, 26
+		group-2-active: 35, 99, 26, 26
+		group-2-active-hover: 35, 99, 26, 26
+		group-3: 67, 3, 26, 26
+		group-3-disabled: 67, 35, 26, 26
+		group-3-hover: 67, 67, 26, 26
+		group-3-active: 67, 99, 26, 26
+		group-3-active-hover: 67, 99, 26, 26
+		group-4: 99, 3, 26, 26
+		group-4-disabled: 99, 35, 26, 26
+		group-4-hover: 99, 67, 26, 26
+		group-4-active: 99, 99, 26, 26
+		group-4-active-hover: 99, 99, 26, 26
+		group-5: 131, 3, 26, 26
+		group-5-disabled: 131, 35, 26, 26
+		group-5-hover: 131, 67, 26, 26
+		group-5-active: 131, 99, 26, 26
+		group-5-active-hover: 131, 99, 26, 26
+		attack-move: 163, 3, 26, 26
+		attack-move-disabled: 163, 35, 26, 26
+		attack-move-hover: 163, 67, 26, 26
+		attack-move-active: 163, 99, 26, 26
+		attack-move-active-hover: 163, 99, 26, 26
+		scatter: 195, 3, 26, 26
+		scatter-disabled: 195, 35, 26, 26
+		scatter-hover: 195, 67, 26, 26
+		scatter-active: 195, 99, 26, 26
+		scatter-active-hover: 195, 99, 26, 26
+		queue-orders: 227, 3, 26, 26
+		queue-orders-disabled: 227, 35, 26, 26
+		queue-orders-hover: 227, 67, 26, 26
+		queue-orders-active: 227, 99, 26, 26
+		queue-orders-active-hover: 227, 99, 26, 26
+
+ios-commandbar-icons-v2-highlighted:
+	Inherits: ios-commandbar-icons-v2
+	Regions:
+		group-1: 3, 99, 26, 26
+		group-2: 35, 99, 26, 26
+		group-3: 67, 99, 26, 26
+		group-4: 99, 99, 26, 26
+		group-5: 131, 99, 26, 26
+		attack-move: 163, 99, 26, 26
+		scatter: 195, 99, 26, 26
+		queue-orders: 227, 99, 26, 26
+
+commandbar-icons:
+	Image: commandbar-icons-remastered.png
+	Regions:
+		group-1: 0, 0, 26, 26
+		group-1-disabled: 0, 26, 26, 26
+		group-1-hover: 0, 52, 26, 26
+		group-1-active: 0, 78, 26, 26
+		group-1-active-hover: 0, 78, 26, 26
+		group-2: 26, 0, 26, 26
+		group-2-disabled: 26, 26, 26, 26
+		group-2-hover: 26, 52, 26, 26
+		group-2-active: 26, 78, 26, 26
+		group-2-active-hover: 26, 78, 26, 26
+		group-3: 52, 0, 26, 26
+		group-3-disabled: 52, 26, 26, 26
+		group-3-hover: 52, 52, 26, 26
+		group-3-active: 52, 78, 26, 26
+		group-3-active-hover: 52, 78, 26, 26
+		group-4: 78, 0, 26, 26
+		group-4-disabled: 78, 26, 26, 26
+		group-4-hover: 78, 52, 26, 26
+		group-4-active: 78, 78, 26, 26
+		group-4-active-hover: 78, 78, 26, 26
+		group-5: 104, 0, 26, 26
+		group-5-disabled: 104, 26, 26, 26
+		group-5-hover: 104, 52, 26, 26
+		group-5-active: 104, 78, 26, 26
+		group-5-active-hover: 104, 78, 26, 26
+		group-6: 130, 0, 26, 26
+		group-6-disabled: 130, 26, 26, 26
+		group-6-hover: 130, 52, 26, 26
+		group-6-active: 130, 78, 26, 26
+		group-6-active-hover: 130, 78, 26, 26
+		group-7: 156, 0, 26, 26
+		group-7-disabled: 156, 26, 26, 26
+		group-7-hover: 156, 52, 26, 26
+		group-7-active: 156, 78, 26, 26
+		group-7-active-hover: 156, 78, 26, 26
+		group-8: 182, 0, 26, 26
+		group-8-disabled: 182, 26, 26, 26
+		group-8-hover: 182, 52, 26, 26
+		group-8-active: 182, 78, 26, 26
+		group-8-active-hover: 182, 78, 26, 26
+		group-9: 208, 0, 26, 26
+		group-9-disabled: 208, 26, 26, 26
+		group-9-hover: 208, 52, 26, 26
+		group-9-active: 208, 78, 26, 26
+		group-9-active-hover: 208, 78, 26, 26
+		group-0: 234, 0, 26, 26
+		group-0-disabled: 234, 26, 26, 26
+		group-0-hover: 234, 52, 26, 26
+		group-0-active: 234, 78, 26, 26
+		group-0-active-hover: 234, 78, 26, 26
+		control-group: 260, 0, 26, 26
+		control-group-disabled: 260, 26, 26, 26
+		control-group-hover: 260, 52, 26, 26
+		control-group-active: 260, 78, 26, 26
+		control-group-active-hover: 260, 78, 26, 26
+		select-all: 286, 0, 26, 26
+		select-all-disabled: 286, 26, 26, 26
+		select-all-hover: 286, 52, 26, 26
+		select-all-active: 286, 78, 26, 26
+		select-all-active-hover: 286, 78, 26, 26
+		select-by-type: 312, 0, 26, 26
+		select-by-type-disabled: 312, 26, 26, 26
+		select-by-type-hover: 312, 52, 26, 26
+		select-by-type-active: 312, 78, 26, 26
+		select-by-type-active-hover: 312, 78, 26, 26
+		cycle-base: 338, 0, 26, 26
+		cycle-base-disabled: 338, 26, 26, 26
+		cycle-base-hover: 338, 52, 26, 26
+		cycle-base-active: 338, 78, 26, 26
+		cycle-base-active-hover: 338, 78, 26, 26
+		to-selection: 364, 0, 26, 26
+		to-selection-disabled: 364, 26, 26, 26
+		to-selection-hover: 364, 52, 26, 26
+		to-selection-active: 364, 78, 26, 26
+		to-selection-active-hover: 364, 78, 26, 26
+		to-last-event: 390, 0, 26, 26
+		to-last-event-disabled: 390, 26, 26, 26
+		to-last-event-hover: 390, 52, 26, 26
+		to-last-event-active: 390, 78, 26, 26
+		to-last-event-active-hover: 390, 78, 26, 26
+		cycle-harvesters: 416, 0, 26, 26
+		cycle-harvesters-disabled: 416, 26, 26, 26
+		cycle-harvesters-hover: 416, 52, 26, 26
+		cycle-harvesters-active: 416, 78, 26, 26
+		cycle-harvesters-active-hover: 416, 78, 26, 26
+		remove-from-group: 442, 0, 26, 26
+		remove-from-group-disabled: 442, 26, 26, 26
+		remove-from-group-hover: 442, 52, 26, 26
+		remove-from-group-active: 442, 78, 26, 26
+		remove-from-group-active-hover: 442, 78, 26, 26
+		sell: 468, 0, 26, 26
+		sell-disabled: 468, 26, 26, 26
+		sell-hover: 468, 52, 26, 26
+		sell-active: 468, 78, 26, 26
+		sell-active-hover: 468, 78, 26, 26
+		repair: 494, 0, 26, 26
+		repair-disabled: 494, 26, 26, 26
+		repair-hover: 494, 52, 26, 26
+		repair-active: 494, 78, 26, 26
+		repair-active-hover: 494, 78, 26, 26
+		beacon: 520, 0, 26, 26
+		beacon-disabled: 520, 26, 26, 26
+		beacon-hover: 520, 52, 26, 26
+		beacon-active: 520, 78, 26, 26
+		beacon-active-hover: 520, 78, 26, 26
+		attack-move: 546, 0, 26, 26
+		attack-move-disabled: 546, 26, 26, 26
+		attack-move-hover: 546, 52, 26, 26
+		attack-move-active: 546, 78, 26, 26
+		attack-move-active-hover: 546, 78, 26, 26
+		force-move: 572, 0, 26, 26
+		force-move-disabled: 572, 26, 26, 26
+		force-move-hover: 572, 52, 26, 26
+		force-move-active: 572, 78, 26, 26
+		force-move-active-hover: 572, 78, 26, 26
+		force-attack: 598, 0, 26, 26
+		force-attack-disabled: 598, 26, 26, 26
+		force-attack-hover: 598, 52, 26, 26
+		force-attack-active: 598, 78, 26, 26
+		force-attack-active-hover: 598, 78, 26, 26
+		guard: 624, 0, 26, 26
+		guard-disabled: 624, 26, 26, 26
+		guard-hover: 624, 52, 26, 26
+		guard-active: 624, 78, 26, 26
+		guard-active-hover: 624, 78, 26, 26
+		deploy: 650, 0, 26, 26
+		deploy-disabled: 650, 26, 26, 26
+		deploy-hover: 650, 52, 26, 26
+		deploy-active: 650, 78, 26, 26
+		deploy-active-hover: 650, 78, 26, 26
+		scatter: 676, 0, 26, 26
+		scatter-disabled: 676, 26, 26, 26
+		scatter-hover: 676, 52, 26, 26
+		scatter-active: 676, 78, 26, 26
+		scatter-active-hover: 676, 78, 26, 26
+		stop: 702, 0, 26, 26
+		stop-disabled: 702, 26, 26, 26
+		stop-hover: 702, 52, 26, 26
+		stop-active: 702, 78, 26, 26
+		stop-active-hover: 702, 78, 26, 26
+		queue-orders: 728, 0, 26, 26
+		queue-orders-disabled: 728, 26, 26, 26
+		queue-orders-hover: 728, 52, 26, 26
+		queue-orders-active: 728, 78, 26, 26
+		queue-orders-active-hover: 728, 78, 26, 26
+		attack-anything: 754, 0, 26, 26
+		attack-anything-disabled: 754, 26, 26, 26
+		attack-anything-hover: 754, 52, 26, 26
+		attack-anything-active: 754, 78, 26, 26
+		attack-anything-active-hover: 754, 78, 26, 26
+		defend: 780, 0, 26, 26
+		defend-disabled: 780, 26, 26, 26
+		defend-hover: 780, 52, 26, 26
+		defend-active: 780, 78, 26, 26
+		defend-active-hover: 780, 78, 26, 26
+		return-fire: 806, 0, 26, 26
+		return-fire-disabled: 806, 26, 26, 26
+		return-fire-hover: 806, 52, 26, 26
+		return-fire-active: 806, 78, 26, 26
+		return-fire-active-hover: 806, 78, 26, 26
+		hold-fire: 832, 0, 26, 26
+		hold-fire-disabled: 832, 26, 26, 26
+		hold-fire-hover: 832, 52, 26, 26
+		hold-fire-active: 832, 78, 26, 26
+		hold-fire-active-hover: 832, 78, 26, 26
+
+
+commandbar-icons-highlighted:
+	Inherits: commandbar-icons
+	Regions:
+		group-1: 0, 78, 26, 26
+		group-1-hover: 0, 78, 26, 26
+		group-1-active: 0, 78, 26, 26
+		group-1-active-hover: 0, 78, 26, 26
+		group-2: 26, 78, 26, 26
+		group-2-hover: 26, 78, 26, 26
+		group-2-active: 26, 78, 26, 26
+		group-2-active-hover: 26, 78, 26, 26
+		group-3: 52, 78, 26, 26
+		group-3-hover: 52, 78, 26, 26
+		group-3-active: 52, 78, 26, 26
+		group-3-active-hover: 52, 78, 26, 26
+		group-4: 78, 78, 26, 26
+		group-4-hover: 78, 78, 26, 26
+		group-4-active: 78, 78, 26, 26
+		group-4-active-hover: 78, 78, 26, 26
+		group-5: 104, 78, 26, 26
+		group-5-hover: 104, 78, 26, 26
+		group-5-active: 104, 78, 26, 26
+		group-5-active-hover: 104, 78, 26, 26
+		group-6: 130, 78, 26, 26
+		group-6-hover: 130, 78, 26, 26
+		group-6-active: 130, 78, 26, 26
+		group-6-active-hover: 130, 78, 26, 26
+		group-7: 156, 78, 26, 26
+		group-7-hover: 156, 78, 26, 26
+		group-7-active: 156, 78, 26, 26
+		group-7-active-hover: 156, 78, 26, 26
+		group-8: 182, 78, 26, 26
+		group-8-hover: 182, 78, 26, 26
+		group-8-active: 182, 78, 26, 26
+		group-8-active-hover: 182, 78, 26, 26
+		group-9: 208, 78, 26, 26
+		group-9-hover: 208, 78, 26, 26
+		group-9-active: 208, 78, 26, 26
+		group-9-active-hover: 208, 78, 26, 26
+		group-0: 234, 78, 26, 26
+		group-0-hover: 234, 78, 26, 26
+		group-0-active: 234, 78, 26, 26
+		group-0-active-hover: 234, 78, 26, 26
+		control-group: 260, 78, 26, 26
+		control-group-hover: 260, 78, 26, 26
+		control-group-active: 260, 78, 26, 26
+		control-group-active-hover: 260, 78, 26, 26
+		select-all: 286, 78, 26, 26
+		select-all-hover: 286, 78, 26, 26
+		select-all-active: 286, 78, 26, 26
+		select-all-active-hover: 286, 78, 26, 26
+		select-by-type: 312, 78, 26, 26
+		select-by-type-hover: 312, 78, 26, 26
+		select-by-type-active: 312, 78, 26, 26
+		select-by-type-active-hover: 312, 78, 26, 26
+		cycle-base: 338, 78, 26, 26
+		cycle-base-hover: 338, 78, 26, 26
+		cycle-base-active: 338, 78, 26, 26
+		cycle-base-active-hover: 338, 78, 26, 26
+		to-selection: 364, 78, 26, 26
+		to-selection-hover: 364, 78, 26, 26
+		to-selection-active: 364, 78, 26, 26
+		to-selection-active-hover: 364, 78, 26, 26
+		to-last-event: 390, 78, 26, 26
+		to-last-event-hover: 390, 78, 26, 26
+		to-last-event-active: 390, 78, 26, 26
+		to-last-event-active-hover: 390, 78, 26, 26
+		cycle-harvesters: 416, 78, 26, 26
+		cycle-harvesters-hover: 416, 78, 26, 26
+		cycle-harvesters-active: 416, 78, 26, 26
+		cycle-harvesters-active-hover: 416, 78, 26, 26
+		remove-from-group: 442, 78, 26, 26
+		remove-from-group-hover: 442, 78, 26, 26
+		remove-from-group-active: 442, 78, 26, 26
+		remove-from-group-active-hover: 442, 78, 26, 26
+		sell: 468, 78, 26, 26
+		sell-hover: 468, 78, 26, 26
+		sell-active: 468, 78, 26, 26
+		sell-active-hover: 468, 78, 26, 26
+		repair: 494, 78, 26, 26
+		repair-hover: 494, 78, 26, 26
+		repair-active: 494, 78, 26, 26
+		repair-active-hover: 494, 78, 26, 26
+		beacon: 520, 78, 26, 26
+		beacon-hover: 520, 78, 26, 26
+		beacon-active: 520, 78, 26, 26
+		beacon-active-hover: 520, 78, 26, 26
+		attack-move: 546, 78, 26, 26
+		attack-move-hover: 546, 78, 26, 26
+		attack-move-active: 546, 78, 26, 26
+		attack-move-active-hover: 546, 78, 26, 26
+		force-move: 572, 78, 26, 26
+		force-move-hover: 572, 78, 26, 26
+		force-move-active: 572, 78, 26, 26
+		force-move-active-hover: 572, 78, 26, 26
+		force-attack: 598, 78, 26, 26
+		force-attack-hover: 598, 78, 26, 26
+		force-attack-active: 598, 78, 26, 26
+		force-attack-active-hover: 598, 78, 26, 26
+		guard: 624, 78, 26, 26
+		guard-hover: 624, 78, 26, 26
+		guard-active: 624, 78, 26, 26
+		guard-active-hover: 624, 78, 26, 26
+		deploy: 650, 78, 26, 26
+		deploy-hover: 650, 78, 26, 26
+		deploy-active: 650, 78, 26, 26
+		deploy-active-hover: 650, 78, 26, 26
+		scatter: 676, 78, 26, 26
+		scatter-hover: 676, 78, 26, 26
+		scatter-active: 676, 78, 26, 26
+		scatter-active-hover: 676, 78, 26, 26
+		stop: 702, 78, 26, 26
+		stop-hover: 702, 78, 26, 26
+		stop-active: 702, 78, 26, 26
+		stop-active-hover: 702, 78, 26, 26
+		queue-orders: 728, 78, 26, 26
+		queue-orders-hover: 728, 78, 26, 26
+		queue-orders-active: 728, 78, 26, 26
+		queue-orders-active-hover: 728, 78, 26, 26
+		attack-anything: 754, 78, 26, 26
+		attack-anything-hover: 754, 78, 26, 26
+		attack-anything-active: 754, 78, 26, 26
+		attack-anything-active-hover: 754, 78, 26, 26
+
+		defend: 780, 78, 26, 26
+		defend-hover: 780, 78, 26, 26
+		defend-active: 780, 78, 26, 26
+		defend-active-hover: 780, 78, 26, 26
+		return-fire: 806, 78, 26, 26
+		return-fire-hover: 806, 78, 26, 26
+		return-fire-active: 806, 78, 26, 26
+		return-fire-active-hover: 806, 78, 26, 26
+		hold-fire: 832, 78, 26, 26
+		hold-fire-hover: 832, 78, 26, 26
+		hold-fire-active: 832, 78, 26, 26
+		hold-fire-active-hover: 832, 78, 26, 26
+
+ios-viewport-joystick:
+	Image: ios-viewport-joystick.png
+	Regions:
+		base: 0, 0, 112, 112
+		thumb: 112, 0, 48, 48
+		thumb-active: 112, 48, 48, 48
+
+command-icons-allies-highlighted:
+	Inherits: command-icons-allies
+	Regions:
+		attack-move: 783, 387, 33, 26
+		attack-move-hover: 783, 439, 33, 26
+		force-move: 816, 387, 26, 26
+		force-move-hover: 816, 439, 26, 26
+		force-attack: 842, 387, 26, 26
+		force-attack-hover: 842, 439, 26, 26
+		guard: 868, 387, 29, 26
+		guard-hover: 868, 439, 29, 26
+		deploy: 897, 387, 27, 26
+		deploy-hover: 897, 439, 27, 26
+		scatter: 924, 387, 29, 26
+		scatter-hover: 924, 439, 29, 26
+		stop: 953, 387, 22, 26
+		stop-hover: 953, 439, 22, 26
+		queue-orders: 975, 387, 35, 26
+		queue-orders-hover: 975, 439, 35, 26
+
+stance-icons-allies:
+	Image: chrome.png
+	Regions:
+		attack-anything: 769, 15, 25, 21
+		attack-anything-disabled: 769, 36, 25, 21
+		attack-anything-hover: 769, 78, 25, 21
+		return-fire: 794, 15, 20, 21
+		return-fire-disabled: 794, 36, 20, 21
+		return-fire-hover: 794, 78, 20, 21
+		defend: 816, 15, 22, 21
+		defend-disabled: 816, 36, 22, 21
+		defend-hover: 816, 78, 22, 21
+		hold-fire: 836, 15, 25, 21
+		hold-fire-disabled: 836, 36, 25, 21
+		hold-fire-hover: 836, 78, 25, 21
+
+stance-icons-allies-highlighted:
+	Inherits: stance-icons-allies
+	Regions:
+		attack-anything: 769, 57, 25, 21
+		attack-anything-hover: 769, 99, 25, 21
+		return-fire: 794, 57, 20, 21
+		return-fire-hover: 794, 99, 20, 21
+		defend: 816, 57, 22, 21
+		defend-hover: 816, 99, 22, 21
+		hold-fire-active: 836, 57, 25, 21
+		hold-fire: 836, 57, 25, 21
+		hold-fire-hover: 836, 99, 25, 21
+
+# -----------------------------------------------------------------------------------
+# Soviets
+# -----------------------------------------------------------------------------------
+
+sidebar-soviets:
+	Image: chrome.png
+	Regions:
+		background-top: 0, 512, 234, 275
+		background-iconrow: 0, 787, 234, 50
+		background-bottom: 0, 837, 234, 66
+		background-supportoverlay: 250, 532, 64, 48
+		background-commandbar: 559, 790, 459, 31
+
+# These coordinates point to an empty area of the chrome.png file to make the background of these buttons empty
+sidebar-button-soviets:
+	Image: chrome.png
+	PanelRegion: 955, 512, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+sidebar-button-soviets-hover:
+	Image: chrome.png
+	PanelRegion: 955, 512, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+sidebar-button-soviets-pressed:
+	Image: chrome.png
+	PanelRegion: 955, 512, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+sidebar-button-soviets-highlighted:
+	Image: chrome.png
+	PanelRegion: 955, 512, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+sidebar-button-soviets-highlighted-hover:
+	Image: chrome.png
+	PanelRegion: 955, 512, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+sidebar-button-soviets-highlighted-pressed:
+	Image: chrome.png
+	PanelRegion: 955, 512, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+sidebar-button-soviets-highlighted-disabled:
+	Image: chrome.png
+	PanelRegion: 955, 512, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+sidebar-button-soviets-disabled:
+	Image: chrome.png
+	PanelRegion: 955, 512, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+
+scrollup-buttons-soviets:
+	Image: chrome.png
+	PanelRegion: 117, 907, 0, 0, 77, 27, 0, 0
+	PanelSides: Center
+scrollup-buttons-soviets-hover:
+	Image: chrome.png
+	PanelRegion: 117, 934, 0, 0, 77, 27, 0, 0
+	PanelSides: Center
+scrollup-buttons-soviets-pressed:
+	Image: chrome.png
+	PanelRegion: 117, 961, 0, 0, 77, 27, 0, 0
+	PanelSides: Center
+scrollup-buttons-soviets-highlighted:
+	Image: chrome.png
+	PanelRegion: 117, 988, 0, 0, 77, 27, 0, 0
+	PanelSides: Center
+scrollup-buttons-soviets-highlighted-hover:
+	Image: chrome.png
+	PanelRegion: 117, 1015, 0, 0, 77, 27, 0, 0
+	PanelSides: Center
+scrollup-buttons-soviets-highlighted-pressed:
+	Image: chrome.png
+	PanelRegion: 117, 1042, 0, 0, 77, 27, 0, 0
+	PanelSides: Center
+scrollup-button-soviets-highlighted-disabled:
+	Image: chrome.png
+	PanelRegion: 117, 1069, 0, 0, 77, 27, 0, 0
+	PanelSides: Center
+scrollup-buttons-soviets-disabled:
+	Image: chrome.png
+	PanelRegion: 117, 1069, 0, 0, 77, 27, 0, 0
+	PanelSides: Center
+
+scrolldown-buttons-soviets:
+	Image: chrome.png
+	PanelRegion: 40, 907, 0, 0, 77, 27, 0, 0
+	PanelSides: Center
+scrolldown-buttons-soviets-hover:
+	Image: chrome.png
+	PanelRegion: 40, 934, 0, 0, 77, 27, 0, 0
+	PanelSides: Center
+scrolldown-buttons-soviets-pressed:
+	Image: chrome.png
+	PanelRegion: 40, 961, 0, 0, 77, 27, 0, 0
+	PanelSides: Center
+scrolldown-buttons-soviets-highlighted:
+	Image: chrome.png
+	PanelRegion: 40, 988, 0, 0, 77, 27, 0, 0
+	PanelSides: Center
+scrolldown-buttons-soviets-highlighted-hover:
+	Image: chrome.png
+	PanelRegion: 40, 1015, 0, 0, 77, 27, 0, 0
+	PanelSides: Center
+scrolldown-buttons-soviets-highlighted-pressed:
+	Image: chrome.png
+	PanelRegion: 40, 1042, 0, 0, 77, 27, 0, 0
+	PanelSides: Center
+scrolldown-button-soviets-highlighted-disabled:
+	Image: chrome.png
+	PanelRegion: 40, 1069, 0, 0, 77, 27, 0, 0
+	PanelSides: Center
+scrolldown-buttons-soviets-disabled:
+	Image: chrome.png
+	PanelRegion: 40, 1069, 0, 0, 77, 27, 0, 0
+	PanelSides: Center
+
+radar-soviets:
+	Image: chrome.png
+	Regions:
+		insignia: 340, 847, 202, 157
+
+repair-button-soviets:
+	Image: chrome.png
+	PanelRegion: 580, 527, 0, 0, 44, 34, 0, 0
+	PanelSides: Center
+repair-button-soviets-hover:
+	Image: chrome.png
+	PanelRegion: 580, 561, 0, 0, 44, 34, 0, 0
+	PanelSides: Center
+repair-button-soviets-pressed:
+	Image: chrome.png
+	PanelRegion: 580, 595, 0, 0, 44, 34, 0, 0
+	PanelSides: Center
+repair-button-soviets-highlighted:
+	Image: chrome.png
+	PanelRegion: 580, 629, 0, 0, 44, 34, 0, 0
+	PanelSides: Center
+repair-button-soviets-highlighted-hover:
+	Image: chrome.png
+	PanelRegion: 580, 663, 0, 0, 44, 34, 0, 0
+	PanelSides: Center
+repair-button-soviets-highlighted-pressed:
+	Image: chrome.png
+	PanelRegion: 580, 697, 0, 0, 44, 34, 0, 0
+	PanelSides: Center
+repair-button-soviets-disabled:
+	Image: chrome.png
+	PanelRegion: 580, 731, 0, 0, 44, 34, 0, 0
+	PanelSides: Center
+repair-button-soviets-highlighted-disabled:
+	Image: chrome.png
+	PanelRegion: 580, 731, 0, 0, 44, 34, 0, 0
+	PanelSides: Center
+
+power-button-soviets:
+	Image: chrome.png
+	PanelRegion: 624, 527, 0, 0, 41, 34, 0, 0
+	PanelSides: Center
+power-button-soviets-hover:
+	Image: chrome.png
+	PanelRegion: 624, 561, 0, 0, 41, 34, 0, 0
+	PanelSides: Center
+power-button-soviets-pressed:
+	Image: chrome.png
+	PanelRegion: 624, 595, 0, 0, 41, 34, 0, 0
+	PanelSides: Center
+power-button-soviets-highlighted:
+	Image: chrome.png
+	PanelRegion: 624, 629, 0, 0, 41, 34, 0, 0
+	PanelSides: Center
+power-button-soviets-highlighted-hover:
+	Image: chrome.png
+	PanelRegion: 624, 663, 0, 0, 41, 34, 0, 0
+	PanelSides: Center
+power-button-soviets-highlighted-pressed:
+	Image: chrome.png
+	PanelRegion: 624, 697, 0, 0, 41, 34, 0, 0
+	PanelSides: Center
+power-button-soviets-disabled:
+	Image: chrome.png
+	PanelRegion: 624, 731, 0, 0, 41, 34, 0, 0
+	PanelSides: Center
+power-button-soviets-highlighted-disabled:
+	Image: chrome.png
+	PanelRegion: 624, 731, 0, 0, 41, 34, 0, 0
+	PanelSides: Center
+
+beacon-button-soviets:
+	Image: chrome.png
+	PanelRegion: 665, 527, 0, 0, 41, 34, 0, 0
+	PanelSides: Center
+beacon-button-soviets-hover:
+	Image: chrome.png
+	PanelRegion: 665, 561, 0, 0, 41, 34, 0, 0
+	PanelSides: Center
+beacon-button-soviets-pressed:
+	Image: chrome.png
+	PanelRegion: 665, 595, 0, 0, 41, 34, 0, 0
+	PanelSides: Center
+beacon-button-soviets-highlighted:
+	Image: chrome.png
+	PanelRegion: 665, 629, 0, 0, 41, 34, 0, 0
+	PanelSides: Center
+beacon-button-soviets-highlighted-hover:
+	Image: chrome.png
+	PanelRegion: 665, 663, 0, 0, 41, 34, 0, 0
+	PanelSides: Center
+beacon-button-soviets-highlighted-pressed:
+	Image: chrome.png
+	PanelRegion: 665, 697, 0, 0, 41, 34, 0, 0
+	PanelSides: Center
+beacon-button-soviets-disabled:
+	Image: chrome.png
+	PanelRegion: 665, 731, 0, 0, 41, 34, 0, 0
+	PanelSides: Center
+beacon-button-soviets-highlighted-disabled:
+	Image: chrome.png
+	PanelRegion: 665, 731, 0, 0, 41, 34, 0, 0
+	PanelSides: Center
+
+sell-button-soviets:
+	Image: chrome.png
+	PanelRegion: 706, 527, 0, 0, 43, 34, 0, 0
+	PanelSides: Center
+sell-button-soviets-hover:
+	Image: chrome.png
+	PanelRegion: 706, 561, 0, 0, 43, 34, 0, 0
+	PanelSides: Center
+sell-button-soviets-pressed:
+	Image: chrome.png
+	PanelRegion: 706, 595, 0, 0, 43, 34, 0, 0
+	PanelSides: Center
+sell-button-soviets-highlighted:
+	Image: chrome.png
+	PanelRegion: 706, 629, 0, 0, 43, 34, 0, 0
+	PanelSides: Center
+sell-button-soviets-highlighted-hover:
+	Image: chrome.png
+	PanelRegion: 706, 663, 0, 0, 43, 34, 0, 0
+	PanelSides: Center
+sell-button-soviets-highlighted-pressed:
+	Image: chrome.png
+	PanelRegion: 706, 697, 0, 0, 43, 34, 0, 0
+	PanelSides: Center
+sell-button-soviets-disabled:
+	Image: chrome.png
+	PanelRegion: 706, 731, 0, 0, 43, 34, 0, 0
+	PanelSides: Center
+sell-button-soviets-highlighted-disabled:
+	Image: chrome.png
+	PanelRegion: 706, 731, 0, 0, 43, 34, 0, 0
+	PanelSides: Center
+
+buildings-button-soviets:
+	Image: chrome.png
+	PanelRegion: 340, 532, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+buildings-button-soviets-hover:
+	Image: chrome.png
+	PanelRegion: 340, 564, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+buildings-button-soviets-pressed:
+	Image: chrome.png
+	PanelRegion: 340, 596, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+buildings-button-soviets-highlighted:
+	Image: chrome.png
+	PanelRegion: 340, 628, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+buildings-button-soviets-highlighted-hover:
+	Image: chrome.png
+	PanelRegion: 340, 660, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+buildings-button-soviets-highlighted-pressed:
+	Image: chrome.png
+	PanelRegion: 340, 692, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+buildings-button-soviets-disabled:
+	Image: chrome.png
+	PanelRegion: 340, 724, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+buildings-button-soviets-highlighted-disabled:
+	Image: chrome.png
+	PanelRegion: 340, 724, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+
+support-button-soviets:
+	Image: chrome.png
+	PanelRegion: 370, 532, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+support-button-soviets-hover:
+	Image: chrome.png
+	PanelRegion: 370, 564, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+support-button-soviets-pressed:
+	Image: chrome.png
+	PanelRegion: 370, 596, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+support-button-soviets-highlighted:
+	Image: chrome.png
+	PanelRegion: 370, 628, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+support-button-soviets-highlighted-hover:
+	Image: chrome.png
+	PanelRegion: 370, 660, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+support-button-soviets-highlighted-pressed:
+	Image: chrome.png
+	PanelRegion: 370, 692, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+support-button-soviets-disabled:
+	Image: chrome.png
+	PanelRegion: 370, 724, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+support-button-soviets-highlighted-disabled:
+	Image: chrome.png
+	PanelRegion: 370, 724, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+
+infantry-button-soviets:
+	Image: chrome.png
+	PanelRegion: 400, 532, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+infantry-button-soviets-hover:
+	Image: chrome.png
+	PanelRegion: 400, 564, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+infantry-button-soviets-pressed:
+	Image: chrome.png
+	PanelRegion: 400, 596, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+infantry-button-soviets-highlighted:
+	Image: chrome.png
+	PanelRegion: 400, 628, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+infantry-button-soviets-highlighted-hover:
+	Image: chrome.png
+	PanelRegion: 400, 660, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+infantry-button-soviets-highlighted-pressed:
+	Image: chrome.png
+	PanelRegion: 400, 692, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+infantry-button-soviets-disabled:
+	Image: chrome.png
+	PanelRegion: 400, 724, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+infantry-button-soviets-highlighted-disabled:
+	Image: chrome.png
+	PanelRegion: 400, 724, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+
+vehicles-button-soviets:
+	Image: chrome.png
+	PanelRegion: 430, 532, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+vehicles-button-soviets-hover:
+	Image: chrome.png
+	PanelRegion: 430, 564, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+vehicles-button-soviets-pressed:
+	Image: chrome.png
+	PanelRegion: 430, 596, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+vehicles-button-soviets-highlighted:
+	Image: chrome.png
+	PanelRegion: 430, 628, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+vehicles-button-soviets-highlighted-hover:
+	Image: chrome.png
+	PanelRegion: 430, 660, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+vehicles-button-soviets-highlighted-pressed:
+	Image: chrome.png
+	PanelRegion: 430, 692, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+vehicles-button-soviets-highlighted-disabled:
+	Image: chrome.png
+	PanelRegion: 430, 724, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+vehicles-button-soviets-disabled:
+	Image: chrome.png
+	PanelRegion: 430, 724, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+
+aircrafts-button-soviets:
+	Image: chrome.png
+	PanelRegion: 460, 532, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+aircrafts-button-soviets-hover:
+	Image: chrome.png
+	PanelRegion: 460, 564, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+aircrafts-button-soviets-pressed:
+	Image: chrome.png
+	PanelRegion: 460, 596, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+aircrafts-button-soviets-highlighted:
+	Image: chrome.png
+	PanelRegion: 460, 628, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+aircrafts-button-soviets-highlighted-hover:
+	Image: chrome.png
+	PanelRegion: 460, 660, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+aircrafts-button-soviets-highlighted-pressed:
+	Image: chrome.png
+	PanelRegion: 460, 692, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+aircrafts-button-soviets-highlighted-disabled:
+	Image: chrome.png
+	PanelRegion: 460, 724, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+aircrafts-button-soviets-disabled:
+	Image: chrome.png
+	PanelRegion: 460, 724, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+
+ships-button-soviets:
+	Image: chrome.png
+	PanelRegion: 490, 532, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+ships-button-soviets-hover:
+	Image: chrome.png
+	PanelRegion: 490, 564, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+ships-button-soviets-pressed:
+	Image: chrome.png
+	PanelRegion: 490, 596, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+ships-button-soviets-highlighted:
+	Image: chrome.png
+	PanelRegion: 490, 628, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+ships-button-soviets-highlighted-hover:
+	Image: chrome.png
+	PanelRegion: 490, 660, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+ships-button-soviets-highlighted-pressed:
+	Image: chrome.png
+	PanelRegion: 490, 692, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+ships-button-soviets-highlighted-disabled:
+	Image: chrome.png
+	PanelRegion: 490, 724, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+ships-button-soviets-disabled:
+	Image: chrome.png
+	PanelRegion: 490, 724, 0, 0, 30, 32, 0, 0
+	PanelSides: Center
+
+power-icons-soviets:
+	Image: chrome.png
+	Regions:
+		power-normal: 326, 812, 19, 19
+		power-critical: 307, 812, 19, 19
+
+cash-icons-soviets:
+	Image: chrome.png
+	Regions:
+		cash-normal: 326, 793, 19, 19
+		cash-critical: 307, 793, 19, 19
+
+diplomacy-button-soviets:
+	Image: chrome.png
+	PanelRegion: 550, 847, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+diplomacy-button-soviets-hover:
+	Image: chrome.png
+	PanelRegion: 550, 870, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+diplomacy-button-soviets-pressed:
+	Image: chrome.png
+	PanelRegion: 550, 893, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+diplomacy-button-soviets-highlighted:
+	Image: chrome.png
+	PanelRegion: 550, 916, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+diplomacy-button-soviets-highlighted-hover:
+	Image: chrome.png
+	PanelRegion: 550, 939, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+diplomacy-button-soviets-highlighted-pressed:
+	Image: chrome.png
+	PanelRegion: 550, 962, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+diplomacy-button-soviets-highlighted-disabled:
+	Image: chrome.png
+	PanelRegion: 550, 985, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+diplomacy-button-soviets-disabled:
+	Image: chrome.png
+	PanelRegion: 550, 985, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+
+debug-button-soviets:
+	Image: chrome.png
+	PanelRegion: 619, 847, 0, 0, 62, 23, 0, 0
+	PanelSides: Center
+debug-button-soviets-hover:
+	Image: chrome.png
+	PanelRegion: 619, 870, 0, 0, 62, 23, 0, 0
+	PanelSides: Center
+debug-button-soviets-pressed:
+	Image: chrome.png
+	PanelRegion: 619, 893, 0, 0, 62, 23, 0, 0
+	PanelSides: Center
+debug-button-soviets-highlighted:
+	Image: chrome.png
+	PanelRegion: 619, 916, 0, 0, 62, 23, 0, 0
+	PanelSides: Center
+debug-button-soviets-highlighted-hover:
+	Image: chrome.png
+	PanelRegion: 619, 939, 0, 0, 62, 23, 0, 0
+	PanelSides: Center
+debug-button-soviets-highlighted-pressed:
+	Image: chrome.png
+	PanelRegion: 619, 962, 0, 0, 62, 23, 0, 0
+	PanelSides: Center
+debug-button-soviets-highlighted-disabled:
+	Image: chrome.png
+	PanelRegion: 619, 985, 0, 0, 62, 23, 0, 0
+	PanelSides: Center
+debug-button-soviets-disabled:
+	Image: chrome.png
+	PanelRegion: 619, 985, 0, 0, 62, 23, 0, 0
+	PanelSides: Center
+
+options-button-soviets:
+	Image: chrome.png
+	PanelRegion: 681, 847, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+options-button-soviets-hover:
+	Image: chrome.png
+	PanelRegion: 681, 870, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+options-button-soviets-pressed:
+	Image: chrome.png
+	PanelRegion: 681, 893, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+options-button-soviets-highlighted:
+	Image: chrome.png
+	PanelRegion: 681, 916, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+options-button-soviets-highlighted-hover:
+	Image: chrome.png
+	PanelRegion: 681, 939, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+options-button-soviets-highlighted-pressed:
+	Image: chrome.png
+	PanelRegion: 681, 962, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+options-button-soviets-highlighted-disabled:
+	Image: chrome.png
+	PanelRegion: 681, 985, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+options-button-soviets-disabled:
+	Image: chrome.png
+	PanelRegion: 681, 985, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+
+# Alias of diplomacy-button (left top slot); used historically as "stats".
+stats-button-soviets:
+	Image: chrome.png
+	PanelRegion: 550, 847, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+stats-button-soviets-hover:
+	Image: chrome.png
+	PanelRegion: 550, 870, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+stats-button-soviets-pressed:
+	Image: chrome.png
+	PanelRegion: 550, 893, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+stats-button-soviets-highlighted:
+	Image: chrome.png
+	PanelRegion: 550, 916, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+stats-button-soviets-highlighted-hover:
+	Image: chrome.png
+	PanelRegion: 550, 939, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+stats-button-soviets-highlighted-pressed:
+	Image: chrome.png
+	PanelRegion: 550, 962, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+stats-button-soviets-highlighted-disabled:
+	Image: chrome.png
+	PanelRegion: 550, 985, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+stats-button-soviets-disabled:
+	Image: chrome.png
+	PanelRegion: 550, 985, 0, 0, 69, 23, 0, 0
+	PanelSides: Center
+
+# Category tabs always show the normal/alert glyphs (ClassicProductionLogic no longer uses *-disabled).
+# The *-disabled regions remain for compatibility / other UI that still references them.
+production-icons-soviets:
+	Image: chrome.png
+	Regions:
+		building: 5250, 622, 19, 19
+		building-disabled: 5269, 622, 19, 19
+		building-alert: 5288, 622, 19, 19
+		support: 5250, 641, 19, 19
+		support-disabled: 5269, 641, 19, 19
+		support-alert: 5288, 641, 19, 19
+		infantry: 5250, 660, 19, 19
+		infantry-disabled: 5269, 660, 19, 19
+		infantry-alert: 5288, 660, 19, 19
+		vehicle: 5250, 679, 19, 19
+		vehicle-disabled: 5269, 679, 19, 19
+		vehicle-alert: 5288, 679, 19, 19
+		aircraft: 5250, 698, 19, 19
+		aircraft-disabled: 5269, 698, 19, 19
+		aircraft-alert: 5288, 698, 19, 19
+		ship: 5250, 717, 19, 19
+		ship-disabled: 5269, 717, 19, 19
+		ship-alert: 5288, 717, 19, 19
+
+command-icons-soviets:
+	Image: chrome.png
+	Regions:
+		attack-move: 783, 847, 33, 26
+		attack-move-disabled: 783, 873, 33, 26
+		attack-move-active: 783, 899, 33, 26
+		attack-move-hover: 783, 925, 33, 26
+		attack-move-active-hover: 783, 951, 33, 26
+		force-move: 816, 847, 26, 26
+		force-move-disabled: 816, 873, 26, 26
+		force-move-active: 816, 899, 26, 26
+		force-move-hover: 816, 925, 26, 26
+		force-move-active-hover: 816, 951, 26, 26
+		force-attack: 842, 847, 26, 26
+		force-attack-disabled: 842, 873, 26, 26
+		force-attack-active: 842, 899, 26, 26
+		force-attack-hover: 842, 925, 26, 26
+		force-attack-active-hover: 842, 951, 26, 26
+		guard: 868, 847, 29, 26
+		guard-disabled: 868, 873, 29, 26
+		guard-active: 868, 899, 29, 26
+		guard-hover: 868, 925, 29, 26
+		guard-active-hover: 868, 951, 29, 26
+		deploy: 897, 847, 27, 26
+		deploy-disabled: 897, 873, 27, 26
+		deploy-active: 897, 899, 27, 26
+		deploy-hover: 897, 925, 27, 26
+		deploy-active-hover: 897, 951, 27, 26
+		scatter: 924, 847, 29, 26
+		scatter-disabled: 924, 873, 29, 26
+		scatter-active: 924, 899, 29, 26
+		scatter-hover: 924, 925, 29, 26
+		scatter-active-hover: 924, 951, 29, 26
+		stop: 953, 847, 22, 26
+		stop-disabled: 953, 873, 22, 26
+		stop-active: 953, 899, 22, 26
+		stop-hover: 953, 925, 22, 26
+		stop-active-hover: 953, 951, 22, 26
+		queue-orders: 975, 847, 35, 26
+		queue-orders-disabled: 975, 873, 35, 26
+		queue-orders-active: 975, 899, 35, 26
+		queue-orders-hover: 975, 925, 35, 26
+		queue-orders-active-hover: 975, 951, 35, 26
+
+command-icons-soviets-highlighted:
+	Inherits: command-icons-soviets
+	Regions:
+		attack-move: 783, 899, 33, 26
+		attack-move-hover: 783, 951, 33, 26
+		force-move: 816, 899, 26, 26
+		force-move-hover: 816, 951, 26, 26
+		force-attack: 842, 899, 26, 26
+		force-attack-hover: 842, 951, 26, 26
+		guard: 868, 899, 29, 26
+		guard-hover: 868, 951, 29, 26
+		deploy: 897, 899, 27, 26
+		deploy-hover: 897, 951, 27, 26
+		scatter: 924, 899, 29, 26
+		scatter-hover: 924, 951, 29, 26
+		stop: 953, 899, 22, 26
+		stop-hover: 953, 951, 22, 26
+		queue-active: 975, 899, 35, 26
+		queue-active-hover: 975, 951, 35, 26
+
+stance-icons-soviets:
+	Image: chrome.png
+	Regions:
+		attack-anything: 769, 527, 25, 21
+		attack-anything-disabled: 769, 548, 25, 21
+		attack-anything-hover: 769, 590, 25, 21
+		return-fire: 794, 527, 20, 21
+		return-fire-disabled: 794, 548, 20, 21
+		return-fire-hover: 794, 590, 20, 21
+		defend: 816, 527, 22, 21
+		defend-disabled: 816, 548, 22, 21
+		defend-hover: 816, 590, 22, 21
+		hold-fire: 836, 527, 25, 21
+		hold-fire-disabled: 836, 548, 25, 21
+		hold-fire-hover: 836, 590, 25, 21
+
+stance-icons-soviets-highlighted:
+	Inherits: stance-icons-soviets
+	Regions:
+		attack-anything: 769, 569, 25, 21
+		attack-anything-hover: 769, 611, 25, 21
+		return-fire: 794, 569, 20, 21
+		return-fire-hover: 794, 611, 20, 21
+		defend: 816, 569, 22, 21
+		defend-hover: 816, 611, 22, 21
+		hold-fire: 836, 569, 25, 21
+		hold-fire-hover: 836, 611, 25, 21
+
+# -----------------------------------------------------------------------------------
+# GENERIC
+# -----------------------------------------------------------------------------------
+
+sidebar-bits:
+	Image: chrome.png
+	Regions:
+		production-tooltip-time: 250, 357, 19, 19
+		production-tooltip-power: 326, 300, 19, 19
+		production-tooltip-cost: 326, 281, 19, 19
+		production-iconoverlay: 250, 20, 64, 48
+		commandbar-background: 0, 123, 434, 44
+
+order-icons:
+	Image: chrome.png
+	Regions:
+		options: 250, 452, 19, 19
+		options-disabled: 269, 452, 19, 19
+		options-active: 288, 452, 19, 19
+		debug: 250, 395, 19, 19
+		debug-disabled: 269, 395, 19, 19
+		debug-active: 288, 395, 19, 19
+		diplomacy: 250, 433, 19, 19
+		diplomacy-disabled: 269, 433, 19, 19
+		diplomacy-active: 288, 433, 19, 19
+		sell: 5250, 281, 19, 19
+		sell-disabled: 5269, 281, 19, 19
+		sell-active: 5288, 281, 19, 19
+		repair: 5250, 262, 19, 19
+		repair-disabled: 5269, 262, 19, 19
+		repair-active: 5288, 262, 19, 19
+		beacon: 5250, 319, 19, 19
+		beacon-disabled: 5269, 319, 19, 19
+		beacon-active: 5288, 319, 19, 19
+		power: 5250, 300, 19, 19
+		power-disabled: 5269, 300, 19, 19
+		power-active: 5288, 300, 19, 19
+		stats: 250, 414, 19, 19
+		stats-disabled: 269, 414, 19, 19
+		stats-active: 288, 414, 19, 19
+
+# -----------------------------------------------------------------------------------
+# OBSERVER
+# -----------------------------------------------------------------------------------
+
+sidebar-observer:
+	Image: chrome.png
+	PanelRegion: 785, 15, 0, 0, 219, 289, 0, 0
+	PanelSides: Center
+	Regions:
+		replay-bottom: 785, 283, 219, 96
+		observer-bottom: 785, 283, 219, 96
+
+sidebar-button-observershroud:
+	Image: chrome.png
+sidebar-button-observershroud-pressed:
+	Image: chrome.png
+sidebar-button-observershroud-hover:
+	Image: chrome.png
+
+sidebar-button-observer:
+	Image: chrome.png
+	Regions:
+		background: 117, 545, 18, 18
+		border-r: 135, 545, 5, 18
+		border-l: 112, 545, 5, 18
+		border-b: 117, 51, 18, 5
+		border-t: 117, 28, 18, 5
+		corner-tl: 112, 28, 5, 5
+		corner-tr: 135, 28, 5, 5
+		corner-bl: 112, 51, 5, 5
+		corner-br: 135, 51, 5, 5
+sidebar-button-observer-hover:
+	Image: chrome.png
+	PanelRegion: 112, 0, 5, 5, 18, 18, 5, 5
+sidebar-button-observer-pressed:
+	Image: chrome.png
+	Regions:
+		background: 117, 545, 18, 18
+		border-r: 135, 545, 5, 18
+		border-l: 112, 545, 5, 18
+		border-b: 117, 51, 18, 5
+		border-t: 117, 28, 18, 5
+		corner-tl: 112, 28, 5, 5
+		corner-tr: 135, 28, 5, 5
+		corner-bl: 112, 51, 5, 5
+		corner-br: 135, 51, 5, 5
+sidebar-button-observer-highlighted:
+	Image: chrome.png
+	Regions:
+		background: 145, 545, 18, 18
+		border-r: 163, 545, 5, 18
+		border-l: 140, 545, 5, 18
+		border-b: 145, 51, 18, 5
+		border-t: 145, 28, 18, 5
+		corner-tl: 140, 28, 5, 5
+		corner-tr: 163, 28, 5, 5
+		corner-bl: 140, 51, 5, 5
+		corner-br: 163, 51, 5, 5
+sidebar-button-observer-highlighted-hover:
+	Image: chrome.png
+	PanelRegion: 140, 0, 5, 5, 18, 18, 5, 5
+sidebar-button-observer-highlighted-pressed:
+	Image: chrome.png
+	Regions:
+		background: 33, 545, 18, 18
+		border-r: 51, 545, 5, 18
+		border-l: 28, 545, 5, 18
+		border-b: 33, 51, 18, 5
+		border-t: 33, 28, 18, 5
+		corner-tl: 28, 28, 5, 5
+		corner-tr: 51, 28, 5, 5
+		corner-bl: 28, 51, 5, 5
+		corner-br: 51, 51, 5, 5
+sidebar-button-observer-disabled:
+	Image: chrome.png
+	PanelRegion: 168, 0, 5, 5, 18, 18, 5, 5
+sidebar-button-observer-highlighted-disabled:
+	Image: chrome.png
+	PanelRegion: 168, 0, 5, 5, 18, 18, 5, 5
+
+observer-scrollpanel-button:
+	Image: dialog.png
+	PanelRegion: 769, 257, 2, 2, 122, 122, 2, 2
+
+observer-scrollpanel-button-hover:
+	Inherits: observer-scrollpanel-button
+
+observer-scrollpanel-button-pressed:
+	Image: dialog.png
+	PanelRegion: 897, 257, 2, 2, 122, 122, 2, 2
+
+observer-scrollpanel-button-disabled:
+	Image: dialog.png
+	PanelRegion: 769, 385, 2, 2, 122, 122, 2, 2
+
+observer-scrollheader:
+	Inherits: observer-scrollpanel-button-disabled
+
+observer-scrollheader-highlighted:
+	Inherits: observer-scrollpanel-button-disabled
+
+observer-scrollitem:
+
+observer-scrollitem-hover:
+	Inherits: observer-scrollpanel-button
+
+observer-scrollitem-pressed:
+	Inherits: observer-scrollpanel-button
+
+observer-scrollitem-highlighted:
+	Inherits: observer-scrollpanel-button-pressed
+
+# -----------------------------------------------------------------------------------
+# REST OF THE UI
+# -----------------------------------------------------------------------------------
+
+# Used for the main menu frame / lobby / multiplayer panels.
+# Align with the redesigned menu chrome (menupanel.png) instead of the old dialog.png frame.
+dialog:
+	Inherits: menu-panel
+
+# Used for Music and Map selection / floating panels
+dialog2:
+	Inherits: menu-panel
+
+# It's a Container, used in various places, like Hotkeys, ColorPicker, Asset Browser frames (looks like a pressed button)
+dialog3:
+	Inherits: button-pressed
+
+# Used for tooltips and the video player
+dialog4:
+	Image: dialog.png
+	PanelRegion: 512, 387, 6, 6, 52, 52, 6, 6
+
+# completely black tile
+dialog5:
+	Image: dialog.png
+	PanelRegion: 579, 387, 0, 0, 64, 64, 0, 0
+	PanelSides: Center
+
+power-meter:
+	Image: chrome.png
+	Regions:
+		power-meter-none: 249, 522, 12, 2
+		power-meter-available: 262, 522, 12, 2
+		power-meter-used: 274, 522, 12, 2
+		power-meter-danger: 286, 522, 12, 2
+		power-meter-disabled: 298, 522, 12, 2
+
+lobby-bits:
+	Image: spawnpoints.png
+	Regions:
+		spawn-unclaimed: 37, 5, 22, 22
+		spawn-claimed: 5, 5, 22, 22
+		spawn-disabled: 5, 5, 22, 22 # TODO: Needs new artwork!
+		admin: 64, 5, 7, 5
+		bot: 170, 51, 16, 16 # TODO: Needs new artwork!
+		colorpicker: 5, 5, 22, 22
+		huepicker: 71, 0, 7, 15
+		kick: 134, 0, 11, 11
+		protected: 79, 0, 10, 13
+		protected-disabled: 90, 0, 10, 13
+		authentication: 77, 16, 12, 13
+		authentication-disabled: 90, 16, 12, 13
+		admin-registered: 102, 0, 16, 16
+		admin-anonymous: 118, 0, 16, 16
+		player-registered: 102, 16, 16, 16
+		player-anonymous: 118, 16, 16, 16
+
+strategic:
+	Image: strategic.png
+	Regions:
+		unowned: 0, 0, 32, 32
+		critical_unowned: 0, 32, 32, 32
+		enemy_owned: 32, 32, 32, 32
+		player_owned: 96, 0, 32, 32
+
+reload-icon:
+	Image: chrome.png
+	Regions:
+		enabled: 768, 152, 16, 16
+		disabled-0: 768, 136, 16, 16
+		disabled-1: 784, 136, 16, 16
+		disabled-2: 800, 136, 16, 16
+		disabled-3: 816, 136, 16, 16
+		disabled-4: 832, 136, 16, 16
+		disabled-5: 848, 136, 16, 16
+		disabled-6: 864, 136, 16, 16
+		disabled-7: 880, 136, 16, 16
+		disabled-8: 896, 136, 16, 16
+		disabled-9: 912, 136, 16, 16
+		disabled-10: 928, 136, 16, 16
+		disabled-11: 944, 136, 16, 16
+
+flags:
+	Image: buttons.png
+	Regions:
+		america: 0, 0, 45, 21
+		germany: 0, 21, 45, 21
+		england: 0, 42, 45, 21
+		france: 0, 63, 45, 21
+		korea: 0, 84, 45, 21
+		cuba: 45, 0, 45, 21
+		libya: 45, 21, 45, 21
+		iraq: 45, 42, 45, 21
+		russia: 45, 63, 45, 21
+		yuri: 45, 105, 45, 21
+		Random: 45, 84, 45, 21
+		random-allies: 0, 105, 45, 21
+		random-soviets: 45, 105, 45, 21
+		spectator: 45, 84, 45, 21
+
+music:
+	Image: musicplayer.png
+	Regions:
+		pause: 0, 0, 16, 16
+		stop: 17, 0, 16, 16
+		play: 34, 0, 16, 16
+		next: 51, 0, 16, 16
+		prev: 68, 0, 16, 16
+		fastforward: 85, 0, 16, 16
+
+# A copy of dialog3 (pressed button)
+progressbar-bg:
+	Image: dialog.png
+	PanelRegion: 640, 0, 1, 1, 126, 126, 1, 1
+
+# A copy of dialog2 (normal button)
+progressbar-thumb:
+	Image: dialog.png
+	PanelRegion: 513, 1, 2, 2, 122, 122, 2, 2
+
+# Default buttons share the redesigned menu-button art so lobby / multiplayer /
+# dialogs match the main menu and settings chrome.
+button:
+	Inherits: menu-button
+
+button-hover:
+	Inherits: menu-button-hover
+
+button-pressed:
+	Inherits: menu-button-pressed
+
+button-disabled:
+	Inherits: menu-button-disabled
+
+button-highlighted:
+	Inherits: menu-button-highlighted
+
+button-highlighted-hover:
+	Inherits: menu-button-highlighted-hover
+
+button-highlighted-pressed:
+	Inherits: menu-button-highlighted-pressed
+
+button-highlighted-disabled:
+	Inherits: menu-button-highlighted-disabled
+
+# vivid red - Used for the Battlefields News button
+newsbutton:
+	Inherits: button
+
+newsbutton-hover:
+	Inherits: button
+
+newsbutton-highlighted:
+	Image: dialog.png
+	PanelRegion: 769, 1, 2, 2, 122, 122, 2, 2
+
+newsbutton-highlighted-hover:
+	Inherits: newsbutton-highlighted
+
+newsbutton-highlighted-pressed:
+	Inherits: button-pressed
+
+newsbutton-pressed:
+	Inherits: button-pressed
+
+# Text fields share the redesigned menu chrome (not the old dialog/checkbox art).
+textfield:
+	Inherits: menu-button-pressed
+
+textfield-hover:
+	Inherits: menu-button-hover
+
+textfield-disabled:
+	Inherits: menu-button-disabled
+
+textfield-focused:
+	Inherits: menu-button-pressed
+
+# Solid opaque fill for scroll areas (settings, etc.) — not the pressed-button chrome.
+scrollpanel-bg:
+	Image: menupanel.png
+	PanelRegion: 2, 2, 6, 6, 240, 240, 6, 6
+
+# A copy of dialog2 (normal button)
+scrollpanel-button:
+	Inherits: button
+
+# A copy of button-hover
+scrollpanel-button-hover:
+	Inherits: button-hover
+
+# A copy of dialog3 (pressed button)
+scrollpanel-button-pressed:
+	Inherits: button-pressed
+
+# A copy of dialog2 (normal button)
+scrollpanel-button-disabled:
+	Inherits: button
+
+slider:
+	Image: dialog.png
+	Regions:
+		tick: 512, 1, 2, 4
+
+# A copy of dialog3 (pressed button)
+slider-track:
+	Inherits: button
+
+# A copy of dialog2 (normal button)
+slider-thumb:
+	Inherits: button
+
+# A copy of button-hover
+slider-thumb-hover:
+	Inherits: button-hover
+
+# A copy of dialog3 (pressed button)
+slider-thumb-pressed:
+	Inherits: button-pressed
+
+# A copy of dialog2 (normal button)
+slider-thumb-disabled:
+	Inherits: button-disabled
+
+# A copy of dialog3 (pressed button)
+checkbox:
+	Inherits: button-pressed
+
+checkmark-tick:
+	Image: buttons.png
+	Regions:
+		checked: 100, 157, 16, 16
+		checked-pressed: 204, 0, 16, 16
+		unchecked: 0, 0, 0, 0
+		unchecked-pressed: 204, 0, 16, 16
+
+checkmark-tick-highlighted:
+	Inherits: checkmark-tick
+
+checkmark-cross:
+	Image: buttons.png
+	Regions:
+		checked: 221, 0, 16, 16
+		checked-pressed: 238, 0, 16, 16
+		unchecked: 0, 0, 0, 0
+		unchecked-pressed: 238, 0, 16, 16
+
+checkmark-cross-highlighted:
+	Inherits: checkmark-cross
+
+checkmark-mute:
+	Image: buttons.png
+	Regions:
+		unchecked: 0, 170, 16, 16
+		unchecked-pressed: 17, 170, 16, 16
+		checked: 17, 170, 16, 16
+		checked-pressed: 0, 170, 16, 16
+
+checkmark-mute-highlighted:
+	Inherits: checkmark-mute
+
+checkbox-hover:
+	Image: dialog.png
+	PanelRegion: 641, 129, 2, 2, 122, 122, 2, 2
+
+checkbox-pressed:
+	Inherits: checkbox-hover
+
+# Same as button-disabled-pressed
+checkbox-disabled:
+	Image: dialog.png
+	PanelRegion: 641, 257, 2, 2, 122, 122, 2, 2
+
+# Same as button-highlighted-pressed
+checkbox-highlighted:
+	Image: dialog.png
+	PanelRegion: 897, 1, 2, 2, 122, 122, 2, 2
+
+checkbox-highlighted-hover:
+	Inherits: checkbox-highlighted
+
+checkbox-highlighted-pressed:
+	Inherits: checkbox-highlighted
+
+checkbox-highlighted-disabled:
+	Inherits: checkbox-disabled
+
+checkbox-toggle:
+
+checkbox-toggle-hover:
+	Inherits: button
+
+checkbox-toggle-pressed:
+	Inherits: checkbox-pressed
+
+checkbox-toggle-highlighted:
+
+checkbox-toggle-highlighted-hover:
+	Inherits: button-highlighted
+
+checkbox-toggle-highlighted-pressed:
+	Inherits: checkbox-highlighted-pressed
+
+scrollitem:
+
+# A copy of dialog2 (normal button)
+scrollitem-hover:
+	Inherits: button
+
+scrollitem-pressed:
+	Inherits: button
+
+scrollitem-highlighted:
+	Inherits: button-pressed
+
+scrollitem-nohover:
+
+scrollitem-nohover-highlighted:
+
+scrollheader:
+	Inherits: button
+
+scrollheader-highlighted:
+	Inherits: button
+
+menu-panel:
+	Image: menupanel.png
+	PanelRegion: 0, 0, 8, 8, 240, 240, 8, 8
+
+settings-panel:
+	# Reuse the solid menu panel (fully opaque). The old settingspanel art was
+	# semi-transparent and read as "broken" over the shellmap / battlefield.
+	Inherits: menu-panel
+
+menu-button:
+	Image: menubuttons.png
+	PanelRegion: 0, 0, 4, 4, 120, 120, 4, 4
+
+menu-button-hover:
+	Image: menubuttons.png
+	PanelRegion: 128, 0, 4, 4, 120, 120, 4, 4
+
+menu-button-pressed:
+	Image: menubuttons.png
+	PanelRegion: 256, 0, 4, 4, 120, 120, 4, 4
+
+menu-button-disabled:
+	Image: menubuttons.png
+	PanelRegion: 384, 0, 4, 4, 120, 120, 4, 4
+
+menu-button-highlighted:
+	Inherits: menu-button-hover
+
+menu-button-highlighted-hover:
+	Inherits: menu-button-hover
+
+menu-button-highlighted-pressed:
+	Inherits: menu-button-pressed
+
+menu-button-highlighted-disabled:
+	Inherits: menu-button-disabled
+
+mainmenu-border:
+	Image: dialog.png
+	PanelRegion: 648, 387, 40, 40, 40, 40, 40, 40
+
+# PanelRegion = ox, oy, left, top, centerW, centerH, right, bottom.
+# Center-only: stretch the full art rect; ignore the POT pad outside it.
+menu-bg-1:
+	Image: menubg1.png
+	PanelRegion: 0, 0, 0, 0, 1920, 1080, 0, 0
+	PanelSides: Center
+
+menu-bg-2:
+	Image: menubg2.png
+	PanelRegion: 0, 0, 0, 0, 1920, 1080, 0, 0
+	PanelSides: Center
+
+menu-bg-3:
+	Image: menubg3.png
+	PanelRegion: 0, 0, 0, 0, 1920, 1080, 0, 0
+	PanelSides: Center
+
+menu-bg-4:
+	Image: menubg4.png
+	PanelRegion: 0, 0, 0, 0, 1920, 1080, 0, 0
+	PanelSides: Center
+
+menu-bg-5:
+	Image: NUCLEAR-CRISIS-BG-01.png
+	PanelRegion: 0, 0, 0, 0, 2048, 1024, 0, 0
+	PanelSides: Center
+
+menu-bg-6:
+	Image: NUCLEAR-CRISIS-BG-02.png
+	PanelRegion: 0, 0, 0, 0, 2048, 1024, 0, 0
+	PanelSides: Center
+
+menu-bg-7:
+	Image: NUCLEAR-CRISIS-BG-03.png
+	PanelRegion: 0, 0, 0, 0, 2048, 1024, 0, 0
+	PanelSides: Center
+
+menu-bg-8:
+	Image: NUCLEAR-CRISIS-BG-04.png
+	PanelRegion: 0, 0, 0, 0, 2048, 1024, 0, 0
+	PanelSides: Center
+
+menu-bg-9:
+	Image: NUCLEAR-CRISIS-BG-05.png
+	PanelRegion: 0, 0, 0, 0, 2048, 1024, 0, 0
+	PanelSides: Center
+
+menu-bg-10:
+	Image: NUCLEAR-CRISIS-BG-06.png
+	PanelRegion: 0, 0, 0, 0, 2048, 1024, 0, 0
+	PanelSides: Center
+
+menu-bg-11:
+	Image: NUCLEAR-CRISIS-BG-07.png
+	PanelRegion: 0, 0, 0, 0, 2048, 1024, 0, 0
+	PanelSides: Center
+
+menu-bg-12:
+	Image: NUCLEAR-CRISIS-BG-08.png
+	PanelRegion: 0, 0, 0, 0, 2048, 1024, 0, 0
+	PanelSides: Center
+
+menu-bg-13:
+	Image: NUCLEAR-CRISIS-BG-09.png
+	PanelRegion: 0, 0, 0, 0, 2048, 1024, 0, 0
+	PanelSides: Center
+
+scrollpanel-decorations:
+	Image: buttons.png # TODO: Will need left and right arrows to be added to the artwork.
+	Regions:
+		down: 116, 140, 16, 16
+		down-disabled: 116, 140, 16, 16
+		up: 132, 140, 16, 16
+		up-disabled: 132, 140, 16, 16
+		right: 116, 140, 16, 16 # TODO: Placeholder coordinates.
+		right-disabled: 116, 140, 16, 16 # TODO: Placeholder coordinates.
+		left: 132, 140, 16, 16 # TODO: Placeholder coordinates.
+		left-disabled: 132, 140, 16, 16 # TODO: Placeholder coordinates.
+
+dropdown-decorations:
+	Image: buttons.png # TODO: This is a placeholder.
+	Regions:
+		marker: 116, 140, 16, 16
+		marker-disabled: 116, 140, 16, 16
+
+dropdown-separators:
+	Image: dialog.png
+	Regions:
+		separator: 513, 2, 1, 19
+		separator-hover: 513, 130, 1, 19
+		separator-pressed: 767, 1, 1, 19
+		separator-disabled: 513, 258, 1, 19
+		observer-separator: 769, 258, 1, 19
+
+separator:
+	Inherits: button
+
+# TODO: This is a placeholder.
+editor:
+	Image: buttons.png
+	Regions:
+		select: 51, 144, 16, 16
+		tiles: 0, 144, 16, 16
+		overlays: 17, 144, 16, 16
+		actors: 34, 68, 16, 16
+		tools: 34, 144, 16, 16
+		history: 136, 51, 16, 16
+		erase: 67, 144, 16, 16
+
+ios-touch-actions-allies:
+	Image: ios-touch-actions-allies.png
+	Image2x: ios-touch-actions-allies-2x.png
+	Regions:
+		ios-stop: 0, 0, 56, 56
+		ios-stop-disabled: 0, 64, 56, 56
+		ios-stop-hover: 0, 128, 56, 56
+		ios-stop-pressed: 0, 192, 56, 56
+		ios-stop-active: 0, 256, 56, 56
+		ios-stop-active-hover: 0, 320, 56, 56
+		ios-stop-active-pressed: 0, 384, 56, 56
+		ios-deploy: 64, 0, 56, 56
+		ios-deploy-disabled: 64, 64, 56, 56
+		ios-deploy-hover: 64, 128, 56, 56
+		ios-deploy-pressed: 64, 192, 56, 56
+		ios-deploy-active: 64, 256, 56, 56
+		ios-deploy-active-hover: 64, 320, 56, 56
+		ios-deploy-active-pressed: 64, 384, 56, 56
+		ios-select-type: 128, 0, 56, 56
+		ios-select-type-disabled: 128, 64, 56, 56
+		ios-select-type-hover: 128, 128, 56, 56
+		ios-select-type-pressed: 128, 192, 56, 56
+		ios-select-type-active: 128, 256, 56, 56
+		ios-select-type-active-hover: 128, 320, 56, 56
+		ios-select-type-active-pressed: 128, 384, 56, 56
+		ios-force-attack: 192, 0, 56, 56
+		ios-force-attack-disabled: 192, 64, 56, 56
+		ios-force-attack-hover: 192, 128, 56, 56
+		ios-force-attack-pressed: 192, 192, 56, 56
+		ios-force-attack-active: 192, 256, 56, 56
+		ios-force-attack-active-hover: 192, 320, 56, 56
+		ios-force-attack-active-pressed: 192, 384, 56, 56
+		ios-return-base: 256, 0, 56, 56
+		ios-return-base-disabled: 256, 64, 56, 56
+		ios-return-base-hover: 256, 128, 56, 56
+		ios-return-base-pressed: 256, 192, 56, 56
+		ios-return-base-active: 256, 256, 56, 56
+		ios-return-base-active-hover: 256, 320, 56, 56
+		ios-return-base-active-pressed: 256, 384, 56, 56
+
+ios-touch-actions-allies-highlighted:
+	Inherits: ios-touch-actions-allies
+	Regions:
+		ios-stop: 0, 256, 56, 56
+		ios-stop-hover: 0, 320, 56, 56
+		ios-stop-pressed: 0, 384, 56, 56
+		ios-deploy: 64, 256, 56, 56
+		ios-deploy-hover: 64, 320, 56, 56
+		ios-deploy-pressed: 64, 384, 56, 56
+		ios-select-type: 128, 256, 56, 56
+		ios-select-type-hover: 128, 320, 56, 56
+		ios-select-type-pressed: 128, 384, 56, 56
+		ios-force-attack: 192, 256, 56, 56
+		ios-force-attack-hover: 192, 320, 56, 56
+		ios-force-attack-pressed: 192, 384, 56, 56
+		ios-return-base: 256, 256, 56, 56
+		ios-return-base-hover: 256, 320, 56, 56
+		ios-return-base-pressed: 256, 384, 56, 56
+
+ios-touch-joystick-allies:
+	Image: ios-touch-joystick-allies.png
+	Image2x: ios-touch-joystick-allies-2x.png
+	Regions:
+		base: 0, 0, 144, 144
+		thumb: 160, 0, 64, 64
+		thumb-active: 160, 72, 64, 64
+
+ios-touch-quickbar-button-allies:
+	Image: ios-touch-quickbar-allies.png
+	Image2x: ios-touch-quickbar-allies-2x.png
+	PanelRegion: 0, 0, 0, 0, 48, 52, 0, 0
+	PanelSides: Center
+
+ios-touch-quickbar-button-allies-hover:
+	Image: ios-touch-quickbar-allies.png
+	Image2x: ios-touch-quickbar-allies-2x.png
+	PanelRegion: 64, 0, 0, 0, 48, 52, 0, 0
+	PanelSides: Center
+
+ios-touch-quickbar-button-allies-pressed:
+	Image: ios-touch-quickbar-allies.png
+	Image2x: ios-touch-quickbar-allies-2x.png
+	PanelRegion: 128, 0, 0, 0, 48, 52, 0, 0
+	PanelSides: Center
+
+ios-touch-quickbar-button-allies-highlighted:
+	Image: ios-touch-quickbar-allies.png
+	Image2x: ios-touch-quickbar-allies-2x.png
+	PanelRegion: 192, 0, 0, 0, 48, 52, 0, 0
+	PanelSides: Center
+
+ios-touch-quickbar-button-allies-highlighted-hover:
+	Image: ios-touch-quickbar-allies.png
+	Image2x: ios-touch-quickbar-allies-2x.png
+	PanelRegion: 256, 0, 0, 0, 48, 52, 0, 0
+	PanelSides: Center
+
+ios-touch-quickbar-button-allies-highlighted-pressed:
+	Image: ios-touch-quickbar-allies.png
+	Image2x: ios-touch-quickbar-allies-2x.png
+	PanelRegion: 320, 0, 0, 0, 48, 52, 0, 0
+	PanelSides: Center
+
+ios-touch-quickbar-button-allies-disabled:
+	Image: ios-touch-quickbar-allies.png
+	Image2x: ios-touch-quickbar-allies-2x.png
+	PanelRegion: 384, 0, 0, 0, 48, 52, 0, 0
+	PanelSides: Center
+
+ios-touch-quickbar-button-allies-highlighted-disabled:
+	Image: ios-touch-quickbar-allies.png
+	Image2x: ios-touch-quickbar-allies-2x.png
+	PanelRegion: 448, 0, 0, 0, 48, 52, 0, 0
+	PanelSides: Center
+
+ios-touch-quickbar-panel-allies:
+	Image: ios-touch-quickbar-allies.png
+	Image2x: ios-touch-quickbar-allies-2x.png
+	PanelRegion: 0, 64, 12, 12, 104, 40, 12, 12
+
+ios-touch-quickbar-panel-compact-allies:
+	Image: ios-touch-quickbar-allies.png
+	Image2x: ios-touch-quickbar-allies-2x.png
+	PanelRegion: 128, 64, 12, 12, 104, 40, 12, 12
+
+ios-touch-quickbar-toggle-allies:
+	Image: ios-touch-quickbar-allies.png
+	Image2x: ios-touch-quickbar-allies-2x.png
+	Regions:
+		collapse: 259, 67, 26, 26
+		expand: 291, 67, 26, 26
+
+ios-touch-actions-soviets:
+	Image: ios-touch-actions-soviets.png
+	Image2x: ios-touch-actions-soviets-2x.png
+	Regions:
+		ios-stop: 0, 0, 56, 56
+		ios-stop-disabled: 0, 64, 56, 56
+		ios-stop-hover: 0, 128, 56, 56
+		ios-stop-pressed: 0, 192, 56, 56
+		ios-stop-active: 0, 256, 56, 56
+		ios-stop-active-hover: 0, 320, 56, 56
+		ios-stop-active-pressed: 0, 384, 56, 56
+		ios-deploy: 64, 0, 56, 56
+		ios-deploy-disabled: 64, 64, 56, 56
+		ios-deploy-hover: 64, 128, 56, 56
+		ios-deploy-pressed: 64, 192, 56, 56
+		ios-deploy-active: 64, 256, 56, 56
+		ios-deploy-active-hover: 64, 320, 56, 56
+		ios-deploy-active-pressed: 64, 384, 56, 56
+		ios-select-type: 128, 0, 56, 56
+		ios-select-type-disabled: 128, 64, 56, 56
+		ios-select-type-hover: 128, 128, 56, 56
+		ios-select-type-pressed: 128, 192, 56, 56
+		ios-select-type-active: 128, 256, 56, 56
+		ios-select-type-active-hover: 128, 320, 56, 56
+		ios-select-type-active-pressed: 128, 384, 56, 56
+		ios-force-attack: 192, 0, 56, 56
+		ios-force-attack-disabled: 192, 64, 56, 56
+		ios-force-attack-hover: 192, 128, 56, 56
+		ios-force-attack-pressed: 192, 192, 56, 56
+		ios-force-attack-active: 192, 256, 56, 56
+		ios-force-attack-active-hover: 192, 320, 56, 56
+		ios-force-attack-active-pressed: 192, 384, 56, 56
+		ios-return-base: 256, 0, 56, 56
+		ios-return-base-disabled: 256, 64, 56, 56
+		ios-return-base-hover: 256, 128, 56, 56
+		ios-return-base-pressed: 256, 192, 56, 56
+		ios-return-base-active: 256, 256, 56, 56
+		ios-return-base-active-hover: 256, 320, 56, 56
+		ios-return-base-active-pressed: 256, 384, 56, 56
+
+ios-touch-actions-soviets-highlighted:
+	Inherits: ios-touch-actions-soviets
+	Regions:
+		ios-stop: 0, 256, 56, 56
+		ios-stop-hover: 0, 320, 56, 56
+		ios-stop-pressed: 0, 384, 56, 56
+		ios-deploy: 64, 256, 56, 56
+		ios-deploy-hover: 64, 320, 56, 56
+		ios-deploy-pressed: 64, 384, 56, 56
+		ios-select-type: 128, 256, 56, 56
+		ios-select-type-hover: 128, 320, 56, 56
+		ios-select-type-pressed: 128, 384, 56, 56
+		ios-force-attack: 192, 256, 56, 56
+		ios-force-attack-hover: 192, 320, 56, 56
+		ios-force-attack-pressed: 192, 384, 56, 56
+		ios-return-base: 256, 256, 56, 56
+		ios-return-base-hover: 256, 320, 56, 56
+		ios-return-base-pressed: 256, 384, 56, 56
+
+ios-touch-joystick-soviets:
+	Image: ios-touch-joystick-soviets.png
+	Image2x: ios-touch-joystick-soviets-2x.png
+	Regions:
+		base: 0, 0, 144, 144
+		thumb: 160, 0, 64, 64
+		thumb-active: 160, 72, 64, 64
+
+ios-touch-quickbar-button-soviets:
+	Image: ios-touch-quickbar-soviets.png
+	Image2x: ios-touch-quickbar-soviets-2x.png
+	PanelRegion: 0, 0, 0, 0, 48, 52, 0, 0
+	PanelSides: Center
+
+ios-touch-quickbar-button-soviets-hover:
+	Image: ios-touch-quickbar-soviets.png
+	Image2x: ios-touch-quickbar-soviets-2x.png
+	PanelRegion: 64, 0, 0, 0, 48, 52, 0, 0
+	PanelSides: Center
+
+ios-touch-quickbar-button-soviets-pressed:
+	Image: ios-touch-quickbar-soviets.png
+	Image2x: ios-touch-quickbar-soviets-2x.png
+	PanelRegion: 128, 0, 0, 0, 48, 52, 0, 0
+	PanelSides: Center
+
+ios-touch-quickbar-button-soviets-highlighted:
+	Image: ios-touch-quickbar-soviets.png
+	Image2x: ios-touch-quickbar-soviets-2x.png
+	PanelRegion: 192, 0, 0, 0, 48, 52, 0, 0
+	PanelSides: Center
+
+ios-touch-quickbar-button-soviets-highlighted-hover:
+	Image: ios-touch-quickbar-soviets.png
+	Image2x: ios-touch-quickbar-soviets-2x.png
+	PanelRegion: 256, 0, 0, 0, 48, 52, 0, 0
+	PanelSides: Center
+
+ios-touch-quickbar-button-soviets-highlighted-pressed:
+	Image: ios-touch-quickbar-soviets.png
+	Image2x: ios-touch-quickbar-soviets-2x.png
+	PanelRegion: 320, 0, 0, 0, 48, 52, 0, 0
+	PanelSides: Center
+
+ios-touch-quickbar-button-soviets-disabled:
+	Image: ios-touch-quickbar-soviets.png
+	Image2x: ios-touch-quickbar-soviets-2x.png
+	PanelRegion: 384, 0, 0, 0, 48, 52, 0, 0
+	PanelSides: Center
+
+ios-touch-quickbar-button-soviets-highlighted-disabled:
+	Image: ios-touch-quickbar-soviets.png
+	Image2x: ios-touch-quickbar-soviets-2x.png
+	PanelRegion: 448, 0, 0, 0, 48, 52, 0, 0
+	PanelSides: Center
+
+ios-touch-quickbar-panel-soviets:
+	Image: ios-touch-quickbar-soviets.png
+	Image2x: ios-touch-quickbar-soviets-2x.png
+	PanelRegion: 0, 64, 12, 12, 104, 40, 12, 12
+
+ios-touch-quickbar-panel-compact-soviets:
+	Image: ios-touch-quickbar-soviets.png
+	Image2x: ios-touch-quickbar-soviets-2x.png
+	PanelRegion: 128, 64, 12, 12, 104, 40, 12, 12
+
+ios-touch-quickbar-toggle-soviets:
+	Image: ios-touch-quickbar-soviets.png
+	Image2x: ios-touch-quickbar-soviets-2x.png
+	Regions:
+		collapse: 259, 67, 26, 26
+		expand: 291, 67, 26, 26
+
+ios-touch-actions-yuri:
+	Image: ios-touch-actions-yuri.png
+	Image2x: ios-touch-actions-yuri-2x.png
+	Regions:
+		ios-stop: 0, 0, 56, 56
+		ios-stop-disabled: 0, 64, 56, 56
+		ios-stop-hover: 0, 128, 56, 56
+		ios-stop-pressed: 0, 192, 56, 56
+		ios-stop-active: 0, 256, 56, 56
+		ios-stop-active-hover: 0, 320, 56, 56
+		ios-stop-active-pressed: 0, 384, 56, 56
+		ios-deploy: 64, 0, 56, 56
+		ios-deploy-disabled: 64, 64, 56, 56
+		ios-deploy-hover: 64, 128, 56, 56
+		ios-deploy-pressed: 64, 192, 56, 56
+		ios-deploy-active: 64, 256, 56, 56
+		ios-deploy-active-hover: 64, 320, 56, 56
+		ios-deploy-active-pressed: 64, 384, 56, 56
+		ios-select-type: 128, 0, 56, 56
+		ios-select-type-disabled: 128, 64, 56, 56
+		ios-select-type-hover: 128, 128, 56, 56
+		ios-select-type-pressed: 128, 192, 56, 56
+		ios-select-type-active: 128, 256, 56, 56
+		ios-select-type-active-hover: 128, 320, 56, 56
+		ios-select-type-active-pressed: 128, 384, 56, 56
+		ios-force-attack: 192, 0, 56, 56
+		ios-force-attack-disabled: 192, 64, 56, 56
+		ios-force-attack-hover: 192, 128, 56, 56
+		ios-force-attack-pressed: 192, 192, 56, 56
+		ios-force-attack-active: 192, 256, 56, 56
+		ios-force-attack-active-hover: 192, 320, 56, 56
+		ios-force-attack-active-pressed: 192, 384, 56, 56
+		ios-return-base: 256, 0, 56, 56
+		ios-return-base-disabled: 256, 64, 56, 56
+		ios-return-base-hover: 256, 128, 56, 56
+		ios-return-base-pressed: 256, 192, 56, 56
+		ios-return-base-active: 256, 256, 56, 56
+		ios-return-base-active-hover: 256, 320, 56, 56
+		ios-return-base-active-pressed: 256, 384, 56, 56
+
+ios-touch-actions-yuri-highlighted:
+	Inherits: ios-touch-actions-yuri
+	Regions:
+		ios-stop: 0, 256, 56, 56
+		ios-stop-hover: 0, 320, 56, 56
+		ios-stop-pressed: 0, 384, 56, 56
+		ios-deploy: 64, 256, 56, 56
+		ios-deploy-hover: 64, 320, 56, 56
+		ios-deploy-pressed: 64, 384, 56, 56
+		ios-select-type: 128, 256, 56, 56
+		ios-select-type-hover: 128, 320, 56, 56
+		ios-select-type-pressed: 128, 384, 56, 56
+		ios-force-attack: 192, 256, 56, 56
+		ios-force-attack-hover: 192, 320, 56, 56
+		ios-force-attack-pressed: 192, 384, 56, 56
+		ios-return-base: 256, 256, 56, 56
+		ios-return-base-hover: 256, 320, 56, 56
+		ios-return-base-pressed: 256, 384, 56, 56
+
+ios-touch-joystick-yuri:
+	Image: ios-touch-joystick-yuri.png
+	Image2x: ios-touch-joystick-yuri-2x.png
+	Regions:
+		base: 0, 0, 144, 144
+		thumb: 160, 0, 64, 64
+		thumb-active: 160, 72, 64, 64
+
+ios-touch-quickbar-button-yuri:
+	Image: ios-touch-quickbar-yuri.png
+	Image2x: ios-touch-quickbar-yuri-2x.png
+	PanelRegion: 0, 0, 0, 0, 48, 52, 0, 0
+	PanelSides: Center
+
+ios-touch-quickbar-button-yuri-hover:
+	Image: ios-touch-quickbar-yuri.png
+	Image2x: ios-touch-quickbar-yuri-2x.png
+	PanelRegion: 64, 0, 0, 0, 48, 52, 0, 0
+	PanelSides: Center
+
+ios-touch-quickbar-button-yuri-pressed:
+	Image: ios-touch-quickbar-yuri.png
+	Image2x: ios-touch-quickbar-yuri-2x.png
+	PanelRegion: 128, 0, 0, 0, 48, 52, 0, 0
+	PanelSides: Center
+
+ios-touch-quickbar-button-yuri-highlighted:
+	Image: ios-touch-quickbar-yuri.png
+	Image2x: ios-touch-quickbar-yuri-2x.png
+	PanelRegion: 192, 0, 0, 0, 48, 52, 0, 0
+	PanelSides: Center
+
+ios-touch-quickbar-button-yuri-highlighted-hover:
+	Image: ios-touch-quickbar-yuri.png
+	Image2x: ios-touch-quickbar-yuri-2x.png
+	PanelRegion: 256, 0, 0, 0, 48, 52, 0, 0
+	PanelSides: Center
+
+ios-touch-quickbar-button-yuri-highlighted-pressed:
+	Image: ios-touch-quickbar-yuri.png
+	Image2x: ios-touch-quickbar-yuri-2x.png
+	PanelRegion: 320, 0, 0, 0, 48, 52, 0, 0
+	PanelSides: Center
+
+ios-touch-quickbar-button-yuri-disabled:
+	Image: ios-touch-quickbar-yuri.png
+	Image2x: ios-touch-quickbar-yuri-2x.png
+	PanelRegion: 384, 0, 0, 0, 48, 52, 0, 0
+	PanelSides: Center
+
+ios-touch-quickbar-button-yuri-highlighted-disabled:
+	Image: ios-touch-quickbar-yuri.png
+	Image2x: ios-touch-quickbar-yuri-2x.png
+	PanelRegion: 448, 0, 0, 0, 48, 52, 0, 0
+	PanelSides: Center
+
+ios-touch-quickbar-panel-yuri:
+	Image: ios-touch-quickbar-yuri.png
+	Image2x: ios-touch-quickbar-yuri-2x.png
+	PanelRegion: 0, 64, 12, 12, 104, 40, 12, 12
+
+ios-touch-quickbar-panel-compact-yuri:
+	Image: ios-touch-quickbar-yuri.png
+	Image2x: ios-touch-quickbar-yuri-2x.png
+	PanelRegion: 128, 64, 12, 12, 104, 40, 12, 12
+
+ios-touch-quickbar-toggle-yuri:
+	Image: ios-touch-quickbar-yuri.png
+	Image2x: ios-touch-quickbar-yuri-2x.png
+	Regions:
+		collapse: 259, 67, 26, 26
+		expand: 291, 67, 26, 26

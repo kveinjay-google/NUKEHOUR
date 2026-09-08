@@ -1,0 +1,3 @@
+Include: manifest/common.yaml
+Include: manifest/gameplay-base.yaml
+Include: manifest/filesystem-ios-base.yaml

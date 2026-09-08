@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <IsPublishable Condition="'$(CopyCncDll)' == 'False'">false</IsPublishable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\OpenRA.Game\OpenRA.Game.csproj">
+      <Private>False</Private>
+    </ProjectReference>
+    <ProjectReference Include="..\OpenRA.Mods.Common\OpenRA.Mods.Common.csproj">
+      <Private>False</Private>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>OpenRA.iOS</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+</Project>

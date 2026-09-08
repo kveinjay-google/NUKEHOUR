@@ -1,0 +1,151 @@
+Container@INGAME_ROOT:
+	Logic: LoadIngamePlayerOrObserverUILogic
+	Children:
+		LogicKeyListener@GLOBAL_KEYHANDLER:
+			Logic: MusicHotkeyLogic, ScreenshotHotkeyLogic, MuteHotkeyLogic
+				StopMusicKey: StopMusic
+				PauseMusicKey: PauseMusic
+				PrevMusicKey: PrevMusic
+				NextMusicKey: NextMusic
+				TakeScreenshotKey: TakeScreenshot
+				MuteAudioKey: ToggleMute
+		LogicKeyListener@WORLD_KEYHANDLER:
+			Logic: CycleBasesHotkeyLogic, CycleProductionActorsHotkeyLogic, CycleHarvestersHotkeyLogic, JumpToLastEventHotkeyLogic, JumpToSelectedActorsHotkeyLogic, ResetZoomHotkeyLogic, TogglePlayerStanceColorHotkeyLogic, CycleStatusBarsHotkeyLogic, PauseHotkeyLogic, SelectUnitsByTypeHotkeyLogic, SelectAllUnitsHotkeyLogic
+				CycleBasesKey: CycleBase
+				CycleProductionActorsKey: CycleProductionBuildings
+				CycleHarvestersKey: CycleHarvesters
+				JumpToLastEventKey: ToLastEvent
+				JumpToSelectedActorsKey: ToSelection
+				ResetZoomKey: ResetZoom
+				TogglePlayerStanceColorKey: TogglePlayerStanceColor
+				CycleStatusBarsKey: CycleStatusBars
+				PauseKey: Pause
+				SelectAllUnitsKey: SelectAllUnits
+				SelectUnitsByTypeKey: SelectUnitsByType
+		Container@WORLD_ROOT:
+			Logic: LoadIngamePerfLogic
+			Children:
+				LogicTicker@DISCONNECT_WATCHER:
+					Logic: DisconnectWatcherLogic
+				Label@MISSION_TEXT:
+					X: WINDOW_WIDTH / 2 - 256
+					Y: 23
+					Width: 512
+					Height: 25
+					Font: Bold
+					Align: Center
+					Contrast: true
+				WorldInteractionController@INTERACTION_CONTROLLER:
+					Width: WINDOW_WIDTH
+					Height: WINDOW_HEIGHT
+				ViewportController:
+					Width: WINDOW_WIDTH
+					Height: WINDOW_HEIGHT
+					TooltipContainer: TOOLTIP_CONTAINER
+					ZoomInKey: ZoomIn
+					ZoomOutKey: ZoomOut
+					ScrollUpKey: MapScrollUp
+					ScrollDownKey: MapScrollDown
+					ScrollLeftKey: MapScrollLeft
+					ScrollRightKey: MapScrollRight
+					JumpToTopEdgeKey: MapJumpToTopEdge
+					JumpToBottomEdgeKey: MapJumpToBottomEdge
+					JumpToLeftEdgeKey: MapJumpToLeftEdge
+					JumpToRightEdgeKey: MapJumpToRightEdge
+					BookmarkSaveKeyPrefix: MapBookmarkSave
+					BookmarkRestoreKeyPrefix: MapBookmarkRestore
+					BookmarkKeyCount: 4
+				# Right-drag pans the map when the selection is empty.
+				# Listed after ViewportController so it receives mouse input first.
+				EmptySelectionMapScroll:
+					Width: WINDOW_WIDTH
+					Height: WINDOW_HEIGHT
+				VirtualViewportJoystick@IOS_VIEWPORT_JOYSTICK:
+					X: 20
+					Y: WINDOW_HEIGHT - HEIGHT - 90
+					Width: 128
+					Height: 128
+				Container@IOS_VIEWPORT_ACTIONS:
+					Logic: CommandBarLogic, IosViewportActionsLogic
+						HighlightOnButtonPress: True
+					X: 20
+					Y: WINDOW_HEIGHT - 296
+					Width: 226
+					Height: 206
+					Children:
+						Button@DEPLOY:
+							Logic: AddFactionSuffixLogic
+							Width: 56
+							Height: 56
+							Background: commandbar-button
+							DisableKeySound: true
+							Children:
+								Image@ICON:
+									Width: 56
+									Height: 56
+									ImageCollection: ios-touch-actions-allies
+									ImageName: ios-deploy
+									IgnoreMouseOver: true
+									StretchToFit: true
+								Label@LABEL:
+									Text: button-ios-viewport-action-deploy.label
+									Align: Center
+									VAlign: Middle
+									Font: TinyBold
+									TextColor: F8F4E8
+									Contrast: true
+									ContrastRadius: 1
+									IgnoreMouseOver: true
+						Button@SELECT_TYPE:
+							Logic: AddFactionSuffixLogic
+							Width: 56
+							Height: 56
+							Background: commandbar-button
+							Children:
+								Image@ICON:
+									Width: 56
+									Height: 56
+									ImageCollection: ios-touch-actions-allies
+									ImageName: ios-select-type
+									IgnoreMouseOver: true
+									StretchToFit: true
+								Label@LABEL:
+									Text: button-ios-viewport-action-select-type.label
+									Align: Center
+									VAlign: Middle
+									Font: TinyBold
+									TextColor: F8F4E8
+									Contrast: true
+									ContrastRadius: 1
+									IgnoreMouseOver: true
+						Button@FORCE_ATTACK:
+							Logic: AddFactionSuffixLogic
+							Width: 56
+							Height: 56
+							Background: commandbar-button
+							DisableKeySound: true
+							Children:
+								Image@ICON:
+									Width: 56
+									Height: 56
+									ImageCollection: ios-touch-actions-allies
+									ImageName: ios-force-attack
+									IgnoreMouseOver: true
+									StretchToFit: true
+								Label@LABEL:
+									Text: button-ios-viewport-action-force-attack.label
+									Align: Center
+									VAlign: Middle
+									Font: TinyBold
+									TextColor: F8F4E8
+									Contrast: true
+									ContrastRadius: 1
+									IgnoreMouseOver: true
+				StrategicProgress@STRATEGIC_PROGRESS:
+					X: WINDOW_WIDTH / 2
+					Y: 40
+				Container@PLAYER_ROOT:
+				Container@PERF_ROOT:
+		Container@MENU_ROOT:
+		TooltipContainer@TOOLTIP_CONTAINER:
+		MouseAttachment@MOUSE_ATTATCHMENT:

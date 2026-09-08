@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleDisplayName</key>
+  <string>NUKE HOUR</string>
+  <key>CFBundleDevelopmentRegion</key>
+  <string>en</string>
+  <key>CFBundleIdentifier</key>
+  <string>com.openra.ipad.personal</string>
+  <key>CFBundleLocalizations</key>
+  <array>
+    <string>en</string>
+    <string>zh-Hans</string>
+  </array>
+  <key>CFBundleName</key>
+  <string>NUKE HOUR</string>
+  <key>CFBundlePackageType</key>
+  <string>APPL</string>
+  <key>CFBundleShortVersionString</key>
+  <string>1.0</string>
+  <key>CFBundleVersion</key>
+  <string>4</string>
+  <key>XSAppIconAssets</key>
+  <string>Assets.xcassets/AppIcon.appiconset</string>
+  <key>UIDeviceFamily</key>
+  <array>
+    <integer>1</integer>
+    <integer>2</integer>
+  </array>
+  <key>UIApplicationSupportsIndirectInputEvents</key>
+  <true/>
+  <key>NSLocalNetworkUsageDescription</key>
+  <string>用于发现并连接同一局域网、个人热点或附近设备上的多人游戏。</string>
+  <key>NSBonjourServices</key>
+  <array>
+    <string>_openra-ra2._tcp</string>
+  </array>
+  <key>UIRequiresFullScreen</key>
+  <true/>
+  <!-- iOS 14+ generated launch screen opts iPhone out of the legacy 480x320
+       compatibility canvas without adding a fixed-size storyboard. -->
+  <key>UILaunchScreen</key>
+  <dict>
+    <key>UIColorName</key>
+    <string>LaunchBackground</string>
+  </dict>
+  <key>UISupportedInterfaceOrientations</key>
+  <array>
+    <string>UIInterfaceOrientationLandscapeLeft</string>
+    <string>UIInterfaceOrientationLandscapeRight</string>
+  </array>
+  <key>UISupportedInterfaceOrientations~iphone</key>
+  <array>
+    <string>UIInterfaceOrientationLandscapeLeft</string>
+    <string>UIInterfaceOrientationLandscapeRight</string>
+  </array>
+  <key>UISupportedInterfaceOrientations~ipad</key>
+  <array>
+    <string>UIInterfaceOrientationLandscapeLeft</string>
+    <string>UIInterfaceOrientationLandscapeRight</string>
+  </array>
+</dict>
+</plist>

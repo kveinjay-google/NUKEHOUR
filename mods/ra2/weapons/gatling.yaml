@@ -1,0 +1,69 @@
+AGGatling:
+	Inherits: ^MG
+	ReloadDelay: 16
+	Range: 5c0
+	Burst: 2
+	BurstDelays: 8
+	Report: vgatlo1a.wav, vgatlo2a.wav, vgatlo2b.wav, vgatlo2c.wav, vgatlo3a.wav
+	ValidTargets: Ground, Water
+	Projectile: InstantHit
+		Blockable: true
+	Warhead@1Dam: SpreadDamage
+		Damage: 25
+		ValidTargets: Ground, Water
+		Versus:
+			None: 100
+			Flak: 90
+			Plate: 80
+			Light: 40
+			Medium: 20
+			Heavy: 20
+			Wood: 20
+			Steel: 15
+			Concrete: 15
+			Drone: 200
+			Rocket: 50
+		DamageTypes: Prone70Percent, TriggerProne, BulletDeath
+	Warhead@2Eff: CreateEffect
+		Explosions: piffpiff
+		ValidTargets: Ground, Water
+
+AGGatlingE:
+	Inherits: AGGatling
+	ReloadDelay: 12
+	BurstDelays: 6
+
+AAGatling:
+	Inherits: ^MG
+	ReloadDelay: 16
+	Range: 8c0
+	Burst: 2
+	BurstDelays: 8
+	Report: vgatlo1a.wav, vgatlo2a.wav, vgatlo2b.wav, vgatlo2c.wav, vgatlo3a.wav
+	ValidTargets: Air
+	Projectile: InstantHit
+		Blockable: false
+	Warhead@1Dam: SpreadDamage
+		Damage: 25
+		ValidTargets: Air
+		Versus:
+			None: 100
+			Flak: 90
+			Plate: 80
+			Light: 65
+			Medium: 25
+			Heavy: 25
+			Wood: 0
+			Steel: 0
+			Concrete: 0
+			Drone: 100
+			Rocket: 100
+		DamageTypes: BulletDeath
+	Warhead@2Eff: CreateEffect
+		Explosions: piffpiff
+		ValidTargets: Air
+
+AAGatlingE:
+	Inherits: AAGatling
+	ReloadDelay: 12
+	BurstDelays: 6

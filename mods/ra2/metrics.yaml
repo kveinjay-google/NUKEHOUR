@@ -1,0 +1,23 @@
+Metrics:
+	FactionSuffix-america: allies
+	FactionSuffix-korea: allies
+	FactionSuffix-france: allies
+	FactionSuffix-germany: allies
+	FactionSuffix-england: allies
+	FactionSuffix-libya: soviets
+	FactionSuffix-cuba: soviets
+	FactionSuffix-iraq: soviets
+	FactionSuffix-russia: soviets
+	FactionSuffix-yuri: soviets
+	TouchFactionSuffix-america: allies
+	TouchFactionSuffix-korea: allies
+	TouchFactionSuffix-france: allies
+	TouchFactionSuffix-germany: allies
+	TouchFactionSuffix-england: allies
+	TouchFactionSuffix-libya: soviets
+	TouchFactionSuffix-cuba: soviets
+	TouchFactionSuffix-iraq: soviets
+	TouchFactionSuffix-russia: soviets
+	TouchFactionSuffix-yuri: yuri
+	IncompatibleVersionColor: D3D3D3
+	IncompatibleProtectedGameColor: B22222

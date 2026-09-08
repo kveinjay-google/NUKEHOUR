@@ -1,0 +1,616 @@
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
+
+:root {
+  color-scheme: dark;
+  --joy-size: 128px;
+  --thumb-size: calc(var(--joy-size) * .43);
+  --ring-radius: 127px;
+  --action-size: 56px;
+  --safe-top: max(12px, env(safe-area-inset-top)); --safe-right: max(12px, env(safe-area-inset-right));
+  --safe-bottom: max(12px, env(safe-area-inset-bottom)); --safe-left: max(12px, env(safe-area-inset-left));
+  --page: #090b0e; --panel: #11151a; --panel-line: #343b43;
+  --text: #f0f2f1; --muted: #9da6ad;
+  --shell: #13283a; --shell-deep: #07131e; --metal: #a8bac4; --edge: #dce8ec;
+  --accent: #67cde5; --force: #e59a3b;
+  --control-radius: 14px;
+  --material:
+    linear-gradient(145deg, #b8c7ce 0 5%, #4d6574 7% 15%, transparent 16%),
+    linear-gradient(155deg, #1d3d55 0 38%, #0a1a28 40% 72%, #314f61 74% 100%);
+  font-family: "Avenir Next Condensed", "DIN Condensed", "Helvetica Neue", system-ui, sans-serif;
+}
+
+body[data-faction="soviet"] {
+  --shell: #2c1817; --shell-deep: #100d0c; --metal: #827d74; --edge: #b4a894;
+  --accent: #e7a33e; --force: #d8392e;
+  --control-radius: 2px;
+  --material:
+    radial-gradient(circle at 14% 16%, #d2b377 0 2px, transparent 3px),
+    radial-gradient(circle at 86% 84%, #d2b377 0 2px, transparent 3px),
+    linear-gradient(145deg, #6d6962 0 12%, #262625 14% 46%, #421b19 48% 76%, #171414 78% 100%);
+}
+
+body[data-faction="yuri"] {
+  --shell: #17101d; --shell-deep: #09070c; --metal: #756a7d; --edge: #a990b0;
+  --accent: #c84ec7; --force: #91bd54;
+  --control-radius: 18px 5px 22px 8px;
+  --material:
+    radial-gradient(circle at 84% 18%, #7fac50 0 2px, transparent 3px),
+    linear-gradient(118deg, #4c3852 0 9%, #25152d 10% 28%, #0b0910 29% 59%, #492251 60% 64%, #15101a 65% 100%);
+}
+
+html, body { min-width: 320px; min-height: 100%; }
+
+body {
+  margin: 0; min-height: 100vh;
+  min-height: 100dvh; overflow-x: hidden; color: var(--text);
+  background: var(--page);
+}
+
+button {
+  min-width: 44px; min-height: 44px; border: 0; color: inherit;
+  font: 700 14px/1 "Avenir Next Condensed", "DIN Condensed", "Helvetica Neue", system-ui, sans-serif;
+  letter-spacing: .02em; white-space: nowrap; cursor: pointer;
+}
+
+button:focus-visible,
+.joystick:focus-visible {
+  outline: 3px solid var(--accent); outline-offset: 3px;
+}
+
+.review-header {
+  position: relative; z-index: 10; min-height: 84px;
+  display: flex; align-items: center; justify-content: space-between; gap: 24px;
+  padding: var(--safe-top) max(24px, var(--safe-right)) 12px max(24px, var(--safe-left));
+  border-bottom: 1px solid #2a3036;
+  background: #0d1014;
+}
+
+.review-kicker,
+.panel-label {
+  margin: 0 0 5px; color: var(--muted);
+  font-size: 11px; font-weight: 800; letter-spacing: .13em;
+}
+
+h1,
+h2,
+p,
+figure { margin-top: 0; }
+
+h1 {
+  margin-bottom: 0; font-size: clamp(25px, 3vw, 40px);
+  font-stretch: condensed; line-height: .96;
+}
+
+h2 {
+  margin-bottom: 0; font-size: 24px; line-height: 1;
+}
+
+.faction-selector,
+.review-control-row {
+  display: flex; align-items: center; gap: 6px;
+}
+
+.faction-button,
+.review-control-row button,
+.quickbar-toggle {
+  border: 1px solid #414850; border-radius: 7px; padding: 0 14px; background: #181d22;
+  box-shadow: inset 0 1px #ffffff0d;
+}
+
+.faction-button:hover,
+.review-control-row button:hover,
+.quickbar-toggle:hover {
+  border-color: #69747d; background: #20262c;
+}
+
+.faction-button:active,
+.review-control-row button:active,
+.quickbar-toggle:active {
+  transform: translateY(2px); box-shadow: inset 0 3px 6px #0008;
+}
+
+.faction-button[aria-pressed="true"],
+.review-control-row button[aria-pressed="true"] {
+  border-color: var(--accent); color: #f8fbfb;
+  background: color-mix(in srgb, var(--accent) 23%, #11161a);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.review-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(310px, 34vw, 520px);
+  min-height: calc(100vh - 84px);
+  min-height: calc(100dvh - 84px);
+}
+
+.stage {
+  position: relative; min-width: 0; background: #080a0c;
+}
+
+.battlefield {
+  position: relative; isolation: isolate;
+  min-height: calc(100vh - 84px);
+  min-height: calc(100dvh - 84px); overflow: hidden; background-color: #101615;
+  background-image:
+    linear-gradient(180deg, #04070a80, #020406d9),
+    radial-gradient(circle at 48% 44%, transparent 0 18%, #06100b52 52%, #020405cc 100%),
+    url("../../mods/ra2/uibits/NUCLEAR-CRISIS-BG-06.png");
+  background-position: center; background-size: cover;
+}
+
+.battlefield::before {
+  content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background:
+    linear-gradient(90deg, transparent 49.8%, #c7d6cf0b 50%, transparent 50.2%),
+    linear-gradient(transparent 49.8%, #c7d6cf0b 50%, transparent 50.2%);
+  background-size: 72px 72px;
+  mask-image: linear-gradient(to right, #000a, transparent 78%);
+}
+
+.control-cluster {
+  position: absolute; z-index: 3;
+  left: calc(var(--safe-left) + var(--ring-radius) + 12px);
+  bottom: calc(var(--safe-bottom) + 78px);
+  width: var(--joy-size); height: var(--joy-size);
+}
+
+.joystick {
+  position: absolute; inset: 0; width: var(--joy-size); height: var(--joy-size);
+  border: 3px solid var(--metal); border-radius: 50%; overflow: hidden;
+  touch-action: none; user-select: none;
+  background: var(--material), var(--shell);
+  box-shadow:
+    0 13px 30px #000c,
+    inset 0 0 0 7px var(--shell-deep),
+    inset 0 0 0 9px color-mix(in srgb, var(--metal) 62%, transparent),
+    inset 0 0 28px #000b;
+}
+
+.joystick::before {
+  content: ""; position: absolute; inset: 7%;
+  border: 1px solid color-mix(in srgb, var(--accent) 54%, transparent);
+  border-radius: inherit; pointer-events: none;
+}
+
+body[data-faction="allies"] .joystick::after {
+  content: ""; position: absolute; inset: 11%;
+  border-radius: 50%; opacity: .72;
+  background: repeating-conic-gradient(from -2deg, var(--edge) 0 1deg, transparent 1deg 30deg);
+  mask: radial-gradient(circle, transparent 0 76%, #000 78% 82%, transparent 84%);
+}
+
+body[data-faction="soviet"] .joystick {
+  border-radius: 20%;
+  clip-path: polygon(22% 0, 78% 0, 100% 22%, 100% 78%, 78% 100%, 22% 100%, 0 78%, 0 22%);
+  box-shadow: inset 0 0 0 8px #131313, inset 0 0 0 11px #5b231f, inset 0 0 25px #000c;
+}
+
+body[data-faction="soviet"] .joystick::before {
+  inset: 13%; border: 6px double #736f68; border-radius: 14%;
+}
+
+body[data-faction="yuri"] .joystick {
+  border-radius: 46% 54% 37% 63% / 57% 41% 59% 43%;
+  clip-path: polygon(11% 6%, 71% 0, 100% 25%, 91% 78%, 63% 100%, 6% 86%, 0 31%);
+  box-shadow: inset 0 0 0 8px #09070c, inset 0 0 24px #6c236e73;
+}
+
+body[data-faction="yuri"] .joystick::before {
+  inset: 10% 13% 15% 8%; border: 2px solid #8d5193;
+  border-radius: 43% 57% 65% 35%;
+  clip-path: polygon(0 0, 77% 0, 100% 30%, 79% 100%, 12% 87%);
+}
+
+.joystick-bearing {
+  position: absolute; inset: 22%;
+  border: 2px solid color-mix(in srgb, var(--accent) 62%, #222); border-radius: inherit;
+  box-shadow: inset 0 0 12px #000c;
+}
+
+.joystick-thumb {
+  position: absolute; left: 50%; top: 50%;
+  width: var(--thumb-size); height: var(--thumb-size);
+  border: 3px solid var(--edge); border-radius: 50%;
+  transform: translate(calc(-50% + var(--thumb-x, 0px)), calc(-50% + var(--thumb-y, 0px)));
+  background:
+    radial-gradient(circle at 34% 28%, #ffffffb8 0 4%, transparent 6%),
+    radial-gradient(circle, color-mix(in srgb, var(--accent) 58%, var(--shell)) 0 20%, var(--shell) 23% 58%, var(--shell-deep) 61%);
+  box-shadow: 0 7px 14px #000c, inset 0 0 0 4px #0007;
+  transition: transform 130ms cubic-bezier(.2, .85, .3, 1); pointer-events: none;
+}
+
+.joystick.is-dragging .joystick-thumb {
+  transition: none; box-shadow: 0 4px 9px #000d, inset 0 4px 8px #0008;
+}
+
+body[data-faction="soviet"] .joystick-thumb {
+  border-radius: 25%;
+  clip-path: polygon(20% 0, 80% 0, 100% 20%, 100% 80%, 80% 100%, 20% 100%, 0 80%, 0 20%);
+}
+
+body[data-faction="yuri"] .joystick-thumb {
+  border-radius: 54% 38% 56% 42%;
+  clip-path: polygon(18% 0, 93% 12%, 100% 67%, 62% 100%, 4% 79%, 0 28%);
+}
+
+.action-ring {
+  position: absolute; inset: 0; overflow: visible; pointer-events: none;
+}
+
+.action-button {
+  position: absolute; left: 50%; top: 50%;
+  width: var(--action-size); height: var(--action-size);
+  min-width: var(--action-size); min-height: var(--action-size); padding: 0;
+  transform: translate(calc(-50% + var(--action-x)), calc(-50% + var(--action-y)));
+  background: transparent; pointer-events: auto; touch-action: manipulation;
+}
+
+.action-face {
+  position: relative; isolation: isolate; width: 100%; height: 100%;
+  display: grid; place-items: center; overflow: hidden;
+  border: 3px solid var(--metal); border-radius: var(--control-radius); color: #f2f2ed;
+  background: var(--material), var(--shell);
+  box-shadow: 0 8px 13px #000c, inset 0 0 0 2px #0008, inset 0 1px var(--edge);
+  transition: transform 100ms ease, filter 100ms ease, box-shadow 120ms ease, color 120ms ease;
+}
+
+.action-face::before {
+  content: ""; position: absolute; inset: 5px; z-index: -1;
+  border: 1px solid color-mix(in srgb, var(--metal) 54%, transparent);
+  border-radius: inherit;
+}
+
+body[data-faction="soviet"] .action-face {
+  border-radius: 0;
+  clip-path: polygon(17% 0, 83% 0, 100% 17%, 100% 83%, 83% 100%, 17% 100%, 0 83%, 0 17%);
+}
+
+body[data-faction="yuri"] .action-face {
+  border-radius: 0;
+  clip-path: polygon(17% 0, 100% 12%, 86% 77%, 57% 100%, 0 85%, 7% 25%);
+}
+
+.action-glyph {
+  position: relative; z-index: 1; width: 31px; height: 31px;
+  fill: none; stroke: currentColor; stroke-width: 2.2;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+
+.action-button:hover .action-face {
+  color: var(--accent); filter: brightness(1.15);
+}
+
+.action-button:active .action-face,
+body[data-state="pressed"] .action-face {
+  transform: translateY(4px) scale(.96); filter: brightness(.72);
+  box-shadow: 0 2px 4px #000d, inset 0 6px 12px #000d;
+}
+
+body[data-state="active"] .action-face {
+  color: var(--accent); border-color: var(--accent);
+  box-shadow: 0 7px 13px #000c, 0 0 15px color-mix(in srgb, var(--accent) 58%, transparent), inset 0 0 11px color-mix(in srgb, var(--accent) 34%, transparent);
+}
+
+.action-button[data-action="force-attack"].is-active .action-face {
+  color: var(--force); border-color: var(--force);
+  box-shadow: 0 7px 13px #000c, 0 0 0 3px color-mix(in srgb, var(--force) 34%, transparent), inset 0 0 16px color-mix(in srgb, var(--force) 52%, transparent);
+}
+
+.action-button[data-action="force-attack"].is-active::after {
+  content: ""; position: absolute; right: -4px; top: -4px;
+  width: 11px; height: 11px; transform: rotate(45deg);
+  border: 2px solid #111; background: var(--force);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--force) 72%, transparent);
+}
+
+.quickbar {
+  position: absolute; z-index: 4; left: 50%; bottom: var(--safe-bottom);
+  min-width: 74px; min-height: 64px;
+  display: flex; align-items: center; gap: 5px; padding: 7px 10px;
+  transform: translateX(-50%);
+  border: 3px solid var(--metal); border-radius: var(--control-radius);
+  background: var(--material), var(--shell);
+  box-shadow: 0 10px 24px #000c, inset 0 0 0 2px #0009, inset 0 1px var(--edge);
+  transition: max-width 160ms ease, filter 120ms ease;
+}
+
+body[data-faction="soviet"] .quickbar {
+  border-radius: 0;
+  clip-path: polygon(10px 0, calc(100% - 10px) 0, 100% 10px, 100% calc(100% - 10px), calc(100% - 10px) 100%, 10px 100%, 0 calc(100% - 10px), 0 10px);
+}
+
+body[data-faction="yuri"] .quickbar {
+  border-radius: 0;
+  clip-path: polygon(16px 0, 78% 0, 100% 12px, calc(100% - 8px) 100%, 22% 93%, 0 calc(100% - 9px), 7px 15px);
+}
+
+.shortcut-slot {
+  position: relative; flex: 0 0 44px;
+  width: 44px; height: 44px; min-width: 44px; min-height: 44px;
+  display: grid; place-items: center; padding: 0;
+  border: 1px solid color-mix(in srgb, var(--metal) 70%, #131313);
+  border-radius: 5px; background: #090b0de8;
+  box-shadow: inset 0 2px 5px #000b;
+}
+
+body[data-faction="soviet"] .shortcut-slot {
+  border-radius: 0;
+  clip-path: polygon(6px 0, calc(100% - 6px) 0, 100% 6px, 100% calc(100% - 6px), calc(100% - 6px) 100%, 6px 100%, 0 calc(100% - 6px), 0 6px);
+}
+
+body[data-faction="yuri"] .shortcut-slot {
+  border-radius: 8px 2px 9px 3px;
+  clip-path: polygon(7px 0, 100% 4px, calc(100% - 4px) 100%, 3px calc(100% - 5px));
+}
+
+.shortcut-slot:active {
+  transform: translateY(3px); box-shadow: inset 0 6px 10px #000e;
+}
+
+.shortcut-glyph {
+  --sprite-y: -3px; width: 26px; height: 26px;
+  background-image: url("../../mods/ra2/uibits/ios-commandbar-icons-v2.png");
+  background-repeat: no-repeat;
+  background-position: var(--sprite-x) var(--sprite-y);
+}
+
+.shortcut-slot:hover .shortcut-glyph,
+.shortcut-slot:focus-visible .shortcut-glyph { --sprite-y: -67px; }
+body[data-state="active"] .shortcut-glyph,
+body[data-state="active"] .shortcut-slot:hover .shortcut-glyph,
+body[data-state="active"] .shortcut-slot:focus-visible .shortcut-glyph { --sprite-y: -99px; }
+body[data-state="disabled"] .shortcut-glyph,
+body[data-state="disabled"] .shortcut-slot:hover .shortcut-glyph,
+body[data-state="disabled"] .shortcut-slot:focus-visible .shortcut-glyph { --sprite-y: -35px; }
+
+.shortcut-slot img {
+  display: block; width: 32px; height: 32px; object-fit: contain; opacity: .88;
+}
+
+.shortcut-slot:hover img,
+body[data-state="active"] .shortcut-slot img { opacity: 1; }
+body[data-state="pressed"] .shortcut-glyph,
+body[data-state="pressed"] .shortcut-slot img { opacity: .72; transform: translateY(2px); }
+body[data-state="disabled"] .shortcut-slot img { opacity: .38; }
+
+.quickbar.is-collapsed .shortcut-slot { display: none; }
+
+.quickbar.is-collapsed::after {
+  content: ""; width: 32px; height: 12px;
+  border-top: 3px solid var(--accent); border-bottom: 3px solid var(--accent); opacity: .85;
+}
+
+body[data-state="pressed"] .joystick { filter: brightness(.74); }
+body[data-state="pressed"] .joystick,
+body[data-state="pressed"] .quickbar {
+  box-shadow: 0 3px 8px #000e, inset 0 7px 15px #000d;
+}
+
+body[data-state="active"] .joystick,
+body[data-state="active"] .quickbar {
+  border-color: var(--accent);
+  box-shadow: 0 10px 25px #000c, 0 0 16px color-mix(in srgb, var(--accent) 46%, transparent), inset 0 0 12px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+body[data-state="disabled"] .joystick,
+body[data-state="disabled"] .action-button,
+body[data-state="disabled"] .shortcut-slot {
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
+body[data-state="disabled"] .joystick,
+body[data-state="disabled"] .action-face { opacity: .42; filter: grayscale(.84) contrast(.72); }
+body[data-state="disabled"] .quickbar { opacity: .5; }
+
+.review-controls {
+  position: absolute; z-index: 8; top: 16px; right: max(16px, var(--safe-right));
+  width: min(342px, 45%); display: grid; gap: 9px; padding: 12px;
+  border: 1px solid #46505a; border-radius: 10px;
+  background: #090c10ed;
+  box-shadow: 0 12px 28px #0008, inset 0 1px #ffffff10;
+  backdrop-filter: blur(10px);
+}
+
+.control-label {
+  min-width: 34px; color: var(--muted); font-size: 12px; font-weight: 800;
+}
+
+.review-control-row button {
+  flex: 1; padding: 0 9px;
+}
+
+.quickbar-toggle { justify-self: stretch; }
+
+.concept-panel {
+  min-width: 0; display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 14px; padding: 22px;
+  border-left: 1px solid #2a3036;
+  background: var(--panel);
+}
+
+.concept-frame {
+  min-height: 0; display: grid; place-items: center;
+  margin-bottom: 0; overflow: hidden;
+  border: 1px solid var(--panel-line); border-radius: 10px;
+  background: #090b0e;
+}
+
+.concept-frame img {
+  display: block; width: 100%; height: 100%;
+  max-height: calc(100vh - 218px);
+  max-height: calc(100dvh - 218px); object-fit: contain;
+}
+
+.concept-note {
+  max-width: 38ch; margin-bottom: 0; color: var(--muted);
+  font-size: 13px; line-height: 1.45;
+}
+
+.comparison {
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  align-items: stretch;
+  min-height: calc(100vh - 84px);
+  min-height: calc(100dvh - 84px);
+  padding: 20px max(20px, var(--safe-right)) max(20px, var(--safe-bottom)) max(20px, var(--safe-left));
+  background: #0b0e12;
+}
+
+.comparison:not([hidden]) {
+  display: grid;
+}
+
+.comparison-card {
+  min-width: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  padding: 12px;
+  border: 1px solid #454c54;
+  border-radius: 10px;
+  background: #12161b;
+}
+
+.comparison-card[data-card-faction="allies"] {
+  border-radius: 16px;
+  border-color: #6f9aab;
+}
+
+.comparison-card[data-card-faction="soviet"] {
+  border-radius: 0;
+  border-color: #76534c;
+  clip-path: polygon(13px 0, calc(100% - 13px) 0, 100% 13px, 100% calc(100% - 13px), calc(100% - 13px) 100%, 13px 100%, 0 calc(100% - 13px), 0 13px);
+}
+
+.comparison-card[data-card-faction="yuri"] {
+  border-radius: 20px 4px 24px 8px;
+  border-color: #76577b;
+  background: #151019;
+}
+
+.comparison-card img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: contain;
+  background: #090b0e;
+}
+
+.comparison-card h2 {
+  margin: 12px 4px 2px;
+  font-size: 19px;
+}
+
+@media (max-width: 1100px) {
+  .review-header {
+    gap: 14px;
+    padding-left: max(16px, var(--safe-left));
+    padding-right: max(16px, var(--safe-right));
+  }
+
+  .review-kicker { display: none; }
+
+  .review-controls {
+    width: min(316px, 47%);
+  }
+
+  .concept-panel {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 900px), (max-height: 500px) {
+  .review-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    min-height: 56px;
+    padding: var(--safe-top) var(--safe-right) 0 var(--safe-left);
+    border-bottom: 0;
+    background: linear-gradient(#07090deb 0 70%, transparent);
+    pointer-events: none;
+  }
+
+  .title-block,
+  .compare-button,
+  .concept-panel,
+  .comparison {
+    display: none !important;
+  }
+
+  .faction-selector {
+    pointer-events: auto;
+  }
+
+  .faction-button {
+    padding: 0 13px;
+  }
+
+  .review-layout,
+  .battlefield {
+    display: block;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  .control-cluster {
+    left: calc(var(--safe-left) + var(--ring-radius) - 10px);
+    bottom: calc(var(--safe-bottom) + 76px);
+  }
+
+  .review-controls {
+    top: calc(var(--safe-top) + 58px);
+    right: var(--safe-right);
+    width: auto;
+    max-width: 48%;
+    grid-template-columns: auto auto;
+    padding: 7px;
+    background: #090c10dc;
+  }
+
+  .state-controls,
+  .control-label {
+    display: none;
+  }
+
+  .size-controls button {
+    flex: 0 0 44px;
+    padding: 0;
+  }
+
+  .quickbar-toggle {
+    padding: 0 11px;
+  }
+
+  .quickbar {
+    max-width: calc(100vw - var(--safe-left) - var(--safe-right) - 12px);
+    overflow: hidden;
+  }
+}
+
+@media (max-width: 620px) {
+  .review-controls {
+    display: none;
+  }
+
+  .quickbar {
+    left: auto;
+    right: var(--safe-right);
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+  }
+}

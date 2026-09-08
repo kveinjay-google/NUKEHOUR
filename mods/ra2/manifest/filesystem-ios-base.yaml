@@ -1,0 +1,45 @@
+PackageFormats: Mix, AudioBag
+FileSystem: ContentInstallerFileSystem
+	SystemPackages:
+		^EngineDir
+		$ra2: ra2
+		$ts: ts
+		^EngineDir|mods/common: common
+		~^SupportDir|Content/ra2: content
+	ContentInstallerMod: ra2-content
+	ContentPackages:
+		# Red Alert 2
+		ra2.mix
+		language.mix
+		audio.mix
+		cache.mix
+		cameo.mix
+		conquer.mix: conquer
+		generic.mix
+		isogen.mix
+		isosnow.mix
+		isotemp.mix
+		isourb.mix
+		load.mix
+		local.mix
+		neutral.mix
+		sidec01.mix
+		sidec02.mix
+		sno.mix
+		snow.mix
+		tem.mix
+		temperat.mix
+		urb.mix
+		urban.mix
+		audio.bag
+		~theme.mix
+		# Below are mod-provided (system) packages that need to be loaded after the content packages so they can override content assets.
+		ra2|bits
+		ra2|bits/cameos
+		ra2|bits/structures
+		ra2|bits/animations
+		ra2|bits/projectiles
+		ra2|uibits
+MapFolders:
+	ra2|maps: System
+	^SupportDir|Content/ra2/maps: User

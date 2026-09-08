@@ -1,0 +1,411 @@
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/Ingame/IosSupportPowerLayoutPolicy.cs b/OpenRA.Mods.Common/Widgets/Logic/Ingame/IosSupportPowerLayoutPolicy.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/Ingame/IosSupportPowerLayoutPolicy.cs	2026-08-30 00:23:42
++++ b/OpenRA.Mods.Common/Widgets/Logic/Ingame/IosSupportPowerLayoutPolicy.cs	2026-08-30 00:23:42
+@@ -204,9 +204,17 @@
+ 			var expandedObstacles = obstacles.Visible
+ 				.Select(o => Expand(o.Bounds, margin))
+ 				.ToArray();
+-			var cells = compact
+-				? PlaceCompact(iconCount, placementBounds, cellSize, gap, expandedObstacles)
+-				: PlaceTablet(iconCount, placementBounds, cellSize, gap, expandedObstacles);
++			IReadOnlyList<Rectangle> cells;
++			if (compact)
++			{
++				cells = obstacles.Production.Visible
++					? PlaceCompactBesideProduction(
++						iconCount, placementBounds, cellSize, gap,
++						Expand(obstacles.Production.Bounds, margin), expandedObstacles)
++					: PlaceCompact(iconCount, placementBounds, cellSize, gap, expandedObstacles);
++			}
++			else
++				cells = PlaceTablet(iconCount, placementBounds, cellSize, gap, expandedObstacles);
+ 
+ 			if (cells.Count != iconCount)
+ 				return new IosSupportPowerLayout(
+@@ -236,6 +244,33 @@
+ 					x >= interval.Left && cells.Count < count;
+ 					x -= cellSize.Width + gap)
+ 					cells.Add(new Rectangle(x, y, cellSize.Width, cellSize.Height));
++			}
++
++			return cells;
++		}
++
++		static IReadOnlyList<Rectangle> PlaceCompactBesideProduction(
++			int count,
++			Rectangle placement,
++			Size cellSize,
++			int gap,
++			Rectangle expandedProduction,
++			IReadOnlyList<Rectangle> expandedObstacles)
++		{
++			var cells = new List<Rectangle>(count);
++			var rightBoundary = Math.Min(placement.Right, expandedProduction.Left);
++			for (var x = rightBoundary - cellSize.Width;
++				x >= placement.Left && cells.Count < count;
++				x -= cellSize.Width + gap)
++			{
++				for (var y = placement.Bottom - cellSize.Height;
++					y >= placement.Top && cells.Count < count;
++					y -= cellSize.Height + gap)
++				{
++					var candidate = new Rectangle(x, y, cellSize.Width, cellSize.Height);
++					if (placement.Contains(candidate) && !IntersectsAny(candidate, expandedObstacles))
++						cells.Add(candidate);
++				}
+ 			}
+ 
+ 			return cells;
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/Ingame/SupportPowerBinLogic.cs b/OpenRA.Mods.Common/Widgets/Logic/Ingame/SupportPowerBinLogic.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/Ingame/SupportPowerBinLogic.cs	2026-08-30 00:23:42
++++ b/OpenRA.Mods.Common/Widgets/Logic/Ingame/SupportPowerBinLogic.cs	2026-08-30 00:23:42
+@@ -62,7 +62,7 @@
+ 			var resolution = Game.Renderer.Resolution;
+ 			var snapshot = IosScreenMetrics.SnapshotFor(resolution);
+ 			var obstacles = new IosSupportPowerObstacles(
+-				GetObstacle("SIDEBAR_PRODUCTION"),
++				GetProductionObstacle(),
+ 				GetObstacle("COMMAND_BAR_BACKGROUND"),
+ 				GetObstacle("IOS_VIEWPORT_JOYSTICK"),
+ 				GetObstacle("IOS_VIEWPORT_ACTIONS"));
+@@ -99,6 +99,65 @@
+ 				return default;
+ 
+ 			return new IosSupportPowerObstacle(obstacle.RenderBounds, true);
++		}
++
++		static IosSupportPowerObstacle GetProductionObstacle()
++		{
++			var production = Ui.Root.GetOrNull("SIDEBAR_PRODUCTION");
++			var backgroundTop = Ui.Root.GetOrNull("SIDEBAR_BACKGROUND_TOP");
++			return CombineVisibleObstacleCore(production, backgroundTop);
++		}
++
++		public static IosSupportPowerObstacle CombineVisibleObstacle(Widget requiredAnchor, params Widget[] relatedRoots)
++		{
++			if (relatedRoots == null || relatedRoots.Length <= 1)
++			{
++				var relatedRoot = relatedRoots == null || relatedRoots.Length == 0 ? null : relatedRoots[0];
++				return CombineVisibleObstacleCore(requiredAnchor, relatedRoot);
++			}
++
++			if (!TryGetVisibleAnchorBounds(requiredAnchor, out var bounds))
++				return default;
++
++			foreach (var root in relatedRoots)
++				UnionVisibleSubtree(root, ref bounds);
++
++			return new IosSupportPowerObstacle(bounds, true);
++		}
++
++		static IosSupportPowerObstacle CombineVisibleObstacleCore(Widget requiredAnchor, Widget relatedRoot)
++		{
++			if (!TryGetVisibleAnchorBounds(requiredAnchor, out var bounds))
++				return default;
++
++			UnionVisibleSubtree(relatedRoot, ref bounds);
++			return new IosSupportPowerObstacle(bounds, true);
++		}
++
++		static bool TryGetVisibleAnchorBounds(Widget requiredAnchor, out Rectangle bounds)
++		{
++			bounds = default;
++			if (requiredAnchor == null || !requiredAnchor.IsVisible())
++				return false;
++
++			bounds = requiredAnchor.RenderBounds;
++			UnionVisibleDescendants(requiredAnchor, ref bounds);
++			return true;
++		}
++
++		static void UnionVisibleDescendants(Widget widget, ref Rectangle bounds)
++		{
++			foreach (var child in widget.Children)
++				UnionVisibleSubtree(child, ref bounds);
++		}
++
++		static void UnionVisibleSubtree(Widget widget, ref Rectangle bounds)
++		{
++			if (widget == null || !widget.IsVisible())
++				return;
++
++			bounds = Rectangle.Union(bounds, widget.RenderBounds);
++			UnionVisibleDescendants(widget, ref bounds);
+ 		}
+ 
+ 		void UpdateLegacyLayers(int _, int icons)
+diff -ruN a/OpenRA.Test/IosSupportPowerLayoutPolicyTest.cs b/OpenRA.Test/IosSupportPowerLayoutPolicyTest.cs
+--- a/OpenRA.Test/IosSupportPowerLayoutPolicyTest.cs	2026-08-30 00:23:42
++++ b/OpenRA.Test/IosSupportPowerLayoutPolicyTest.cs	2026-08-30 00:23:42
+@@ -48,6 +48,22 @@
+ 				false).SetName("iPad_1366x1024");
+ 		}
+ 
++		static IEnumerable<TestCaseData> CompactSidebarCases()
++		{
++			foreach (var snapshot in new[]
++			{
++				new IosScreenSnapshot(
++					new Size(844, 390), new Size(844, 390), new IosSafeAreaInsets(47, 0, 34, 21)),
++				new IosScreenSnapshot(
++					new Size(932, 430), new Size(932, 430), new IosSafeAreaInsets(59, 0, 41, 21)),
++				new IosScreenSnapshot(
++					new Size(1558, 720), new Size(844, 390), new IosSafeAreaInsets(47, 0, 47, 21))
++			})
++				foreach (var count in IconCounts)
++					yield return new TestCaseData(snapshot, count)
++						.SetName($"effective{snapshot.EffectiveSize.Width}x{snapshot.EffectiveSize.Height}_count{count}");
++		}
++
+ 		static IosSupportPowerObstacles ObstaclesFor(IosScreenSnapshot snapshot)
+ 		{
+ 			var safe = snapshot.SafeBounds;
+@@ -123,6 +139,121 @@
+ 		}
+ 
+ 		[Test]
++		public void CompactPhoneAnchorsEverySupportPowerOutsideTheProductionSidebarLeftEdge()
++		{
++			var snapshot = new IosScreenSnapshot(
++				new Size(1558, 720), new Size(844, 390), new IosSafeAreaInsets(47, 0, 47, 21));
++			var existing = ObstaclesFor(snapshot);
++			var production = new IosSupportPowerObstacle(
++				new Rectangle(1324, 275, 234, 250), true);
++			var obstacles = new IosSupportPowerObstacles(
++				production, existing.CommandBar, existing.Joystick, existing.Actions);
++			var fullSidebar = new Rectangle(
++				production.Bounds.Left, snapshot.SafeBounds.Top, production.Bounds.Width,
++				snapshot.SafeBounds.Bottom - snapshot.SafeBounds.Top);
++			var layout = IosSupportPowerLayoutPolicy.Create(true, snapshot, 6, obstacles);
++
++			Assert.Multiple(() =>
++			{
++				Assert.That(layout.FitsAll, Is.True);
++				Assert.That(layout.HasOverride, Is.True);
++				Assert.That(layout.Cells.Count, Is.EqualTo(6));
++			});
++			Assert.That(layout.Cells.Max(cell => cell.Right),
++				Is.EqualTo(production.Bounds.Left - layout.Margin));
++			foreach (var cell in layout.Cells)
++			{
++				Assert.That(layout.PlacementBounds.Contains(cell), Is.True, cell.ToString());
++				Assert.That(cell.IntersectsWith(Expand(fullSidebar, layout.Margin)), Is.False,
++					$"cell={cell}, full sidebar={fullSidebar}");
++			}
++
++			AssertCellsAreSafe(layout, obstacles);
++		}
++
++		[TestCaseSource(nameof(CompactSidebarCases))]
++		public void CompactPhoneSidebarMatrixStaysOutsideTheRightmostSidebar(IosScreenSnapshot snapshot, int count)
++		{
++			var sidebar = new Rectangle(
++				snapshot.EffectiveSize.Width - 234, snapshot.SafeBounds.Top, 234,
++				snapshot.SafeBounds.Bottom - snapshot.SafeBounds.Top);
++			var occupied = ObstaclesFor(snapshot);
++			var obstacles = new IosSupportPowerObstacles(
++				new IosSupportPowerObstacle(sidebar, true),
++				occupied.CommandBar, occupied.Joystick, occupied.Actions);
++			var layout = IosSupportPowerLayoutPolicy.Create(true, snapshot, count, obstacles);
++
++			Assert.Multiple(() =>
++			{
++				Assert.That(layout.FitsAll, Is.True, $"count={count}");
++				Assert.That(layout.HasOverride, Is.True, $"count={count}");
++				Assert.That(layout.Cells.Count, Is.EqualTo(count), $"count={count}");
++			});
++			if (count == 0)
++				return;
++
++			Assert.That(layout.Cells.Max(cell => cell.Right),
++				Is.EqualTo(sidebar.Left - layout.Margin), $"count={count}");
++			AssertCellsAreSafe(layout, obstacles);
++		}
++
++		[Test]
++		public void CompactPhoneFillsEachSidebarColumnBottomToTopThenExpandsOnlyLeft()
++		{
++			var snapshot = new IosScreenSnapshot(
++				new Size(844, 390), new Size(844, 390), new IosSafeAreaInsets(47, 0, 34, 21));
++			var sidebar = new Rectangle(snapshot.EffectiveSize.Width - 234, 0, 234, snapshot.EffectiveSize.Height);
++			var obstacles = new IosSupportPowerObstacles(
++				new IosSupportPowerObstacle(sidebar, true), default, default, default);
++			var layout = IosSupportPowerLayoutPolicy.Create(true, snapshot, 12, obstacles);
++
++			Assert.Multiple(() =>
++			{
++				Assert.That(layout.FitsAll, Is.True);
++				Assert.That(layout.HasOverride, Is.True);
++				Assert.That(layout.Cells.Count, Is.EqualTo(12));
++			});
++
++			var columns = new List<List<Rectangle>>();
++			foreach (var cell in layout.Cells)
++			{
++				if (columns.Count == 0 || columns[^1][0].X != cell.X)
++					columns.Add(new List<Rectangle>());
++				columns[^1].Add(cell);
++			}
++
++			var firstX = columns[0][0].X;
++			var availableYs = new List<int>();
++			for (var y = layout.PlacementBounds.Bottom - layout.CellSize.Height;
++				y >= layout.PlacementBounds.Top;
++				y -= layout.CellSize.Height + layout.Gap)
++			{
++				var candidate = new Rectangle(firstX, y, layout.CellSize.Width, layout.CellSize.Height);
++				if (layout.PlacementBounds.Contains(candidate) &&
++					!candidate.IntersectsWith(Expand(sidebar, layout.Margin)))
++					availableYs.Add(y);
++			}
++
++			Assert.That(availableYs, Is.Not.Empty);
++			Assert.That(columns[0].Count, Is.EqualTo(availableYs.Count));
++			for (var columnIndex = 0; columnIndex < columns.Count; columnIndex++)
++			{
++				var column = columns[columnIndex];
++				Assert.That(column[0].Y, Is.EqualTo(availableYs[0]));
++				CollectionAssert.AreEqual(availableYs.Take(column.Count), column.Select(cell => cell.Y).ToArray());
++				if (columnIndex > 0)
++					Assert.That(column[0].X, Is.LessThan(columns[columnIndex - 1][0].X));
++				if (columnIndex < columns.Count - 1)
++					Assert.That(column.Count, Is.EqualTo(availableYs.Count));
++			}
++
++			for (var i = 1; i < layout.Cells.Count; i++)
++				Assert.That(layout.Cells[i].X, Is.LessThanOrEqualTo(layout.Cells[i - 1].X));
++
++			AssertCellsAreSafe(layout, obstacles);
++		}
++
++		[Test]
+ 		public void CompactPhoneStartsAtLowerRightAndFlowsRightToLeftThenUp()
+ 		{
+ 			var snapshot = new IosScreenSnapshot(
+@@ -223,6 +354,22 @@
+ 		}
+ 
+ 		[Test]
++		public void CompactPhoneUsesGenericBottomRightFallbackWhenProductionIsMissingOrHidden()
++		{
++			var snapshot = new IosScreenSnapshot(
++				new Size(844, 390), new Size(844, 390), new IosSafeAreaInsets(47, 0, 34, 21));
++			var missing = IosSupportPowerLayoutPolicy.Create(true, snapshot, 7, default);
++			var hidden = new IosSupportPowerObstacles(
++				new IosSupportPowerObstacle(new Rectangle(610, 0, 234, 390), false),
++				default, default, default);
++			var hiddenResult = IosSupportPowerLayoutPolicy.Create(true, snapshot, 7, hidden);
++
++			Assert.That(missing.Mode, Is.EqualTo(IosSupportPowerLayoutMode.CompactBottomRight));
++			Assert.That(hiddenResult.Mode, Is.EqualTo(IosSupportPowerLayoutMode.CompactBottomRight));
++			CollectionAssert.AreEqual(missing.Cells, hiddenResult.Cells);
++		}
++
++		[Test]
+ 		public void HiddenObstacleBoundsDoNotInvalidateAStableSignature()
+ 		{
+ 			var snapshot = new IosScreenSnapshot(
+@@ -467,6 +614,86 @@
+ 		}
+ 
+ 		[Test]
++		public void ProductionObstacleUnionsTheVisibleProductionAndTopRoots()
++		{
++			var production = new ContainerWidget { Bounds = new WidgetBounds(700, 80, 100, 200) };
++			var top = new ContainerWidget { Bounds = new WidgetBounds(100, 20, 180, 40) };
++
++			var obstacle = SupportPowerBinLogic.CombineVisibleObstacle(production, top);
++
++			Assert.That(obstacle, Is.EqualTo(
++				new IosSupportPowerObstacle(new Rectangle(100, 20, 700, 260), true)));
++		}
++
++		[Test]
++		public void ProductionObstacleIncludesVisibleDescendantsBeyondTheirParentBounds()
++		{
++			var production = new ContainerWidget { Bounds = new WidgetBounds(700, 80, 100, 200) };
++			var child = new ContainerWidget { Bounds = new WidgetBounds(10, 150, 40, 50) };
++			child.AddChild(new ContainerWidget { Bounds = new WidgetBounds(0, 100, 150, 50) });
++			production.AddChild(child);
++
++			var obstacle = SupportPowerBinLogic.CombineVisibleObstacle(production);
++
++			Assert.That(obstacle, Is.EqualTo(
++				new IosSupportPowerObstacle(new Rectangle(700, 80, 160, 300), true)));
++		}
++
++		[Test]
++		public void ProductionObstacleExcludesAnEntireHiddenChildSubtree()
++		{
++			var production = new ContainerWidget { Bounds = new WidgetBounds(700, 80, 100, 200) };
++			var hidden = new ContainerWidget
++			{
++				Bounds = new WidgetBounds(10, 150, 40, 50),
++				Visible = false
++			};
++			hidden.AddChild(new ContainerWidget { Bounds = new WidgetBounds(0, 150, 150, 50) });
++			production.AddChild(hidden);
++
++			var obstacle = SupportPowerBinLogic.CombineVisibleObstacle(production);
++
++			Assert.That(obstacle, Is.EqualTo(
++				new IosSupportPowerObstacle(new Rectangle(700, 80, 100, 200), true)));
++		}
++
++		[Test]
++		public void ProductionObstacleIgnoresAMissingRelatedRoot()
++		{
++			var production = new ContainerWidget { Bounds = new WidgetBounds(700, 80, 100, 200) };
++
++			var obstacle = SupportPowerBinLogic.CombineVisibleObstacle(production, null);
++
++			Assert.That(obstacle, Is.EqualTo(
++				new IosSupportPowerObstacle(new Rectangle(700, 80, 100, 200), true)));
++		}
++
++		[Test]
++		public void HiddenProductionAnchorReturnsNoObstacleEvenWhenTopRootIsVisible()
++		{
++			var production = new ContainerWidget
++			{
++				Bounds = new WidgetBounds(700, 80, 100, 200),
++				Visible = false
++			};
++			var top = new ContainerWidget { Bounds = new WidgetBounds(100, 20, 180, 40) };
++
++			var obstacle = SupportPowerBinLogic.CombineVisibleObstacle(production, top);
++
++			Assert.That(obstacle, Is.EqualTo(default(IosSupportPowerObstacle)));
++		}
++
++		[Test]
++		public void NullProductionAnchorReturnsNoObstacle()
++		{
++			var top = new ContainerWidget { Bounds = new WidgetBounds(100, 20, 180, 40) };
++
++			var obstacle = SupportPowerBinLogic.CombineVisibleObstacle(null, top);
++
++			Assert.That(obstacle, Is.EqualTo(default(IosSupportPowerObstacle)));
++		}
++
++		[Test]
+ 		public void RuntimeWidgetsConsumeTheExecutablePolicies()
+ 		{
+ 			var provider = typeof(SupportPowersWidget).GetField("CellProvider");
+@@ -495,10 +722,15 @@
+ 				StringAssert.Contains("IosScreenMetrics.SnapshotFor", bin);
+ 				foreach (var id in new[]
+ 				{
+-					"SIDEBAR_PRODUCTION", "COMMAND_BAR_BACKGROUND",
++					"SIDEBAR_PRODUCTION", "SIDEBAR_BACKGROUND_TOP", "COMMAND_BAR_BACKGROUND",
+ 					"IOS_VIEWPORT_JOYSTICK", "IOS_VIEWPORT_ACTIONS"
+ 				})
+ 					StringAssert.Contains(id, bin);
++				StringAssert.Contains("GetProductionObstacle()", bin);
++				StringAssert.Contains("CombineVisibleObstacleCore(production, backgroundTop)", bin);
++				StringAssert.Contains("if (relatedRoots == null || relatedRoots.Length <= 1)", bin);
++				StringAssert.Contains("return CombineVisibleObstacleCore(requiredAnchor, relatedRoot);", bin);
++				StringAssert.Contains("new IosSupportPowerObstacles(\n\t\t\t\tGetProductionObstacle(),", bin);
+ 				StringAssert.Contains("layoutTracker.RunIfChanged", bin);
+ 				StringAssert.Contains("palette.RefreshIcons()", bin);
+ 				StringAssert.Contains("IosSupportPowerCellPolicy.PlaceTemplate", bin);

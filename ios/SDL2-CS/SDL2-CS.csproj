@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>SDL2-CS</AssemblyName>
+    <RootNamespace>SDL2</RootNamespace>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <DefineConstants>IOS</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="src/SDL2.cs" />
+  </ItemGroup>
+</Project>

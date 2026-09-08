@@ -1,0 +1,175 @@
+Container@GAME_INFO_PANEL:
+	# Anchored inside INGAME_MENU / PANEL_ROOT (not free-floating on the window).
+	X: 0
+	Y: 0
+	Width: PARENT_WIDTH
+	Height: PARENT_HEIGHT
+	Logic: GameInfoLogic
+	Visible: False
+	Children:
+		# Shell already provides chrome — hide the separate dialog frame.
+		Background@BACKGROUND:
+			Width: PARENT_WIDTH
+			Height: PARENT_HEIGHT
+			Visible: False
+		Label@TITLE:
+			Y: 16
+			Width: PARENT_WIDTH
+			Height: 28
+			Align: Center
+			Font: Bold
+			Shadow: true
+			TextColor: F0C040
+		Container@TAB_CONTAINER_2:
+			X: (PARENT_WIDTH - WIDTH) / 2
+			Width: 320
+			Height: 36
+			Visible: False
+			Children:
+				Button@BUTTON1:
+					Y: 52
+					Width: 160
+					Height: 34
+					VisualHeight: 0
+					Background: menu-button
+					Font: Bold
+				Button@BUTTON2:
+					X: 160
+					Y: 52
+					Width: 160
+					Height: 34
+					VisualHeight: 0
+					Background: menu-button
+					Font: Bold
+		Container@TAB_CONTAINER_3:
+			X: (PARENT_WIDTH - WIDTH) / 2
+			Width: 480
+			Height: 36
+			Visible: False
+			Children:
+				Button@BUTTON1:
+					Y: 52
+					Width: 160
+					Height: 34
+					VisualHeight: 0
+					Background: menu-button
+					Font: Bold
+				Button@BUTTON2:
+					X: 160
+					Y: 52
+					Width: 160
+					Height: 34
+					VisualHeight: 0
+					Background: menu-button
+					Font: Bold
+				Button@BUTTON3:
+					X: 320
+					Y: 52
+					Width: 160
+					Height: 34
+					VisualHeight: 0
+					Background: menu-button
+					Font: Bold
+		Container@TAB_CONTAINER_4:
+			X: (PARENT_WIDTH - WIDTH) / 2
+			Width: 640
+			Height: 36
+			Visible: False
+			Children:
+				Button@BUTTON1:
+					Y: 52
+					Width: 160
+					Height: 34
+					VisualHeight: 0
+					Background: menu-button
+					Font: Bold
+				Button@BUTTON2:
+					X: 160
+					Y: 52
+					Width: 160
+					Height: 34
+					VisualHeight: 0
+					Background: menu-button
+					Font: Bold
+				Button@BUTTON3:
+					X: 320
+					Y: 52
+					Width: 160
+					Height: 34
+					VisualHeight: 0
+					Background: menu-button
+					Font: Bold
+				Button@BUTTON4:
+					X: 480
+					Y: 52
+					Width: 160
+					Height: 34
+					VisualHeight: 0
+					Background: menu-button
+					Font: Bold
+		Container@TAB_CONTAINER_5:
+			X: (PARENT_WIDTH - WIDTH) / 2
+			Width: 640
+			Height: 36
+			Visible: False
+			Children:
+				Button@BUTTON1:
+					Y: 52
+					Width: 128
+					Height: 34
+					VisualHeight: 0
+					Background: menu-button
+					Font: Bold
+				Button@BUTTON2:
+					X: 128
+					Y: 52
+					Width: 128
+					Height: 34
+					VisualHeight: 0
+					Background: menu-button
+					Font: Bold
+				Button@BUTTON3:
+					X: 256
+					Y: 52
+					Width: 128
+					Height: 34
+					VisualHeight: 0
+					Background: menu-button
+					Font: Bold
+				Button@BUTTON4:
+					X: 384
+					Y: 52
+					Width: 128
+					Height: 34
+					VisualHeight: 0
+					Background: menu-button
+					Font: Bold
+				Button@BUTTON5:
+					X: 512
+					Y: 52
+					Width: 128
+					Height: 34
+					VisualHeight: 0
+					Background: menu-button
+					Font: Bold
+		Container@STATS_PANEL:
+			Y: 100
+		Container@MAP_PANEL:
+			Y: 100
+			Width: PARENT_WIDTH
+			Height: PARENT_HEIGHT - 100
+		Container@OBJECTIVES_PANEL:
+			Y: 100
+			Width: PARENT_WIDTH
+		Container@DEBUG_PANEL:
+			Y: 100
+			Width: PARENT_WIDTH
+			Height: PARENT_HEIGHT - 100
+		Container@CHAT_PANEL:
+			Y: 100
+			Width: PARENT_WIDTH
+			Height: PARENT_HEIGHT - 100
+		Container@LOBBY_OPTIONS_PANEL:
+			Y: 100
+			Width: PARENT_WIDTH
+			Height: PARENT_HEIGHT - 100

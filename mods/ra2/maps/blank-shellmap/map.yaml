@@ -1,0 +1,53 @@
+MapFormat: 11
+
+RequiresMod: ra2
+
+Title: NUKE HOUR Training Grounds
+
+Author: OpenRA contributors
+
+Tileset: TEMPERATE
+
+MapSize: 130,146
+
+Bounds: 1,1,128,144
+
+Visibility: Shellmap
+
+Categories: Shellmap
+
+Players:
+	PlayerReference@Neutral:
+		Name: Neutral
+		OwnsWorld: True
+		NonCombatant: True
+		Faction: Random
+	PlayerReference@Creeps:
+		Name: Creeps
+		NonCombatant: True
+		Faction: Random
+		Enemies: Multi0, Multi1
+	PlayerReference@Multi0:
+		Name: Multi0
+		Playable: True
+		Faction: Random
+		Enemies: Creeps
+	PlayerReference@Multi1:
+		Name: Multi1
+		Playable: True
+		Faction: Random
+		Enemies: Creeps
+
+Actors:
+	Spawn1: mpspawn
+		Location: 30,-10
+		Owner: Neutral
+	Spawn2: mpspawn
+		Location: 155,-45
+		Owner: Neutral
+
+Rules:
+	World:
+		-StartGameNotification:
+		MusicPlaylist:
+			StartingMusic: grinder

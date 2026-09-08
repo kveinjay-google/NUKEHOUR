@@ -1,0 +1,310 @@
+lcrf:
+	Inherits: ^Ship
+	Inherits@MC: ^MindControllable
+	Buildable:
+		Queue: Ship
+		BuildPaletteOrder: 10
+		Prerequisites: ~gayard
+		Description: actor-lcrf.description
+	Valued:
+		Cost: 900
+	UpdatesPlayerStatistics:
+		AddToArmyValue: true
+	Tooltip:
+		Name: actor-lcrf.name
+	Selectable:
+		Bounds: 1448, 3861, 0, -289
+	Health:
+		HP: 300
+	Armor:
+		Type: Light
+	Mobile:
+		TurnSpeed: 20
+		Speed: 90
+		Locomotor: lcraft
+		PauseOnCondition: notmobile || chronodisable
+	RevealsShroud:
+		Range: 6c0
+	Cargo:
+		Types: Infantry, Vehicle
+		MaxWeight: 12
+		PassengerFacing: 384
+		UnloadTerrainTypes: Clear, Rough, Rail, Road, DirtRoad, Beach, Ore, Gems
+		UnloadVoice: Move
+		LoadingCondition: notmobile
+	FireWarheadsOnDeath:
+		Weapon: UnitExplode
+		EmptyWeapon: UnitExplode
+	WithVoxelBody:
+	RenderSprites:
+	Voiced:
+		VoiceSet: AlliedNavalVoice
+	HitShape:
+	WithCargoPipsDecoration:
+		Position: BottomLeft
+		RequiresSelection: true
+		Palette: pips
+		CustomPipSequences:
+			blue: pip-blue
+			yellow: pip-yellow
+			green: pip-green
+			red: pip-red
+
+dest:
+	Inherits: ^Ship
+	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
+	Inherits@MC: ^MindControllable
+	Buildable:
+		Queue: Ship
+		BuildPaletteOrder: 20
+		Prerequisites: ~gayard
+		Description: actor-dest.description
+	Valued:
+		Cost: 1000
+	UpdatesPlayerStatistics:
+		AddToArmyValue: true
+	Tooltip:
+		Name: actor-dest.name
+	Health:
+		HP: 600
+	Armor:
+		Type: Heavy
+	Mobile:
+		TurnSpeed: 20
+		Speed: 90
+	RevealsShroud:
+		Range: 7c0
+	Selectable:
+		Bounds: 1930, 3861, 0, -289
+	Armament@primary:
+		Weapon: 155mm
+		FireDelay: 2
+		LocalOffset: 1152,0,800
+		MuzzleSequence: muzzle
+		RequiresCondition: !rank-elite
+	Armament@elite:
+		Weapon: 155mmE
+		FireDelay: 2
+		LocalOffset: 1152,0,800
+		MuzzleSequence: muzzle-2
+		RequiresCondition: rank-elite
+	Armament@asw:
+		Name: asw
+		Weapon: ASWLauncher
+	CarrierParent:
+		Actors: asw
+		RespawnTicks: 300
+		ArmamentNames: asw
+		LoadedCondition: loaded
+	WithCarrierParentPipsDecoration:
+		Position: BottomLeft
+		Palette: pips
+	Exit:
+		SpawnOffset: 768,0,0
+	AttackFrontal:
+		Voice: Attack
+		Armaments: primary
+		PauseOnCondition: chronodisable
+		FacingTolerance: 0
+	AttackFrontal@Spawner:
+		Voice: Attack
+		Armaments: asw
+		FacingTolerance: 512
+	WithMuzzleOverlay:
+	DetectCloaked:
+		DetectionTypes: Underwater
+		Range: 4c0
+	RenderDetectionCircle:
+	FireWarheadsOnDeath:
+		Weapon: UnitExplode
+		EmptyWeapon: UnitExplode
+	WithVoxelBody@FULL:
+		RequiresCondition: loaded
+	WithVoxelBody@EMPTY:
+		Sequence: empty
+		RequiresCondition: !loaded
+	RenderSprites:
+	Voiced:
+		VoiceSet: AlliedNavalVoice
+	HitShape:
+
+aegis:
+	Inherits: ^Ship
+	Inherits@AUTOTARGET: ^AutoTargetAir
+	Inherits@MC: ^MindControllable
+	Buildable:
+		Queue: Ship
+		BuildPaletteOrder: 30
+		Prerequisites: radar, ~gayard
+		Description: actor-aegis.description
+	Valued:
+		Cost: 1200
+	UpdatesPlayerStatistics:
+		AddToArmyValue: true
+	Tooltip:
+		Name: actor-aegis.name
+	Selectable:
+		Bounds: 1448, 3861, 0, -289
+	Health:
+		HP: 800
+	Armor:
+		Type: Light
+	Mobile:
+		TurnSpeed: 4
+		Speed: 60
+	RevealsShroud:
+		Range: 8c0
+	Armament:
+		Weapon: Medusa
+	AttackFrontal:
+		Voice: Attack
+		FacingTolerance: 512
+	AutoTarget:
+	FireWarheadsOnDeath:
+		Weapon: UnitExplode
+		EmptyWeapon: UnitExplode
+	WithVoxelBody:
+	RenderSprites:
+	Voiced:
+		VoiceSet: AlliedNavalVoice
+	HitShape:
+
+dlph:
+	Inherits@1: ^ExistsInWorld
+	Inherits@2: ^SpriteActor
+	Inherits@3: ^GainsExperience
+	Inherits@5: ^CrateStatModifiers
+	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
+	Buildable:
+		Queue: Ship
+		BuildPaletteOrder: 40
+		Prerequisites: gatech, ~gayard
+		Description: actor-dlph.description
+	Valued:
+		Cost: 500
+	UpdatesPlayerStatistics:
+		AddToArmyValue: true
+	Tooltip:
+		Name: actor-dlph.name
+	Armor:
+		Type: Light
+	Health:
+		HP: 200
+	Mobile:
+		TurnSpeed: 24
+		Speed: 120
+		Locomotor: naval
+		Voice: Move
+	SelectionDecorations:
+		ShowSelectionBox: false
+	Selectable:
+		Bounds: 965, 1930
+	Voiced:
+		VoiceSet: DolphinVoice
+	Armament:
+		Weapon: SonicZap
+	AttackFrontal:
+		Voice: Attack
+		FacingTolerance: 0
+	AutoTarget:
+	RevealsShroud:
+		Range: 4c0
+	Cloak:
+		DetectionTypes: Underwater
+		InitialDelay: 50
+		CloakDelay: 75
+		CloakSound: vnavupa.wav
+		UncloakSound: vnavupa.wav
+		CloakedCondition: underwater
+		UncloakOn: Damage
+		IsPlayerPalette: true
+		CloakedPalette: cloak
+		CloakStyle: Palette
+	Targetable:
+		TargetTypes: Ground, Water, ImmuneToAllySonic, Submergeable
+		RequiresCondition: !underwater
+	Targetable@underwater:
+		TargetTypes: Underwater, ImmuneToAllySonic, Submergeable
+		RequiresCondition: underwater
+	DetectCloaked:
+		DetectionTypes: Underwater
+		Range: 4c0
+	HiddenUnderFog:
+	ActorLostNotification:
+	Guard:
+		Voice: Attack
+	Guardable:
+	DeathSounds:
+	QuantizeFacingsFromSequence:
+		Sequence: stand
+	Chronoshiftable:
+		ExplodeInstead: true
+	RenderDetectionCircle:
+	RenderSprites:
+	WithInfantryBody:
+		MinIdleDelay: 1
+		MaxIdleDelay: 2
+		IdleSequences: idle
+		StandSequences: stand
+		DefaultAttackSequence: shoot
+	WithDeathAnimation:
+		UseDeathTypeSuffix: false
+	Repairable:
+		Voice: Attack
+		RepairActors: gayard, nayard
+	HitShape:
+	OwnerLostAction:
+		Action: Kill
+
+carrier:
+	Inherits: ^Ship
+	Inherits@AUTOTARGET: ^AutoTargetGroundAssaultMove
+	Inherits@MC: ^MindControllable
+	Buildable:
+		Queue: Ship
+		BuildPaletteOrder: 60
+		Prerequisites: gatech, ~gayard
+		Description: actor-carrier.description
+	Valued:
+		Cost: 2000
+	UpdatesPlayerStatistics:
+		AddToArmyValue: true
+	Tooltip:
+		Name: actor-carrier.name
+	Health:
+		HP: 800
+	Armor:
+		Type: Heavy
+	RevealsShroud:
+		Range: 7c0
+		Type: CenterPosition
+	Selectable:
+		Bounds: 1448, 3861, 0, -289
+	Mobile:
+		TurnSpeed: 4
+		Speed: 60
+	RevealsShroud:
+		Range: 7c0
+	AttackFrontal:
+		Voice: Attack
+		FacingTolerance: 512
+	FireWarheadsOnDeath:
+		Weapon: UnitExplode
+		EmptyWeapon: UnitExplode
+	WithVoxelBody:
+	RenderSprites:
+	Voiced:
+		VoiceSet: AlliedNavalVoice
+	HitShape:
+	CarrierParent:
+		Actors: hornet, hornet, hornet
+		RespawnTicks: 300
+		SpawnAllAtOnce: true
+	WithCarrierParentPipsDecoration:
+		Position: BottomLeft
+		Palette: pips
+	Exit@0:
+		SpawnOffset: 0,0,0
+		Facing: 0
+	Armament:
+		Weapon: HornetLauncher

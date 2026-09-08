@@ -1,0 +1,2928 @@
+{
+  "passed": false,
+  "errors": [
+    {
+      "code": "unclassified-resource",
+      "path": "BeaconLib.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "BeaconLib.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "DiscordRPC.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "DiscordRPC.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "Eluant.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "Eluant.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "Eluant.dll.config",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "FuzzyLogicLibrary.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "FuzzyLogicLibrary.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "ICSharpCode.SharpZipLib.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "ICSharpCode.SharpZipLib.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "Linguini.Bundle.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "Linguini.Bundle.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "Linguini.Shared.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "Linguini.Shared.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "Linguini.Syntax.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "Linguini.Syntax.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "MP3Sharp.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "MP3Sharp.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "Microsoft.CSharp.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "Microsoft.CSharp.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "Microsoft.Extensions.DependencyModel.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "Microsoft.Extensions.DependencyModel.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "Microsoft.VisualBasic.Core.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "Microsoft.VisualBasic.Core.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "Microsoft.VisualBasic.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "Microsoft.VisualBasic.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "Microsoft.Win32.Primitives.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "Microsoft.Win32.Primitives.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "Microsoft.Win32.Registry.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "Microsoft.Win32.Registry.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "Microsoft.iOS.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "Microsoft.iOS.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "Mono.Nat.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "Mono.Nat.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "NVorbis.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "NVorbis.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "Newtonsoft.Json.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "Newtonsoft.Json.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "OpenRA.Game.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "OpenRA.Game.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "OpenRA.Mods.Cnc.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "OpenRA.Mods.Cnc.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "OpenRA.Mods.Common.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "OpenRA.Mods.Common.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "OpenRA.Mods.RA2.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "OpenRA.Mods.RA2.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "OpenRA.Platforms.Default.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "OpenRA.Platforms.Default.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "OpenRA.iOS",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "OpenRA.iOS.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "OpenRA.iOS.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "Pfim.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "Pfim.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "SDL2-CS.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "SDL2-CS.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.AppContext.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.AppContext.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Buffers.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Buffers.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Collections.Concurrent.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Collections.Concurrent.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Collections.Immutable.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Collections.Immutable.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Collections.NonGeneric.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Collections.NonGeneric.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Collections.Specialized.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Collections.Specialized.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Collections.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Collections.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.ComponentModel.Annotations.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.ComponentModel.Annotations.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.ComponentModel.DataAnnotations.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.ComponentModel.DataAnnotations.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.ComponentModel.EventBasedAsync.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.ComponentModel.EventBasedAsync.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.ComponentModel.Primitives.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.ComponentModel.Primitives.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.ComponentModel.TypeConverter.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.ComponentModel.TypeConverter.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.ComponentModel.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.ComponentModel.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Configuration.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Configuration.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Console.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Console.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Core.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Core.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Data.Common.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Data.Common.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Data.DataSetExtensions.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Data.DataSetExtensions.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Data.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Data.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Diagnostics.Contracts.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Diagnostics.Contracts.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Diagnostics.Debug.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Diagnostics.Debug.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Diagnostics.DiagnosticSource.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Diagnostics.DiagnosticSource.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Diagnostics.FileVersionInfo.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Diagnostics.FileVersionInfo.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Diagnostics.Process.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Diagnostics.Process.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Diagnostics.StackTrace.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Diagnostics.StackTrace.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Diagnostics.TextWriterTraceListener.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Diagnostics.TextWriterTraceListener.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Diagnostics.Tools.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Diagnostics.Tools.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Diagnostics.TraceSource.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Diagnostics.TraceSource.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Diagnostics.Tracing.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Diagnostics.Tracing.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Drawing.Primitives.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Drawing.Primitives.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Drawing.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Drawing.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Dynamic.Runtime.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Dynamic.Runtime.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Formats.Asn1.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Formats.Asn1.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Formats.Tar.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Formats.Tar.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Globalization.Calendars.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Globalization.Calendars.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Globalization.Extensions.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Globalization.Extensions.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Globalization.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Globalization.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.IO.Compression.Brotli.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.IO.Compression.Brotli.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.IO.Compression.FileSystem.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.IO.Compression.FileSystem.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.IO.Compression.ZipFile.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.IO.Compression.ZipFile.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.IO.Compression.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.IO.Compression.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.IO.FileSystem.AccessControl.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.IO.FileSystem.AccessControl.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.IO.FileSystem.DriveInfo.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.IO.FileSystem.DriveInfo.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.IO.FileSystem.Primitives.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.IO.FileSystem.Primitives.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.IO.FileSystem.Watcher.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.IO.FileSystem.Watcher.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.IO.FileSystem.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.IO.FileSystem.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.IO.IsolatedStorage.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.IO.IsolatedStorage.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.IO.MemoryMappedFiles.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.IO.MemoryMappedFiles.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.IO.Pipes.AccessControl.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.IO.Pipes.AccessControl.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.IO.Pipes.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.IO.Pipes.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.IO.UnmanagedMemoryStream.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.IO.UnmanagedMemoryStream.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.IO.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.IO.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Linq.Expressions.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Linq.Expressions.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Linq.Parallel.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Linq.Parallel.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Linq.Queryable.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Linq.Queryable.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Linq.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Linq.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Memory.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Memory.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Net.Http.Json.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Net.Http.Json.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Net.Http.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Net.Http.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Net.HttpListener.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Net.HttpListener.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Net.Mail.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Net.Mail.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Net.NameResolution.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Net.NameResolution.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Net.NetworkInformation.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Net.NetworkInformation.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Net.Ping.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Net.Ping.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Net.Primitives.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Net.Primitives.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Net.Quic.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Net.Quic.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Net.Requests.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Net.Requests.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Net.Security.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Net.Security.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Net.ServicePoint.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Net.ServicePoint.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Net.Sockets.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Net.Sockets.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Net.WebClient.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Net.WebClient.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Net.WebHeaderCollection.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Net.WebHeaderCollection.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Net.WebProxy.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Net.WebProxy.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Net.WebSockets.Client.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Net.WebSockets.Client.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Net.WebSockets.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Net.WebSockets.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Net.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Net.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Numerics.Vectors.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Numerics.Vectors.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Numerics.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Numerics.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.ObjectModel.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.ObjectModel.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Private.CoreLib.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Private.CoreLib.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Private.DataContractSerialization.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Private.DataContractSerialization.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Private.Uri.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Private.Uri.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Private.Xml.Linq.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Private.Xml.Linq.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Private.Xml.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Private.Xml.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Reflection.DispatchProxy.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Reflection.DispatchProxy.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Reflection.Emit.ILGeneration.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Reflection.Emit.ILGeneration.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Reflection.Emit.Lightweight.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Reflection.Emit.Lightweight.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Reflection.Emit.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Reflection.Emit.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Reflection.Extensions.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Reflection.Extensions.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Reflection.Metadata.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Reflection.Metadata.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Reflection.Primitives.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Reflection.Primitives.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Reflection.TypeExtensions.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Reflection.TypeExtensions.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Reflection.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Reflection.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Resources.Reader.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Resources.Reader.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Resources.ResourceManager.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Resources.ResourceManager.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Resources.Writer.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Resources.Writer.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Runtime.CompilerServices.Unsafe.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Runtime.CompilerServices.Unsafe.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Runtime.CompilerServices.VisualC.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Runtime.CompilerServices.VisualC.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Runtime.Extensions.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Runtime.Extensions.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Runtime.Handles.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Runtime.Handles.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Runtime.InteropServices.JavaScript.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Runtime.InteropServices.JavaScript.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Runtime.InteropServices.RuntimeInformation.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Runtime.InteropServices.RuntimeInformation.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Runtime.InteropServices.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Runtime.InteropServices.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Runtime.Intrinsics.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Runtime.Intrinsics.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Runtime.Loader.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Runtime.Loader.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Runtime.Numerics.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Runtime.Numerics.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Runtime.Serialization.Formatters.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Runtime.Serialization.Formatters.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Runtime.Serialization.Json.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Runtime.Serialization.Json.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Runtime.Serialization.Primitives.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Runtime.Serialization.Primitives.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Runtime.Serialization.Xml.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Runtime.Serialization.Xml.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Runtime.Serialization.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Runtime.Serialization.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Runtime.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Runtime.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Security.AccessControl.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Security.AccessControl.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Security.Claims.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Security.Claims.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Security.Cryptography.Algorithms.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Security.Cryptography.Algorithms.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Security.Cryptography.Cng.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Security.Cryptography.Cng.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Security.Cryptography.Csp.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Security.Cryptography.Csp.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Security.Cryptography.Encoding.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Security.Cryptography.Encoding.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Security.Cryptography.OpenSsl.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Security.Cryptography.OpenSsl.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Security.Cryptography.Primitives.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Security.Cryptography.Primitives.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Security.Cryptography.X509Certificates.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Security.Cryptography.X509Certificates.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Security.Cryptography.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Security.Cryptography.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Security.Principal.Windows.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Security.Principal.Windows.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Security.Principal.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Security.Principal.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Security.SecureString.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Security.SecureString.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Security.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Security.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.ServiceModel.Web.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.ServiceModel.Web.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.ServiceProcess.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.ServiceProcess.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Text.Encoding.CodePages.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Text.Encoding.CodePages.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Text.Encoding.Extensions.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Text.Encoding.Extensions.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Text.Encoding.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Text.Encoding.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Text.Encodings.Web.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Text.Encodings.Web.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Text.Json.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Text.Json.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Text.RegularExpressions.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Text.RegularExpressions.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Threading.Channels.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Threading.Channels.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Threading.Overlapped.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Threading.Overlapped.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Threading.Tasks.Dataflow.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Threading.Tasks.Dataflow.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Threading.Tasks.Extensions.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Threading.Tasks.Extensions.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Threading.Tasks.Parallel.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Threading.Tasks.Parallel.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Threading.Tasks.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Threading.Tasks.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Threading.Thread.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Threading.Thread.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Threading.ThreadPool.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Threading.ThreadPool.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Threading.Timer.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Threading.Timer.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Threading.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Threading.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Transactions.Local.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Transactions.Local.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Transactions.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Transactions.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.ValueTuple.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.ValueTuple.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Web.HttpUtility.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Web.HttpUtility.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Web.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Web.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Windows.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Windows.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Xml.Linq.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Xml.Linq.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Xml.ReaderWriter.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Xml.ReaderWriter.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Xml.Serialization.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Xml.Serialization.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Xml.XDocument.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Xml.XDocument.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Xml.XPath.XDocument.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Xml.XPath.XDocument.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Xml.XPath.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Xml.XPath.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Xml.XmlDocument.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Xml.XmlDocument.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Xml.XmlSerializer.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Xml.XmlSerializer.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Xml.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.Xml.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "System.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "TagLibSharp.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "TagLibSharp.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "WindowsBase.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "WindowsBase.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "aot-instances.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "icudt.dat",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "libSystem.Globalization.Native.dylib",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "libSystem.IO.Compression.Native.dylib",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "libSystem.Native.dylib",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "libSystem.Net.Security.Native.dylib",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "libSystem.Security.Cryptography.Native.Apple.dylib",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "libmono-component-debugger.dylib",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "libmono-component-diagnostics_tracing.dylib",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "libmono-component-hot_reload.dylib",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "libmono-component-marshal-ilgen.dylib",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "libmonosgen-2.0.dylib",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "libxamarin-dotnet.dylib",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common-content/chrome-2x.png",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common-content/chrome-3x.png",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common-content/chrome.png",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common-content/chrome.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common-content/content.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common-content/cursor.png",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common-content/cursors.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common-content/fluent/chrome.ftl",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common-content/fluent/content.ftl",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common-content/metrics.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common-content/notifications.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common-content/rules.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/FreeSans.ttf",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/FreeSansBold.ttf",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/assetbrowser.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/color-picker.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/confirmation-dialogs.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/connection.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/credits.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/dropdowns.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/editor.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/gamesave-browser.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/gamesave-loading.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/ingame-chat.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/ingame-debug-hpf.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/ingame-debug.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/ingame-debuginfo.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/ingame-fmvplayer.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/ingame-info-lobby-options.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/ingame-info.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/ingame-infobriefing.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/ingame-infochat.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/ingame-infoobjectives.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/ingame-infoscripterror.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/ingame-infostats.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/ingame-menu.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/ingame-perf.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/ingame-transients.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/ingame.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/lobby-kickdialogs.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/lobby-mappreview.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/lobby-music.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/lobby-options.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/lobby-players.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/lobby-servers.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/lobby.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/mainmenu-prompts.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/mainmenu.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/map-chooser.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/missionbrowser.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/multiplayer-browser.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/multiplayer-browserpanels.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/multiplayer-createserver.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/multiplayer-directconnect.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/musicplayer.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/playerprofile.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/replaybrowser.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/settings-advanced.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/settings-audio.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/settings-display.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/settings-hotkeys.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/settings-input.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/settings.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/text-notifications.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/chrome/tooltips.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/fluent/chrome.ftl",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/fluent/common.ftl",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/fluent/hotkeys.ftl",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/fluent/rules.ftl",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/fluent/zh-CN/chrome.ftl",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/fluent/zh-CN/common.ftl",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/fluent/zh-CN/hotkeys.ftl",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/fluent/zh-CN/rules.ftl",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/hotkeys/chat.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/hotkeys/control-groups.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/hotkeys/editor.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/hotkeys/game.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/hotkeys/observer.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/hotkeys/production-common.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/hotkeys/supportpowers.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/hotkeys/viewport.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/metrics.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/common/scripts/utils.lua",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/ra2-content/fluent/chrome.ftl",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/ra2-content/fluent/zh-CN/chrome.ftl",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/ra2-content/installer/firstdecade.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/ra2-content/installer/origin.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/ra2-content/installer/ra2-disk.yaml",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/ra2-content/mod.yaml",
+      "detail": ""
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/AUTHORS",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/audio/music.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/audio/notifications.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/audio/voices.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/chrome.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mods/ra2/chrome/gamesave-loading.yaml",
+      "detail": ""
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/chrome/ingame-chat.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/chrome/ingame-debug.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/chrome/ingame-info.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/chrome/ingame-menu.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/chrome/ingame-observer.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/chrome/ingame-player.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/chrome/ingame.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/chrome/mainmenu-prerelease-notification.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/chrome/mainmenu.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/chrome/settings-advanced.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/chrome/settings.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/cursors.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/fluent/assetbrowser.ftl",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/fluent/chrome.ftl",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/fluent/hotkeys.ftl",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/fluent/mod.ftl",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/fluent/rules.ftl",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/fluent/zh-CN/assetbrowser.ftl",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/fluent/zh-CN/chrome.ftl",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/fluent/zh-CN/hotkeys.ftl",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/fluent/zh-CN/mod.ftl",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/fluent/zh-CN/rules.ftl",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/hotkeys.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/metrics.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/mod.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/rules/ai-profiles.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/rules/ai.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/rules/aircraft.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/rules/allied-infantry.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/rules/allied-naval.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/rules/allied-structures.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/rules/allied-vehicles.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/rules/animals.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/rules/bridges.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/rules/civilian-naval.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/rules/civilian-props.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/rules/civilian-structures.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/rules/civilian-vehicles.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/rules/civilians.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/rules/defaults.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/rules/misc.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/rules/palettes.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/rules/player.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/rules/proxy-actors.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/rules/soviet-infantry.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/rules/soviet-naval.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/rules/soviet-structures.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/rules/soviet-vehicles.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/rules/tech-structures.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/rules/trees.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/rules/world.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/rules/yuri-infantry.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/rules/yuri-naval.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/rules/yuri-structures.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/rules/yuri-vehicles.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/sequences/aircraft.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/sequences/allied-infantry.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/sequences/allied-structures.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/sequences/animals.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/sequences/bridges.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/sequences/civilian-props.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/sequences/civilian-structures.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/sequences/civilians.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/sequences/defaults.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/sequences/misc.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/sequences/soviet-infantry.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/sequences/soviet-structures.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/sequences/tech-structures.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/sequences/trees.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/sequences/vehicles.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/sequences/voxels.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/sequences/yuri-infantry.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/sequences/yuri-structures.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/tilesets/snow.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/tilesets/temperat.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/tilesets/urban.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/weapons/bullets.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/weapons/defaults.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/weapons/explosions.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/weapons/flaks.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/weapons/gatling.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/weapons/melee.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/weapons/mgs.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/weapons/misc.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/weapons/missiles.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/weapons/yuri.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "not-public",
+      "path": "mods/ra2/weapons/zaps.yaml",
+      "detail": "unknown-or-derivative"
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mscorlib.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "mscorlib.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "netstandard.aotdata.arm64",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "netstandard.dll",
+      "detail": ""
+    },
+    {
+      "code": "unclassified-resource",
+      "path": "runtimeconfig.bin",
+      "detail": ""
+    }
+  ],
+  "files": [
+    {
+      "path": "mods/ra2/bits/animations/nc-impact-core.png",
+      "size": 173982,
+      "sha256": "30f790a756b8dbd79a08f4734dc1778a3966808d6b3a82e3480823e28578d93b",
+      "category": "project-original",
+      "license": "Project original"
+    },
+    {
+      "path": "mods/ra2/bits/animations/nc-impact-debris.png",
+      "size": 34090,
+      "sha256": "c8bae7db9c20b5d147ad5a946b56f6a8e37694253f6aec2af8b6181635e15323",
+      "category": "project-original",
+      "license": "Project original"
+    },
+    {
+      "path": "mods/ra2/bits/animations/nc-impact-ring.png",
+      "size": 95954,
+      "sha256": "bb906789d33dfb7fb68c8aa07a636e6623afd17e37808f2d64340d7ba2c78797",
+      "category": "project-original",
+      "license": "Project original"
+    }
+  ]
+}

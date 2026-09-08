@@ -1,0 +1,198 @@
+BlimpBomb:
+	ReloadDelay: 50
+	Range: 0c256
+	MinRange: 0c001
+	Report: vkiratta.wav
+	Projectile: GravityBomb
+		Velocity: 0, 0, -50
+		Acceleration: 0, 0, -10
+		Image: zbomb
+		Palette: player
+		IsPlayerPalette: true
+	Warhead@1Dam: SpreadDamage
+		Spread: 400
+		Damage: 250
+		ValidTargets: Building, Ground, Water
+		Versus:
+			None: 100
+			Flak: 100
+			Plate: 100
+			Light: 70
+			Medium: 35
+			Heavy: 35
+			Wood: 85
+			Steel: 75
+			Concrete: 50
+			Drone: 100
+			Rocket: 100
+		DamageTypes: Prone70Percent, TriggerProne, BulletDeath
+	Warhead@20Core: CreateEffect
+		Image: nc-impact
+		Explosions: nc_core_large
+		ImpactActors: false
+		ForceDisplayAtGroundLevel: true
+		ValidTargets: Ground, Water, Air
+	Warhead@21MainLand: CreateEffect
+		Explosions: verylarge_clsn
+		ImpactSounds: gexp14a.wav
+		ImpactActors: false
+		ForceDisplayAtGroundLevel: true
+		ValidTargets: Ground, Air
+	Warhead@22MainWater: CreateEffect
+		Explosions: verylarge_clsn
+		ImpactActors: false
+		ForceDisplayAtGroundLevel: true
+		ValidTargets: Water
+	Warhead@23Ring: CreateEffect
+		Delay: 1
+		Image: nc-impact
+		Explosions: nc_ring_large
+		ImpactActors: false
+		ForceDisplayAtGroundLevel: true
+		ValidTargets: Ground, Water, Air
+	Warhead@24PlumeLand: CreateEffect
+		Delay: 3
+		Image: nc-impact
+		Explosions: nc_debris_large
+		ImpactActors: false
+		ForceDisplayAtGroundLevel: true
+		ValidTargets: Ground, Air
+	Warhead@25SplashWater: CreateEffect
+		Delay: 1
+		Explosions: huge_watersplash
+		ImpactSounds: gexpwasa.wav
+		ImpactActors: false
+		ForceDisplayAtGroundLevel: true
+		ValidTargets: Water
+	Warhead@26Shake: ShakeScreen
+		Duration: 6
+		Intensity: 2
+		Multiplier: 1,1
+		ValidTargets: Ground, Water, Air
+
+BlimpBombE:
+	Inherits: BlimpBomb
+	Warhead@20Core: CreateEffect
+		Explosions: nc_core_tesla
+	Warhead@21MainLand: CreateEffect
+		Explosions: kirovtesla
+	Warhead@22MainWater: CreateEffect
+		Explosions: kirovtesla
+	Warhead@23Ring: CreateEffect
+		Explosions: nc_ring_tesla
+	Warhead@26Shake: ShakeScreen
+		Duration: 8
+		Intensity: 3
+
+RepairBullet:
+	ReloadDelay: 80
+	Range: 1c819
+	Report: vifvrepa.wav
+	ValidTargets: Repair
+	Projectile: Bullet
+		Speed: 1c682
+	Warhead@1Dam: SpreadDamage
+		Spread: 213
+		Damage: -50
+		ValidTargets: Repair
+		DamageTypes: KillTerrorDrone
+
+MindControl:
+	ReloadDelay: 200
+	Range: 7c0
+	ValidTargets: MindControl
+	Projectile: ArcLaserZap
+		UsePlayerColor: true
+		Width: 63
+		Angle: 120
+		ZOffset: 2047
+	Warhead@1Dam: TargetDamage
+		Damage: 0
+
+SuperMindControl:
+	Inherits: MindControl
+	Range: 30c0
+
+PsiWave:
+	ReloadDelay: 100
+	Range: 1c0
+	Report: iyurat2a.wav
+	Warhead@1Dam: SpreadDamage
+		Spread: 3c0
+		Falloff: 100, 100
+		Damage: 250
+		ValidTargets: Infantry
+		DamageTypes: PsychicDeath
+	Warhead@2Eff: CreateEffect
+		Explosions: psi_wave
+
+DemoTruckTargeting:
+	ValidTargets: DetonateAttack
+	Range: 2c0
+	Projectile: InstantHit
+	Warhead@1Dam: TargetDamage
+		ValidTargets: DetonateAttack
+
+HornetLauncher:
+	ReloadDelay: 30
+	Range: 25c0
+	ValidTargets: Ground, Water
+	Projectile: InstantHit
+	Warhead@1Dam: TargetDamage
+		ValidTargets: Ground, Water
+
+ASWLauncher:
+	ReloadDelay: 150
+	Range: 8c0
+	ValidTargets: Underwater
+	Projectile: InstantHit
+	Warhead@1Dam: TargetDamage
+		ValidTargets: Underwater
+
+V3Launcher:
+	ReloadDelay: 75
+	Range: 18c0
+	MinRange: 5c0
+	ValidTargets: Ground, Water
+	Projectile: InstantHit
+	Warhead@1Dam: TargetDamage
+		ValidTargets: Ground, Water
+
+DredLauncher:
+	ReloadDelay: 150
+	Burst: 2
+	BurstDelays: 10
+	Range: 25c0
+	MinRange: 8c0
+	ValidTargets: Ground, Water
+	Projectile: InstantHit
+	Warhead@1Dam: TargetDamage
+		ValidTargets: Ground, Water
+
+PsychicJab:
+	Inherits: ^MG
+	ReloadDelay: 15
+	Range: 4c0
+	Report: iiniatta.wav
+	Warhead@1Dam: SpreadDamage
+		Damage: 25
+		Versus:
+			None: 100
+			Flak: 100
+			Plate: 80
+			Light: 35
+			Medium: 20
+			Heavy: 15
+			Wood: 45
+			Concrete: 40
+			Drone: 100
+			Rocket: 50
+		DamageTypes: Prone50Percent, TriggerProne, PsychicDeath
+	Warhead@2Eff: CreateEffect
+		Explosions: piffpiff
+
+PsychicJabE:
+	Inherits: PsychicJab
+	Range: 5c0
+	Warhead@1Dam: SpreadDamage
+		Damage: 30

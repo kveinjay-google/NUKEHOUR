@@ -1,0 +1,243 @@
+mpspawn:
+	Interactable:
+	EditorOnlyTooltip:
+		Name: actor-mpspawn-name
+	Immobile:
+		OccupiesSpace: false
+	BodyOrientation:
+		QuantizedFacings: 1
+	AlwaysVisible:
+	RenderSpritesEditorOnly:
+	WithSpriteBody:
+	MapEditorData:
+		Categories: System
+	RequiresSpecificOwners:
+		ValidOwnerNames: Neutral
+
+waypoint:
+	Interactable:
+	EditorOnlyTooltip:
+		Name: actor-waypoint-name
+	Immobile:
+		OccupiesSpace: false
+	BodyOrientation:
+		QuantizedFacings: 1
+	AlwaysVisible:
+	RenderSpritesEditorOnly:
+	WithSpriteBody:
+	MapEditorData:
+		Categories: System
+
+crate:
+	Inherits: ^Crate
+	Crate:
+		Duration: 6000
+	GiveCashCrateAction@500:
+		Amount: 500
+		SelectionShares: 10
+		UseCashTick: true
+	GiveCashCrateAction@1000:
+		Amount: 1000
+		SelectionShares: 20
+		UseCashTick: true
+	GiveCashCrateAction@1500:
+		Amount: 1500
+		SelectionShares: 10
+		UseCashTick: true
+	RevealMapCrateAction:
+		SelectionShares: 2
+		Sequence: reveal-map
+	LevelUpCrateAction:
+		SelectionShares: 25
+	GiveBaseBuilderCrateAction@soviets:
+		SelectionShares: 0
+		NoBaseSelectionShares: 150
+		ValidFactions: cuba, libya, iraq, russia
+		Units: smcv
+	GiveBaseBuilderCrateAction@allied:
+		SelectionShares: 0
+		NoBaseSelectionShares: 150
+		ValidFactions: america, germany, england, france, korea
+		Units: amcv
+
+amcv.colorpicker:
+	Inherits: amcv
+	-Buildable:
+	-MapEditorData:
+	RenderVoxels:
+		Image: amcv
+		Palette: colorpicker
+
+SROCK01:
+	Inherits: ^Rock
+
+SROCK02:
+	Inherits: ^Rock
+
+SROCK03:
+	Inherits: ^Rock
+
+SROCK04:
+	Inherits: ^Rock
+
+SROCK05:
+	Inherits: ^Rock
+
+TROCK01:
+	Inherits: ^Rock
+
+TROCK02:
+	Inherits: ^Rock
+
+TROCK03:
+	Inherits: ^Rock
+
+TROCK04:
+	Inherits: ^Rock
+
+TROCK05:
+	Inherits: ^Rock
+
+CAMERA:
+	AlwaysVisible:
+	Interactable:
+	Immobile:
+		OccupiesSpace: false
+	RevealsShroud:
+		Range: 10c0
+		Type: CenterPosition
+	BodyOrientation:
+		QuantizedFacings: 1
+	WithSpriteBody:
+	RenderSpritesEditorOnly:
+		Image: camera
+	EditorOnlyTooltip:
+		Name: actor-camera-name
+	MapEditorData:
+		Categories: System
+
+FLAMEGUY:
+	Inherits@1: ^ExistsInWorld
+	Inherits@2: ^SpriteActor
+	Mobile:
+		Speed: 71
+		Locomotor: flameguy
+	HiddenUnderFog:
+	RenderSprites:
+		Palette: effect
+	WithInfantryBody:
+		IdleSequences: run
+	Health:
+		HP: 160
+	ChangesHealth:
+		Step: -10
+		StartIfBelow: 101
+	ScaredyCat:
+		PanicSequencePrefix:
+	WithDeathAnimation:
+		FallbackSequence: die
+		UseDeathTypeSuffix: false
+		DeathSequencePalette: effect
+		DeathPaletteIsPlayerPalette: false
+	HitShape:
+
+INGALITE:
+	Interactable:
+	EditorOnlyTooltip:
+		Name: actor-ingalite-name
+	AlwaysVisible:
+	Immobile:
+		OccupiesSpace: false
+	RenderSpritesEditorOnly:
+		Image: galite
+		Palette: terrainalpha
+	WithSpriteBody:
+	BodyOrientation:
+		QuantizedFacings: 1
+	MapEditorData:
+		Categories: System
+	RequiresSpecificOwners:
+		ValidOwnerNames: Neutral
+	TerrainLightSource:
+		Range: 19c544
+		Intensity: 0.2
+		RedTint: 0.05
+		GreenTint: 0.05
+		BlueTint: 0.01
+
+NEGLAMP:
+	Inherits: INGALITE
+	EditorOnlyTooltip:
+		Name: actor-neglamp-name
+	TerrainLightSource:
+		Range: 13c688
+		Intensity: -0.15
+		RedTint: 0.03
+		GreenTint: 0.04
+		BlueTint: 0.04
+
+INYELWLAMP:
+	Inherits: INGALITE
+	EditorOnlyTooltip:
+		Name: actor-inyelwlamp-name
+	TerrainLightSource:
+		Range: 15c640
+		Intensity: 0.01
+		RedTint: 1.5
+		GreenTint: 1.5
+		BlueTint: 0.01
+
+INPURPLAMP:
+	Inherits: INGALITE
+	EditorOnlyTooltip:
+		Name: actor-inpurplamp-name
+	TerrainLightSource:
+		Range: 11c736
+		Intensity: 0.01
+		RedTint: 2.0
+		GreenTint: 0.01
+		BlueTint: 2.0
+
+INORANLAMP:
+	Inherits: INGALITE
+	EditorOnlyTooltip:
+		Name: actor-inoranlamp-name
+	TerrainLightSource:
+		Range: 11c736
+		Intensity: 0.01
+		RedTint: 2.0
+		GreenTint: 1.4
+		BlueTint: 0.3
+
+INGRNLMP:
+	Inherits: INGALITE
+	EditorOnlyTooltip:
+		Name: actor-ingrnlmp-name
+	TerrainLightSource:
+		Range: 15c640
+		Intensity: 0.01
+		RedTint: 0.01
+		GreenTint: 1.5
+		BlueTint: 0.01
+
+INREDLMP:
+	Inherits: INGALITE
+	EditorOnlyTooltip:
+		Name: actor-inredlmp-name
+	TerrainLightSource:
+		Range: 15c640
+		Intensity: 0.01
+		RedTint: 1.5
+		GreenTint: 0.01
+		BlueTint: 0.01
+
+INBLULMP:
+	Inherits: INGALITE
+	EditorOnlyTooltip:
+		Name: actor-inblulmp-name
+	TerrainLightSource:
+		Range: 15c640
+		Intensity: 0.01
+		RedTint: 0.01
+		GreenTint: 0.01
+		BlueTint: 0.7
