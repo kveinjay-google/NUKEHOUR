@@ -41,29 +41,42 @@ class IosPublicPresentationContractTest(unittest.TestCase):
         self.assertIn("../../mods/ra2/fonts/**/*", includes)
         self.assertIn("../../mods/ra2/uibits/**/*", includes)
 
-    def test_public_build_only_bundles_approved_project_original_bits(self):
+    def test_public_build_bundles_the_complete_hash_locked_reviewed_bits_tree(self):
         includes = self.public_bundle_resources()
 
-        self.assertNotIn("../../mods/ra2/bits/**/*", includes)
-        self.assertIn("../../mods/ra2/bits/animations/nc-impact-*.png", includes)
+        self.assertIn("../../mods/ra2/bits/**/*", includes)
+        self.assertNotIn("../../mods/ra2/bits/animations/nc-impact-*.png", includes)
         self.assertEqual([], self.manifest.get("trees", []))
 
         approved_bits = {
-            "mods/ra2/bits/animations/nc-impact-core.png",
-            "mods/ra2/bits/animations/nc-impact-debris.png",
-            "mods/ra2/bits/animations/nc-impact-ring.png",
+            path.relative_to(ROOT).as_posix()
+            for path in (ROOT / "mods" / "ra2" / "bits").rglob("*")
+            if path.is_file()
         }
         manifest_bits = {
             path for path, entry in self.entries.items()
             if path.startswith("mods/ra2/bits/") and entry.get("public")
         }
         self.assertEqual(approved_bits, manifest_bits)
+        self.assertEqual(52, len(manifest_bits))
+        self.assertEqual(
+            {"project-original", "redistributable-third-party"},
+            {self.entries[path]["category"] for path in manifest_bits},
+        )
 
     def test_public_build_forces_a_clean_rebuild(self):
         script = (ROOT / "ios" / "scripts" / "build-public-clean.sh").read_text(
             encoding="utf-8")
 
         self.assertIn("-t:Rebuild", script)
+
+    def test_public_ipa_packaging_does_not_emit_macos_metadata_entries(self):
+        script = (ROOT / "ios" / "scripts" / "build-public-clean.sh").read_text(
+            encoding="utf-8")
+
+        self.assertIn("COPYFILE_DISABLE=1", script)
+        self.assertIn("/usr/bin/zip -qry", script)
+        self.assertNotIn("--sequesterRsrc", script)
 
     def test_mandatory_presentation_files_are_public_and_hash_locked(self):
         for path in MANDATORY_PRESENTATION_PATHS:

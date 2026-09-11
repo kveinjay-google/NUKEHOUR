@@ -14,8 +14,8 @@ PROJECT = ROOT / "ios" / "OpenRA.iOS" / "OpenRA.iOS.csproj"
 MANIFEST = ROOT / "packaging" / "public-content-manifest.json"
 IMPACT_ASSET_DIRECTORY = ROOT / "mods" / "ra2" / "bits" / "animations"
 PUBLIC_CLEAN_CONDITION = "'$(PublicClean)' == 'true'"
-IMPACT_BUNDLE_INCLUDE = "../../mods/ra2/bits/animations/nc-impact-*.png"
-IMPACT_BUNDLE_LINK = "mods/ra2/bits/animations/%(Filename)%(Extension)"
+BITS_BUNDLE_INCLUDE = "../../mods/ra2/bits/**/*"
+BITS_BUNDLE_LINK = "mods/ra2/bits/%(RecursiveDir)%(Filename)%(Extension)"
 
 IMPACT_ASSETS = (
     "mods/ra2/bits/animations/nc-impact-core.png",
@@ -68,7 +68,7 @@ class ProjectileImpactPublicBundleTest(unittest.TestCase):
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(source.read_bytes())
 
-    def test_public_clean_msbuild_item_uses_only_the_exact_impact_glob(self):
+    def test_public_clean_msbuild_item_includes_the_reviewed_bits_tree(self):
         tree = ElementTree.parse(PROJECT)
         public_groups = [
             group for group in tree.getroot().findall("ItemGroup")
@@ -83,7 +83,7 @@ class ProjectileImpactPublicBundleTest(unittest.TestCase):
             if "/mods/ra2/bits/" in normalized:
                 bits_items.append((normalized, item.findtext("Link")))
 
-        self.assertEqual([(IMPACT_BUNDLE_INCLUDE, IMPACT_BUNDLE_LINK)], bits_items)
+        self.assertEqual([(BITS_BUNDLE_INCLUDE, BITS_BUNDLE_LINK)], bits_items)
 
     def test_generated_png_inventory_is_exact_and_source_bytes_pass_audit(self):
         all_manifest_paths = tuple(entry["path"] for entry in self.manifest_files)
@@ -112,7 +112,7 @@ class ProjectileImpactPublicBundleTest(unittest.TestCase):
                 self.assertEqual(path.stat().st_size, entry["size"])
                 self.assertEqual(sha256(path), entry["sha256"])
                 self.assertEqual("project-original", entry["category"])
-                self.assertEqual("Project original", entry["license"])
+                self.assertEqual("GPL-3.0-only / NUKE HOUR project", entry["license"])
                 self.assertIs(True, entry["public"])
 
         with tempfile.TemporaryDirectory() as directory:

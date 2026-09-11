@@ -213,7 +213,15 @@ def audit_tree(root: Path | str, manifest: dict[str, Any]) -> AuditResult:
         direct_entry = entries.get(relative)
         entry = direct_entry or tree_entry
         suffix = path.suffix.lower()
-        reviewed_render_asset = tree_entry is not None and suffix in REVIEWABLE_PUBLIC_RENDER_EXTENSIONS
+        reviewed_direct_asset = (
+            direct_entry is not None
+            and direct_entry.get("public", False)
+            and direct_entry.get("category", "") == "redistributable-third-party"
+        )
+        reviewed_render_asset = (
+            suffix in REVIEWABLE_PUBLIC_RENDER_EXTENSIONS
+            and (tree_entry is not None or reviewed_direct_asset)
+        )
         if suffix in RETAIL_EXTENSIONS and not reviewed_render_asset:
             errors.append(AuditError("retail-extension", relative, suffix))
             continue

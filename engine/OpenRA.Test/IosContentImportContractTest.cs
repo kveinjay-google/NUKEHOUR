@@ -236,10 +236,10 @@ namespace OpenRA.Test
 			StringAssert.Contains("#if PUBLIC_CLEAN", appDelegate);
 			StringAssert.DoesNotContain("../../mods/ra2/maps/", project,
 				"No map payload may be restored to the public IPA to provide the native menu surface.");
-			StringAssert.DoesNotContain("../../mods/ra2/bits/**/*", project,
-				"Unreviewed RA2 binary art must remain user supplied at runtime.");
-			StringAssert.Contains("../../mods/ra2/bits/animations/nc-impact-*.png", project,
-				"The approved clean-room NUKE HOUR impact overlays must remain available.");
+			StringAssert.Contains("../../mods/ra2/bits/**/*", project,
+				"The complete, individually hash-locked support-art inventory must remain in the public IPA.");
+			StringAssert.DoesNotContain("../../mods/ra2/bits/animations/nc-impact-*.png", project,
+				"PublicClean must not regress to the incomplete impact-overlay-only bundle.");
 		}
 
 		[Test]

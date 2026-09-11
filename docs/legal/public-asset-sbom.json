@@ -61,393 +61,417 @@
       "path": "mods/ra2/bits/ammopips.shp",
       "sha256": "0fc71f5dc70cdf675a68009823184532122e123c88f653d2de82a56125a94a6a",
       "size": 128,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / OpenRA RA2 project",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/animations/clock.shp",
       "sha256": "a9ba0f3375674c19886baeedae6b7cf62240d42147cd417e2ff835481a2c8117",
       "size": 165008,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / OpenRA RA2 project",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/bits/animations/nc-impact-core.png",
+      "sha256": "30f790a756b8dbd79a08f4734dc1778a3966808d6b3a82e3480823e28578d93b",
+      "size": 173982,
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/bits/animations/nc-impact-debris.png",
+      "sha256": "c8bae7db9c20b5d147ad5a946b56f6a8e37694253f6aec2af8b6181635e15323",
+      "size": 34090,
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project",
+      "public": true
+    },
+    {
+      "path": "mods/ra2/bits/animations/nc-impact-ring.png",
+      "sha256": "bb906789d33dfb7fb68c8aa07a636e6623afd17e37808f2d64340d7ba2c78797",
+      "size": 95954,
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/assaultmove.shp",
       "sha256": "61bab48852e042e01dde99a49beed564ee1be4e8f3606c7d2b2fdc869b84e3ce",
       "size": 5782,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / OpenRA RA2 project",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/cameos/acnsicon.shp",
       "sha256": "289c6b1d51718f015858c900017f90e3cc83232c1c33d56c207a47c730f39485",
       "size": 2912,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / OpenRA RA2 project",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/cameos/cameo-chevron.png",
       "sha256": "c70e8eb5e37d04c9373f035c557d13aa3d05d4c1976d85e951ae0908259c3f57",
       "size": 592,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / OpenRA RA2 project",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/cameos/diskicon.shp",
       "sha256": "a906943c0bf15b641040e0f5620a33d7e15e5b92ee5f48bfc86b8da9a2cbe77f",
       "size": 2912,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / Romanov's Vengeance",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/cameos/ggunicon.shp",
       "sha256": "de3b8199cfdf671c7d3e1ab725dafc5abf38d153892f4ffef1414767b34892cf",
       "size": 2912,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / Romanov's Vengeance",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/cameos/gtncicon.shp",
       "sha256": "a2d63ce4d353b5448de5faab307b0ac0619a28e52f9806d58a0e3f0a39e5f73d",
       "size": 2912,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / Romanov's Vengeance",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/cameos/scnsicon.shp",
       "sha256": "82da3fd39738ac526710cbab9c774eba5211fd65a80b06672027c1ab2c372cda",
       "size": 2912,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / OpenRA RA2 project",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/cameos/slavicon.shp",
       "sha256": "b58f44f81d27c334779b2dbf1e0f589c2e0ef2422914257aa2e3342d2b9fd06c",
       "size": 2912,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / Romanov's Vengeance",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/cameos/ydomicon-cn.png",
       "sha256": "72dd940734e47f31173828bdb9b92d2b481cac08a85fde23e1926483e7a2d094",
       "size": 82096,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/cameos/ydomicon.shp",
       "sha256": "fb7f0da638303aa6b96ebf15e4d5ee7ccac2ab7377eb24d72431ed07f40dcde7",
       "size": 2912,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / Romanov's Vengeance",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/cameos/yfixicon-cn.png",
       "sha256": "0748b9a69b95721481b6d6120dba7ecbe54593d1b8fe2adaf40d0b8a6b907f5e",
       "size": 94879,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/cameos/yfixicon.shp",
       "sha256": "3c6c6a04c01b0b7299ae1c073d05df90c6676a33fbf7eec776ccde281a1410d5",
       "size": 2912,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / Romanov's Vengeance",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/cameos/yhvricon.shp",
       "sha256": "bab3957ec6309d8bb0d9b1b3fb6c1409e04b207dbfbba14d6c80524f2a3df7bb",
       "size": 2912,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / Romanov's Vengeance",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/cameos/yrcyicon.png",
       "sha256": "6707dc6a805238372f595aeba791a4a88203bf69706c1de4a7186d66efc1096f",
       "size": 10252,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / Romanov's Vengeance",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/cameos/ytnkicon.shp",
       "sha256": "d0f3242e6b0065783bc675b305cbf0d4c7a76988ffa0284472681cd3166a0c4b",
       "size": 2912,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / Romanov's Vengeance",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/camera.shp",
       "sha256": "f07850b1c52f4722578fccabac07760c8fbe66b09d4505964ba9985631f66cb0",
       "size": 563,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / OpenRA RA2 project",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/isodepth.shp",
       "sha256": "bd1cdb5d8286d389d01e865d97dddddf9ad8ab330915997f330c791b36de73d2",
       "size": 57676,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / OpenRA RA2 project",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/mpspawn.shp",
       "sha256": "549d7825b160990e5d85ed8b3add457ca7499736c5acc24cc61504974440d867",
       "size": 594,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / OpenRA RA2 project",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/pip-disguise.shp",
       "sha256": "8d707d8f3970f21b64fc41a4b94efd4488405ac5153333cb3bab0d01c200b102",
       "size": 887,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / OpenRA RA2 project",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/pipsra.shp",
       "sha256": "97f782920a91070682925885b97da1f07630602a0b2cb3f679c0f59dd6ac7472",
       "size": 1225,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / OpenRA RA2 project",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/projectiles/zbomb.shp",
       "sha256": "8bf939364cb923c4edc16dcbbbf7681843175d10cc888bc94b3604b8618dacb2",
       "size": 4061,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / OpenRA RA2 project",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/structures/cgwash06_a.shp",
       "sha256": "27f70e47ae5e5c9b0fda5e17043b0e9ab5b1204cceed1428340bd724c9409d34",
       "size": 20315,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / OpenRA RA2 project",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/structures/cgwt01.shp",
       "sha256": "67093843cda2133326ebf2ee46ca6058b4e73f8f0dbfae94a4cf37e8032a2618",
       "size": 8646,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / OpenRA RA2 project",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/structures/gaweth.shp",
       "sha256": "a9458724c21e2e92e18d6f1f07b6b2bb59166dcbf98fa5a73dc65fa1d01f729a",
       "size": 27699,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / OpenRA RA2 project",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/structures/ngweapbb.shp",
       "sha256": "5b5abbf5e2232b536ca151c6146b4cd1109c44043ec15ce751746a0d30822809",
       "size": 5942,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / OpenRA RA2 project",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/structures/yadept.shp",
       "sha256": "3d11dbbcfe3a91f6afa262bc728d240de73bcef5c6b098cfda8cc897943fa003",
       "size": 5993,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / Romanov's Vengeance",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/structures/yadept_b.shp",
       "sha256": "56d4715050c47a16cdf76df7419e886f70be585c12a50a8525c51eb8b7d32243",
       "size": 26913,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / Romanov's Vengeance",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/structures/yadept_c.shp",
       "sha256": "3242fa59ed7bf501ad4fecbc4ec5c280ce7c0a557d881fe7820b07a800139590",
       "size": 437543,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / Romanov's Vengeance",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/structures/yadeptbb.shp",
       "sha256": "85aa14c95b6f2310fb1661929d35758613c05da5c053608d90d9182a0b1ccda7",
       "size": 11459,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / Romanov's Vengeance",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/structures/yadeptmk.shp",
       "sha256": "4c216da4cf881abb00bed1ca64b791d84716ff30f4aa650a30af1b954d7b1afe",
       "size": 225268,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / Romanov's Vengeance",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/structures/yadome.shp",
       "sha256": "27f27af328148ff2a6097e109e68ab6f1dc49df12cce212bec336b7d97d884cb",
       "size": 31801,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / Romanov's Vengeance",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/structures/yadome_a.shp",
       "sha256": "92572e7e08bffe4e085efb9c696d54303e10e40b63ac35cfb91b45b50e899af9",
       "size": 344,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / Romanov's Vengeance",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/structures/yadome_b.shp",
       "sha256": "688da93eab2d645aedb404fcac244a3fcc9b540f215988748619ed1ce24d0246",
       "size": 2648,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / Romanov's Vengeance",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/structures/yadomemk.shp",
       "sha256": "cf37847b8fb76c9e78d7282111710348e89e7402634e7a346fb27a61b30a6a35",
       "size": 99048,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / Romanov's Vengeance",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/structures/ygdept.shp",
       "sha256": "3d11dbbcfe3a91f6afa262bc728d240de73bcef5c6b098cfda8cc897943fa003",
       "size": 5993,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / Romanov's Vengeance",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/structures/ygdept_b.shp",
       "sha256": "b92a746f9678cabc27931ed97c583c0f18d8cb49b82560263ce473f3abd1e96b",
       "size": 26892,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / Romanov's Vengeance",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/structures/ygdept_c.shp",
       "sha256": "13aa378c2d902380d6b281642ac69caeee03101b84ccc9cc5e2fb7946039827a",
       "size": 437198,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / Romanov's Vengeance",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/structures/ygdeptbb.shp",
       "sha256": "c0774c396f918edbe4128197150de39c79b37cf0e948dfa706d128ce74f3c4b3",
       "size": 11436,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / Romanov's Vengeance",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/structures/ygdeptmk.shp",
       "sha256": "4c216da4cf881abb00bed1ca64b791d84716ff30f4aa650a30af1b954d7b1afe",
       "size": 225268,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / Romanov's Vengeance",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/structures/ygdome.shp",
       "sha256": "45e9377d728da0cc2496c3220d2e2bccd54401959734870f7803e1433772af85",
       "size": 31646,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / Romanov's Vengeance",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/structures/ygdome_a.shp",
       "sha256": "92572e7e08bffe4e085efb9c696d54303e10e40b63ac35cfb91b45b50e899af9",
       "size": 344,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / Romanov's Vengeance",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/structures/ygdome_b.shp",
       "sha256": "688da93eab2d645aedb404fcac244a3fcc9b540f215988748619ed1ce24d0246",
       "size": 2648,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / Romanov's Vengeance",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/structures/ygdomemk.shp",
       "sha256": "ce2fb7d7825f8083745f753ec1cb58e14d49b0763fb30de7e73ca318329c7f2b",
       "size": 98953,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / Romanov's Vengeance",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/ts-mousepal.pal",
       "sha256": "99c1fddc98ce5fc3749a71567385d985d6f82743e5e290a91278a8024cb18fdd",
       "size": 768,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / OpenRA RA2 project",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/tscameo.pal",
       "sha256": "9c7cb0680f74fc41990abefbb2fa83a858d0f0cbb7d23818c7b52a978a8ac2d2",
       "size": 768,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / OpenRA RA2 project",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/undeploy.shp",
       "sha256": "9348b415e3f513036892e94a31057ddb34b62c58af14957ed2aa80a9a00130b4",
       "size": 3234,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / OpenRA RA2 project",
+      "public": true
     },
     {
       "path": "mods/ra2/bits/waypoint.shp",
       "sha256": "160f3dbd2ce103ce8de0c6a17147c45d25d0bae53a21de63ddd8a40655b24776",
       "size": 602,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
+      "category": "redistributable-third-party",
+      "license": "GPL-3.0-only / OpenRA RA2 project",
+      "public": true
     },
     {
       "path": "mods/ra2/chrome.yaml",

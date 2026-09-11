@@ -51,6 +51,22 @@ class PublicBundleAuditTest(unittest.TestCase):
 
         self.assertIn("retail-extension", self.error_codes(result))
 
+    def test_hash_locked_redistributable_shp_file_passes(self):
+        data = b"reviewed community sprite"
+        self.write("mods/ra2/bits/unit.shp", data)
+        self.manifest["files"].append({
+            "path": "mods/ra2/bits/unit.shp",
+            "sha256": hashlib.sha256(data).hexdigest(),
+            "size": len(data),
+            "category": "redistributable-third-party",
+            "license": "GPL-3.0-only / community project",
+            "public": True,
+        })
+
+        result = audit_tree(self.root, self.manifest)
+
+        self.assertEqual((), result.errors)
+
     def test_reviewed_redistributable_shp_tree_passes_by_exact_inventory_digest(self):
         self.write("mods/ra2/bits/isodepth.shp", b"redistributable support art")
         inventory = tree_inventory(self.root / "mods/ra2/bits")

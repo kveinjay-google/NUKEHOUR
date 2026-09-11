@@ -7,7 +7,7 @@
     <IpaPackageName>NUKE HOUR.ipa</IpaPackageName>
     <ApplicationId>com.openra.ipad.personal</ApplicationId>
     <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
-    <ApplicationVersion>16</ApplicationVersion>
+    <ApplicationVersion>17</ApplicationVersion>
     <TargetedDeviceFamily>1,2</TargetedDeviceFamily>
     <DevelopmentTeam>267KQ4A3N4</DevelopmentTeam>
     <TargetPlatform>ios</TargetPlatform>
@@ -121,10 +121,11 @@
     <BundleResource Include="../../mods/ra2/audio/**/*.yaml">
       <Link>mods/ra2/audio/%(RecursiveDir)%(Filename)%(Extension)</Link>
     </BundleResource>
-    <!-- Only the clean-room NUKE HOUR impact overlays are approved for public
-         distribution. All other RA2 bits remain user-supplied at runtime. -->
-    <BundleResource Include="../../mods/ra2/bits/animations/nc-impact-*.png">
-      <Link>mods/ra2/bits/animations/%(Filename)%(Extension)</Link>
+    <!-- Every file below this tree is individually hash-locked in the public
+         manifest: GPL community support art or NUKE HOUR project originals.
+         Future/unreviewed additions are copied but make the bundle audit fail. -->
+    <BundleResource Include="../../mods/ra2/bits/**/*">
+      <Link>mods/ra2/bits/%(RecursiveDir)%(Filename)%(Extension)</Link>
     </BundleResource>
     <BundleResource Include="../../mods/ra2/chrome/**/*.yaml">
       <Link>mods/ra2/chrome/%(RecursiveDir)%(Filename)%(Extension)</Link>

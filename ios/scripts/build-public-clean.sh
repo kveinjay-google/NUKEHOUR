@@ -51,7 +51,9 @@ PACKAGE_DIR=$(mktemp -d "${TMPDIR:-/tmp}/openra-public-package.XXXXXX")
 trap 'rm -rf "$PACKAGE_DIR"' EXIT HUP INT TERM
 mkdir -p "$PACKAGE_DIR/Payload"
 ditto "$APP" "$PACKAGE_DIR/Payload/OpenRA.iOS.app"
-(cd "$PACKAGE_DIR" && ditto -c -k --sequesterRsrc --keepParent Payload "$IPA")
+PACKAGE_IPA="$PACKAGE_DIR/NUKE HOUR-PublicClean.ipa"
+(cd "$PACKAGE_DIR" && COPYFILE_DISABLE=1 /usr/bin/zip -qry "$PACKAGE_IPA" Payload)
+mv "$PACKAGE_IPA" "$IPA"
 
 python3 "$REPOSITORY_ROOT/packaging/public_bundle_audit.py" \
 	--ipa "$IPA" \
