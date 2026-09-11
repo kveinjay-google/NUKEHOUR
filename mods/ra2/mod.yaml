@@ -1,8 +1,10 @@
 Metadata:
 	Title: mod-title
-	Version: {DEV_VERSION}
+	Version: nukehour-storage-v1
 	WindowTitle: mod-windowtitle
 
+	DisplayVersion: NUKE HOUR macOS 1.0.3 (Build 3)
+	Compatibility: nukehour-core-sha256-d9401a2ec816100de4abb65ce17a0b92aa6f55a8114322e3c1f917be7b35407a
 ModCredits:
 	ModTabTitle: NUKE HOUR
 	ModCreditsFile: ra2|AUTHORS
@@ -13,7 +15,6 @@ FileSystem: ContentInstallerFileSystem
 	SystemPackages:
 		^EngineDir
 		$ra2: ra2
-		$ts: ts
 		^EngineDir|mods/common: common
 		~^SupportDir|Content/ra2: content
 	ContentInstallerMod: ra2-content
@@ -76,16 +77,24 @@ FileSystem: ContentInstallerFileSystem
 		audio.bag
 		~theme.mix
 		# Below are mod-provided (system) packages that need to be loaded after the content packages so they can override content assets.
-		ra2|bits
-		ra2|bits/cameos
-		ra2|bits/structures
-		ra2|bits/animations
-		ra2|bits/projectiles
+		~ra2|bits
+		~ra2|bits/cameos
+		~ra2|bits/structures
+		~ra2|bits/animations
+		~ra2|bits/projectiles
 		ra2|uibits
 
+RuntimeContractConfiguration:
+	ResourceCapability: ra2-presentation-capability-v2
+	RequiredResources: content|ra2.mix, content|language.mix
+	OptionalResources: content|ra2md.mix, content|langmd.mix
+
+WebServices:
+	OnlineLobby: https://lobby.nukehour.com/
+
 MapFolders:
-	ra2|maps: System
-	^SupportDir|Content/ra2/maps: User
+	~ra2|maps: System
+	~^SupportDir|maps/ra2/nukehour-storage-v1: User
 	~^SupportDir|maps/ra2/{DEV_VERSION}: User
 
 Rules:
@@ -151,7 +160,6 @@ Chrome:
 Assemblies: OpenRA.Mods.Common.dll, OpenRA.Mods.Cnc.dll, OpenRA.Mods.RA2.dll
 
 ChromeLayout:
-	ts|chrome/assetbrowser.yaml
 	ra2|chrome/ingame-player.yaml
 	ra2|chrome/mainmenu.yaml
 	common|chrome/mainmenu-prompts.yaml

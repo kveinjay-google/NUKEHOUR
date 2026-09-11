@@ -1155,6 +1155,739 @@ commandbar-icons-highlighted:
 		hold-fire-active: 832, 78, 26, 26
 		hold-fire-active-hover: 832, 78, 26, 26
 
+ios-commandbar-glyphs:
+	Image: ios-commandbar-glyphs-unified.png
+	Regions:
+		group-1: 3, 3, 26, 26
+		group-1-disabled: 3, 35, 26, 26
+		group-1-hover: 3, 67, 26, 26
+		group-1-active: 3, 99, 26, 26
+		group-1-active-hover: 3, 99, 26, 26
+		group-2: 35, 3, 26, 26
+		group-2-disabled: 35, 35, 26, 26
+		group-2-hover: 35, 67, 26, 26
+		group-2-active: 35, 99, 26, 26
+		group-2-active-hover: 35, 99, 26, 26
+		group-3: 67, 3, 26, 26
+		group-3-disabled: 67, 35, 26, 26
+		group-3-hover: 67, 67, 26, 26
+		group-3-active: 67, 99, 26, 26
+		group-3-active-hover: 67, 99, 26, 26
+		group-4: 99, 3, 26, 26
+		group-4-disabled: 99, 35, 26, 26
+		group-4-hover: 99, 67, 26, 26
+		group-4-active: 99, 99, 26, 26
+		group-4-active-hover: 99, 99, 26, 26
+		group-5: 131, 3, 26, 26
+		group-5-disabled: 131, 35, 26, 26
+		group-5-hover: 131, 67, 26, 26
+		group-5-active: 131, 99, 26, 26
+		group-5-active-hover: 131, 99, 26, 26
+		production-x5: 163, 3, 26, 26
+		production-x5-disabled: 163, 35, 26, 26
+		production-x5-hover: 163, 67, 26, 26
+		production-x5-active: 163, 99, 26, 26
+		production-x5-active-hover: 163, 99, 26, 26
+		attack-move: 195, 3, 26, 26
+		attack-move-disabled: 195, 35, 26, 26
+		attack-move-hover: 195, 67, 26, 26
+		attack-move-active: 195, 99, 26, 26
+		attack-move-active-hover: 195, 99, 26, 26
+		scatter: 227, 3, 26, 26
+		scatter-disabled: 227, 35, 26, 26
+		scatter-hover: 227, 67, 26, 26
+		scatter-active: 227, 99, 26, 26
+		scatter-active-hover: 227, 99, 26, 26
+		queue-orders: 259, 3, 26, 26
+		queue-orders-disabled: 259, 35, 26, 26
+		queue-orders-hover: 259, 67, 26, 26
+		queue-orders-active: 259, 99, 26, 26
+		queue-orders-active-hover: 259, 99, 26, 26
+		stop: 291, 3, 26, 26
+		stop-disabled: 291, 35, 26, 26
+		stop-hover: 291, 67, 26, 26
+		stop-active: 291, 99, 26, 26
+		stop-active-hover: 291, 99, 26, 26
+		cycle-base: 323, 3, 26, 26
+		cycle-base-disabled: 323, 35, 26, 26
+		cycle-base-hover: 323, 67, 26, 26
+		cycle-base-active: 323, 99, 26, 26
+		cycle-base-active-hover: 323, 99, 26, 26
+
+ios-commandbar-glyphs-highlighted:
+	Inherits: ios-commandbar-glyphs
+	Regions:
+		group-1: 3, 99, 26, 26
+		group-2: 35, 99, 26, 26
+		group-3: 67, 99, 26, 26
+		group-4: 99, 99, 26, 26
+		group-5: 131, 99, 26, 26
+		production-x5: 163, 99, 26, 26
+		attack-move: 195, 99, 26, 26
+		scatter: 227, 99, 26, 26
+		queue-orders: 259, 99, 26, 26
+		stop: 291, 99, 26, 26
+		cycle-base: 323, 99, 26, 26
+
+
+ios-commandbar-glyphs-v3-regions:
+	Image: ios-commandbar-glyphs-allies-v3.png
+	Regions:
+		group-1: 3, 3, 26, 26
+		group-1-disabled: 3, 35, 26, 26
+		group-1-hover: 3, 67, 26, 26
+		group-1-pressed: 3, 99, 26, 26
+		group-1-active: 3, 99, 26, 26
+		group-1-active-hover: 3, 99, 26, 26
+		group-1-active-pressed: 3, 99, 26, 26
+		group-2: 35, 3, 26, 26
+		group-2-disabled: 35, 35, 26, 26
+		group-2-hover: 35, 67, 26, 26
+		group-2-pressed: 35, 99, 26, 26
+		group-2-active: 35, 99, 26, 26
+		group-2-active-hover: 35, 99, 26, 26
+		group-2-active-pressed: 35, 99, 26, 26
+		group-3: 67, 3, 26, 26
+		group-3-disabled: 67, 35, 26, 26
+		group-3-hover: 67, 67, 26, 26
+		group-3-pressed: 67, 99, 26, 26
+		group-3-active: 67, 99, 26, 26
+		group-3-active-hover: 67, 99, 26, 26
+		group-3-active-pressed: 67, 99, 26, 26
+		group-4: 99, 3, 26, 26
+		group-4-disabled: 99, 35, 26, 26
+		group-4-hover: 99, 67, 26, 26
+		group-4-pressed: 99, 99, 26, 26
+		group-4-active: 99, 99, 26, 26
+		group-4-active-hover: 99, 99, 26, 26
+		group-4-active-pressed: 99, 99, 26, 26
+		group-5: 131, 3, 26, 26
+		group-5-disabled: 131, 35, 26, 26
+		group-5-hover: 131, 67, 26, 26
+		group-5-pressed: 131, 99, 26, 26
+		group-5-active: 131, 99, 26, 26
+		group-5-active-hover: 131, 99, 26, 26
+		group-5-active-pressed: 131, 99, 26, 26
+		production-x5: 163, 3, 26, 26
+		production-x5-disabled: 163, 35, 26, 26
+		production-x5-hover: 163, 67, 26, 26
+		production-x5-pressed: 163, 99, 26, 26
+		production-x5-active: 163, 99, 26, 26
+		production-x5-active-hover: 163, 99, 26, 26
+		production-x5-active-pressed: 163, 99, 26, 26
+		group-6: 195, 3, 26, 26
+		group-6-disabled: 195, 35, 26, 26
+		group-6-hover: 195, 67, 26, 26
+		group-6-pressed: 195, 99, 26, 26
+		group-6-active: 195, 99, 26, 26
+		group-6-active-hover: 195, 99, 26, 26
+		group-6-active-pressed: 195, 99, 26, 26
+		group-7: 227, 3, 26, 26
+		group-7-disabled: 227, 35, 26, 26
+		group-7-hover: 227, 67, 26, 26
+		group-7-pressed: 227, 99, 26, 26
+		group-7-active: 227, 99, 26, 26
+		group-7-active-hover: 227, 99, 26, 26
+		group-7-active-pressed: 227, 99, 26, 26
+		group-8: 259, 3, 26, 26
+		group-8-disabled: 259, 35, 26, 26
+		group-8-hover: 259, 67, 26, 26
+		group-8-pressed: 259, 99, 26, 26
+		group-8-active: 259, 99, 26, 26
+		group-8-active-hover: 259, 99, 26, 26
+		group-8-active-pressed: 259, 99, 26, 26
+		group-9: 291, 3, 26, 26
+		group-9-disabled: 291, 35, 26, 26
+		group-9-hover: 291, 67, 26, 26
+		group-9-pressed: 291, 99, 26, 26
+		group-9-active: 291, 99, 26, 26
+		group-9-active-hover: 291, 99, 26, 26
+		group-9-active-pressed: 291, 99, 26, 26
+		group-0: 323, 3, 26, 26
+		group-0-disabled: 323, 35, 26, 26
+		group-0-hover: 323, 67, 26, 26
+		group-0-pressed: 323, 99, 26, 26
+		group-0-active: 323, 99, 26, 26
+		group-0-active-hover: 323, 99, 26, 26
+		group-0-active-pressed: 323, 99, 26, 26
+		select-all: 355, 3, 26, 26
+		select-all-disabled: 355, 35, 26, 26
+		select-all-hover: 355, 67, 26, 26
+		select-all-pressed: 355, 99, 26, 26
+		select-all-active: 355, 99, 26, 26
+		select-all-active-hover: 355, 99, 26, 26
+		select-all-active-pressed: 355, 99, 26, 26
+		select-by-type: 387, 3, 26, 26
+		select-by-type-disabled: 387, 35, 26, 26
+		select-by-type-hover: 387, 67, 26, 26
+		select-by-type-pressed: 387, 99, 26, 26
+		select-by-type-active: 387, 99, 26, 26
+		select-by-type-active-hover: 387, 99, 26, 26
+		select-by-type-active-pressed: 387, 99, 26, 26
+		cycle-base: 419, 3, 26, 26
+		cycle-base-disabled: 419, 35, 26, 26
+		cycle-base-hover: 419, 67, 26, 26
+		cycle-base-pressed: 419, 99, 26, 26
+		cycle-base-active: 419, 99, 26, 26
+		cycle-base-active-hover: 419, 99, 26, 26
+		cycle-base-active-pressed: 419, 99, 26, 26
+		to-selection: 451, 3, 26, 26
+		to-selection-disabled: 451, 35, 26, 26
+		to-selection-hover: 451, 67, 26, 26
+		to-selection-pressed: 451, 99, 26, 26
+		to-selection-active: 451, 99, 26, 26
+		to-selection-active-hover: 451, 99, 26, 26
+		to-selection-active-pressed: 451, 99, 26, 26
+		to-last-event: 483, 3, 26, 26
+		to-last-event-disabled: 483, 35, 26, 26
+		to-last-event-hover: 483, 67, 26, 26
+		to-last-event-pressed: 483, 99, 26, 26
+		to-last-event-active: 483, 99, 26, 26
+		to-last-event-active-hover: 483, 99, 26, 26
+		to-last-event-active-pressed: 483, 99, 26, 26
+		cycle-harvesters: 515, 3, 26, 26
+		cycle-harvesters-disabled: 515, 35, 26, 26
+		cycle-harvesters-hover: 515, 67, 26, 26
+		cycle-harvesters-pressed: 515, 99, 26, 26
+		cycle-harvesters-active: 515, 99, 26, 26
+		cycle-harvesters-active-hover: 515, 99, 26, 26
+		cycle-harvesters-active-pressed: 515, 99, 26, 26
+		remove-from-group: 547, 3, 26, 26
+		remove-from-group-disabled: 547, 35, 26, 26
+		remove-from-group-hover: 547, 67, 26, 26
+		remove-from-group-pressed: 547, 99, 26, 26
+		remove-from-group-active: 547, 99, 26, 26
+		remove-from-group-active-hover: 547, 99, 26, 26
+		remove-from-group-active-pressed: 547, 99, 26, 26
+		attack-move: 579, 3, 26, 26
+		attack-move-disabled: 579, 35, 26, 26
+		attack-move-hover: 579, 67, 26, 26
+		attack-move-pressed: 579, 99, 26, 26
+		attack-move-active: 579, 99, 26, 26
+		attack-move-active-hover: 579, 99, 26, 26
+		attack-move-active-pressed: 579, 99, 26, 26
+		force-move: 611, 3, 26, 26
+		force-move-disabled: 611, 35, 26, 26
+		force-move-hover: 611, 67, 26, 26
+		force-move-pressed: 611, 99, 26, 26
+		force-move-active: 611, 99, 26, 26
+		force-move-active-hover: 611, 99, 26, 26
+		force-move-active-pressed: 611, 99, 26, 26
+		force-attack: 643, 3, 26, 26
+		force-attack-disabled: 643, 35, 26, 26
+		force-attack-hover: 643, 67, 26, 26
+		force-attack-pressed: 643, 99, 26, 26
+		force-attack-active: 643, 99, 26, 26
+		force-attack-active-hover: 643, 99, 26, 26
+		force-attack-active-pressed: 643, 99, 26, 26
+		guard: 675, 3, 26, 26
+		guard-disabled: 675, 35, 26, 26
+		guard-hover: 675, 67, 26, 26
+		guard-pressed: 675, 99, 26, 26
+		guard-active: 675, 99, 26, 26
+		guard-active-hover: 675, 99, 26, 26
+		guard-active-pressed: 675, 99, 26, 26
+		deploy: 707, 3, 26, 26
+		deploy-disabled: 707, 35, 26, 26
+		deploy-hover: 707, 67, 26, 26
+		deploy-pressed: 707, 99, 26, 26
+		deploy-active: 707, 99, 26, 26
+		deploy-active-hover: 707, 99, 26, 26
+		deploy-active-pressed: 707, 99, 26, 26
+		scatter: 739, 3, 26, 26
+		scatter-disabled: 739, 35, 26, 26
+		scatter-hover: 739, 67, 26, 26
+		scatter-pressed: 739, 99, 26, 26
+		scatter-active: 739, 99, 26, 26
+		scatter-active-hover: 739, 99, 26, 26
+		scatter-active-pressed: 739, 99, 26, 26
+		stop: 771, 3, 26, 26
+		stop-disabled: 771, 35, 26, 26
+		stop-hover: 771, 67, 26, 26
+		stop-pressed: 771, 99, 26, 26
+		stop-active: 771, 99, 26, 26
+		stop-active-hover: 771, 99, 26, 26
+		stop-active-pressed: 771, 99, 26, 26
+		queue-orders: 803, 3, 26, 26
+		queue-orders-disabled: 803, 35, 26, 26
+		queue-orders-hover: 803, 67, 26, 26
+		queue-orders-pressed: 803, 99, 26, 26
+		queue-orders-active: 803, 99, 26, 26
+		queue-orders-active-hover: 803, 99, 26, 26
+		queue-orders-active-pressed: 803, 99, 26, 26
+		attack-anything: 835, 3, 26, 26
+		attack-anything-disabled: 835, 35, 26, 26
+		attack-anything-hover: 835, 67, 26, 26
+		attack-anything-pressed: 835, 99, 26, 26
+		attack-anything-active: 835, 99, 26, 26
+		attack-anything-active-hover: 835, 99, 26, 26
+		attack-anything-active-pressed: 835, 99, 26, 26
+		defend: 867, 3, 26, 26
+		defend-disabled: 867, 35, 26, 26
+		defend-hover: 867, 67, 26, 26
+		defend-pressed: 867, 99, 26, 26
+		defend-active: 867, 99, 26, 26
+		defend-active-hover: 867, 99, 26, 26
+		defend-active-pressed: 867, 99, 26, 26
+		return-fire: 899, 3, 26, 26
+		return-fire-disabled: 899, 35, 26, 26
+		return-fire-hover: 899, 67, 26, 26
+		return-fire-pressed: 899, 99, 26, 26
+		return-fire-active: 899, 99, 26, 26
+		return-fire-active-hover: 899, 99, 26, 26
+		return-fire-active-pressed: 899, 99, 26, 26
+		hold-fire: 931, 3, 26, 26
+		hold-fire-disabled: 931, 35, 26, 26
+		hold-fire-hover: 931, 67, 26, 26
+		hold-fire-pressed: 931, 99, 26, 26
+		hold-fire-active: 931, 99, 26, 26
+		hold-fire-active-hover: 931, 99, 26, 26
+		hold-fire-active-pressed: 931, 99, 26, 26
+		sell: 963, 3, 26, 26
+		sell-disabled: 963, 35, 26, 26
+		sell-hover: 963, 67, 26, 26
+		sell-pressed: 963, 99, 26, 26
+		sell-active: 963, 99, 26, 26
+		sell-active-hover: 963, 99, 26, 26
+		sell-active-pressed: 963, 99, 26, 26
+		repair: 995, 3, 26, 26
+		repair-disabled: 995, 35, 26, 26
+		repair-hover: 995, 67, 26, 26
+		repair-pressed: 995, 99, 26, 26
+		repair-active: 995, 99, 26, 26
+		repair-active-hover: 995, 99, 26, 26
+		repair-active-pressed: 995, 99, 26, 26
+		beacon: 1027, 3, 26, 26
+		beacon-disabled: 1027, 35, 26, 26
+		beacon-hover: 1027, 67, 26, 26
+		beacon-pressed: 1027, 99, 26, 26
+		beacon-active: 1027, 99, 26, 26
+		beacon-active-hover: 1027, 99, 26, 26
+		beacon-active-pressed: 1027, 99, 26, 26
+
+ios-commandbar-glyphs-allies:
+	Inherits: ios-commandbar-glyphs-v3-regions
+	Image: ios-commandbar-glyphs-allies-v3.png
+	Regions:
+		group-1: 3, 3, 26, 26
+		group-2: 35, 3, 26, 26
+		group-3: 67, 3, 26, 26
+		group-4: 99, 3, 26, 26
+		group-5: 131, 3, 26, 26
+		production-x5: 163, 3, 26, 26
+		group-6: 195, 3, 26, 26
+		group-7: 227, 3, 26, 26
+		group-8: 259, 3, 26, 26
+		group-9: 291, 3, 26, 26
+		group-0: 323, 3, 26, 26
+		select-all: 355, 3, 26, 26
+		select-by-type: 387, 3, 26, 26
+		cycle-base: 419, 3, 26, 26
+		to-selection: 451, 3, 26, 26
+		to-last-event: 483, 3, 26, 26
+		cycle-harvesters: 515, 3, 26, 26
+		remove-from-group: 547, 3, 26, 26
+		attack-move: 579, 3, 26, 26
+		force-move: 611, 3, 26, 26
+		force-attack: 643, 3, 26, 26
+		guard: 675, 3, 26, 26
+		deploy: 707, 3, 26, 26
+		scatter: 739, 3, 26, 26
+		stop: 771, 3, 26, 26
+		queue-orders: 803, 3, 26, 26
+		attack-anything: 835, 3, 26, 26
+		defend: 867, 3, 26, 26
+		return-fire: 899, 3, 26, 26
+		hold-fire: 931, 3, 26, 26
+		sell: 963, 3, 26, 26
+		repair: 995, 3, 26, 26
+		beacon: 1027, 3, 26, 26
+
+ios-commandbar-glyphs-allies-highlighted:
+	Inherits: ios-commandbar-glyphs-allies
+	Regions:
+		group-1: 3, 99, 26, 26
+		group-1-hover: 3, 99, 26, 26
+		group-1-pressed: 3, 99, 26, 26
+		group-2: 35, 99, 26, 26
+		group-2-hover: 35, 99, 26, 26
+		group-2-pressed: 35, 99, 26, 26
+		group-3: 67, 99, 26, 26
+		group-3-hover: 67, 99, 26, 26
+		group-3-pressed: 67, 99, 26, 26
+		group-4: 99, 99, 26, 26
+		group-4-hover: 99, 99, 26, 26
+		group-4-pressed: 99, 99, 26, 26
+		group-5: 131, 99, 26, 26
+		group-5-hover: 131, 99, 26, 26
+		group-5-pressed: 131, 99, 26, 26
+		production-x5: 163, 99, 26, 26
+		production-x5-hover: 163, 99, 26, 26
+		production-x5-pressed: 163, 99, 26, 26
+		group-6: 195, 99, 26, 26
+		group-6-hover: 195, 99, 26, 26
+		group-6-pressed: 195, 99, 26, 26
+		group-7: 227, 99, 26, 26
+		group-7-hover: 227, 99, 26, 26
+		group-7-pressed: 227, 99, 26, 26
+		group-8: 259, 99, 26, 26
+		group-8-hover: 259, 99, 26, 26
+		group-8-pressed: 259, 99, 26, 26
+		group-9: 291, 99, 26, 26
+		group-9-hover: 291, 99, 26, 26
+		group-9-pressed: 291, 99, 26, 26
+		group-0: 323, 99, 26, 26
+		group-0-hover: 323, 99, 26, 26
+		group-0-pressed: 323, 99, 26, 26
+		select-all: 355, 99, 26, 26
+		select-all-hover: 355, 99, 26, 26
+		select-all-pressed: 355, 99, 26, 26
+		select-by-type: 387, 99, 26, 26
+		select-by-type-hover: 387, 99, 26, 26
+		select-by-type-pressed: 387, 99, 26, 26
+		cycle-base: 419, 99, 26, 26
+		cycle-base-hover: 419, 99, 26, 26
+		cycle-base-pressed: 419, 99, 26, 26
+		to-selection: 451, 99, 26, 26
+		to-selection-hover: 451, 99, 26, 26
+		to-selection-pressed: 451, 99, 26, 26
+		to-last-event: 483, 99, 26, 26
+		to-last-event-hover: 483, 99, 26, 26
+		to-last-event-pressed: 483, 99, 26, 26
+		cycle-harvesters: 515, 99, 26, 26
+		cycle-harvesters-hover: 515, 99, 26, 26
+		cycle-harvesters-pressed: 515, 99, 26, 26
+		remove-from-group: 547, 99, 26, 26
+		remove-from-group-hover: 547, 99, 26, 26
+		remove-from-group-pressed: 547, 99, 26, 26
+		attack-move: 579, 99, 26, 26
+		attack-move-hover: 579, 99, 26, 26
+		attack-move-pressed: 579, 99, 26, 26
+		force-move: 611, 99, 26, 26
+		force-move-hover: 611, 99, 26, 26
+		force-move-pressed: 611, 99, 26, 26
+		force-attack: 643, 99, 26, 26
+		force-attack-hover: 643, 99, 26, 26
+		force-attack-pressed: 643, 99, 26, 26
+		guard: 675, 99, 26, 26
+		guard-hover: 675, 99, 26, 26
+		guard-pressed: 675, 99, 26, 26
+		deploy: 707, 99, 26, 26
+		deploy-hover: 707, 99, 26, 26
+		deploy-pressed: 707, 99, 26, 26
+		scatter: 739, 99, 26, 26
+		scatter-hover: 739, 99, 26, 26
+		scatter-pressed: 739, 99, 26, 26
+		stop: 771, 99, 26, 26
+		stop-hover: 771, 99, 26, 26
+		stop-pressed: 771, 99, 26, 26
+		queue-orders: 803, 99, 26, 26
+		queue-orders-hover: 803, 99, 26, 26
+		queue-orders-pressed: 803, 99, 26, 26
+		attack-anything: 835, 99, 26, 26
+		attack-anything-hover: 835, 99, 26, 26
+		attack-anything-pressed: 835, 99, 26, 26
+		defend: 867, 99, 26, 26
+		defend-hover: 867, 99, 26, 26
+		defend-pressed: 867, 99, 26, 26
+		return-fire: 899, 99, 26, 26
+		return-fire-hover: 899, 99, 26, 26
+		return-fire-pressed: 899, 99, 26, 26
+		hold-fire: 931, 99, 26, 26
+		hold-fire-hover: 931, 99, 26, 26
+		hold-fire-pressed: 931, 99, 26, 26
+		sell: 963, 99, 26, 26
+		sell-hover: 963, 99, 26, 26
+		sell-pressed: 963, 99, 26, 26
+		repair: 995, 99, 26, 26
+		repair-hover: 995, 99, 26, 26
+		repair-pressed: 995, 99, 26, 26
+		beacon: 1027, 99, 26, 26
+		beacon-hover: 1027, 99, 26, 26
+		beacon-pressed: 1027, 99, 26, 26
+
+ios-commandbar-glyphs-soviets:
+	Inherits: ios-commandbar-glyphs-v3-regions
+	Image: ios-commandbar-glyphs-soviets-v3.png
+	Regions:
+		group-1: 3, 3, 26, 26
+		group-2: 35, 3, 26, 26
+		group-3: 67, 3, 26, 26
+		group-4: 99, 3, 26, 26
+		group-5: 131, 3, 26, 26
+		production-x5: 163, 3, 26, 26
+		group-6: 195, 3, 26, 26
+		group-7: 227, 3, 26, 26
+		group-8: 259, 3, 26, 26
+		group-9: 291, 3, 26, 26
+		group-0: 323, 3, 26, 26
+		select-all: 355, 3, 26, 26
+		select-by-type: 387, 3, 26, 26
+		cycle-base: 419, 3, 26, 26
+		to-selection: 451, 3, 26, 26
+		to-last-event: 483, 3, 26, 26
+		cycle-harvesters: 515, 3, 26, 26
+		remove-from-group: 547, 3, 26, 26
+		attack-move: 579, 3, 26, 26
+		force-move: 611, 3, 26, 26
+		force-attack: 643, 3, 26, 26
+		guard: 675, 3, 26, 26
+		deploy: 707, 3, 26, 26
+		scatter: 739, 3, 26, 26
+		stop: 771, 3, 26, 26
+		queue-orders: 803, 3, 26, 26
+		attack-anything: 835, 3, 26, 26
+		defend: 867, 3, 26, 26
+		return-fire: 899, 3, 26, 26
+		hold-fire: 931, 3, 26, 26
+		sell: 963, 3, 26, 26
+		repair: 995, 3, 26, 26
+		beacon: 1027, 3, 26, 26
+
+ios-commandbar-glyphs-soviets-highlighted:
+	Inherits: ios-commandbar-glyphs-soviets
+	Regions:
+		group-1: 3, 99, 26, 26
+		group-1-hover: 3, 99, 26, 26
+		group-1-pressed: 3, 99, 26, 26
+		group-2: 35, 99, 26, 26
+		group-2-hover: 35, 99, 26, 26
+		group-2-pressed: 35, 99, 26, 26
+		group-3: 67, 99, 26, 26
+		group-3-hover: 67, 99, 26, 26
+		group-3-pressed: 67, 99, 26, 26
+		group-4: 99, 99, 26, 26
+		group-4-hover: 99, 99, 26, 26
+		group-4-pressed: 99, 99, 26, 26
+		group-5: 131, 99, 26, 26
+		group-5-hover: 131, 99, 26, 26
+		group-5-pressed: 131, 99, 26, 26
+		production-x5: 163, 99, 26, 26
+		production-x5-hover: 163, 99, 26, 26
+		production-x5-pressed: 163, 99, 26, 26
+		group-6: 195, 99, 26, 26
+		group-6-hover: 195, 99, 26, 26
+		group-6-pressed: 195, 99, 26, 26
+		group-7: 227, 99, 26, 26
+		group-7-hover: 227, 99, 26, 26
+		group-7-pressed: 227, 99, 26, 26
+		group-8: 259, 99, 26, 26
+		group-8-hover: 259, 99, 26, 26
+		group-8-pressed: 259, 99, 26, 26
+		group-9: 291, 99, 26, 26
+		group-9-hover: 291, 99, 26, 26
+		group-9-pressed: 291, 99, 26, 26
+		group-0: 323, 99, 26, 26
+		group-0-hover: 323, 99, 26, 26
+		group-0-pressed: 323, 99, 26, 26
+		select-all: 355, 99, 26, 26
+		select-all-hover: 355, 99, 26, 26
+		select-all-pressed: 355, 99, 26, 26
+		select-by-type: 387, 99, 26, 26
+		select-by-type-hover: 387, 99, 26, 26
+		select-by-type-pressed: 387, 99, 26, 26
+		cycle-base: 419, 99, 26, 26
+		cycle-base-hover: 419, 99, 26, 26
+		cycle-base-pressed: 419, 99, 26, 26
+		to-selection: 451, 99, 26, 26
+		to-selection-hover: 451, 99, 26, 26
+		to-selection-pressed: 451, 99, 26, 26
+		to-last-event: 483, 99, 26, 26
+		to-last-event-hover: 483, 99, 26, 26
+		to-last-event-pressed: 483, 99, 26, 26
+		cycle-harvesters: 515, 99, 26, 26
+		cycle-harvesters-hover: 515, 99, 26, 26
+		cycle-harvesters-pressed: 515, 99, 26, 26
+		remove-from-group: 547, 99, 26, 26
+		remove-from-group-hover: 547, 99, 26, 26
+		remove-from-group-pressed: 547, 99, 26, 26
+		attack-move: 579, 99, 26, 26
+		attack-move-hover: 579, 99, 26, 26
+		attack-move-pressed: 579, 99, 26, 26
+		force-move: 611, 99, 26, 26
+		force-move-hover: 611, 99, 26, 26
+		force-move-pressed: 611, 99, 26, 26
+		force-attack: 643, 99, 26, 26
+		force-attack-hover: 643, 99, 26, 26
+		force-attack-pressed: 643, 99, 26, 26
+		guard: 675, 99, 26, 26
+		guard-hover: 675, 99, 26, 26
+		guard-pressed: 675, 99, 26, 26
+		deploy: 707, 99, 26, 26
+		deploy-hover: 707, 99, 26, 26
+		deploy-pressed: 707, 99, 26, 26
+		scatter: 739, 99, 26, 26
+		scatter-hover: 739, 99, 26, 26
+		scatter-pressed: 739, 99, 26, 26
+		stop: 771, 99, 26, 26
+		stop-hover: 771, 99, 26, 26
+		stop-pressed: 771, 99, 26, 26
+		queue-orders: 803, 99, 26, 26
+		queue-orders-hover: 803, 99, 26, 26
+		queue-orders-pressed: 803, 99, 26, 26
+		attack-anything: 835, 99, 26, 26
+		attack-anything-hover: 835, 99, 26, 26
+		attack-anything-pressed: 835, 99, 26, 26
+		defend: 867, 99, 26, 26
+		defend-hover: 867, 99, 26, 26
+		defend-pressed: 867, 99, 26, 26
+		return-fire: 899, 99, 26, 26
+		return-fire-hover: 899, 99, 26, 26
+		return-fire-pressed: 899, 99, 26, 26
+		hold-fire: 931, 99, 26, 26
+		hold-fire-hover: 931, 99, 26, 26
+		hold-fire-pressed: 931, 99, 26, 26
+		sell: 963, 99, 26, 26
+		sell-hover: 963, 99, 26, 26
+		sell-pressed: 963, 99, 26, 26
+		repair: 995, 99, 26, 26
+		repair-hover: 995, 99, 26, 26
+		repair-pressed: 995, 99, 26, 26
+		beacon: 1027, 99, 26, 26
+		beacon-hover: 1027, 99, 26, 26
+		beacon-pressed: 1027, 99, 26, 26
+
+ios-commandbar-glyphs-yuri:
+	Inherits: ios-commandbar-glyphs-v3-regions
+	Image: ios-commandbar-glyphs-yuri-v3.png
+	Regions:
+		group-1: 3, 3, 26, 26
+		group-2: 35, 3, 26, 26
+		group-3: 67, 3, 26, 26
+		group-4: 99, 3, 26, 26
+		group-5: 131, 3, 26, 26
+		production-x5: 163, 3, 26, 26
+		group-6: 195, 3, 26, 26
+		group-7: 227, 3, 26, 26
+		group-8: 259, 3, 26, 26
+		group-9: 291, 3, 26, 26
+		group-0: 323, 3, 26, 26
+		select-all: 355, 3, 26, 26
+		select-by-type: 387, 3, 26, 26
+		cycle-base: 419, 3, 26, 26
+		to-selection: 451, 3, 26, 26
+		to-last-event: 483, 3, 26, 26
+		cycle-harvesters: 515, 3, 26, 26
+		remove-from-group: 547, 3, 26, 26
+		attack-move: 579, 3, 26, 26
+		force-move: 611, 3, 26, 26
+		force-attack: 643, 3, 26, 26
+		guard: 675, 3, 26, 26
+		deploy: 707, 3, 26, 26
+		scatter: 739, 3, 26, 26
+		stop: 771, 3, 26, 26
+		queue-orders: 803, 3, 26, 26
+		attack-anything: 835, 3, 26, 26
+		defend: 867, 3, 26, 26
+		return-fire: 899, 3, 26, 26
+		hold-fire: 931, 3, 26, 26
+		sell: 963, 3, 26, 26
+		repair: 995, 3, 26, 26
+		beacon: 1027, 3, 26, 26
+
+ios-commandbar-glyphs-yuri-highlighted:
+	Inherits: ios-commandbar-glyphs-yuri
+	Regions:
+		group-1: 3, 99, 26, 26
+		group-1-hover: 3, 99, 26, 26
+		group-1-pressed: 3, 99, 26, 26
+		group-2: 35, 99, 26, 26
+		group-2-hover: 35, 99, 26, 26
+		group-2-pressed: 35, 99, 26, 26
+		group-3: 67, 99, 26, 26
+		group-3-hover: 67, 99, 26, 26
+		group-3-pressed: 67, 99, 26, 26
+		group-4: 99, 99, 26, 26
+		group-4-hover: 99, 99, 26, 26
+		group-4-pressed: 99, 99, 26, 26
+		group-5: 131, 99, 26, 26
+		group-5-hover: 131, 99, 26, 26
+		group-5-pressed: 131, 99, 26, 26
+		production-x5: 163, 99, 26, 26
+		production-x5-hover: 163, 99, 26, 26
+		production-x5-pressed: 163, 99, 26, 26
+		group-6: 195, 99, 26, 26
+		group-6-hover: 195, 99, 26, 26
+		group-6-pressed: 195, 99, 26, 26
+		group-7: 227, 99, 26, 26
+		group-7-hover: 227, 99, 26, 26
+		group-7-pressed: 227, 99, 26, 26
+		group-8: 259, 99, 26, 26
+		group-8-hover: 259, 99, 26, 26
+		group-8-pressed: 259, 99, 26, 26
+		group-9: 291, 99, 26, 26
+		group-9-hover: 291, 99, 26, 26
+		group-9-pressed: 291, 99, 26, 26
+		group-0: 323, 99, 26, 26
+		group-0-hover: 323, 99, 26, 26
+		group-0-pressed: 323, 99, 26, 26
+		select-all: 355, 99, 26, 26
+		select-all-hover: 355, 99, 26, 26
+		select-all-pressed: 355, 99, 26, 26
+		select-by-type: 387, 99, 26, 26
+		select-by-type-hover: 387, 99, 26, 26
+		select-by-type-pressed: 387, 99, 26, 26
+		cycle-base: 419, 99, 26, 26
+		cycle-base-hover: 419, 99, 26, 26
+		cycle-base-pressed: 419, 99, 26, 26
+		to-selection: 451, 99, 26, 26
+		to-selection-hover: 451, 99, 26, 26
+		to-selection-pressed: 451, 99, 26, 26
+		to-last-event: 483, 99, 26, 26
+		to-last-event-hover: 483, 99, 26, 26
+		to-last-event-pressed: 483, 99, 26, 26
+		cycle-harvesters: 515, 99, 26, 26
+		cycle-harvesters-hover: 515, 99, 26, 26
+		cycle-harvesters-pressed: 515, 99, 26, 26
+		remove-from-group: 547, 99, 26, 26
+		remove-from-group-hover: 547, 99, 26, 26
+		remove-from-group-pressed: 547, 99, 26, 26
+		attack-move: 579, 99, 26, 26
+		attack-move-hover: 579, 99, 26, 26
+		attack-move-pressed: 579, 99, 26, 26
+		force-move: 611, 99, 26, 26
+		force-move-hover: 611, 99, 26, 26
+		force-move-pressed: 611, 99, 26, 26
+		force-attack: 643, 99, 26, 26
+		force-attack-hover: 643, 99, 26, 26
+		force-attack-pressed: 643, 99, 26, 26
+		guard: 675, 99, 26, 26
+		guard-hover: 675, 99, 26, 26
+		guard-pressed: 675, 99, 26, 26
+		deploy: 707, 99, 26, 26
+		deploy-hover: 707, 99, 26, 26
+		deploy-pressed: 707, 99, 26, 26
+		scatter: 739, 99, 26, 26
+		scatter-hover: 739, 99, 26, 26
+		scatter-pressed: 739, 99, 26, 26
+		stop: 771, 99, 26, 26
+		stop-hover: 771, 99, 26, 26
+		stop-pressed: 771, 99, 26, 26
+		queue-orders: 803, 99, 26, 26
+		queue-orders-hover: 803, 99, 26, 26
+		queue-orders-pressed: 803, 99, 26, 26
+		attack-anything: 835, 99, 26, 26
+		attack-anything-hover: 835, 99, 26, 26
+		attack-anything-pressed: 835, 99, 26, 26
+		defend: 867, 99, 26, 26
+		defend-hover: 867, 99, 26, 26
+		defend-pressed: 867, 99, 26, 26
+		return-fire: 899, 99, 26, 26
+		return-fire-hover: 899, 99, 26, 26
+		return-fire-pressed: 899, 99, 26, 26
+		hold-fire: 931, 99, 26, 26
+		hold-fire-hover: 931, 99, 26, 26
+		hold-fire-pressed: 931, 99, 26, 26
+		sell: 963, 99, 26, 26
+		sell-hover: 963, 99, 26, 26
+		sell-pressed: 963, 99, 26, 26
+		repair: 995, 99, 26, 26
+		repair-hover: 995, 99, 26, 26
+		repair-pressed: 995, 99, 26, 26
+		beacon: 1027, 99, 26, 26
+		beacon-hover: 1027, 99, 26, 26
+		beacon-pressed: 1027, 99, 26, 26
+
 ios-viewport-joystick:
 	Image: ios-viewport-joystick.png
 	Regions:
@@ -2424,6 +3157,61 @@ menu-button-disabled:
 	Image: menubuttons.png
 	PanelRegion: 384, 0, 4, 4, 120, 120, 4, 4
 
+# The start-menu controls use one-pixel repeat-safe center and edge samples.
+# This preserves the complete red outer frame while avoiding the vertical
+# seams that appeared when the original 120-pixel gradient was tiled.
+main-menu-button:
+	Image: menubuttons.png
+	Regions:
+		corner-tl: 0, 0, 4, 4
+		border-t: 64, 0, 1, 4
+		corner-tr: 124, 0, 4, 4
+		border-l: 0, 64, 4, 1
+		background: 64, 64, 1, 1
+		border-r: 124, 64, 4, 1
+		corner-bl: 0, 124, 4, 4
+		border-b: 64, 124, 1, 4
+		corner-br: 124, 124, 4, 4
+
+main-menu-button-hover:
+	Image: menubuttons.png
+	Regions:
+		corner-tl: 128, 0, 4, 4
+		border-t: 192, 0, 1, 4
+		corner-tr: 252, 0, 4, 4
+		border-l: 128, 64, 4, 1
+		background: 192, 64, 1, 1
+		border-r: 252, 64, 4, 1
+		corner-bl: 128, 124, 4, 4
+		border-b: 192, 124, 1, 4
+		corner-br: 252, 124, 4, 4
+
+main-menu-button-pressed:
+	Image: menubuttons.png
+	Regions:
+		corner-tl: 256, 0, 4, 4
+		border-t: 320, 0, 1, 4
+		corner-tr: 380, 0, 4, 4
+		border-l: 256, 64, 4, 1
+		background: 320, 64, 1, 1
+		border-r: 380, 64, 4, 1
+		corner-bl: 256, 124, 4, 4
+		border-b: 320, 124, 1, 4
+		corner-br: 380, 124, 4, 4
+
+main-menu-button-disabled:
+	Image: menubuttons.png
+	Regions:
+		corner-tl: 384, 0, 4, 4
+		border-t: 448, 0, 1, 4
+		corner-tr: 508, 0, 4, 4
+		border-l: 384, 64, 4, 1
+		background: 448, 64, 1, 1
+		border-r: 508, 64, 4, 1
+		corner-bl: 384, 124, 4, 4
+		border-b: 448, 124, 1, 4
+		corner-br: 508, 124, 4, 4
+
 menu-button-highlighted:
 	Inherits: menu-button-hover
 
@@ -2550,8 +3338,8 @@ editor:
 		erase: 67, 144, 16, 16
 
 ios-touch-actions-allies:
-	Image: ios-touch-actions-allies.png
-	Image2x: ios-touch-actions-allies-2x.png
+	Image: ios-touch-actions-allies-v3.png
+	Image2x: ios-touch-actions-allies-v3-2x.png
 	Regions:
 		ios-stop: 0, 0, 56, 56
 		ios-stop-disabled: 0, 64, 56, 56
@@ -2609,81 +3397,81 @@ ios-touch-actions-allies-highlighted:
 		ios-return-base-pressed: 256, 384, 56, 56
 
 ios-touch-joystick-allies:
-	Image: ios-touch-joystick-allies.png
-	Image2x: ios-touch-joystick-allies-2x.png
+	Image: ios-touch-joystick-allies-v3.png
+	Image2x: ios-touch-joystick-allies-v3-2x.png
 	Regions:
 		base: 0, 0, 144, 144
 		thumb: 160, 0, 64, 64
 		thumb-active: 160, 72, 64, 64
 
 ios-touch-quickbar-button-allies:
-	Image: ios-touch-quickbar-allies.png
-	Image2x: ios-touch-quickbar-allies-2x.png
+	Image: ios-touch-quickbar-allies-v3.png
+	Image2x: ios-touch-quickbar-allies-v3-2x.png
 	PanelRegion: 0, 0, 0, 0, 48, 52, 0, 0
 	PanelSides: Center
 
 ios-touch-quickbar-button-allies-hover:
-	Image: ios-touch-quickbar-allies.png
-	Image2x: ios-touch-quickbar-allies-2x.png
+	Image: ios-touch-quickbar-allies-v3.png
+	Image2x: ios-touch-quickbar-allies-v3-2x.png
 	PanelRegion: 64, 0, 0, 0, 48, 52, 0, 0
 	PanelSides: Center
 
 ios-touch-quickbar-button-allies-pressed:
-	Image: ios-touch-quickbar-allies.png
-	Image2x: ios-touch-quickbar-allies-2x.png
+	Image: ios-touch-quickbar-allies-v3.png
+	Image2x: ios-touch-quickbar-allies-v3-2x.png
 	PanelRegion: 128, 0, 0, 0, 48, 52, 0, 0
 	PanelSides: Center
 
 ios-touch-quickbar-button-allies-highlighted:
-	Image: ios-touch-quickbar-allies.png
-	Image2x: ios-touch-quickbar-allies-2x.png
+	Image: ios-touch-quickbar-allies-v3.png
+	Image2x: ios-touch-quickbar-allies-v3-2x.png
 	PanelRegion: 192, 0, 0, 0, 48, 52, 0, 0
 	PanelSides: Center
 
 ios-touch-quickbar-button-allies-highlighted-hover:
-	Image: ios-touch-quickbar-allies.png
-	Image2x: ios-touch-quickbar-allies-2x.png
+	Image: ios-touch-quickbar-allies-v3.png
+	Image2x: ios-touch-quickbar-allies-v3-2x.png
 	PanelRegion: 256, 0, 0, 0, 48, 52, 0, 0
 	PanelSides: Center
 
 ios-touch-quickbar-button-allies-highlighted-pressed:
-	Image: ios-touch-quickbar-allies.png
-	Image2x: ios-touch-quickbar-allies-2x.png
+	Image: ios-touch-quickbar-allies-v3.png
+	Image2x: ios-touch-quickbar-allies-v3-2x.png
 	PanelRegion: 320, 0, 0, 0, 48, 52, 0, 0
 	PanelSides: Center
 
 ios-touch-quickbar-button-allies-disabled:
-	Image: ios-touch-quickbar-allies.png
-	Image2x: ios-touch-quickbar-allies-2x.png
+	Image: ios-touch-quickbar-allies-v3.png
+	Image2x: ios-touch-quickbar-allies-v3-2x.png
 	PanelRegion: 384, 0, 0, 0, 48, 52, 0, 0
 	PanelSides: Center
 
 ios-touch-quickbar-button-allies-highlighted-disabled:
-	Image: ios-touch-quickbar-allies.png
-	Image2x: ios-touch-quickbar-allies-2x.png
+	Image: ios-touch-quickbar-allies-v3.png
+	Image2x: ios-touch-quickbar-allies-v3-2x.png
 	PanelRegion: 448, 0, 0, 0, 48, 52, 0, 0
 	PanelSides: Center
 
 ios-touch-quickbar-panel-allies:
-	Image: ios-touch-quickbar-allies.png
-	Image2x: ios-touch-quickbar-allies-2x.png
+	Image: ios-touch-quickbar-allies-v3.png
+	Image2x: ios-touch-quickbar-allies-v3-2x.png
 	PanelRegion: 0, 64, 12, 12, 104, 40, 12, 12
 
 ios-touch-quickbar-panel-compact-allies:
-	Image: ios-touch-quickbar-allies.png
-	Image2x: ios-touch-quickbar-allies-2x.png
+	Image: ios-touch-quickbar-allies-v3.png
+	Image2x: ios-touch-quickbar-allies-v3-2x.png
 	PanelRegion: 128, 64, 12, 12, 104, 40, 12, 12
 
 ios-touch-quickbar-toggle-allies:
-	Image: ios-touch-quickbar-allies.png
-	Image2x: ios-touch-quickbar-allies-2x.png
+	Image: ios-touch-quickbar-allies-v3.png
+	Image2x: ios-touch-quickbar-allies-v3-2x.png
 	Regions:
 		collapse: 259, 67, 26, 26
 		expand: 291, 67, 26, 26
 
 ios-touch-actions-soviets:
-	Image: ios-touch-actions-soviets.png
-	Image2x: ios-touch-actions-soviets-2x.png
+	Image: ios-touch-actions-soviets-v3.png
+	Image2x: ios-touch-actions-soviets-v3-2x.png
 	Regions:
 		ios-stop: 0, 0, 56, 56
 		ios-stop-disabled: 0, 64, 56, 56
@@ -2741,81 +3529,81 @@ ios-touch-actions-soviets-highlighted:
 		ios-return-base-pressed: 256, 384, 56, 56
 
 ios-touch-joystick-soviets:
-	Image: ios-touch-joystick-soviets.png
-	Image2x: ios-touch-joystick-soviets-2x.png
+	Image: ios-touch-joystick-soviets-v3.png
+	Image2x: ios-touch-joystick-soviets-v3-2x.png
 	Regions:
 		base: 0, 0, 144, 144
 		thumb: 160, 0, 64, 64
 		thumb-active: 160, 72, 64, 64
 
 ios-touch-quickbar-button-soviets:
-	Image: ios-touch-quickbar-soviets.png
-	Image2x: ios-touch-quickbar-soviets-2x.png
+	Image: ios-touch-quickbar-soviets-v3.png
+	Image2x: ios-touch-quickbar-soviets-v3-2x.png
 	PanelRegion: 0, 0, 0, 0, 48, 52, 0, 0
 	PanelSides: Center
 
 ios-touch-quickbar-button-soviets-hover:
-	Image: ios-touch-quickbar-soviets.png
-	Image2x: ios-touch-quickbar-soviets-2x.png
+	Image: ios-touch-quickbar-soviets-v3.png
+	Image2x: ios-touch-quickbar-soviets-v3-2x.png
 	PanelRegion: 64, 0, 0, 0, 48, 52, 0, 0
 	PanelSides: Center
 
 ios-touch-quickbar-button-soviets-pressed:
-	Image: ios-touch-quickbar-soviets.png
-	Image2x: ios-touch-quickbar-soviets-2x.png
+	Image: ios-touch-quickbar-soviets-v3.png
+	Image2x: ios-touch-quickbar-soviets-v3-2x.png
 	PanelRegion: 128, 0, 0, 0, 48, 52, 0, 0
 	PanelSides: Center
 
 ios-touch-quickbar-button-soviets-highlighted:
-	Image: ios-touch-quickbar-soviets.png
-	Image2x: ios-touch-quickbar-soviets-2x.png
+	Image: ios-touch-quickbar-soviets-v3.png
+	Image2x: ios-touch-quickbar-soviets-v3-2x.png
 	PanelRegion: 192, 0, 0, 0, 48, 52, 0, 0
 	PanelSides: Center
 
 ios-touch-quickbar-button-soviets-highlighted-hover:
-	Image: ios-touch-quickbar-soviets.png
-	Image2x: ios-touch-quickbar-soviets-2x.png
+	Image: ios-touch-quickbar-soviets-v3.png
+	Image2x: ios-touch-quickbar-soviets-v3-2x.png
 	PanelRegion: 256, 0, 0, 0, 48, 52, 0, 0
 	PanelSides: Center
 
 ios-touch-quickbar-button-soviets-highlighted-pressed:
-	Image: ios-touch-quickbar-soviets.png
-	Image2x: ios-touch-quickbar-soviets-2x.png
+	Image: ios-touch-quickbar-soviets-v3.png
+	Image2x: ios-touch-quickbar-soviets-v3-2x.png
 	PanelRegion: 320, 0, 0, 0, 48, 52, 0, 0
 	PanelSides: Center
 
 ios-touch-quickbar-button-soviets-disabled:
-	Image: ios-touch-quickbar-soviets.png
-	Image2x: ios-touch-quickbar-soviets-2x.png
+	Image: ios-touch-quickbar-soviets-v3.png
+	Image2x: ios-touch-quickbar-soviets-v3-2x.png
 	PanelRegion: 384, 0, 0, 0, 48, 52, 0, 0
 	PanelSides: Center
 
 ios-touch-quickbar-button-soviets-highlighted-disabled:
-	Image: ios-touch-quickbar-soviets.png
-	Image2x: ios-touch-quickbar-soviets-2x.png
+	Image: ios-touch-quickbar-soviets-v3.png
+	Image2x: ios-touch-quickbar-soviets-v3-2x.png
 	PanelRegion: 448, 0, 0, 0, 48, 52, 0, 0
 	PanelSides: Center
 
 ios-touch-quickbar-panel-soviets:
-	Image: ios-touch-quickbar-soviets.png
-	Image2x: ios-touch-quickbar-soviets-2x.png
+	Image: ios-touch-quickbar-soviets-v3.png
+	Image2x: ios-touch-quickbar-soviets-v3-2x.png
 	PanelRegion: 0, 64, 12, 12, 104, 40, 12, 12
 
 ios-touch-quickbar-panel-compact-soviets:
-	Image: ios-touch-quickbar-soviets.png
-	Image2x: ios-touch-quickbar-soviets-2x.png
+	Image: ios-touch-quickbar-soviets-v3.png
+	Image2x: ios-touch-quickbar-soviets-v3-2x.png
 	PanelRegion: 128, 64, 12, 12, 104, 40, 12, 12
 
 ios-touch-quickbar-toggle-soviets:
-	Image: ios-touch-quickbar-soviets.png
-	Image2x: ios-touch-quickbar-soviets-2x.png
+	Image: ios-touch-quickbar-soviets-v3.png
+	Image2x: ios-touch-quickbar-soviets-v3-2x.png
 	Regions:
 		collapse: 259, 67, 26, 26
 		expand: 291, 67, 26, 26
 
 ios-touch-actions-yuri:
-	Image: ios-touch-actions-yuri.png
-	Image2x: ios-touch-actions-yuri-2x.png
+	Image: ios-touch-actions-yuri-v3.png
+	Image2x: ios-touch-actions-yuri-v3-2x.png
 	Regions:
 		ios-stop: 0, 0, 56, 56
 		ios-stop-disabled: 0, 64, 56, 56
@@ -2873,74 +3661,74 @@ ios-touch-actions-yuri-highlighted:
 		ios-return-base-pressed: 256, 384, 56, 56
 
 ios-touch-joystick-yuri:
-	Image: ios-touch-joystick-yuri.png
-	Image2x: ios-touch-joystick-yuri-2x.png
+	Image: ios-touch-joystick-yuri-v3.png
+	Image2x: ios-touch-joystick-yuri-v3-2x.png
 	Regions:
 		base: 0, 0, 144, 144
 		thumb: 160, 0, 64, 64
 		thumb-active: 160, 72, 64, 64
 
 ios-touch-quickbar-button-yuri:
-	Image: ios-touch-quickbar-yuri.png
-	Image2x: ios-touch-quickbar-yuri-2x.png
+	Image: ios-touch-quickbar-yuri-v3.png
+	Image2x: ios-touch-quickbar-yuri-v3-2x.png
 	PanelRegion: 0, 0, 0, 0, 48, 52, 0, 0
 	PanelSides: Center
 
 ios-touch-quickbar-button-yuri-hover:
-	Image: ios-touch-quickbar-yuri.png
-	Image2x: ios-touch-quickbar-yuri-2x.png
+	Image: ios-touch-quickbar-yuri-v3.png
+	Image2x: ios-touch-quickbar-yuri-v3-2x.png
 	PanelRegion: 64, 0, 0, 0, 48, 52, 0, 0
 	PanelSides: Center
 
 ios-touch-quickbar-button-yuri-pressed:
-	Image: ios-touch-quickbar-yuri.png
-	Image2x: ios-touch-quickbar-yuri-2x.png
+	Image: ios-touch-quickbar-yuri-v3.png
+	Image2x: ios-touch-quickbar-yuri-v3-2x.png
 	PanelRegion: 128, 0, 0, 0, 48, 52, 0, 0
 	PanelSides: Center
 
 ios-touch-quickbar-button-yuri-highlighted:
-	Image: ios-touch-quickbar-yuri.png
-	Image2x: ios-touch-quickbar-yuri-2x.png
+	Image: ios-touch-quickbar-yuri-v3.png
+	Image2x: ios-touch-quickbar-yuri-v3-2x.png
 	PanelRegion: 192, 0, 0, 0, 48, 52, 0, 0
 	PanelSides: Center
 
 ios-touch-quickbar-button-yuri-highlighted-hover:
-	Image: ios-touch-quickbar-yuri.png
-	Image2x: ios-touch-quickbar-yuri-2x.png
+	Image: ios-touch-quickbar-yuri-v3.png
+	Image2x: ios-touch-quickbar-yuri-v3-2x.png
 	PanelRegion: 256, 0, 0, 0, 48, 52, 0, 0
 	PanelSides: Center
 
 ios-touch-quickbar-button-yuri-highlighted-pressed:
-	Image: ios-touch-quickbar-yuri.png
-	Image2x: ios-touch-quickbar-yuri-2x.png
+	Image: ios-touch-quickbar-yuri-v3.png
+	Image2x: ios-touch-quickbar-yuri-v3-2x.png
 	PanelRegion: 320, 0, 0, 0, 48, 52, 0, 0
 	PanelSides: Center
 
 ios-touch-quickbar-button-yuri-disabled:
-	Image: ios-touch-quickbar-yuri.png
-	Image2x: ios-touch-quickbar-yuri-2x.png
+	Image: ios-touch-quickbar-yuri-v3.png
+	Image2x: ios-touch-quickbar-yuri-v3-2x.png
 	PanelRegion: 384, 0, 0, 0, 48, 52, 0, 0
 	PanelSides: Center
 
 ios-touch-quickbar-button-yuri-highlighted-disabled:
-	Image: ios-touch-quickbar-yuri.png
-	Image2x: ios-touch-quickbar-yuri-2x.png
+	Image: ios-touch-quickbar-yuri-v3.png
+	Image2x: ios-touch-quickbar-yuri-v3-2x.png
 	PanelRegion: 448, 0, 0, 0, 48, 52, 0, 0
 	PanelSides: Center
 
 ios-touch-quickbar-panel-yuri:
-	Image: ios-touch-quickbar-yuri.png
-	Image2x: ios-touch-quickbar-yuri-2x.png
+	Image: ios-touch-quickbar-yuri-v3.png
+	Image2x: ios-touch-quickbar-yuri-v3-2x.png
 	PanelRegion: 0, 64, 12, 12, 104, 40, 12, 12
 
 ios-touch-quickbar-panel-compact-yuri:
-	Image: ios-touch-quickbar-yuri.png
-	Image2x: ios-touch-quickbar-yuri-2x.png
+	Image: ios-touch-quickbar-yuri-v3.png
+	Image2x: ios-touch-quickbar-yuri-v3-2x.png
 	PanelRegion: 128, 64, 12, 12, 104, 40, 12, 12
 
 ios-touch-quickbar-toggle-yuri:
-	Image: ios-touch-quickbar-yuri.png
-	Image2x: ios-touch-quickbar-yuri-2x.png
+	Image: ios-touch-quickbar-yuri-v3.png
+	Image2x: ios-touch-quickbar-yuri-v3-2x.png
 	Regions:
 		collapse: 259, 67, 26, 26
 		expand: 291, 67, 26, 26

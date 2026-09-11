@@ -11,11 +11,8 @@
 
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using OpenRA.Mods.Common.FileSystem;
 using OpenRA.Network;
 using OpenRA.Primitives;
@@ -28,8 +25,7 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 	{
 		const int DesktopPanelWidth = 320;
 		const int DesktopControlWidth = 264;
-		const int SingleplayerPanelHeight = 420;
-		const int DesktopVerticalMarginPoints = 12;
+		const int DesktopVerticalMarginPoints = 20;
 		const int PreferredPanelX = 72;
 
 		public WidgetBounds Panel { get; }
@@ -56,21 +52,45 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 				Math.Max(policy.MinimumTarget, desiredPanelWidth));
 			var controlsWidth = Math.Min(
 				Math.Max(1, panelWidth - 2 * policy.Gap), desiredControlsWidth);
-			var controlsHeight = count * policy.MinimumTarget + Math.Max(0, count - 1) * policy.Gap;
-			var desiredPanelHeight = Math.Max(SingleplayerPanelHeight,
-				controlsHeight + 2 * Math.Max(policy.Gap, Points(DesktopVerticalMarginPoints, policy)));
+			var referenceCount = Math.Max(6, count);
+			var referenceControlsHeight = referenceCount * policy.MinimumTarget +
+				Math.Max(0, referenceCount - 1) * policy.Gap;
+			var verticalMargin = Math.Max(policy.Gap, Points(DesktopVerticalMarginPoints, policy));
+			var desiredPanelHeight = referenceControlsHeight + 2 * verticalMargin;
 			var panelHeight = Math.Min(content.Height, desiredPanelHeight);
 			var panel = new WidgetBounds(
 				Math.Clamp(PreferredPanelX, content.X, content.Right - panelWidth),
 				content.Y + Math.Max(0, (content.Height - panelHeight) / 2),
 				panelWidth,
 				panelHeight);
-			var x = Math.Max(0, (panel.Width - controlsWidth) / 2);
-			var y = Math.Max(0, (panel.Height - controlsHeight) / 2);
+
 			var controls = new WidgetBounds[count];
+			if (count == 0)
+				return new IosMainMenuLayout(panel, controls);
+
+			var x = Math.Max(0, (panel.Width - controlsWidth) / 2);
+
+			// Preserve the complete six-row control span. Fewer controls divide the
+			// same space between themselves, while constrained phones reduce only
+			// the outer margin before ever shrinking a physical touch target.
+			var minimumControlsHeight = count * policy.MinimumTarget +
+				Math.Max(0, count - 1) * policy.Gap;
+			var appliedMargin = Math.Min(verticalMargin,
+				Math.Max(0, (panel.Height - minimumControlsHeight) / 2));
+			var referenceControlsSpan = Math.Min(
+				Math.Max(1, panel.Height - 2 * appliedMargin), referenceControlsHeight);
+			var availableControlsHeight = Math.Max(1,
+				referenceControlsSpan - Math.Max(0, count - 1) * policy.Gap);
+			var controlHeight = Math.Max(1, availableControlsHeight / count);
+			var remainder = Math.Max(0, availableControlsHeight - controlHeight * count);
+			var controlsHeight = referenceControlsSpan;
+			var y = Math.Max(0, (panel.Height - controlsHeight) / 2);
 			for (var i = 0; i < count; i++)
-				controls[i] = new WidgetBounds(
-					x, y + i * (policy.MinimumTarget + policy.Gap), controlsWidth, policy.MinimumTarget);
+			{
+				var height = controlHeight + (i < remainder ? 1 : 0);
+				controls[i] = new WidgetBounds(x, y, controlsWidth, height);
+				y += height + policy.Gap;
+			}
 
 			return new IosMainMenuLayout(panel, controls);
 		}
@@ -102,48 +122,18 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 
 	public class MainMenuLogic : ChromeLogic
 	{
-		[FluentReference]
-		const string LoadingNews = "label-loading-news";
-
-		[FluentReference("message")]
-		const string NewsRetrivalFailed = "label-news-retrieval-failed";
-
-		[FluentReference("message")]
-		const string NewsParsingFailed = "label-news-parsing-failed";
-
-		[FluentReference("author", "datetime")]
-		const string AuthorDateTime = "label-author-datetime";
-
-		[FluentReference("kind")]
-		const string RuntimePersistenceMismatch = "notification-runtime-persistence-mismatch";
-
-		[FluentReference("kind")]
-		const string RuntimePersistenceLegacyHidden = "notification-runtime-persistence-legacy-hidden";
-
-		[FluentReference]
-		const string RuntimePersistenceSavedGameKind = "notification-runtime-persistence-kind-saved-game";
-
-		[FluentReference]
-		const string RuntimePersistenceReplayKind = "notification-runtime-persistence-kind-replay";
-
-		static readonly UTF8Encoding StrictUtf8 = new(false, true);
-
 		protected enum MenuType { Main, Singleplayer, MapEditor, StartupPrompts, None }
 
 		protected enum MenuPanel { None, Missions, Skirmish, Multiplayer, MapEditor, Replays, GameSaves }
 
 		protected MenuType menuType = MenuType.Main;
 		readonly Widget rootMenu;
-		readonly ScrollPanelWidget newsPanel;
-		readonly int maxNewsHeight;
-		readonly Widget newsTemplate;
-		readonly LabelWidget newsStatus;
 		readonly ModData modData;
 		readonly World world;
 		readonly ContentInstallerFileSystemLoader contentInstaller;
 		readonly Widget mainMenu;
 		readonly Widget[] mainMenuControls;
-		readonly DropDownButtonWidget languageDropdown;
+		readonly ButtonWidget languageButton;
 		readonly bool iosMainMenuLayoutEnabled;
 		Size lastIosResolution;
 		Size lastIosNativePointSize;
@@ -153,12 +143,7 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 		WidgetBounds[] lastIosControlBounds;
 		bool iosLayoutInitialized;
 
-		// Update news once per game launch
-		static bool fetchedNews;
-
 		protected static MenuPanel lastGameState = MenuPanel.None;
-
-		bool newsOpen;
 
 		void SwitchMenu(MenuType type)
 		{
@@ -193,7 +178,7 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 
 			if (contentButton != null)
 			{
-				contentButton.IsVisible = () => !Platform.IsIOS;
+				contentButton.Visible = !Platform.IsIOS;
 				contentButton.Disabled = contentInstaller == null;
 				contentButton.OnClick = () =>
 				{
@@ -210,35 +195,60 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 			var settingsButton = mainMenu.Get<ButtonWidget>("SETTINGS_BUTTON");
 			settingsButton.OnClick = OpenSettingsPanel;
 
-			var quitButton = mainMenu.Get<ButtonWidget>("QUIT_BUTTON");
-			quitButton.OnClick = Game.Exit;
-
-			// iOS applications are exited with the system Home gesture. Ending the engine
-			// loop from this button only exposes the native launch wallpaper while leaving
-			// the application process alive, so do not offer that misleading action.
-			quitButton.IsVisible = () => !Platform.IsIOS;
-
-			languageDropdown = mainMenu.GetOrNull<DropDownButtonWidget>("LANGUAGE_DROPDOWN");
-			if (languageDropdown != null)
+			var aboutButton = mainMenu.GetOrNull<ButtonWidget>("ABOUT_BUTTON");
+			var showAboutButton = aboutButton != null && Platform.CurrentPlatform == PlatformType.OSX;
+			if (aboutButton != null)
 			{
-				languageDropdown.IsVisible = () => !Platform.IsIOS;
-				languageDropdown.GetText = () => LanguageSelectionPolicy.GetDisplayName(
-					Game.Settings.Game.Language, FluentProvider.CurrentLanguage);
-				languageDropdown.OnMouseDown = _ => ShowLanguageDropdown(languageDropdown);
+				aboutButton.Visible = showAboutButton;
+				if (showAboutButton)
+					aboutButton.OnClick = OpenAboutPanel;
+			}
+
+			var quitButton = mainMenu.Get<ButtonWidget>("QUIT_BUTTON");
+			quitButton.Visible = !Platform.IsIOS;
+			if (quitButton.Visible)
+				quitButton.OnClick = Game.Exit;
+
+			languageButton = mainMenu.GetOrNull<ButtonWidget>("LANGUAGE_BUTTON");
+			if (languageButton != null)
+			{
+				languageButton.GetText = () => Platform.IsIOS ?
+					GetIosLanguageDisplayName(Game.Settings.Game.Language, FluentProvider.CurrentLanguage) :
+					LanguageSelectionPolicy.GetDisplayName(
+						Game.Settings.Game.Language, FluentProvider.CurrentLanguage);
+				languageButton.OnClick = () =>
+				{
+					var currentMod = modData.Manifest.Id;
+					ApplyLanguageSelection(
+						Game.Settings.Game,
+						Game.Settings.SystemLanguageTag,
+						FluentProvider.CurrentLanguage,
+						NextLanguagePreference(Game.Settings.Game.Language),
+						Game.Settings.Save,
+						() => Game.RunAfterTick(() => Game.InitializeMod(currentMod, new Arguments())));
+				};
 			}
 
 			var controls = new List<Widget> { singleplayerButton, multiplayerButton, settingsButton };
-			if (!Platform.IsIOS && languageDropdown != null)
-				controls.Add(languageDropdown);
+			if (languageButton != null)
+				controls.Add(languageButton);
 
-			if (!Platform.IsIOS && contentButton != null)
+			if (contentButton != null && contentButton.Visible)
 				controls.Add(contentButton);
 
-			if (!Platform.IsIOS)
-				controls.Add(quitButton);
+			if (aboutButton != null)
+			{
+				if (showAboutButton)
+					controls.Add(aboutButton);
+				else if (quitButton.Visible)
+					quitButton.Bounds.Y = aboutButton.Bounds.Y;
+			}
 
+			if (quitButton.Visible)
+				controls.Add(quitButton);
 			mainMenuControls = controls.ToArray();
-			iosMainMenuLayoutEnabled = languageDropdown != null && contentButton != null;
+			iosMainMenuLayoutEnabled = languageButton != null && contentButton != null &&
+				mainMenuControls.Length == 4;
 			ApplyIosMainMenuLayout();
 
 			// Singleplayer menu
@@ -314,38 +324,12 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 
 			mapEditorMenu.Get<ButtonWidget>("BACK_BUTTON").OnClick = () => SwitchMenu(MenuType.Main);
 
-			var newsBG = widget.GetOrNull("NEWS_BG");
-			if (newsBG != null)
-			{
-				newsBG.IsVisible = () => Game.Settings.Game.FetchNews && menuType != MenuType.None && menuType != MenuType.StartupPrompts;
-
-				newsPanel = Ui.LoadWidget<ScrollPanelWidget>("NEWS_PANEL", null, new WidgetArgs());
-				newsTemplate = newsPanel.Get("NEWS_ITEM_TEMPLATE");
-				newsPanel.RemoveChild(newsTemplate);
-				maxNewsHeight = newsPanel.Bounds.Height;
-
-				newsStatus = newsPanel.Get<LabelWidget>("NEWS_STATUS");
-				SetNewsStatus(FluentProvider.GetMessage(LoadingNews));
-			}
-
 			Game.OnRemoteDirectConnect += OnRemoteDirectConnect;
-
-			// Check for updates in the background
-			var webServices = modData.Manifest.Get<WebServices>();
-			if (Game.Settings.Debug.CheckVersion)
-				webServices.CheckModVersion();
-
-			var updateLabel = rootMenu.GetOrNull("UPDATE_NOTICE");
-			if (updateLabel != null)
-				updateLabel.IsVisible = () => !newsOpen && menuType != MenuType.None &&
-					menuType != MenuType.StartupPrompts &&
-					webServices.ModVersionStatus == ModVersionStatus.Outdated;
 
 			menuType = MenuType.StartupPrompts;
 
 			void OnIntroductionComplete()
 			{
-				LoadAndDisplayNews(webServices, newsBG);
 				SwitchMenu(MenuType.Main);
 				LaunchIntoRequestedPanel();
 			}
@@ -390,33 +374,29 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 			return requiresReload;
 		}
 
-		void ShowLanguageDropdown(DropDownButtonWidget dropdown)
+		public static string GetIosLanguageDisplayName(string preference, string uiLanguage)
+		{
+			if (LanguageSelectionPolicy.NormalizePreference(preference) ==
+				LanguageSelectionPolicy.SystemPreference)
+				return LanguageSelectionPolicy.Resolve(preference, uiLanguage) ==
+					LanguageSelectionPolicy.SimplifiedChinese ? "自动" : "Auto";
+
+			return LanguageSelectionPolicy.GetDisplayName(preference, uiLanguage);
+		}
+
+		public static string NextLanguagePreference(string preference)
 		{
 			var preferences = LanguageSelectionPolicy.SupportedPreferences;
+			var normalized = LanguageSelectionPolicy.NormalizePreference(preference);
+			var index = 0;
+			for (var i = 0; i < preferences.Count; i++)
+				if (preferences[i] == normalized)
+				{
+					index = i;
+					break;
+				}
 
-			ScrollItemWidget SetupItem(string preference, ScrollItemWidget itemTemplate)
-			{
-				var normalizedPreference = LanguageSelectionPolicy.NormalizePreference(preference);
-				var item = ScrollItemWidget.Setup(itemTemplate,
-					() => LanguageSelectionPolicy.NormalizePreference(Game.Settings.Game.Language) == normalizedPreference,
-					() =>
-					{
-						var currentMod = modData.Manifest.Id;
-						ApplyLanguageSelection(
-							Game.Settings.Game,
-							Game.Settings.SystemLanguageTag,
-							FluentProvider.CurrentLanguage,
-							normalizedPreference,
-							Game.Settings.Save,
-							() => Game.RunAfterTick(() => Game.InitializeMod(currentMod, new Arguments())));
-					});
-
-				item.Get<LabelWidget>("LABEL").GetText = () =>
-					LanguageSelectionPolicy.GetDisplayName(normalizedPreference, FluentProvider.CurrentLanguage);
-				return item;
-			}
-
-			dropdown.ShowDropDown("LABEL_DROPDOWN_TEMPLATE", 500, preferences, SetupItem);
+			return preferences[(index + 1) % preferences.Count];
 		}
 
 		void ApplyIosMainMenuLayout()
@@ -428,7 +408,6 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 			var snapshot = IosScreenMetrics.SnapshotFor(resolution);
 			var policy = IosMenuLayoutPolicy.Create(true, snapshot);
 			var layout = IosMainMenuLayout.Create(policy, mainMenuControls.Length);
-			languageDropdown.RemovePanel();
 			var parentRenderOrigin = mainMenu.Parent.RenderOrigin;
 			var relativePanel = IosTouchWidgetPolicy.RelativeToRoot(
 				layout.Panel.ToRectangle(), parentRenderOrigin);
@@ -467,69 +446,6 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 				ApplyIosMainMenuLayout();
 		}
 
-		void LoadAndDisplayNews(WebServices webServices, Widget newsBG)
-		{
-			if (newsBG != null && Game.Settings.Game.FetchNews)
-			{
-				var cacheFile = Path.Combine(Platform.SupportDir, webServices.GameNewsFileName);
-				var currentNews = ParseNews(cacheFile);
-				if (currentNews != null)
-					DisplayNews(currentNews);
-
-				var newsButton = newsBG.GetOrNull<DropDownButtonWidget>("NEWS_BUTTON");
-				if (newsButton != null)
-				{
-					if (!fetchedNews)
-					{
-						Task.Run(async () =>
-						{
-							try
-							{
-								var client = HttpClientFactory.Create();
-
-								// Send the mod and engine version to support version-filtered news (update prompts)
-								var url = new HttpQueryBuilder(webServices.GameNews)
-								{
-									{ "version", Game.EngineVersion },
-									{ "mod", modData.Manifest.Id },
-									{ "modversion", modData.Manifest.Metadata.Version }
-								}.ToString();
-
-								var response = await client.GetStringAsync(url);
-								await File.WriteAllTextAsync(cacheFile, response);
-
-								Game.RunAfterTick(() => // run on the main thread
-								{
-									fetchedNews = true;
-									var newNews = ParseNews(cacheFile);
-									if (newNews == null)
-										return;
-
-									DisplayNews(newNews);
-
-									if (currentNews == null || newNews.Any(n => !currentNews.Select(c => c.DateTime).Contains(n.DateTime)))
-										OpenNewsPanel(newsButton);
-								});
-							}
-							catch (Exception e)
-							{
-								Game.RunAfterTick(() => // run on the main thread
-									SetNewsStatus(FluentProvider.GetMessage(NewsRetrivalFailed, "message", e.Message)));
-							}
-						});
-					}
-
-					newsButton.OnClick = () => OpenNewsPanel(newsButton);
-				}
-			}
-		}
-
-		void OpenNewsPanel(DropDownButtonWidget button)
-		{
-			newsOpen = true;
-			button.AttachPanel(newsPanel, () => newsOpen = false);
-		}
-
 		void OnRemoteDirectConnect(ConnectionTarget endpoint)
 		{
 			SwitchMenu(MenuType.None);
@@ -548,79 +464,6 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 			DiscordService.UpdateStatus(DiscordState.InMapEditor);
 
 			lastGameState = MenuPanel.MapEditor;
-		}
-
-		void SetNewsStatus(string message)
-		{
-			message = WidgetUtils.WrapText(message, newsStatus.Bounds.Width, Game.Renderer.Fonts[newsStatus.Font]);
-			newsStatus.GetText = () => message;
-		}
-
-		sealed class NewsItem
-		{
-			public string Title;
-			public string Author;
-			public DateTime DateTime;
-			public string Content;
-		}
-
-		NewsItem[] ParseNews(string path)
-		{
-			if (!File.Exists(path))
-				return null;
-
-			try
-			{
-				return MiniYaml.FromFile(path).Select(node =>
-				{
-					var nodesDict = node.Value.ToDictionary();
-					return new NewsItem
-					{
-						Title = nodesDict["Title"].Value,
-						Author = nodesDict["Author"].Value,
-						DateTime = FieldLoader.GetValue<DateTime>("DateTime", node.Key),
-						Content = nodesDict["Content"].Value
-					};
-				}).ToArray();
-			}
-			catch (Exception ex)
-			{
-				SetNewsStatus(FluentProvider.GetMessage(NewsParsingFailed, "message", ex.Message));
-			}
-
-			return null;
-		}
-
-		void DisplayNews(IEnumerable<NewsItem> newsItems)
-		{
-			newsPanel.RemoveChildren();
-			SetNewsStatus("");
-
-			foreach (var item in newsItems)
-			{
-				var newsItem = newsTemplate.Clone();
-
-				var titleLabel = newsItem.Get<LabelWidget>("TITLE");
-				titleLabel.GetText = () => item.Title;
-
-				var authorDateTimeLabel = newsItem.Get<LabelWidget>("AUTHOR_DATETIME");
-				var authorDateTime = FluentProvider.GetMessage(AuthorDateTime,
-					"author", item.Author,
-					"datetime", item.DateTime.ToLocalTime().ToString(CultureInfo.CurrentCulture));
-
-				authorDateTimeLabel.GetText = () => authorDateTime;
-
-				var contentLabel = newsItem.Get<LabelWidget>("CONTENT");
-				var content = item.Content.Replace("\\n", "\n");
-				content = WidgetUtils.WrapText(content, contentLabel.Bounds.Width, Game.Renderer.Fonts[contentLabel.Font]);
-				contentLabel.GetText = () => content;
-				contentLabel.Bounds.Height = Game.Renderer.Fonts[contentLabel.Font].Measure(content).Y;
-				newsItem.Bounds.Height += contentLabel.Bounds.Height;
-
-				newsPanel.AddChild(newsItem);
-				newsPanel.Layout.AdjustChildren();
-				newsPanel.Bounds.Height = Math.Min(newsPanel.ContentHeight, maxNewsHeight);
-			}
 		}
 
 		void RemoveShellmapUI()
@@ -715,6 +558,18 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 			});
 		}
 
+		void OpenAboutPanel()
+		{
+			var aboutPanel = Game.OpenWindow("ABOUT_PANEL", new WidgetArgs());
+			aboutPanel.Get<ButtonWidget>("BACK_BUTTON").OnClick = () =>
+			{
+				Ui.CloseWindow();
+				SwitchMenu(MenuType.Main);
+			};
+
+			SwitchMenu(MenuType.None);
+		}
+
 		void LaunchIntoRequestedPanel()
 		{
 			var target = Game.Settings.Game.LaunchInto;
@@ -732,21 +587,7 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 			switch (command)
 			{
 				case "replay" when !string.IsNullOrEmpty(argument):
-					try
-					{
-						Game.JoinReplay(argument);
-					}
-					catch (RuntimeContractCompatibilityException ex)
-					{
-						Log.Write("debug", ex.ToString());
-						NotifyRuntimePersistenceFailure(
-							ex.Reason, RuntimePersistenceReplayKind);
-					}
-					catch (Exception ex)
-					{
-						Log.Write("debug", ex.ToString());
-					}
-
+					Game.JoinReplay(argument);
 					break;
 				case "loadsave" when !string.IsNullOrEmpty(argument):
 					LoadSavedGame(argument);
@@ -816,28 +657,12 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 		// can deep-link into a specific saved game ("loadsave <filename>").
 		void LoadSavedGame(string saveFilename)
 		{
-			if (saveFilename == null)
-				return;
-
-			string filename;
-			try
-			{
-				filename = Path.GetFileName(saveFilename);
-			}
-			catch (ArgumentException)
-			{
-				return;
-			}
-
-			if (!string.Equals(saveFilename, filename, StringComparison.Ordinal) ||
-				!IsCanonicalFilename(filename))
-				return;
-
 			var savePath = Path.Combine(
-				RuntimeContractStorage.SavesPath(
-					Platform.SupportDir, modData.Manifest.Id,
-					modData.Manifest.Metadata.Version, modData.RuntimeContract),
-				filename);
+				Platform.SupportDir,
+				"Saves",
+				modData.Manifest.Id,
+				modData.Manifest.Metadata.Version,
+				saveFilename);
 
 			if (!File.Exists(savePath))
 				return;
@@ -852,70 +677,17 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 				return;
 			}
 
-			var compatibility = save.RuntimeContractCompatibilityWith(modData.RuntimeContract);
-			if (compatibility != RuntimeContractCompatibilityReason.Compatible)
-			{
-				NotifyRuntimePersistenceFailure(
-					compatibility, RuntimePersistenceSavedGameKind);
-				return;
-			}
-
-			var mapUid = save.GlobalSettings?.Map;
-			if (string.IsNullOrEmpty(mapUid))
-				return;
-
-			MapPreview map;
-			try
-			{
-				map = modData.MapCache[mapUid];
-			}
-			catch (Exception ex)
-			{
-				Log.Write("debug", ex.ToString());
-				return;
-			}
-
+			var map = modData.MapCache[save.GlobalSettings.Map];
 			if (map.Status != MapStatus.Available)
 				return;
 
 			var orders = new List<Order>()
 			{
-				Order.FromTargetString("LoadGameSave", filename, true),
+				Order.FromTargetString("LoadGameSave", saveFilename, true),
 				Order.Command($"state {Session.ClientState.Ready}")
 			};
 
 			Game.CreateAndStartLocalServer(map.Uid, orders);
-		}
-
-		static bool IsCanonicalFilename(string filename)
-		{
-			if (string.IsNullOrEmpty(filename) || filename is "." or ".." ||
-				filename.IndexOfAny(new[] { '/', '\\', '\0', ':' }) >= 0 ||
-				Path.IsPathFullyQualified(filename))
-				return false;
-
-			try
-			{
-				if (!filename.IsNormalized(NormalizationForm.FormC) ||
-					StrictUtf8.GetByteCount(filename) > 255)
-					return false;
-			}
-			catch (ArgumentException)
-			{
-				return false;
-			}
-
-			return filename.All(character =>
-				!char.IsControl(character) && character is not '\u2028' and not '\u2029');
-		}
-
-		static void NotifyRuntimePersistenceFailure(
-			RuntimeContractCompatibilityReason reason, string kind)
-		{
-			var message = reason == RuntimeContractCompatibilityReason.MissingIdentity ?
-				RuntimePersistenceLegacyHidden : RuntimePersistenceMismatch;
-			TextNotificationsManager.AddFeedbackLine(
-				message, "kind", FluentProvider.GetMessage(kind));
 		}
 
 		// Local patch: deep-link straight into a running skirmish, bypassing the lobby UI.

@@ -24,7 +24,7 @@ using OpenRA.Traits;
 
 namespace OpenRA.Mods.RA2.UtilityCommands
 {
-	public sealed class ImportRA2MapCommand : IUtilityCommand
+	sealed class ImportRA2MapCommand : IUtilityCommand
 	{
 		string IUtilityCommand.Name => "--import-ra2-map";
 
@@ -351,48 +351,11 @@ namespace OpenRA.Mods.RA2.UtilityCommands
 		[Desc("FILENAME", "Convert a Red Alert 2 map to the OpenRA format.")]
 		void IUtilityCommand.Run(Utility utility, string[] args)
 		{
+			// HACK: The engine code assumes that Game.modData is set.
+			Game.ModData = utility.ModData;
+
 			var filename = args[1];
-			using var input = File.Open(args[1], FileMode.Open);
-			var dest = Path.GetFileNameWithoutExtension(args[1]) + ".oramap";
-			using var output = ZipFileLoader.Create(dest);
-			ConvertMap(utility.ModData, input, filename, output);
-			Console.WriteLine(dest + " saved.");
-		}
-
-		public static int ConvertMap(
-			ModData modData,
-			Stream input,
-			string sourceName,
-			IReadWritePackage output)
-		{
-			if (modData == null)
-				throw new ArgumentNullException(nameof(modData));
-			if (input == null || !input.CanRead)
-				throw new ArgumentException("The map source must be readable.", nameof(input));
-			if (string.IsNullOrEmpty(sourceName))
-				throw new ArgumentException("The map source name is required.", nameof(sourceName));
-			if (output == null)
-				throw new ArgumentNullException(nameof(output));
-
-			var previousModData = Game.ModData;
-			try
-			{
-				Game.ModData = modData;
-				return ConvertMapWithInitializedContext(modData, input, sourceName, output);
-			}
-			finally
-			{
-				Game.ModData = previousModData;
-			}
-		}
-
-		static int ConvertMapWithInitializedContext(
-			ModData modData,
-			Stream input,
-			string sourceName,
-			IReadWritePackage output)
-		{
-			var file = new IniFile(input);
+			var file = new IniFile(File.Open(args[1], FileMode.Open));
 			var basic = file.GetSection("Basic");
 			var mapSection = file.GetSection("Map");
 			var tileset = mapSection.GetValue("Theater", "");
@@ -400,19 +363,19 @@ namespace OpenRA.Mods.RA2.UtilityCommands
 			var iniBounds = mapSection.GetValue("LocalSize", "0, 0, 0, 0").Split(',').Select(int.Parse).ToArray();
 			var size = new Size(iniSize[2], 2 * iniSize[3]);
 
-			if (!modData.DefaultTerrainInfo.TryGetValue(tileset, out var terrainInfo))
+			if (!utility.ModData.DefaultTerrainInfo.TryGetValue(tileset, out var terrainInfo))
 				throw new InvalidDataException($"Unknown tileset {tileset}");
 
-			var map = new Map(modData, terrainInfo, size.Width, size.Height)
+			var map = new Map(Game.ModData, terrainInfo, size.Width, size.Height)
 			{
-				Title = basic.GetValue("Name", Path.GetFileNameWithoutExtension(sourceName)),
+				Title = basic.GetValue("Name", Path.GetFileNameWithoutExtension(filename)),
 				Author = "Westwood Studios",
 				Bounds = new Rectangle(iniBounds[0], iniBounds[1], iniBounds[2], 2 * iniBounds[3] + 2 * iniBounds[1]),
-				RequiresMod = modData.Manifest.Id
+				RequiresMod = utility.ModData.Manifest.Id
 			};
 
 			var fullSize = new int2(iniSize[2], iniSize[3]);
-			ReadTiles(map, file, fullSize, modData);
+			ReadTiles(map, file, fullSize);
 			ReadActors(map, file, "Structures", fullSize);
 			ReadActors(map, file, "Units", fullSize);
 			ReadActors(map, file, "Infantry", fullSize);
@@ -426,8 +389,9 @@ namespace OpenRA.Mods.RA2.UtilityCommands
 			var mapPlayers = new MapPlayers(map.Rules, spawnCount);
 			map.PlayerDefinitions = mapPlayers.ToMiniYaml();
 
-			map.Save(output);
-			return spawnCount;
+			var dest = Path.GetFileNameWithoutExtension(args[1]) + ".oramap";
+			map.Save(ZipFileLoader.Create(dest));
+			Console.WriteLine(dest + " saved.");
 		}
 
 		static void UnpackLZO(byte[] src, byte[] dest)
@@ -463,9 +427,9 @@ namespace OpenRA.Mods.RA2.UtilityCommands
 			}
 		}
 
-		static void ReadTiles(Map map, IniFile file, int2 fullSize, ModData modData)
+		static void ReadTiles(Map map, IniFile file, int2 fullSize)
 		{
-			var terrainInfo = (ITemplatedTerrainInfo)modData.DefaultTerrainInfo[map.Tileset];
+			var terrainInfo = (ITemplatedTerrainInfo)Game.ModData.DefaultTerrainInfo[map.Tileset];
 			var mapSection = file.GetSection("IsoMapPack5");
 
 			var data = Convert.FromBase64String(string.Concat(mapSection.Select(kvp => kvp.Value)));

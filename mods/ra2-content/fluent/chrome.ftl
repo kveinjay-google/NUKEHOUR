@@ -1,3 +1,5 @@
+mod-windowtitle = NUKE HOUR
+
 modcontent-installprompt =
     Red Alert 2 requires artwork and audio files from the original game.
 

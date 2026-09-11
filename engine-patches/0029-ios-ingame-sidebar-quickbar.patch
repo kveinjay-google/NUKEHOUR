@@ -1,0 +1,258 @@
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/Ingame/ClassicProductionLogic.cs b/OpenRA.Mods.Common/Widgets/Logic/Ingame/ClassicProductionLogic.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/Ingame/ClassicProductionLogic.cs	2026-09-09 10:11:28
++++ b/OpenRA.Mods.Common/Widgets/Logic/Ingame/ClassicProductionLogic.cs	2026-09-09 10:11:28
+@@ -95,23 +95,30 @@
+ 					var rows = Platform.IsIOS ? iosLayout.BackgroundRows :
+ 						Math.Min(palette.MaximumRows,
+ 							Math.Max(palette.MinimumRows, (icons + palette.Columns - 1) / palette.Columns));
++					var rowHeights = Platform.IsIOS
++						? IosIngameSidebarLayoutPolicy.BackgroundRowHeights(iosLayout)
++						: Enumerable.Repeat(backgroundTemplate?.Bounds.Height ?? foregroundTemplate.Bounds.Height, rows).ToArray();
+ 
+ 					if (background != null)
+ 					{
+ 						background.RemoveChildren();
+ 
+-						var rowHeight = backgroundTemplate.Bounds.Height;
+-						for (var i = 0; i < rows; i++)
++						var y = 0;
++						foreach (var height in rowHeights)
+ 						{
+ 							var row = backgroundTemplate.Clone();
+-							row.Bounds.Y = i * rowHeight;
++							row.Bounds.Y = y;
++							row.Bounds.Height = height;
++							if (row is ImageWidget image)
++								image.StretchToFit = height != backgroundTemplate.Bounds.Height;
+ 							background.AddChild(row);
++							y += height;
+ 						}
+ 
+ 						if (backgroundBottom == null)
+ 							return;
+ 
+-						backgroundBottom.Bounds.Y = Platform.IsIOS ? iosLayout.BottomCapY : rows * rowHeight;
++						backgroundBottom.Bounds.Y = Platform.IsIOS ? iosLayout.BottomCapY : y;
+ 						background.AddChild(backgroundBottom);
+ 					}
+ 
+@@ -119,12 +126,16 @@
+ 					{
+ 						foreground.RemoveChildren();
+ 
+-						var rowHeight = foregroundTemplate.Bounds.Height;
+-						for (var i = 0; i < rows; i++)
++						var y = 0;
++						foreach (var height in rowHeights)
+ 						{
+ 							var row = foregroundTemplate.Clone();
+-							row.Bounds.Y = i * rowHeight;
++							row.Bounds.Y = y;
++							row.Bounds.Height = height;
++							if (row is ImageWidget image)
++								image.StretchToFit = height != foregroundTemplate.Bounds.Height;
+ 							foreground.AddChild(row);
++							y += height;
+ 						}
+ 					}
+ 				}
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/Ingame/IosIngameSidebarLayoutPolicy.cs b/OpenRA.Mods.Common/Widgets/Logic/Ingame/IosIngameSidebarLayoutPolicy.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/Ingame/IosIngameSidebarLayoutPolicy.cs	2026-09-09 10:11:28
++++ b/OpenRA.Mods.Common/Widgets/Logic/Ingame/IosIngameSidebarLayoutPolicy.cs	2026-09-09 10:11:28
+@@ -19,16 +19,18 @@
+ 		public readonly Rectangle ProductionBounds;
+ 		public readonly int MaximumRows;
+ 		public readonly int BackgroundRows;
++		public readonly int BackgroundRemainderHeight;
+ 		public readonly int BottomCapY;
+ 
+ 		public IosIngameSidebarLayout(
+ 			Rectangle topBounds, Rectangle productionBounds,
+-			int maximumRows, int backgroundRows, int bottomCapY)
++			int maximumRows, int backgroundRows, int backgroundRemainderHeight, int bottomCapY)
+ 		{
+ 			TopBounds = topBounds;
+ 			ProductionBounds = productionBounds;
+ 			MaximumRows = maximumRows;
+ 			BackgroundRows = backgroundRows;
++			BackgroundRemainderHeight = backgroundRemainderHeight;
+ 			BottomCapY = bottomCapY;
+ 		}
+ 	}
+@@ -60,10 +62,23 @@
+ 			var paletteHeight = Math.Max(RowHeight, productionHeight - PaletteTop - BottomCapHeight);
+ 			var maximumRows = Math.Max(MinimumRows, paletteHeight / RowHeight);
+ 			var bottomCapY = Math.Max(0, productionHeight - BottomCapHeight);
+-			var backgroundRows = Math.Max(MinimumRows, (bottomCapY + RowHeight - 1) / RowHeight);
++			var backgroundRows = Math.Max(0, bottomCapY / RowHeight);
++			var backgroundRemainderHeight = Math.Max(0, bottomCapY - backgroundRows * RowHeight);
+ 
+ 			return new IosIngameSidebarLayout(
+-				topBounds, productionBounds, maximumRows, backgroundRows, bottomCapY);
++				topBounds, productionBounds, maximumRows, backgroundRows,
++				backgroundRemainderHeight, bottomCapY);
++		}
++
++		public static int[] BackgroundRowHeights(IosIngameSidebarLayout layout)
++		{
++			var count = layout.BackgroundRows + (layout.BackgroundRemainderHeight > 0 ? 1 : 0);
++			var heights = new int[count];
++			for (var i = 0; i < layout.BackgroundRows; i++)
++				heights[i] = RowHeight;
++			if (layout.BackgroundRemainderHeight > 0)
++				heights[^1] = layout.BackgroundRemainderHeight;
++			return heights;
+ 		}
+ 	}
+ }
+diff -ruN a/OpenRA.Test/IosProductionBatchToggleTest.cs b/OpenRA.Test/IosProductionBatchToggleTest.cs
+--- a/OpenRA.Test/IosProductionBatchToggleTest.cs	2026-09-09 10:11:28
++++ b/OpenRA.Test/IosProductionBatchToggleTest.cs	2026-09-09 10:11:28
+@@ -321,13 +321,14 @@
+ 					{
+ 						Assert.That(layout.ButtonSize.Width, Is.GreaterThanOrEqualTo(44), id);
+ 						Assert.That(layout.ButtonSize.Height, Is.GreaterThanOrEqualTo(44), id);
+-						Assert.That(layout.ShowLabel, Is.True, id);
++						Assert.That(layout.ShowLabel, Is.EqualTo(expanded), id);
+ 						Assert.That(layout.Font, Is.EqualTo("IosTouchLabel"), id);
+-						Assert.That(layout.LabelBounds.IsEmpty, Is.False, id);
+-						Assert.That(buttonBounds.Contains(layout.LabelBounds), Is.True, id);
++						Assert.That(layout.LabelBounds.IsEmpty, Is.EqualTo(!expanded), id);
++						if (expanded)
++							Assert.That(buttonBounds.Contains(layout.LabelBounds), Is.True, id);
+ 						Assert.That(buttonBounds.Contains(layout.IconBounds), Is.True, id);
+ 						Assert.That(layout.IconBounds.Size,
+-							Is.EqualTo(new Size(26, 26)), id);
++							Is.EqualTo(new Size(expanded ? 34 : 32, expanded ? 34 : 32)), id);
+ 					});
+ 				}
+ 			}
+@@ -349,7 +350,8 @@
+ 					Assert.That(layout.ButtonSize.Height,
+ 						Is.EqualTo(expanded ? 52 : 44), $"height expanded={expanded}");
+ 					Assert.That(layout.IconBounds.Size,
+-						Is.EqualTo(new Size(26, 26)), $"icon expanded={expanded}");
++						Is.EqualTo(new Size(expanded ? 34 : 32, expanded ? 34 : 32)),
++						$"icon expanded={expanded}");
+ 				});
+ 			}
+ 		}
+@@ -367,10 +369,14 @@
+ 				Assert.That(layout.ProductionBounds.Top, Is.EqualTo(layout.TopBounds.Bottom));
+ 				Assert.That(layout.ProductionBounds.Bottom, Is.EqualTo(snapshot.EffectiveSize.Height));
+ 				Assert.That(layout.MaximumRows, Is.EqualTo(7), "Only complete icon rows may appear above the bottom cap.");
+-				Assert.That(layout.BackgroundRows, Is.EqualTo(8), "One clipped fill row closes the fractional gap.");
++				Assert.That(layout.BackgroundRows, Is.EqualTo(7), "Only complete background rows may be emitted.");
++				Assert.That(layout.BackgroundRemainderHeight, Is.EqualTo(29),
++					"A separately sized final fill must close the fractional gap without overlapping the bottom cap.");
+ 				Assert.That(layout.BottomCapY, Is.EqualTo(layout.ProductionBounds.Height - 66));
+-				Assert.That(layout.BackgroundRows * 50, Is.GreaterThanOrEqualTo(layout.BottomCapY));
+-				Assert.That((layout.BackgroundRows - 1) * 50, Is.LessThan(layout.BottomCapY));
++				Assert.That(layout.BackgroundRows * 50 + layout.BackgroundRemainderHeight,
++					Is.EqualTo(layout.BottomCapY));
++				Assert.That(IosIngameSidebarLayoutPolicy.BackgroundRowHeights(layout),
++					Is.EqualTo(new[] { 50, 50, 50, 50, 50, 50, 50, 29 }));
+ 			});
+ 		}
+ 
+@@ -506,9 +512,10 @@
+ 					Assert.That(button.IsVisible(), Is.True, id);
+ 					Assert.That(button.Bounds.Height, Is.EqualTo(rowHeight), id);
+ 					Assert.That(snapshot.SafeBounds.Contains(button.RenderBounds), Is.True, id);
+-					Assert.That(labels[id].IsVisible(), Is.True, id);
++					Assert.That(labels[id].IsVisible(), Is.EqualTo(expanded), id);
+ 					Assert.That(labels[id].Font, Is.EqualTo("IosTouchLabel"), id);
+-					Assert.That(button.RenderBounds.Contains(labels[id].RenderBounds), Is.True, id);
++					if (expanded)
++						Assert.That(button.RenderBounds.Contains(labels[id].RenderBounds), Is.True, id);
+ 					Assert.That(button.RenderBounds.Contains(icons[id].RenderBounds), Is.True, id);
+ 					Assert.That(icons[id].StretchToFit, Is.True, id);
+ 				});
+diff -ruN a/OpenRA.Test/IosViewportActionLayoutTest.cs b/OpenRA.Test/IosViewportActionLayoutTest.cs
+--- a/OpenRA.Test/IosViewportActionLayoutTest.cs	2026-09-09 10:21:42
++++ b/OpenRA.Test/IosViewportActionLayoutTest.cs	2026-09-09 10:21:42
+@@ -330,14 +330,14 @@
+ 		}
+ 
+ 		[Test]
+-		public void CompactTouchCommandsUseTheUnifiedRedGoldIconSet()
++		public void CompactTouchCommandsUseTransparentGlyphsWithoutEmbeddedSquareFrames()
+ 		{
+ 			var root = RepositoryRoot();
+ 			var chrome = File.ReadAllText(Path.Combine(root, "mods", "ra2", "chrome.yaml"));
+ 			var layout = File.ReadAllText(Path.Combine(root, "mods", "ra2", "chrome", "ingame-player.yaml"));
+ 
+-			StringAssert.Contains("ios-commandbar-icons-v2:", chrome);
+-			StringAssert.Contains("Image: ios-commandbar-icons-v2.png", chrome);
++			StringAssert.Contains("ios-commandbar-glyphs:", chrome);
++			StringAssert.Contains("\tImage: commandbar-icons.png", chrome);
+ 			foreach (var icon in new[] { "group-1", "group-2", "group-3", "group-4", "group-5", "attack-move", "scatter", "queue-orders" })
+ 			{
+ 				StringAssert.Contains(icon + ":", chrome);
+@@ -345,7 +345,8 @@
+ 				var iconAt = layout.IndexOf(iconName, System.StringComparison.Ordinal);
+ 				Assert.That(iconAt, Is.GreaterThanOrEqualTo(0));
+ 				var collectionAt = layout.LastIndexOf("ImageCollection:", iconAt, System.StringComparison.Ordinal);
+-				Assert.That(layout.Substring(collectionAt, iconAt - collectionAt), Does.Contain("ios-commandbar-icons-v2"));
++				Assert.That(layout.Substring(collectionAt, iconAt - collectionAt), Does.Contain("ios-commandbar-glyphs"));
++				Assert.That(layout.Substring(collectionAt, iconAt - collectionAt), Does.Not.Contain("ios-commandbar-icons-v2"));
+ 			}
+ 		}
+ 
+diff -ruN a/OpenRA.Test/IosViewportControlsLayoutTest.cs b/OpenRA.Test/IosViewportControlsLayoutTest.cs
+--- a/OpenRA.Test/IosViewportControlsLayoutTest.cs	2026-09-09 10:11:28
++++ b/OpenRA.Test/IosViewportControlsLayoutTest.cs	2026-09-09 10:11:28
+@@ -473,7 +473,7 @@
+ 					Assert.That(CustomCommandBarWidget.PanelBackgroundFor(true, false, skin),
+ 						Is.EqualTo("ios-touch-quickbar-panel-compact-" + skin));
+ 					Assert.That(CustomCommandBarWidget.ButtonBackgroundFor(true, "commandbar-button-soviets", skin),
+-						Is.EqualTo("ios-touch-quickbar-button-" + skin));
++						Is.Empty, "The continuous touch tray must not wrap every icon in a small square tile.");
+ 					Assert.That(CustomCommandBarWidget.ToggleCollectionFor(true, "commandbar-toggle-icons", skin),
+ 						Is.EqualTo("ios-touch-quickbar-toggle-" + skin));
+ 				});
+@@ -533,8 +533,8 @@
+ 			Assert.Multiple(() =>
+ 			{
+ 				Assert.That(panel, Is.EqualTo("ios-touch-quickbar-panel-compact-yuri"));
+-				Assert.That(backgrounds.Values, Has.All.EqualTo("ios-touch-quickbar-button-yuri"),
+-					"Every catalog slot plus edit and collapse must be repainted.");
++				Assert.That(backgrounds.Values, Has.All.Empty,
++					"The continuous tray must not render a square tile behind every icon.");
+ 				Assert.That(toggle, Is.EqualTo("ios-touch-quickbar-toggle-yuri"));
+ 			});
+ 		}
+@@ -570,10 +570,9 @@
+ 			Assert.Multiple(() =>
+ 			{
+ 				Assert.That(commandBar.Background, Is.EqualTo("ios-touch-quickbar-panel-compact-allies"));
+-				Assert.That(buttons.Values.Select(button => button.Background),
+-					Has.All.EqualTo("ios-touch-quickbar-button-allies"));
+-				Assert.That(edit.Background, Is.EqualTo("ios-touch-quickbar-button-allies"));
+-				Assert.That(collapse.Background, Is.EqualTo("ios-touch-quickbar-button-allies"));
++				Assert.That(buttons.Values.Select(button => button.Background), Has.All.Empty);
++				Assert.That(edit.Background, Is.Empty);
++				Assert.That(collapse.Background, Is.Empty);
+ 				Assert.That(collapseIcon.ImageCollection, Is.EqualTo("ios-touch-quickbar-toggle-allies"));
+ 			});
+ 
+@@ -584,16 +583,15 @@
+ 
+ 			TouchFactionSkin.SetActive("soviets");
+ 			InvokePrivate(commandBar, "RefreshTouchChrome", true);
+-			Assert.That(buttons.Values.Select(button => button.Background),
+-				Has.All.EqualTo("ios-touch-quickbar-button-soviets"));
++			Assert.That(buttons.Values.Select(button => button.Background), Has.All.Empty);
+ 
+ 			SetPrivateField(commandBar, "expanded", true);
+ 			InvokePrivate(commandBar, "RefreshTouchChrome", true);
+ 			Assert.Multiple(() =>
+ 			{
+ 				Assert.That(commandBar.Background, Is.EqualTo("ios-touch-quickbar-panel-soviets"));
+-				Assert.That(edit.Background, Is.EqualTo("ios-touch-quickbar-button-soviets"));
+-				Assert.That(collapse.Background, Is.EqualTo("ios-touch-quickbar-button-soviets"));
++				Assert.That(edit.Background, Is.Empty);
++				Assert.That(collapse.Background, Is.Empty);
+ 			});
+ 		}
+ 

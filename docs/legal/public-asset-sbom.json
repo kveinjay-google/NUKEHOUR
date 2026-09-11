@@ -50,14 +50,6 @@
       "public": false
     },
     {
-      "path": "mods/ra2/audio/voices-base.yaml",
-      "sha256": "55bda8df946562d3750912a4350ebeffe3340a6a96002d6ad31cfc6e6c2bd40a",
-      "size": 10461,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
-    },
-    {
       "path": "mods/ra2/audio/voices.yaml",
       "sha256": "8af108c3c861fdeca8f636fc3f8d5318f9d8ad172afb2a8c8b9ccf242f944ba3",
       "size": 13232,
@@ -459,8 +451,8 @@
     },
     {
       "path": "mods/ra2/chrome.yaml",
-      "sha256": "27b73cda9c1e94631791f0baeb2f5e13b534251a53f707fd21acc61ebe1d024c",
-      "size": 69449,
+      "sha256": "4849239c46a373eaca4946f3265639c4fdc4bd0beb0e3fa8425ca5f878d170b0",
+      "size": 112436,
       "category": "unknown-or-derivative",
       "license": "Unreviewed",
       "public": false
@@ -531,8 +523,8 @@
     },
     {
       "path": "mods/ra2/chrome/mainmenu.yaml",
-      "sha256": "89446af7e79245f58dc4ce867844153ae1280bcbea396475c7bd401b6d415314",
-      "size": 4938,
+      "sha256": "edc79978ebb2014f485c76d4dd7091ce3868d043bb72b14dcd006b56d4f9e6fe",
+      "size": 6428,
       "category": "unknown-or-derivative",
       "license": "Unreviewed",
       "public": false
@@ -587,8 +579,8 @@
     },
     {
       "path": "mods/ra2/fluent/mod.ftl",
-      "sha256": "929fd6b9b2a50f2dbcdcad69f1d545d8203cca6f059d21800d766e3a2347ccfb",
-      "size": 259,
+      "sha256": "d0a185ef43d51e5e8f6661517ec7c08366c06196aa333fc211f69d8441a367e4",
+      "size": 650,
       "category": "unknown-or-derivative",
       "license": "Unreviewed",
       "public": false
@@ -627,8 +619,8 @@
     },
     {
       "path": "mods/ra2/fluent/zh-CN/mod.ftl",
-      "sha256": "1a6351196239572aeb54e29f4251c0a71d30c50bcb374d7d90eb68bcf7484209",
-      "size": 296,
+      "sha256": "742db5f45a2334da19fc435fe2ff3e519a2a721f8e0ff02f26dab1e4579092b7",
+      "size": 677,
       "category": "unknown-or-derivative",
       "license": "Unreviewed",
       "public": false
@@ -677,54 +669,6 @@
       "path": "mods/ra2/icon.png",
       "sha256": "edc7f2d9a651b7e6d8ff6eeedf501cbc57fa3bfc5af7e2ef7372005a6e1013a8",
       "size": 2626,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
-    },
-    {
-      "path": "mods/ra2/manifest/common.yaml",
-      "sha256": "d19bc04a3c750224b5c090d2909a3565c72462b9a653ab66a8ce89efd08a71e4",
-      "size": 4455,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
-    },
-    {
-      "path": "mods/ra2/manifest/filesystem-desktop.yaml",
-      "sha256": "6c5f0c04d8414ba7580ce6f0dfe507c0805786d5921cb729d9937569dd1658f3",
-      "size": 1671,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
-    },
-    {
-      "path": "mods/ra2/manifest/filesystem-ios-base.yaml",
-      "sha256": "2ca3727582d2e339cc0a3172630f57c8bd0746d3adb164e7f0a105637a50121d",
-      "size": 842,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
-    },
-    {
-      "path": "mods/ra2/manifest/filesystem-ios-yuri.yaml",
-      "sha256": "ba5cc7a7625b83f10d71239e1d094ddc0a48e554188fdbb2151d79a43f1b50f7",
-      "size": 1631,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
-    },
-    {
-      "path": "mods/ra2/manifest/gameplay-base.yaml",
-      "sha256": "091aa3e3392f41cfcee50f4c20864c2dc8f4e993e16e6ec5772d8bf90d69ed51",
-      "size": 2468,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
-    },
-    {
-      "path": "mods/ra2/manifest/gameplay-yuri.yaml",
-      "sha256": "2946c42ec4e41679b0eb845fca3da0a1926b879503092031bb5e2407b43f707f",
-      "size": 2635,
       "category": "unknown-or-derivative",
       "license": "Unreviewed",
       "public": false
@@ -1410,25 +1354,9 @@
       "public": false
     },
     {
-      "path": "mods/ra2/mod.ios-base.yaml",
-      "sha256": "0d21035c2b97903225989484205a029f8a9419b11748a8f746cf4c50bf58eb09",
-      "size": 110,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
-    },
-    {
-      "path": "mods/ra2/mod.ios-yuri.yaml",
-      "sha256": "4a078d5d26559b92b8c5220968dda0d2e648b8e69413b95c116e17f93942d888",
-      "size": 110,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
-    },
-    {
       "path": "mods/ra2/mod.yaml",
-      "sha256": "6f0f5fc9f8bf6b725213b1a05e71e98a50b8ae3757d158d73d5f971cb86e8d85",
-      "size": 8760,
+      "sha256": "5f523d63696a137afe7e793e596b2d1f145295cc980ce5b6f61bb9c9f0c07f2e",
+      "size": 9188,
       "category": "unknown-or-derivative",
       "license": "Unreviewed",
       "public": false
@@ -1453,14 +1381,6 @@
       "path": "mods/ra2/rules/aircraft.yaml",
       "sha256": "db498da3c3569dbf89d1f3f95148ab1272582f9ec50da704142dd1970bdcfed7",
       "size": 7656,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
-    },
-    {
-      "path": "mods/ra2/rules/allied-infantry-base.yaml",
-      "sha256": "ba7ea292674960dcad7b0c0638c4a0db1fab791d09ccaf8a522ad63e10af9664",
-      "size": 14806,
       "category": "unknown-or-derivative",
       "license": "Unreviewed",
       "public": false
@@ -1554,14 +1474,6 @@
       "public": false
     },
     {
-      "path": "mods/ra2/rules/defaults-base.yaml",
-      "sha256": "6ff96cd51bc552b7446af3bbaaa24cd0b740cfdbfe6cf618deb7eb29bde13978",
-      "size": 27704,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
-    },
-    {
       "path": "mods/ra2/rules/defaults.yaml",
       "sha256": "1b4f61f869754b333176fd37058eb02fcc64b30f4a96236fd83b4caf3d23a8c6",
       "size": 29110,
@@ -1594,25 +1506,9 @@
       "public": false
     },
     {
-      "path": "mods/ra2/rules/proxy-actors-base.yaml",
-      "sha256": "7515fb3ff4581e86144a7e6e9c36095385784c30697490d99a2824f80b61b0cb",
-      "size": 256,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
-    },
-    {
       "path": "mods/ra2/rules/proxy-actors.yaml",
       "sha256": "1aa6110f77972d8f698b33ab4fbec0a93f8f40e6d2f8d4c4b4d6b39aeb1a2b79",
       "size": 319,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
-    },
-    {
-      "path": "mods/ra2/rules/soviet-infantry-base.yaml",
-      "sha256": "776dd519e357e63700e7e4557ce0f15a202fbe46f6b836ee3cf6d20f2b24b8f2",
-      "size": 10492,
       "category": "unknown-or-derivative",
       "license": "Unreviewed",
       "public": false
@@ -1642,14 +1538,6 @@
       "public": false
     },
     {
-      "path": "mods/ra2/rules/soviet-vehicles-base.yaml",
-      "sha256": "3751401e17e45cf4bdaa4724a739b84046225532e86ffc42e346ce5cdebe907a",
-      "size": 11668,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
-    },
-    {
       "path": "mods/ra2/rules/soviet-vehicles.yaml",
       "sha256": "3aab2b8e3aab915ce3e3eafefb5b3f7ca1fb4aff32f27d6d772beb6bfe843de2",
       "size": 11712,
@@ -1669,14 +1557,6 @@
       "path": "mods/ra2/rules/trees.yaml",
       "sha256": "60d56e487a9e0e7a6cd76c71cb0f2874d4616847831ca6454828ecfb1c871ebf",
       "size": 823,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
-    },
-    {
-      "path": "mods/ra2/rules/world-base.yaml",
-      "sha256": "20b2ef9cad9d901a6c8d776298b0de5ef02c0bb1b52e6223900b283e64dc49b4",
-      "size": 10245,
       "category": "unknown-or-derivative",
       "license": "Unreviewed",
       "public": false
@@ -1834,25 +1714,9 @@
       "public": false
     },
     {
-      "path": "mods/ra2/sequences/vehicles-base.yaml",
-      "sha256": "531215cb99083575d61bc7e4a4980b30c2fb79403254ab5cc5b3bc8580ed0dd1",
-      "size": 4424,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
-    },
-    {
       "path": "mods/ra2/sequences/vehicles.yaml",
       "sha256": "39e0f87a785572b3c41e9b4b57bc19a0167d9fe4908c8c2671618ad53a2cbf3c",
       "size": 5432,
-      "category": "unknown-or-derivative",
-      "license": "Unreviewed",
-      "public": false
-    },
-    {
-      "path": "mods/ra2/sequences/voxels-base.yaml",
-      "sha256": "b31dc55d451f9b04bb28fa380cde0829a72ccdec8f5d4b1c89f388b2f533b3ea",
-      "size": 1910,
       "category": "unknown-or-derivative",
       "license": "Unreviewed",
       "public": false

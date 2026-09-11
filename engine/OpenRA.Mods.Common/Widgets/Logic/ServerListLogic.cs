@@ -25,6 +25,16 @@ using OpenRA.Widgets;
 
 namespace OpenRA.Mods.Common.Widgets.Logic
 {
+	public enum MultiplayerServerMode { Local, Online }
+
+	public static class MultiplayerServerModePolicy
+	{
+		public static bool UsesNearbyDiscovery(MultiplayerServerMode mode) => mode == MultiplayerServerMode.Local;
+		public static bool UsesOnlineDirectory(MultiplayerServerMode mode) => mode == MultiplayerServerMode.Online;
+		public static bool ShowsLocalHosting(MultiplayerServerMode mode) => mode == MultiplayerServerMode.Local;
+		public static bool ShowsDirectIp(MultiplayerServerMode mode) => mode == MultiplayerServerMode.Local;
+	}
+
 	public sealed class ServerListDirectory<T>
 	{
 		readonly object sync = new();
@@ -126,9 +136,6 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 
 	public class ServerListLogic : ChromeLogic
 	{
-		public static bool IsCompatibilityUnavailable(GameServerCompatibilityReason reason) =>
-			reason != GameServerCompatibilityReason.Compatible;
-
 		public static (WidgetBounds ServerList, WidgetBounds Progress) ReflowNoticeSurfaces(
 			WidgetBounds serverList, WidgetBounds progress, int noticeHeight, bool show, bool iosEnabled)
 		{
@@ -160,6 +167,24 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 
 		[FluentReference]
 		const string SearchStatusNoGames = "label-search-status-no-games";
+
+		[FluentReference]
+		const string OnlineStatusNoRooms = "label-online-room-status-no-rooms";
+
+		[FluentReference]
+		const string OnlineErrorUnavailable = "label-online-room-error-unavailable";
+
+		[FluentReference]
+		const string OnlineErrorDisappeared = "label-online-room-error-disappeared";
+
+		[FluentReference]
+		const string OnlineErrorRateLimited = "label-online-room-error-rate-limited";
+
+		[FluentReference]
+		const string OnlineErrorInvalidResponse = "label-online-room-error-invalid-response";
+
+		[FluentReference]
+		const string OnlineErrorInvalidCode = "label-online-room-error-invalid-code";
 
 		[FluentReference("players")]
 		const string PlayersOnline = "label-players-online-count";
@@ -238,10 +263,13 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 		readonly ModData modData;
 		readonly WebServices services;
 		readonly LanGameProbe lanGameProbe;
-		readonly ServerListDirectory<GameServer> gameDirectory = new(game => game.NearbySessionId ?? game.Address);
 		readonly ServerListCallbackGeneration callbackGeneration = ServerListCallbackGeneration.Create();
 		List<GameServer> lanGames = new();
 		List<GameServer> peerGames = new();
+		List<GameServer> onlineGames = new();
+		OnlineRoomDirectoryClient onlineDirectory;
+		CancellationTokenSource onlineQueryCancellation;
+		long nextOnlineRefreshAt;
 
 		readonly Widget serverList;
 		readonly ScrollItemWidget serverTemplate;
@@ -261,6 +289,9 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 		MapPreview currentMap;
 		bool showNotices;
 		int playerCount;
+		string statusMessage;
+
+		public MultiplayerServerMode Mode { get; private set; } = MultiplayerServerMode.Local;
 
 		enum SearchStatus { Fetching, Failed, NoGames, Hidden }
 
@@ -279,6 +310,9 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 
 		public string ProgressLabelText()
 		{
+			if (!string.IsNullOrEmpty(statusMessage))
+				return statusMessage;
+
 			switch (searchStatus)
 			{
 				case SearchStatus.Failed: return FluentProvider.GetMessage(SearchStatusFailed);
@@ -311,6 +345,20 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 			unknownServerState = FluentProvider.GetMessage(UnknownServerState);
 
 			services = modData.Manifest.Get<WebServices>();
+			if (!string.IsNullOrWhiteSpace(services.OnlineLobby))
+			{
+				try
+				{
+					var httpClient = HttpClientFactory.Create();
+					httpClient.Timeout = TimeSpan.FromSeconds(10);
+					onlineDirectory = new OnlineRoomDirectoryClient(
+						httpClient, OnlineRoomDirectoryClient.ParseBaseUri(services.OnlineLobby));
+				}
+				catch (ArgumentException ex)
+				{
+					Log.Write("client", $"Online Lobby configuration rejected: {ex.Message}");
+				}
+			}
 
 			incompatibleVersionColor = ChromeMetrics.Get<Color>("IncompatibleVersionColor");
 			incompatibleGameColor = ChromeMetrics.Get<Color>("IncompatibleGameColor");
@@ -330,9 +378,9 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 			if (noticeContainer != null)
 			{
 				noticeContainer.IsVisible = () => showNotices;
-				noticeContainer.Get("OUTDATED_VERSION_LABEL").IsVisible = () => services.ModVersionStatus == ModVersionStatus.Outdated;
-				noticeContainer.Get("UNKNOWN_VERSION_LABEL").IsVisible = () => services.ModVersionStatus == ModVersionStatus.Unknown;
-				noticeContainer.Get("PLAYTEST_AVAILABLE_LABEL").IsVisible = () => services.ModVersionStatus == ModVersionStatus.PlaytestAvailable;
+				noticeContainer.Get("OUTDATED_VERSION_LABEL").IsVisible = () => false;
+				noticeContainer.Get("UNKNOWN_VERSION_LABEL").IsVisible = () => false;
+				noticeContainer.Get("PLAYTEST_AVAILABLE_LABEL").IsVisible = () => false;
 			}
 
 			var noticeWatcher = widget.Get<LogicTickerWidget>("NOTICE_WATCHER");
@@ -341,7 +389,7 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 			{
 				noticeWatcher.OnTick = () =>
 				{
-					var show = services.ModVersionStatus != ModVersionStatus.NotChecked && services.ModVersionStatus != ModVersionStatus.Latest;
+					const bool show = false;
 					if (show != showNotices)
 					{
 						var containerHeight = noticeContainer.Bounds.Height;
@@ -368,6 +416,42 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 			progressText.IsVisible = () => searchStatus != SearchStatus.Hidden;
 			progressText.GetText = ProgressLabelText;
 
+			var localModeButton = widget.GetOrNull<ButtonWidget>("LOCAL_MODE_BUTTON");
+			if (localModeButton != null)
+			{
+				localModeButton.IsDisabled = () => Mode == MultiplayerServerMode.Local;
+				localModeButton.OnClick = () => SetMode(MultiplayerServerMode.Local);
+			}
+
+			var onlineModeButton = widget.GetOrNull<ButtonWidget>("ONLINE_MODE_BUTTON");
+			if (onlineModeButton != null)
+			{
+				onlineModeButton.IsDisabled = () => Mode == MultiplayerServerMode.Online;
+				onlineModeButton.OnClick = () => SetMode(MultiplayerServerMode.Online);
+			}
+
+			var roomCodeInput = widget.GetOrNull<TextFieldWidget>("ROOM_CODE_INPUT");
+			var roomCodeButton = widget.GetOrNull<ButtonWidget>("ROOM_CODE_BUTTON");
+			if (roomCodeInput != null)
+			{
+				roomCodeInput.IsVisible = () => Mode == MultiplayerServerMode.Online;
+				roomCodeInput.IsValid = () => string.IsNullOrEmpty(roomCodeInput.Text) ||
+					OnlineRoomDirectoryClient.TryNormalizeRoomCode(roomCodeInput.Text, out _);
+				roomCodeInput.OnEnterKey = _ =>
+				{
+					LookupRoomCode(roomCodeInput.Text);
+					return true;
+				};
+			}
+
+			if (roomCodeButton != null)
+			{
+				roomCodeButton.IsVisible = () => Mode == MultiplayerServerMode.Online;
+				roomCodeButton.IsDisabled = () => activeQuery || roomCodeInput == null ||
+					!OnlineRoomDirectoryClient.TryNormalizeRoomCode(roomCodeInput.Text, out _);
+				roomCodeButton.OnClick = () => LookupRoomCode(roomCodeInput?.Text);
+			}
+
 			var gs = Game.Settings.Game;
 			void ToggleFilterFlag(MPGameFilters f)
 			{
@@ -379,6 +463,8 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 			var filtersButton = widget.GetOrNull<DropDownButtonWidget>("FILTERS_DROPDOWNBUTTON");
 			if (filtersButton != null)
 			{
+				filtersButton.IsVisible = () => Mode == MultiplayerServerMode.Local;
+
 				// HACK: MULTIPLAYER_FILTER_PANEL doesn't follow our normal procedure for dropdown creation
 				// but we still need to be able to set the dropdown width based on the parent
 				// The yaml should use PARENT_WIDTH instead of DROPDOWN_WIDTH
@@ -457,7 +543,7 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 			if (playersLabel != null)
 			{
 				var playersText = new CachedTransform<int, string>(p => FluentProvider.GetMessage(PlayersOnline, "players", p));
-				playersLabel.IsVisible = () => playerCount != 0;
+				playersLabel.IsVisible = () => Mode == MultiplayerServerMode.Local && playerCount != 0;
 				playersLabel.GetText = () => playersText.Update(playerCount);
 			}
 
@@ -489,7 +575,7 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 			var ip = widget.GetOrNull<LabelWidget>("SELECTED_IP");
 			if (ip != null)
 			{
-				ip.IsVisible = () => currentServer != null;
+				ip.IsVisible = () => currentServer != null && !currentServer.IsOnlineRoom;
 				ip.GetText = () => currentServer.Address;
 			}
 
@@ -505,8 +591,7 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 			if (modVersion != null)
 			{
 				modVersion.IsVisible = () => currentServer != null;
-				modVersion.GetColor = () => IsCompatibilityUnavailable(currentServer.CompatibilityReason)
-					? incompatibleVersionColor : modVersion.TextColor;
+				modVersion.GetColor = () => currentServer.IsCompatible ? modVersion.TextColor : incompatibleVersionColor;
 
 				var version = new ResponsiveTextCache();
 				modVersion.GetText = () => version.Update(currentServer.ModLabel, modVersion.Bounds.Width,
@@ -559,7 +644,7 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 			NearbyGameNetworking.StartBrowsing();
 			NearbyGamesChanged();
 
-			RefreshServerList();
+			SetMode(MultiplayerServerMode.Local, true);
 		}
 
 		void NearbyGamesChanged()
@@ -588,74 +673,184 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 
 		public void RefreshServerList()
 		{
-			var generation = callbackGeneration.Capture();
-			if (!callbackGeneration.IsCurrent(generation))
+			if (Mode == MultiplayerServerMode.Local)
+			{
+				statusMessage = null;
+				var nearby = ServerListNearbyMerger.Merge(
+					lanGames, peerGames, game => game.NearbySessionId ?? game.Address);
+				RefreshServerListInner(nearby.ToList());
+				return;
+			}
+
+			RefreshOnlineRooms();
+		}
+
+		public void SetMode(MultiplayerServerMode mode, bool force = false)
+		{
+			if (!force && Mode == mode)
 				return;
 
-			var cachedGames = gameDirectory.Snapshot();
-			if (cachedGames.Count > 0)
-				RefreshServerListInner(cachedGames.ToList());
+			Mode = mode;
+			CancelOnlineQuery();
+			activeQuery = false;
+			statusMessage = null;
+			playerCount = 0;
+			SelectServer(null);
 
-			// Query in progress
-			if (activeQuery)
+			if (mode == MultiplayerServerMode.Local)
+				RefreshServerList();
+			else
+			{
+				onlineGames.Clear();
+				RefreshOnlineRooms();
+			}
+		}
+
+		OnlineRoomCompatibilityIdentity LocalOnlineIdentity() => new(
+			Game.EngineVersion,
+			modData.Manifest.Id,
+			modData.Manifest.Metadata.CompatibilityOrVersion,
+			modData.RuntimeContract.ResourceCapability,
+			ProtocolVersion.HandshakeSchema,
+			ProtocolVersion.Orders);
+
+		void RefreshOnlineRooms()
+		{
+			if (Mode != MultiplayerServerMode.Online || activeQuery)
 				return;
+
+			if (onlineDirectory == null)
+			{
+				ShowOnlineError(OnlineErrorUnavailable);
+				return;
+			}
 
 			activeQuery = true;
+			statusMessage = null;
 			searchStatus = SearchStatus.Fetching;
-
-			var queryURL = new HttpQueryBuilder(services.ServerList)
-			{
-				{ "protocol", GameServer.ProtocolVersion },
-				{ "engine", Game.EngineVersion },
-				{ "mod", Game.ModData.Manifest.Id },
-				{ "version", Game.ModData.Manifest.Metadata.Version }
-			}.ToString();
-
+			var generation = callbackGeneration.Capture();
+			var cancellation = ReplaceOnlineCancellation();
 			Task.Run(async () =>
 			{
-				List<GameServer> games = null;
-				var querySucceeded = false;
-
 				try
 				{
-					var client = HttpClientFactory.Create();
-					var httpResponseMessage = await client.GetAsync(queryURL);
-					var result = await httpResponseMessage.Content.ReadAsStreamAsync();
-
-					var yaml = MiniYaml.FromStream(result, queryURL);
-					games = new List<GameServer>();
-					foreach (var node in yaml)
+					var rooms = await onlineDirectory.GetRoomsAsync(cancellation.Token).ConfigureAwait(false);
+					var identity = LocalOnlineIdentity();
+					var games = new List<GameServer>();
+					foreach (var room in rooms)
 					{
 						try
 						{
-							var gs = new GameServer(node.Value);
-							if (gs.Address != null)
-								games.Add(gs);
+							games.Add(new GameServer(room, identity));
 						}
-						catch
+						catch (Exception ex)
 						{
-							// Ignore any invalid games advertised.
+							Log.Write("debug", $"Ignored invalid Online room metadata: {ex.Message}");
 						}
 					}
 
-					querySucceeded = true;
+					Game.RunAfterTick(() => CompleteOnlineQuery(generation, cancellation, games, null));
 				}
-				catch (Exception e)
+				catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { }
+				catch (OnlineRoomDirectoryException ex)
 				{
-					Log.Write("debug", $"Failed to query server list with exception: {e}");
+					Game.RunAfterTick(() => CompleteOnlineQuery(generation, cancellation, null, ex.Error));
 				}
-
-				gameDirectory.UpdateInternet(games);
-				Game.RunAfterTick(() =>
-				{
-					if (!callbackGeneration.IsCurrent(generation))
-						return;
-
-					activeQuery = false;
-					var visibleGames = gameDirectory.Snapshot();
-					RefreshServerListInner(querySucceeded || visibleGames.Count > 0 ? visibleGames.ToList() : null);
-				});
 			});
+		}
+
+		void LookupRoomCode(string value)
+		{
+			if (Mode != MultiplayerServerMode.Online || activeQuery)
+				return;
+
+			if (!OnlineRoomDirectoryClient.TryNormalizeRoomCode(value, out var roomCode))
+			{
+				ShowOnlineError(OnlineErrorInvalidCode);
+				return;
+			}
+
+			if (onlineDirectory == null)
+			{
+				ShowOnlineError(OnlineErrorUnavailable);
+				return;
+			}
+
+			activeQuery = true;
+			statusMessage = null;
+			searchStatus = SearchStatus.Fetching;
+			var generation = callbackGeneration.Capture();
+			var cancellation = ReplaceOnlineCancellation();
+			Task.Run(async () =>
+			{
+				try
+				{
+					var room = await onlineDirectory.ResolveCodeAsync(roomCode, cancellation.Token).ConfigureAwait(false);
+					var game = new GameServer(room, LocalOnlineIdentity());
+					Game.RunAfterTick(() => CompleteOnlineQuery(generation, cancellation, new List<GameServer> { game }, null));
+				}
+				catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { }
+				catch (OnlineRoomDirectoryException ex)
+				{
+					Game.RunAfterTick(() => CompleteOnlineQuery(generation, cancellation, null, ex.Error));
+				}
+				catch (Exception ex)
+				{
+					Log.Write("debug", $"Online room-code lookup failed: {ex.Message}");
+					Game.RunAfterTick(() => CompleteOnlineQuery(
+						generation, cancellation, null, OnlineRoomDirectoryError.InvalidResponse));
+				}
+			});
+		}
+
+		CancellationTokenSource ReplaceOnlineCancellation()
+		{
+			CancelOnlineQuery();
+			onlineQueryCancellation = new CancellationTokenSource();
+			return onlineQueryCancellation;
+		}
+
+		void CancelOnlineQuery()
+		{
+			onlineQueryCancellation?.Cancel();
+			onlineQueryCancellation?.Dispose();
+			onlineQueryCancellation = null;
+		}
+
+		void CompleteOnlineQuery(
+			int generation, CancellationTokenSource cancellation,
+			List<GameServer> games, OnlineRoomDirectoryError? error)
+		{
+			if (!callbackGeneration.IsCurrent(generation) ||
+				Mode != MultiplayerServerMode.Online || cancellation != onlineQueryCancellation)
+				return;
+
+			activeQuery = false;
+			nextOnlineRefreshAt = Game.RunTime + 10000;
+			if (error.HasValue)
+			{
+				ShowOnlineError(ErrorMessageKey(error.Value));
+				return;
+			}
+
+			onlineGames = games ?? new List<GameServer>();
+			statusMessage = onlineGames.Count == 0 ? FluentProvider.GetMessage(OnlineStatusNoRooms) : null;
+			RefreshServerListInner(onlineGames.ToList());
+		}
+
+		static string ErrorMessageKey(OnlineRoomDirectoryError error) => error switch
+		{
+			OnlineRoomDirectoryError.RoomDisappeared => OnlineErrorDisappeared,
+			OnlineRoomDirectoryError.RateLimited => OnlineErrorRateLimited,
+			OnlineRoomDirectoryError.InvalidResponse => OnlineErrorInvalidResponse,
+			_ => OnlineErrorUnavailable,
+		};
+
+		void ShowOnlineError(string messageKey)
+		{
+			statusMessage = FluentProvider.GetMessage(messageKey);
+			searchStatus = SearchStatus.Failed;
+			RefreshServerListInner(null);
 		}
 
 		void RefreshNearbyServerList(IEnumerable<BeaconLocation> locations)
@@ -744,19 +939,19 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 		{
 			var combined = ServerListNearbyMerger.Merge(
 				lanGames, peerGames, game => game.NearbySessionId ?? game.Address);
-			var visibleGames = gameDirectory.UpdateNearby(combined);
-			RefreshServerListInner(visibleGames.ToList());
+			if (Mode == MultiplayerServerMode.Local)
+				RefreshServerListInner(combined.ToList());
 		}
 
 		int GroupSortOrder(GameServer testEntry)
 		{
 			// Games that we can't join are sorted last
-			if (IsCompatibilityUnavailable(testEntry.CompatibilityReason))
+			if (!testEntry.IsCompatible)
 				return testEntry.Mod == modData.Manifest.Id ? 1 : 0;
 
 			// Games for the current mod+version are sorted first
 			if (testEntry.Mod == modData.Manifest.Id)
-				return testEntry.Version == modData.Manifest.Metadata.Version ? 4 : 3;
+				return testEntry.Version == modData.Manifest.Metadata.CompatibilityOrVersion ? 4 : 3;
 
 			// Followed by games for different mods that are joinable
 			return 2;
@@ -922,10 +1117,6 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 
 				searchStatus = SearchStatus.Hidden;
 
-				// Search for any unknown maps
-				if (Game.Settings.Game.AllowDownloading)
-					modData.MapCache.QueryRemoteMapDetails(services.MapRepository, games.Where(g => !Filtered(g)).Select(g => g.Map));
-
 				foreach (var row in rows)
 					serverList.AddChild(row);
 
@@ -987,7 +1178,8 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 						if (title != null)
 						{
 							var titleText = ResponsiveTextCache.WithTooltip(title);
-							title.GetText = () => titleText.Update(game.Name, title.Bounds.Width,
+							var displayName = game.IsOnlineRoom ? $"[{game.RoomCode}] {game.Name}" : game.Name;
+							title.GetText = () => titleText.Update(displayName, title.Bounds.Width,
 								Game.Renderer.Fonts[title.Font]);
 							title.GetColor = () => canJoin ? title.TextColor : incompatibleGameColor;
 						}
@@ -1078,6 +1270,9 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 			if (game == null)
 				return string.Empty;
 
+			if (game.IsOnlineRoom && !game.IsCompatible)
+				return FluentProvider.GetMessage(OnlineRoomCompatibility.MessageKey(game.OnlineCompatibilityReason));
+
 			if (game.State == (int)ServerState.GameStarted)
 			{
 				var totalMinutes = Math.Ceiling(game.PlayTime / 60.0);
@@ -1109,6 +1304,9 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 
 		bool Filtered(GameServer game)
 		{
+			if (game.IsOnlineRoom)
+				return false;
+
 			var filters = Game.Settings.Game.MPGameFilters;
 			if (game.State == (int)ServerState.GameStarted && !filters.HasFlag(MPGameFilters.Started))
 				return true;
@@ -1119,14 +1317,19 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 			if (game.Players + game.Spectators == 0 && !filters.HasFlag(MPGameFilters.Empty))
 				return true;
 
-			if (IsCompatibilityUnavailable(game.CompatibilityReason) &&
-				!filters.HasFlag(MPGameFilters.Incompatible))
+			if (!game.IsCompatible && !filters.HasFlag(MPGameFilters.Incompatible))
 				return true;
 
 			if (game.Protected && !filters.HasFlag(MPGameFilters.Protected))
 				return true;
 
 			return false;
+		}
+
+		public override void Tick()
+		{
+			if (Mode == MultiplayerServerMode.Online && !activeQuery && Game.RunTime >= nextOnlineRefreshAt)
+				RefreshOnlineRooms();
 		}
 
 		bool disposed;
@@ -1136,6 +1339,8 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 			{
 				disposed = true;
 				callbackGeneration.Dispose();
+				CancelOnlineQuery();
+				onlineDirectory?.Dispose();
 				lanGameProbe?.Dispose();
 				NearbyGameNetworking.GamesChanged -= NearbyGamesChanged;
 				NearbyGameNetworking.StopBrowsing();

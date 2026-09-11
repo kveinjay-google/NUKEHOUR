@@ -89,15 +89,6 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 		[FluentReference("file")]
 		const string ReplayDeletionFailed = "notification-replay-deletion-failed";
 
-		[FluentReference("kind")]
-		const string RuntimePersistenceMismatch = "notification-runtime-persistence-mismatch";
-
-		[FluentReference("kind")]
-		const string RuntimePersistenceLegacyHidden = "notification-runtime-persistence-legacy-hidden";
-
-		[FluentReference]
-		const string RuntimePersistenceReplayKind = "notification-runtime-persistence-kind-replay";
-
 		[FluentReference]
 		const string Players = "label-players";
 
@@ -122,7 +113,6 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 		readonly Dictionary<ReplayMetadata, ReplayState> replayState = new();
 		readonly Action onStart;
 		readonly ModData modData;
-		readonly WebServices services;
 
 		MapPreview map;
 		ReplayMetadata selectedReplay;
@@ -135,7 +125,6 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 			map = MapCache.UnknownMap;
 			panel = widget;
 
-			services = modData.Manifest.Get<WebServices>();
 			this.modData = modData;
 			this.onStart = onStart;
 			Game.BeforeGameStart += OnGameStart;
@@ -151,17 +140,10 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 			var template = panel.Get<ScrollItemWidget>("REPLAY_TEMPLATE");
 
 			var mod = modData.Manifest;
-			var dir = RuntimeContractStorage.ReplaysPath(
-				Platform.SupportDir, mod.Id, mod.Metadata.Version,
-				modData.RuntimeContract);
-			var runPendingReplayNotification = new Action<Action>(action =>
-				TryRunPendingReplayAction(cancelLoadingReplays, disposed, action));
-			var runPendingReplayListUpdate = new Action<Action>(action =>
-				TryRunPendingReplayAction(cancelLoadingReplays, disposed, action));
+			var dir = Path.Combine(Platform.SupportDir, "Replays", mod.Id, mod.Metadata.Version);
 
 			if (Directory.Exists(dir))
-				ThreadPool.QueueUserWorkItem(_ => LoadReplays(
-					dir, template, runPendingReplayNotification, runPendingReplayListUpdate));
+				ThreadPool.QueueUserWorkItem(_ => LoadReplays(dir, template));
 
 			var watch = panel.Get<ButtonWidget>("WATCH_BUTTON");
 			watch.IsDisabled = () => selectedReplay == null || map.Status != MapStatus.Available;
@@ -205,89 +187,37 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 			SetupManagement();
 		}
 
-		internal static bool TryRunPendingReplayAction(
-			bool cancelled, bool disposed, Action action)
-		{
-			if (cancelled || disposed)
-				return false;
-
-			action();
-			return true;
-		}
-
-		void LoadReplays(
-			string dir, ScrollItemWidget template,
-			Action<Action> runPendingReplayNotification,
-			Action<Action> runPendingReplayListUpdate)
+		void LoadReplays(string dir, ScrollItemWidget template)
 		{
 			using (new Support.PerfTimer("Load replays"))
 			{
 				var loadedReplays = new ConcurrentBag<ReplayMetadata>();
-				var hiddenReasonNotified = -1;
-				try
+				Parallel.ForEach(Directory.GetFiles(dir, "*.orarep", SearchOption.AllDirectories), (fileName, pls) =>
 				{
-					var replayFiles = Directory.GetFiles(
-						dir, "*.orarep", SearchOption.TopDirectoryOnly);
-					Parallel.ForEach(replayFiles, (fileName, pls) =>
-					{
-						if (cancelLoadingReplays)
-						{
-							pls.Stop();
-							return;
-						}
-
-						ReplayMetadata replay;
-						try
-						{
-							replay = ReplayMetadata.Read(fileName);
-						}
-						catch (Exception ex)
-						{
-							Log.Write("debug", ex.ToString());
-							return;
-						}
-
-						if (replay == null)
-							return;
-
-						var compatibility = RuntimeContractStorage.Compatibility(
-							modData.RuntimeContract,
-							replay.GameInfo.RuntimeProfile,
-							replay.GameInfo.RuntimeContract);
-						if (compatibility != RuntimeContractCompatibilityReason.Compatible)
-						{
-							if (Interlocked.CompareExchange(
-								ref hiddenReasonNotified, (int)compatibility, -1) == -1)
-								Game.RunAfterTick(() => runPendingReplayNotification(() =>
-									NotifyRuntimePersistenceFailure(compatibility,
-										RuntimePersistenceReplayKind)));
-
-							return;
-						}
-
-						loadedReplays.Add(replay);
-					});
-
 					if (cancelLoadingReplays)
-						return;
-
-					var sortedReplays = loadedReplays
-						.OrderByDescending(replay => replay.GameInfo.StartTimeUtc)
-						.ToList();
-					Game.RunAfterTick(() => runPendingReplayListUpdate(() =>
 					{
-						replayList.RemoveChildren();
-						foreach (var replay in sortedReplays)
-							AddReplay(replay, template);
+						pls.Stop();
+						return;
+					}
 
-						SetupReplayDependentFilters();
-						ApplyFilter();
-					}));
-				}
-				catch (Exception ex)
+					var replay = ReplayMetadata.Read(fileName);
+					if (replay != null)
+						loadedReplays.Add(replay);
+				});
+
+				if (cancelLoadingReplays)
+					return;
+
+				var sortedReplays = loadedReplays.OrderByDescending(replay => replay.GameInfo.StartTimeUtc).ToList();
+				Game.RunAfterTick(() =>
 				{
-					Log.Write("debug", ex.ToString());
-				}
+					replayList.RemoveChildren();
+					foreach (var replay in sortedReplays)
+						AddReplay(replay, template);
+
+					SetupReplayDependentFilters();
+					ApplyFilter();
+				});
 			}
 		}
 
@@ -665,16 +595,8 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 			replayState.Remove(replay);
 		}
 
-		static bool EvaluateReplayVisibility(
-			ReplayMetadata replay, RuntimeContractIdentity runtimeContract)
+		static bool EvaluateReplayVisibility(ReplayMetadata replay)
 		{
-			var compatibility = RuntimeContractStorage.Compatibility(
-				runtimeContract,
-				replay.GameInfo.RuntimeProfile,
-				replay.GameInfo.RuntimeContract);
-			if (compatibility != RuntimeContractCompatibilityReason.Compatible)
-				return false;
-
 			// Game type
 			if ((filter.Type == GameType.Multiplayer && replay.GameInfo.IsSinglePlayer) || (filter.Type == GameType.Singleplayer && !replay.GameInfo.IsSinglePlayer))
 				return false;
@@ -764,8 +686,7 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 		void ApplyFilter()
 		{
 			foreach (var replay in replays)
-				replayState[replay].Visible = EvaluateReplayVisibility(
-					replay, modData.RuntimeContract);
+				replayState[replay].Visible = EvaluateReplayVisibility(replay);
 
 			if (selectedReplay == null || !replayState[selectedReplay].Visible)
 				SelectFirstVisibleReplay();
@@ -789,9 +710,6 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 
 			try
 			{
-				if (map.Status == MapStatus.Unavailable && Game.Settings.Game.AllowDownloading)
-					modData.MapCache.QueryRemoteMapDetails(services.MapRepository, new[] { map.Uid });
-
 				var players = replay.GameInfo.Players
 					.GroupBy(p => p.Team)
 					.OrderBy(g => g.Key)
@@ -853,64 +771,14 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 
 		void WatchReplay()
 		{
-			if (selectedReplay == null)
-				return;
-
-			ReplayMetadata replay;
-			try
+			if (selectedReplay != null && ReplayUtils.PromptConfirmReplayCompatibility(selectedReplay, modData))
 			{
-				replay = ReplayMetadata.Read(selectedReplay.FilePath);
-			}
-			catch (Exception ex)
-			{
-				Log.Write("debug", ex.ToString());
-				return;
-			}
+				cancelLoadingReplays = true;
 
-			if (replay == null)
-				return;
+				DiscordService.UpdateStatus(DiscordState.WatchingReplay);
 
-			var compatibility = RuntimeContractStorage.Compatibility(
-				modData.RuntimeContract,
-				replay.GameInfo.RuntimeProfile,
-				replay.GameInfo.RuntimeContract);
-			if (compatibility != RuntimeContractCompatibilityReason.Compatible)
-			{
-				NotifyRuntimePersistenceFailure(
-					compatibility, RuntimePersistenceReplayKind);
-				return;
-			}
-
-			if (!ReplayUtils.PromptConfirmReplayCompatibility(replay, modData))
-				return;
-
-			cancelLoadingReplays = true;
-
-			DiscordService.UpdateStatus(DiscordState.WatchingReplay);
-
-			try
-			{
 				Game.JoinReplay(selectedReplay.FilePath);
 			}
-			catch (RuntimeContractCompatibilityException ex)
-			{
-				Log.Write("debug", ex.ToString());
-				NotifyRuntimePersistenceFailure(
-					ex.Reason, RuntimePersistenceReplayKind);
-			}
-			catch (Exception ex)
-			{
-				Log.Write("debug", ex.ToString());
-			}
-		}
-
-		static void NotifyRuntimePersistenceFailure(
-			RuntimeContractCompatibilityReason reason, string kind)
-		{
-			var message = reason == RuntimeContractCompatibilityReason.MissingIdentity ?
-				RuntimePersistenceLegacyHidden : RuntimePersistenceMismatch;
-			TextNotificationsManager.AddFeedbackLine(
-				message, "kind", FluentProvider.GetMessage(kind));
 		}
 
 		void AddReplay(ReplayMetadata replay, ScrollItemWidget template)
@@ -948,7 +816,6 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 		{
 			if (disposing && !disposed)
 			{
-				cancelLoadingReplays = true;
 				disposed = true;
 				Game.BeforeGameStart -= OnGameStart;
 			}

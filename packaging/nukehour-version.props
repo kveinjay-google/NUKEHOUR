@@ -1,0 +1,8 @@
+<Project>
+  <PropertyGroup>
+    <NukeHourPlatform>macos</NukeHourPlatform>
+    <NukeHourProductVersion>1.0.3</NukeHourProductVersion>
+    <NukeHourBuildNumber>3</NukeHourBuildNumber>
+    <NukeHourDisplayVersion>NUKE HOUR macOS 1.0.3 (Build 3)</NukeHourDisplayVersion>
+  </PropertyGroup>
+</Project>

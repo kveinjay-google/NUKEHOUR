@@ -1,0 +1,358 @@
+diff -ruN a/OpenRA.Game/Game.cs b/OpenRA.Game/Game.cs
+--- a/OpenRA.Game/Game.cs	2026-09-06 13:18:46
++++ b/OpenRA.Game/Game.cs	2026-09-06 13:18:46
+@@ -1063,7 +1063,7 @@
+ 		{
+ 			var settings = new ServerSettings()
+ 			{
+-				Name = "Skirmish Game",
++				Name = ModData.Manifest.Metadata.TitleTranslated,
+ 				Map = map,
+ 				AdvertiseOnline = false
+ 			};
+diff -ruN a/OpenRA.Game/Settings.cs b/OpenRA.Game/Settings.cs
+--- a/OpenRA.Game/Settings.cs	2026-09-06 13:18:46
++++ b/OpenRA.Game/Settings.cs	2026-09-06 13:18:46
+@@ -248,8 +248,10 @@
+ 
+ 	public class PlayerSettings
+ 	{
++		internal const string DefaultName = "NUKE HOUR";
++
+ 		[Desc("Sets the player nickname.")]
+-		public string Name = "Commander";
++		public string Name = DefaultName;
+ 		public Color Color = Color.FromArgb(200, 32, 32);
+ 		public string LastServer = "localhost:1234";
+ 		public Color[] CustomColors = Array.Empty<Color>();
+@@ -379,7 +381,13 @@
+ 				FieldLoader.InvalidValueAction = err2;
+ 			}
+ 
++			Player.Name = MigrateLegacyPlayerName(Player.Name);
+ 			Game.Language = LanguageSelectionPolicy.NormalizePreference(Game.Language);
++		}
++
++		public static string MigrateLegacyPlayerName(string name)
++		{
++			return name == "Commander" || name == "指挥官" ? PlayerSettings.DefaultName : name;
+ 		}
+ 
+ 		static string ReadSystemLanguageTag(Arguments args)
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/MainMenuLogic.cs b/OpenRA.Mods.Common/Widgets/Logic/MainMenuLogic.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/MainMenuLogic.cs	2026-09-06 13:18:46
++++ b/OpenRA.Mods.Common/Widgets/Logic/MainMenuLogic.cs	2026-09-06 13:18:46
+@@ -193,6 +193,15 @@
+ 			var settingsButton = mainMenu.Get<ButtonWidget>("SETTINGS_BUTTON");
+ 			settingsButton.OnClick = OpenSettingsPanel;
+ 
++			var aboutButton = mainMenu.GetOrNull<ButtonWidget>("ABOUT_BUTTON");
++			var showAboutButton = aboutButton != null && Platform.CurrentPlatform == PlatformType.OSX;
++			if (aboutButton != null)
++			{
++				aboutButton.Visible = showAboutButton;
++				if (showAboutButton)
++					aboutButton.OnClick = OpenAboutPanel;
++			}
++
+ 			var quitButton = mainMenu.Get<ButtonWidget>("QUIT_BUTTON");
+ 			quitButton.OnClick = Game.Exit;
+ 
+@@ -211,6 +220,14 @@
+ 			if (contentButton != null)
+ 				controls.Add(contentButton);
+ 
++			if (aboutButton != null)
++			{
++				if (showAboutButton)
++					controls.Add(aboutButton);
++				else
++					quitButton.Bounds.Y = aboutButton.Bounds.Y;
++			}
++
+ 			controls.Add(quitButton);
+ 			mainMenuControls = controls.ToArray();
+ 			iosMainMenuLayoutEnabled = languageDropdown != null && contentButton != null &&
+@@ -689,6 +706,18 @@
+ 			{
+ 				{ "onExit", () => SwitchMenu(MenuType.Main) }
+ 			});
++		}
++
++		void OpenAboutPanel()
++		{
++			var aboutPanel = Game.OpenWindow("ABOUT_PANEL", new WidgetArgs());
++			aboutPanel.Get<ButtonWidget>("BACK_BUTTON").OnClick = () =>
++			{
++				Ui.CloseWindow();
++				SwitchMenu(MenuType.Main);
++			};
++
++			SwitchMenu(MenuType.None);
+ 		}
+ 
+ 		void LaunchIntoRequestedPanel()
+diff -ruN a/OpenRA.Test/IosMenuLayoutPolicyTest.cs b/OpenRA.Test/IosMenuLayoutPolicyTest.cs
+--- a/OpenRA.Test/IosMenuLayoutPolicyTest.cs	2026-09-06 13:18:46
++++ b/OpenRA.Test/IosMenuLayoutPolicyTest.cs	2026-09-06 13:18:46
+@@ -70,15 +70,15 @@
+ 		}
+ 
+ 		[Test]
+-		public void Ra2MainMenuUsesOneAlignedSixControlDesktopGrid()
++		public void Ra2MainMenuUsesOneAlignedSevenControlDesktopGrid()
+ 		{
+ 			var yaml = File.ReadAllText(Path.Combine(RepositoryRoot(), "mods", "ra2", "chrome", "mainmenu.yaml"));
+ 			var ids = new[]
+ 			{
+ 				"SINGLEPLAYER_BUTTON", "MULTIPLAYER_BUTTON", "SETTINGS_BUTTON",
+-				"LANGUAGE_DROPDOWN", "CONTENT_BUTTON", "QUIT_BUTTON"
++				"LANGUAGE_DROPDOWN", "CONTENT_BUTTON", "ABOUT_BUTTON", "QUIT_BUTTON"
+ 			};
+-			var expectedY = new[] { 36, 92, 148, 204, 260, 316 };
++			var expectedY = new[] { 36, 92, 148, 204, 260, 316, 372 };
+ 			var bounds = ids.Select(id => MainMenuControlBounds(yaml, id)).ToArray();
+ 
+ 			for (var i = 0; i < bounds.Length; i++)
+diff -ruN a/OpenRA.Test/NukeHourBrandingTest.cs b/OpenRA.Test/NukeHourBrandingTest.cs
+--- a/OpenRA.Test/NukeHourBrandingTest.cs	1969-12-31 16:00:00
++++ b/OpenRA.Test/NukeHourBrandingTest.cs	2026-09-06 13:18:46
+@@ -0,0 +1,238 @@
++#region Copyright & License Information
++/*
++ * Copyright (c) The OpenRA Developers and Contributors
++ * This file is part of OpenRA, which is free software. It is
++ * made available under the terms of the GNU General Public License
++ * as published by the Free Software Foundation, either version 3 of
++ * the License, or (at your option) any later version. For more
++ * information, see COPYING.
++ */
++#endregion
++
++using System;
++using System.IO;
++using System.Linq;
++using System.Text.RegularExpressions;
++using NUnit.Framework;
++
++namespace OpenRA.Test
++{
++	[TestFixture]
++	public sealed class NukeHourBrandingTest
++	{
++		static Settings LoadSettings(string storedName, params string[] arguments)
++		{
++			var settingsPath = Path.GetTempFileName();
++			try
++			{
++				File.WriteAllText(settingsPath, $"Player:\n\tName: {storedName}\n");
++				return new Settings(settingsPath, new Arguments(arguments));
++			}
++			finally
++			{
++				File.Delete(settingsPath);
++			}
++		}
++
++		[Test]
++		public void NewPlayersUseTheNukeHourName()
++		{
++			Assert.That(new PlayerSettings().Name, Is.EqualTo("NUKE HOUR"));
++		}
++
++		[Test]
++		public void DefaultNameIsNotExposedToCommandLineFieldDiscovery()
++		{
++			Assert.That(typeof(PlayerSettings).GetField("DefaultName"), Is.Null);
++		}
++
++		[TestCase("Commander")]
++		[TestCase("指挥官")]
++		public void GeneratedLegacyNamesMigrateToNukeHour(string legacyName)
++		{
++			Assert.That(Settings.MigrateLegacyPlayerName(legacyName), Is.EqualTo("NUKE HOUR"));
++		}
++
++		[Test]
++		public void CustomPlayerNamesArePreserved()
++		{
++			Assert.That(Settings.MigrateLegacyPlayerName("Field Marshal"), Is.EqualTo("Field Marshal"));
++		}
++
++		[TestCase("Commander", "NUKE HOUR")]
++		[TestCase("指挥官", "NUKE HOUR")]
++		[TestCase("Field Marshal", "Field Marshal")]
++		public void StoredPlayerNamesMigrateAfterSettingsLoad(string storedName, string expectedName)
++		{
++			var settings = LoadSettings(storedName);
++
++			Assert.That(settings.Player.Name, Is.EqualTo(expectedName));
++		}
++
++		[TestCase("Commander", "NUKE HOUR")]
++		[TestCase("指挥官", "NUKE HOUR")]
++		[TestCase("Field Marshal", "Field Marshal")]
++		public void CommandLinePlayerNamesMigrateAfterOverrides(string commandLineName, string expectedName)
++		{
++			var settings = LoadSettings("Saved Player", $"Player.Name={commandLineName}");
++
++			Assert.That(settings.Player.Name, Is.EqualTo(expectedName));
++		}
++
++		[Test]
++		public void LocalSkirmishServerUsesTheTranslatedModTitle()
++		{
++			var source = File.ReadAllText(Path.Combine(
++				RepositoryRoot(), "engine", "OpenRA.Game", "Game.cs"));
++
++			Assert.That(source, Does.Contain("Name = ModData.Manifest.Metadata.TitleTranslated"));
++			Assert.That(source, Does.Not.Contain("Name = \"Skirmish Game\""));
++		}
++
++		[Test]
++		public void Ra2MainMenuDefinesTheAboutEntryAndPanel()
++		{
++			var yaml = File.ReadAllText(Path.Combine(
++				RepositoryRoot(), "mods", "ra2", "chrome", "mainmenu.yaml"));
++			var modYaml = File.ReadAllText(Path.Combine(
++				RepositoryRoot(), "mods", "ra2", "mod.yaml"));
++			var aboutButton = yaml.IndexOf("Button@ABOUT_BUTTON:", StringComparison.Ordinal);
++			var quitButton = yaml.IndexOf("Button@QUIT_BUTTON:", StringComparison.Ordinal);
++			var aboutPanel = yaml.IndexOf("Background@ABOUT_PANEL:", StringComparison.Ordinal);
++
++			Assert.That(aboutButton, Is.GreaterThanOrEqualTo(0));
++			Assert.That(quitButton, Is.GreaterThan(aboutButton));
++			Assert.That(yaml, Does.Contain("Text: button-main-menu-about"));
++			Assert.That(aboutPanel, Is.GreaterThanOrEqualTo(0));
++
++			var panel = yaml.Substring(aboutPanel);
++			Assert.That(panel, Does.Contain("Width: 620"));
++			Assert.That(panel, Does.Contain("Height: 420"));
++			Assert.That(panel, Does.Contain("Background: dialog4"));
++			Assert.That(panel, Does.Contain("Label@ABOUT_TITLE:"));
++			Assert.That(panel, Does.Contain("Font: BigBold"));
++			Assert.That(panel, Does.Contain("Text: label-nuke-hour-about-title"));
++			Assert.That(panel, Does.Contain("Label@ABOUT_DESCRIPTION:"));
++			Assert.That(panel, Does.Contain("Font: Regular"));
++			Assert.That(panel, Does.Not.Contain("Font: Medium\n"));
++			Assert.That(panel, Does.Contain("WordWrap: true"));
++			Assert.That(panel, Does.Contain("Text: label-nuke-hour-about-description"));
++			Assert.That(panel, Does.Contain("Label@VERSION_CAPTION:"));
++			Assert.That(panel, Does.Contain("Label@VERSION_VALUE:"));
++			Assert.That(panel, Does.Contain("Logic: VersionLabelLogic"));
++			Assert.That(panel, Does.Contain("Text: label-nuke-hour-about-version"));
++			Assert.That(panel, Does.Contain("Label@WEBSITE_CAPTION:"));
++			Assert.That(panel, Does.Contain("Text: label-nuke-hour-about-website"));
++			Assert.That(panel, Does.Contain("Label@WEBSITE_URL:"));
++			Assert.That(panel, Does.Contain("Text: label-nuke-hour-about-url"));
++			Assert.That(panel, Does.Contain("Button@BACK_BUTTON:"));
++			Assert.That(panel, Does.Contain("Width: 220"));
++			Assert.That(panel, Does.Contain("Height: 54"));
++			Assert.That(panel, Does.Contain("Text: button-back"));
++			Assert.That(panel, Does.Contain("Key: escape"));
++			Assert.That(panel, Does.Not.Contain("Logic: NukeHourAboutLogic"));
++
++			var fontsStart = modYaml.IndexOf("Fonts:\n", StringComparison.Ordinal);
++			var fontsEnd = modYaml.IndexOf("\nDefaultOrderGenerator:", fontsStart, StringComparison.Ordinal);
++			Assert.That(fontsStart, Is.GreaterThanOrEqualTo(0));
++			Assert.That(fontsEnd, Is.GreaterThan(fontsStart));
++			var declaredFonts = Regex.Matches(modYaml.Substring(fontsStart, fontsEnd - fontsStart),
++				@"(?m)^\t(?<name>[A-Za-z][A-Za-z0-9]*):\s*$")
++				.Select(match => match.Groups["name"].Value).ToArray();
++			var aboutFonts = Regex.Matches(panel, @"(?m)^[ \t]*Font:[ \t]*(?<name>\S+)[ \t]*$")
++				.Select(match => match.Groups["name"].Value).Distinct().ToArray();
++			Assert.That(aboutFonts, Is.Not.Empty);
++			Assert.That(aboutFonts, Is.SubsetOf(declaredFonts),
++				$"About uses fonts not declared by the RA2 manifest: {string.Join(", ", aboutFonts.Except(declaredFonts))}");
++		}
++
++		[Test]
++		public void MainMenuLogicMakesAboutMacOnlyAndKeepsItOutOfTheIosLayout()
++		{
++			var source = File.ReadAllText(Path.Combine(RepositoryRoot(), "engine", "OpenRA.Mods.Common",
++				"Widgets", "Logic", "MainMenuLogic.cs"));
++
++			Assert.That(source, Does.Contain("GetOrNull<ButtonWidget>(\"ABOUT_BUTTON\")"));
++			Assert.That(source, Does.Contain("Platform.CurrentPlatform == PlatformType.OSX"));
++			Assert.That(source, Does.Contain("aboutButton.Visible = showAboutButton;"));
++			Assert.That(source, Does.Contain("aboutButton.OnClick = OpenAboutPanel;"));
++			Assert.That(source, Does.Contain("controls.Add(aboutButton);"));
++			Assert.That(source.IndexOf("controls.Add(aboutButton);", StringComparison.Ordinal),
++				Is.LessThan(source.IndexOf("controls.Add(quitButton);", StringComparison.Ordinal)));
++			Assert.That(source, Does.Contain("quitButton.Bounds.Y = aboutButton.Bounds.Y;"));
++			Assert.That(source, Does.Contain("mainMenuControls.Length == 6"));
++
++			var methodStart = source.IndexOf("void OpenAboutPanel()", StringComparison.Ordinal);
++			Assert.That(methodStart, Is.GreaterThanOrEqualTo(0));
++			var methodEnd = source.IndexOf("\n\t\tvoid ", methodStart + 1, StringComparison.Ordinal);
++			Assert.That(methodEnd, Is.GreaterThan(methodStart));
++			var method = source.Substring(methodStart, methodEnd - methodStart);
++			var openWindow = method.IndexOf("var aboutPanel = Game.OpenWindow(\"ABOUT_PANEL\"", StringComparison.Ordinal);
++			var hideMenu = method.IndexOf("SwitchMenu(MenuType.None);", StringComparison.Ordinal);
++			Assert.That(method, Does.Contain("SwitchMenu(MenuType.None);"));
++			Assert.That(method, Does.Contain("Game.OpenWindow(\"ABOUT_PANEL\""));
++			Assert.That(openWindow, Is.GreaterThanOrEqualTo(0));
++			Assert.That(hideMenu, Is.GreaterThan(openWindow),
++				"Keep the main menu visible until the About window has opened successfully.");
++			Assert.That(method, Does.Contain("Get<ButtonWidget>(\"BACK_BUTTON\").OnClick"));
++			Assert.That(method, Does.Contain("Ui.CloseWindow();"));
++			Assert.That(method, Does.Contain("SwitchMenu(MenuType.Main);"));
++		}
++
++		[Test]
++		public void EnglishAboutCopyDescribesTheMacExperience()
++		{
++			AssertFluentLines("mods", "ra2", "fluent", "mod.ftl", new[]
++			{
++				"button-main-menu-about = About",
++				"label-nuke-hour-about-title = NUKE HOUR",
++				"label-nuke-hour-about-description = A classic real-time strategy experience built for macOS, " +
++					"with mouse and keyboard controls, skirmish battles, and multiplayer.",
++				"label-nuke-hour-about-version = Version",
++				"label-nuke-hour-about-website = Official website",
++				"label-nuke-hour-about-url = https://nukehour.com"
++			});
++		}
++
++		[Test]
++		public void SimplifiedChineseAboutCopyDescribesTheMacExperience()
++		{
++			AssertFluentLines("mods", "ra2", "fluent", "zh-CN", "mod.ftl", new[]
++			{
++				"button-main-menu-about = 关于程序",
++				"label-nuke-hour-about-title = NUKE HOUR",
++				"label-nuke-hour-about-description = 为 macOS 打造的经典即时战略游戏体验，支持键鼠操作、遭遇战与多人游戏。",
++				"label-nuke-hour-about-version = 程序版本",
++				"label-nuke-hour-about-website = 官方网站",
++				"label-nuke-hour-about-url = https://nukehour.com"
++			});
++		}
++
++		static void AssertFluentLines(string first, string second, string third, string fourth, string[] expected)
++		{
++			var lines = File.ReadAllLines(Path.Combine(RepositoryRoot(), first, second, third, fourth));
++			foreach (var line in expected)
++				Assert.That(lines, Does.Contain(line));
++		}
++
++		static void AssertFluentLines(
++			string first, string second, string third, string fourth, string fifth, string[] expected)
++		{
++			var lines = File.ReadAllLines(Path.Combine(RepositoryRoot(), first, second, third, fourth, fifth));
++			foreach (var line in expected)
++				Assert.That(lines, Does.Contain(line));
++		}
++
++		static string RepositoryRoot()
++		{
++			var root = TestContext.CurrentContext.TestDirectory;
++			while (root != null &&
++				!Directory.Exists(Path.Combine(root, ".git")) &&
++				!File.Exists(Path.Combine(root, ".git")))
++				root = Directory.GetParent(root)?.FullName;
++
++			Assert.That(root, Is.Not.Null, "Could not locate repository root.");
++			return root!;
++		}
++	}
++}

@@ -1,0 +1,79 @@
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/Ingame/ClassicProductionLogic.cs b/OpenRA.Mods.Common/Widgets/Logic/Ingame/ClassicProductionLogic.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/Ingame/ClassicProductionLogic.cs	2026-09-10 21:46:28
++++ b/OpenRA.Mods.Common/Widgets/Logic/Ingame/ClassicProductionLogic.cs	2026-09-10 21:46:28
+@@ -178,7 +178,7 @@
+ 				scrollDown.OnClick = palette.ScrollDown;
+ 				scrollDown.IsVisible = () => palette.TotalIconCount > palette.MaxIconRowOffset * palette.Columns;
+ 				scrollDown.IsDisabled = () => !palette.CanScrollDown;
+-				PositionIosScrollButton(widget, typesContainer, scrollDown);
++				PositionIosScrollButton(typesContainer, scrollDown);
+ 			}
+ 
+ 			var scrollUp = widget.GetOrNull<ButtonWidget>("SCROLL_UP_BUTTON");
+@@ -188,21 +188,24 @@
+ 				scrollUp.OnClick = palette.ScrollUp;
+ 				scrollUp.IsVisible = () => palette.TotalIconCount > palette.MaxIconRowOffset * palette.Columns;
+ 				scrollUp.IsDisabled = () => !palette.CanScrollUp;
+-				PositionIosScrollButton(widget, typesContainer, scrollUp);
++				PositionIosScrollButton(typesContainer, scrollUp);
+ 			}
+ 
+ 			SetMaximumVisibleRows(palette);
+ 		}
+ 
+-		static void PositionIosScrollButton(Widget productionSidebar, Widget typesContainer, ButtonWidget button)
++		static void PositionIosScrollButton(Widget typesContainer, ButtonWidget button)
+ 		{
+ 			if (!Platform.IsIOS)
+ 				return;
+ 
+-			// PRODUCTION_TYPES is offset above the palette. Keep its scroll buttons
+-			// pinned to the production panel's bottom after the panel is expanded.
+-			var bottomInset = IosScreenMetrics.SnapshotFor(Game.Renderer.Resolution).LogicalPoints(4);
+-			button.Bounds.Y = productionSidebar.Bounds.Height - button.Bounds.Height - bottomInset - typesContainer.Bounds.Y;
++			// The bottom-cap artwork contains an authored slot for these buttons at
++			// its top edge. Convert that production-panel coordinate into the local
++			// coordinate of PRODUCTION_TYPES exactly once so visuals and hit targets
++			// overlay the slot instead of being appended below the cap.
++			var layout = IosIngameSidebarLayoutPolicy.Create(
++				IosScreenMetrics.SnapshotFor(Game.Renderer.Resolution));
++			button.Bounds.Y = layout.ScrollButtonLocalY(typesContainer.Bounds.Y);
+ 		}
+ 
+ 		static void ApplyIosSidebarLayout(Widget productionSidebar, ProductionPaletteWidget productionPalette)
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/Ingame/IosIngameSidebarLayoutPolicy.cs b/OpenRA.Mods.Common/Widgets/Logic/Ingame/IosIngameSidebarLayoutPolicy.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/Ingame/IosIngameSidebarLayoutPolicy.cs	2026-09-10 21:46:28
++++ b/OpenRA.Mods.Common/Widgets/Logic/Ingame/IosIngameSidebarLayoutPolicy.cs	2026-09-10 21:46:28
+@@ -21,6 +21,7 @@
+ 		public readonly int BackgroundRows;
+ 		public readonly int BackgroundRemainderHeight;
+ 		public readonly int BottomCapY;
++		public readonly int ScrollButtonsY;
+ 
+ 		public IosIngameSidebarLayout(
+ 			Rectangle topBounds, Rectangle productionBounds,
+@@ -32,7 +33,10 @@
+ 			BackgroundRows = backgroundRows;
+ 			BackgroundRemainderHeight = backgroundRemainderHeight;
+ 			BottomCapY = bottomCapY;
++			ScrollButtonsY = bottomCapY;
+ 		}
++
++		public int ScrollButtonLocalY(int parentY) => ScrollButtonsY - parentY;
+ 	}
+ 
+ 	/// <summary>
+diff -ruN a/OpenRA.Test/IosProductionBatchToggleTest.cs b/OpenRA.Test/IosProductionBatchToggleTest.cs
+--- a/OpenRA.Test/IosProductionBatchToggleTest.cs	2026-09-10 21:46:28
++++ b/OpenRA.Test/IosProductionBatchToggleTest.cs	2026-09-10 21:46:28
+@@ -373,6 +373,10 @@
+ 				Assert.That(layout.BackgroundRemainderHeight, Is.EqualTo(29),
+ 					"A separately sized final fill must close the fractional gap without overlapping the bottom cap.");
+ 				Assert.That(layout.BottomCapY, Is.EqualTo(layout.ProductionBounds.Height - 66));
++				Assert.That(layout.ScrollButtonsY, Is.EqualTo(layout.BottomCapY),
++					"The scroll buttons must overlay the authored button slot at the top of the bottom cap.");
++				Assert.That(layout.ScrollButtonLocalY(-30) - 30, Is.EqualTo(layout.BottomCapY),
++					"The PRODUCTION_TYPES parent offset must be applied exactly once.");
+ 				Assert.That(layout.BackgroundRows * 50 + layout.BackgroundRemainderHeight,
+ 					Is.EqualTo(layout.BottomCapY));
+ 				Assert.That(IosIngameSidebarLayoutPolicy.BackgroundRowHeights(layout),

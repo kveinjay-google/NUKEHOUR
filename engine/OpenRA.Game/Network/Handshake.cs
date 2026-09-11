@@ -15,77 +15,16 @@ using System.Linq;
 
 namespace OpenRA.Network
 {
-	public enum RuntimeContractCompatibilityReason
-	{
-		Compatible = 0,
-		MissingIdentity = 1,
-		MalformedIdentity = 2,
-		ProfileMismatch = 3,
-		ContractMismatch = 4,
-	}
-
-	static class RuntimeContractHandshake
-	{
-		public static RuntimeContractCompatibilityReason Compare(
-			RuntimeContractIdentity local,
-			string remoteProfile,
-			string remoteContract)
-		{
-			if (!local.IsValid)
-				return RuntimeContractCompatibilityReason.MalformedIdentity;
-
-			if (remoteProfile == null && remoteContract == null)
-				return local.IsLegacy
-					? RuntimeContractCompatibilityReason.Compatible
-					: RuntimeContractCompatibilityReason.MissingIdentity;
-
-			if (string.IsNullOrEmpty(remoteProfile) || string.IsNullOrEmpty(remoteContract))
-				return RuntimeContractCompatibilityReason.MalformedIdentity;
-
-			RuntimeContractIdentity remote;
-			try
-			{
-				remote = new RuntimeContractIdentity(remoteProfile, remoteContract);
-			}
-			catch (ArgumentException)
-			{
-				return RuntimeContractCompatibilityReason.MalformedIdentity;
-			}
-
-			if (local.IsLegacy)
-				return RuntimeContractCompatibilityReason.MissingIdentity;
-			if (!string.Equals(local.ProfileId, remote.ProfileId, StringComparison.Ordinal))
-				return RuntimeContractCompatibilityReason.ProfileMismatch;
-			if (!string.Equals(local.ContractDigest, remote.ContractDigest, StringComparison.Ordinal))
-				return RuntimeContractCompatibilityReason.ContractMismatch;
-
-			return RuntimeContractCompatibilityReason.Compatible;
-		}
-
-		public static void GetFields(
-			RuntimeContractIdentity identity,
-			out string runtimeProfile,
-			out string runtimeContract)
-		{
-			if (!identity.IsValid)
-				throw new ArgumentException("The runtime contract identity is invalid.", nameof(identity));
-
-			runtimeProfile = identity.IsLegacy ? null : identity.ProfileId;
-			runtimeContract = identity.IsLegacy ? null : identity.ContractDigest;
-		}
-	}
-
 	public class HandshakeRequest
 	{
+		public int HandshakeSchema;
+		public int OrdersProtocol;
+		public string EngineCompatibility;
 		public string Mod;
 		public string Version;
 		public string RuntimeProfile;
 		public string RuntimeContract;
 		public string AuthToken;
-
-		internal RuntimeContractCompatibilityReason RuntimeContractCompatibilityWith(
-			RuntimeContractIdentity local) =>
-			RuntimeContractHandshake.Compare(local, RuntimeProfile, RuntimeContract);
 
 		public static HandshakeRequest Deserialize(string data, string name)
 		{
@@ -94,29 +33,36 @@ namespace OpenRA.Network
 			return handshake;
 		}
 
+		public static bool TryDeserialize(string data, string name, out HandshakeRequest handshake)
+		{
+			try
+			{
+				handshake = Deserialize(data, name);
+				return true;
+			}
+			catch (Exception)
+			{
+				handshake = null;
+				return false;
+			}
+		}
+
 		public string Serialize()
 		{
-			var handshake = FieldSaver.Save(this);
-			if (RuntimeProfile == null && RuntimeContract == null)
-				handshake = handshake.WithNodes(handshake.Nodes.Where(node =>
-					node.Key != nameof(RuntimeProfile) && node.Key != nameof(RuntimeContract)));
-
-			var data = new List<MiniYamlNode> { new("Handshake", handshake) };
+			var data = new List<MiniYamlNode> { new("Handshake", FieldSaver.Save(this)) };
 			return data.WriteToString();
 		}
 	}
 
 	public class HandshakeResponse
 	{
+		public int HandshakeSchema;
+		public string EngineCompatibility;
 		public string Mod;
 		public string Version;
 		public string RuntimeProfile;
 		public string RuntimeContract;
 		public string Password;
-
-		internal RuntimeContractCompatibilityReason RuntimeContractCompatibilityWith(
-			RuntimeContractIdentity local) =>
-			RuntimeContractHandshake.Compare(local, RuntimeProfile, RuntimeContract);
 
 		// Default value is hardcoded to 7 so that newer servers
 		// (which define OrdersProtocol > 7) can detect older clients
@@ -153,19 +99,30 @@ namespace OpenRA.Network
 			return handshake;
 		}
 
+		public static bool TryDeserialize(string data, string name, out HandshakeResponse handshake)
+		{
+			try
+			{
+				handshake = Deserialize(data, name);
+				return true;
+			}
+			catch (Exception)
+			{
+				handshake = null;
+				return false;
+			}
+		}
+
 		public string Serialize()
 		{
-			var includeRuntimeContract = RuntimeProfile != null || RuntimeContract != null;
 			var data = new List<MiniYamlNode>
 			{
 				new("Handshake", null,
 					new[]
 					{
-						"Mod", "Version", "RuntimeProfile", "RuntimeContract", "Password",
-						"Fingerprint", "AuthSignature", "OrdersProtocol"
-					}.Where(field => includeRuntimeContract ||
-						(field != nameof(RuntimeProfile) && field != nameof(RuntimeContract)))
-						.Select(p => FieldSaver.SaveField(this, p)).ToList()),
+						"HandshakeSchema", "OrdersProtocol", "EngineCompatibility", "Mod", "Version",
+						"RuntimeProfile", "RuntimeContract", "Password", "Fingerprint", "AuthSignature"
+					}.Select(p => FieldSaver.SaveField(this, p)).ToList()),
 				new("Client", FieldSaver.Save(Client))
 			};
 

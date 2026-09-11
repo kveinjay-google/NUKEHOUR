@@ -20,7 +20,7 @@ using FS = OpenRA.FileSystem.FileSystem;
 
 namespace OpenRA.Mods.Cnc.FileSystem
 {
-	public sealed class AudioBagLoader : IBoundedPackageLoader
+	public sealed class AudioBagLoader : IPackageLoader
 	{
 		sealed class BagFile : IReadOnlyPackage
 		{
@@ -142,11 +142,11 @@ namespace OpenRA.Mods.Cnc.FileSystem
 
 			try
 			{
-				// Build the index and dispose the stream, it is no longer needed after this.
+				// Build the index and dispose the stream, it is no longer needed after this
 				using (var indexStream = context.Open(indexFilename))
 					entries = new IdxReader(indexStream).Entries;
 			}
-			catch (FileNotFoundException)
+			catch
 			{
 				package = null;
 				return false;
@@ -154,35 +154,6 @@ namespace OpenRA.Mods.Cnc.FileSystem
 
 			package = new BagFile(s, entries, filename);
 			return true;
-		}
-
-		bool IBoundedPackageLoader.TryParsePackage(Stream stream, string filename, FS context,
-			PackageReadContext readContext, out IReadOnlyPackage package)
-		{
-			package = null;
-			if (readContext == null)
-				throw new ArgumentNullException(nameof(readContext));
-			if (readContext.EnvelopePolicy == null)
-				throw new InvalidOperationException("A bounded BAG loader requires an explicit package policy.");
-			if (!filename.EndsWith(".bag", StringComparison.OrdinalIgnoreCase))
-				return false;
-			throw new PackageEnvelopeException(PackageEnvelopeFailure.Malformed,
-				"Bounded BAG parsing requires an archive-local validated IDX/BAG pair.");
-		}
-
-		public static IReadOnlyPackage OpenValidated(ValidatedIdxBagIndex ownedIndex, string filename,
-			PackageReadContext context)
-		{
-			if (ownedIndex == null)
-				throw new ArgumentNullException(nameof(ownedIndex));
-			try
-			{
-				return ownedIndex.OpenPackage(filename, context);
-			}
-			finally
-			{
-				ownedIndex.Dispose();
-			}
 		}
 	}
 }

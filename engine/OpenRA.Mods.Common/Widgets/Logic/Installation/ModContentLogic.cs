@@ -37,7 +37,7 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 			{
 				var widgetArgs = new WidgetArgs
 				{
-					{ "onCancel", () => Game.RunAfterTick(() => Game.InitializeMod(content.Mod, new Arguments())) },
+					{ "onCancel", () => Game.ReturnFromContentManager(content.Mod) },
 					{ "content", content },
 				};
 
@@ -57,6 +57,12 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 	{
 		[FluentReference]
 		const string ManualInstall = "button-manual-install";
+
+		[FluentReference]
+		const string ChooseInstallationDirectory = "button-content-panel-choose-source";
+
+		[FluentReference]
+		const string AutomaticSearch = "button-content-panel-auto-search";
 
 		readonly ModContent content;
 		readonly ScrollPanelWidget scrollPanel;
@@ -96,11 +102,32 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 			sourceButton.Bounds.Y += headerHeight;
 			sourceButton.IsVisible = () => sourceAvailable;
 
-			sourceButton.OnClick = () => Ui.OpenWindow("SOURCE_INSTALL_PANEL", new WidgetArgs
+			var chooseSourceButton = panel.Get<ButtonWidget>("CHOOSE_SOURCE_BUTTON");
+			chooseSourceButton.Bounds.Y += headerHeight;
+			var isMacOS = Platform.CurrentPlatform == PlatformType.OSX;
+			chooseSourceButton.IsVisible = () => isMacOS && sourceAvailable;
+			if (isMacOS)
 			{
-				{ "sources", sources },
-				{ "content", content },
-			});
+				sourceButton.Bounds.X = 185;
+				sourceButton.Bounds.Width = 140;
+				var chooseText = FluentProvider.GetMessage(ChooseInstallationDirectory);
+				chooseSourceButton.GetText = () => chooseText;
+				var automaticSearchText = FluentProvider.GetMessage(AutomaticSearch);
+				sourceButton.GetText = () => automaticSearchText;
+			}
+
+			void OpenSourceInstaller(bool chooseDirectory)
+			{
+				Ui.OpenWindow("SOURCE_INSTALL_PANEL", new WidgetArgs
+				{
+					{ "sources", sources },
+					{ "content", content },
+					{ "chooseDirectory", chooseDirectory },
+				});
+			}
+
+			sourceButton.OnClick = () => OpenSourceInstaller(false);
+			chooseSourceButton.OnClick = () => OpenSourceInstaller(true);
 
 			var backButton = panel.Get<ButtonWidget>("BACK_BUTTON");
 			backButton.Bounds.Y += headerHeight;

@@ -72,6 +72,9 @@ namespace OpenRA.Mods.Common.Widgets
 		public static string QuickbarToggleCollection(string skin) =>
 			"ios-touch-quickbar-toggle-" + Normalize(skin);
 
+		public static string CommandGlyphCollection(string skin) =>
+			"ios-commandbar-glyphs-" + Normalize(skin);
+
 		static string Normalize(string suffix)
 		{
 			return suffix == "allies" || suffix == "soviets" || suffix == "yuri" ? suffix : Default;

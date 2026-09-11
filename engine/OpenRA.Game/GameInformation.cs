@@ -24,8 +24,7 @@ namespace OpenRA
 
 		public string Mod;
 		public string Version;
-		public string RuntimeProfile;
-		public string RuntimeContract;
+		public string ProductVersion;
 
 		public string MapUid;
 		public string MapTitle;
@@ -49,26 +48,16 @@ namespace OpenRA
 		readonly Dictionary<OpenRA.Player, Player> playersByRuntime;
 
 		public GameInformation()
-			: this(true)
-		{
-		}
-
-		GameInformation(bool captureRuntimeContract)
 		{
 			Players = new List<Player>();
 			playersByRuntime = new Dictionary<OpenRA.Player, Player>();
-
-			if (captureRuntimeContract)
-				RuntimeContractHandshake.GetFields(
-					Game.ModData == null ? RuntimeContractIdentity.Legacy : Game.ModData.RuntimeContract,
-					out RuntimeProfile, out RuntimeContract);
 		}
 
 		public static GameInformation Deserialize(string data, string path)
 		{
 			try
 			{
-				var info = new GameInformation(false);
+				var info = new GameInformation();
 
 				var nodes = MiniYaml.FromString(data, path);
 				foreach (var node in nodes)
@@ -98,14 +87,9 @@ namespace OpenRA
 
 		public string Serialize()
 		{
-			var root = FieldSaver.Save(this);
-			if (RuntimeProfile == null && RuntimeContract == null)
-				root = root.WithNodes(root.Nodes.Where(node =>
-					node.Key != nameof(RuntimeProfile) && node.Key != nameof(RuntimeContract)));
-
 			var nodes = new List<MiniYamlNode>
 			{
-				new("Root", root)
+				new("Root", FieldSaver.Save(this))
 			};
 
 			for (var i = 0; i < Players.Count; i++)

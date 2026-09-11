@@ -1,0 +1,396 @@
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/Ingame/ClassicProductionLogic.cs b/OpenRA.Mods.Common/Widgets/Logic/Ingame/ClassicProductionLogic.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/Ingame/ClassicProductionLogic.cs	2026-09-10 23:26:27
++++ b/OpenRA.Mods.Common/Widgets/Logic/Ingame/ClassicProductionLogic.cs	2026-09-10 23:26:27
+@@ -153,9 +153,32 @@
+ 
+ 			palette.OnSwipeProductionType = SelectAdjacentProductionGroup;
+ 
++			// Hook up scroll up and down buttons on the palette before installing the
++			// ticker so their authored bottom-cap slots can be refreshed after any
++			// renderer or widget relayout.
++			var scrollDown = widget.GetOrNull<ButtonWidget>("SCROLL_DOWN_BUTTON");
++			if (scrollDown != null)
++			{
++				scrollDown.OnClick = palette.ScrollDown;
++				scrollDown.IsVisible = () => palette.TotalIconCount > palette.MaxIconRowOffset * palette.Columns;
++				scrollDown.IsDisabled = () => !palette.CanScrollDown;
++			}
++
++			var scrollUp = widget.GetOrNull<ButtonWidget>("SCROLL_UP_BUTTON");
++			if (scrollUp != null)
++			{
++				scrollUp.OnClick = palette.ScrollUp;
++				scrollUp.IsVisible = () => palette.TotalIconCount > palette.MaxIconRowOffset * palette.Columns;
++				scrollUp.IsDisabled = () => !palette.CanScrollUp;
++			}
++
++			RefreshIosSidebarLayout(widget, palette, typesContainer, scrollUp, scrollDown);
++
+ 			var ticker = widget.Get<LogicTickerWidget>("PRODUCTION_TICKER");
+ 			ticker.OnTick = () =>
+ 			{
++				RefreshIosSidebarLayout(widget, palette, typesContainer, scrollUp, scrollDown);
++
+ 				// Only auto-select when nothing is selected. Do not leave an intentionally empty category tab.
+ 				if (palette.CurrentQueue == null)
+ 				{
+@@ -170,42 +193,38 @@
+ 				}
+ 			};
+ 
+-			// Hook up scroll up and down buttons on the palette
+-			var scrollDown = widget.GetOrNull<ButtonWidget>("SCROLL_DOWN_BUTTON");
+-
+-			if (scrollDown != null)
+-			{
+-				scrollDown.OnClick = palette.ScrollDown;
+-				scrollDown.IsVisible = () => palette.TotalIconCount > palette.MaxIconRowOffset * palette.Columns;
+-				scrollDown.IsDisabled = () => !palette.CanScrollDown;
+-				PositionIosScrollButton(typesContainer, scrollDown);
+-			}
+-
+-			var scrollUp = widget.GetOrNull<ButtonWidget>("SCROLL_UP_BUTTON");
+-
+-			if (scrollUp != null)
+-			{
+-				scrollUp.OnClick = palette.ScrollUp;
+-				scrollUp.IsVisible = () => palette.TotalIconCount > palette.MaxIconRowOffset * palette.Columns;
+-				scrollUp.IsDisabled = () => !palette.CanScrollUp;
+-				PositionIosScrollButton(typesContainer, scrollUp);
+-			}
+-
+ 			SetMaximumVisibleRows(palette);
+ 		}
+ 
+-		static void PositionIosScrollButton(Widget typesContainer, ButtonWidget button)
++		static void PositionIosScrollButton(
++			Widget typesContainer, ButtonWidget button, IosIngameSidebarLayout layout)
+ 		{
+-			if (!Platform.IsIOS)
++			if (!Platform.IsIOS || button == null)
+ 				return;
+ 
+ 			// The bottom-cap artwork contains an authored slot for these buttons at
+ 			// its top edge. Convert that production-panel coordinate into the local
+-			// coordinate of PRODUCTION_TYPES exactly once so visuals and hit targets
+-			// overlay the slot instead of being appended below the cap.
++			// coordinate of PRODUCTION_TYPES whenever layout changes so visuals and
++			// hit targets cannot retain stale startup coordinates.
++			button.Bounds = layout.ScrollButtonLocalBounds(
++				typesContainer.Bounds.Y, button.Id == "SCROLL_UP_BUTTON");
++		}
++
++		static void RefreshIosSidebarLayout(
++			Widget productionSidebar,
++			ProductionPaletteWidget productionPalette,
++			Widget typesContainer,
++			ButtonWidget scrollUp,
++			ButtonWidget scrollDown)
++		{
++			if (!Platform.IsIOS)
++				return;
++
+ 			var layout = IosIngameSidebarLayoutPolicy.Create(
+ 				IosScreenMetrics.SnapshotFor(Game.Renderer.Resolution));
+-			button.Bounds.Y = layout.ScrollButtonLocalY(typesContainer.Bounds.Y);
++			ApplyIosSidebarLayout(productionSidebar, productionPalette, layout);
++			PositionIosScrollButton(typesContainer, scrollUp, layout);
++			PositionIosScrollButton(typesContainer, scrollDown, layout);
+ 		}
+ 
+ 		static void ApplyIosSidebarLayout(Widget productionSidebar, ProductionPaletteWidget productionPalette)
+@@ -215,6 +234,14 @@
+ 
+ 			var layout = IosIngameSidebarLayoutPolicy.Create(
+ 				IosScreenMetrics.SnapshotFor(Game.Renderer.Resolution));
++			ApplyIosSidebarLayout(productionSidebar, productionPalette, layout);
++		}
++
++		static void ApplyIosSidebarLayout(
++			Widget productionSidebar,
++			ProductionPaletteWidget productionPalette,
++			IosIngameSidebarLayout layout)
++		{
+ 			productionSidebar.Bounds.X = layout.ProductionBounds.X;
+ 			productionSidebar.Bounds.Y = layout.ProductionBounds.Y;
+ 			productionSidebar.Bounds.Width = layout.ProductionBounds.Width;
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/Ingame/IosIngameSidebarLayoutPolicy.cs b/OpenRA.Mods.Common/Widgets/Logic/Ingame/IosIngameSidebarLayoutPolicy.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/Ingame/IosIngameSidebarLayoutPolicy.cs	2026-09-10 23:26:27
++++ b/OpenRA.Mods.Common/Widgets/Logic/Ingame/IosIngameSidebarLayoutPolicy.cs	2026-09-10 23:26:27
+@@ -10,6 +10,7 @@
+ 
+ using System;
+ using OpenRA.Primitives;
++using OpenRA.Widgets;
+ 
+ namespace OpenRA.Mods.Common.Widgets.Logic
+ {
+@@ -37,6 +38,12 @@
+ 		}
+ 
+ 		public int ScrollButtonLocalY(int parentY) => ScrollButtonsY - parentY;
++
++		public WidgetBounds ScrollButtonLocalBounds(int parentY, bool scrollUp) => new(
++			scrollUp ? 89 : 12,
++			ScrollButtonLocalY(parentY),
++			77,
++			27);
+ 	}
+ 
+ 	/// <summary>
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/MainMenuLogic.cs b/OpenRA.Mods.Common/Widgets/Logic/MainMenuLogic.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/MainMenuLogic.cs	2026-09-10 23:26:27
++++ b/OpenRA.Mods.Common/Widgets/Logic/MainMenuLogic.cs	2026-09-10 23:26:27
+@@ -54,21 +54,40 @@
+ 				Math.Max(policy.MinimumTarget, desiredPanelWidth));
+ 			var controlsWidth = Math.Min(
+ 				Math.Max(1, panelWidth - 2 * policy.Gap), desiredControlsWidth);
+-			var controlsHeight = count * policy.MinimumTarget + Math.Max(0, count - 1) * policy.Gap;
+-			var desiredPanelHeight = controlsHeight + 2 * Math.Max(
+-				policy.Gap, Points(DesktopVerticalMarginPoints, policy));
++			var referenceCount = Math.Max(6, count);
++			var referenceControlsHeight = referenceCount * policy.MinimumTarget +
++				Math.Max(0, referenceCount - 1) * policy.Gap;
++			var verticalMargin = Math.Max(policy.Gap, Points(DesktopVerticalMarginPoints, policy));
++			var desiredPanelHeight = referenceControlsHeight + 2 * verticalMargin;
+ 			var panelHeight = Math.Min(content.Height, desiredPanelHeight);
+ 			var panel = new WidgetBounds(
+ 				Math.Clamp(PreferredPanelX, content.X, content.Right - panelWidth),
+ 				content.Y + Math.Max(0, (content.Height - panelHeight) / 2),
+ 				panelWidth,
+ 				panelHeight);
++
++			var controls = new WidgetBounds[count];
++			if (count == 0)
++				return new IosMainMenuLayout(panel, controls);
++
+ 			var x = Math.Max(0, (panel.Width - controlsWidth) / 2);
++
++			// Preserve the complete six-row control span. Fewer controls divide the
++			// same space between themselves, while constrained phones reduce only
++			// the outer margin before ever shrinking a physical touch target.
++			var referenceControlsSpan = Math.Min(panel.Height, referenceControlsHeight);
++			var availableControlsHeight = Math.Max(1,
++				referenceControlsSpan - Math.Max(0, count - 1) * policy.Gap);
++			var controlHeight = Math.Max(1, availableControlsHeight / count);
++			var remainder = Math.Max(0, availableControlsHeight - controlHeight * count);
++			var controlsHeight = referenceControlsSpan;
+ 			var y = Math.Max(0, (panel.Height - controlsHeight) / 2);
+-			var controls = new WidgetBounds[count];
+ 			for (var i = 0; i < count; i++)
+-				controls[i] = new WidgetBounds(
+-					x, y + i * (policy.MinimumTarget + policy.Gap), controlsWidth, policy.MinimumTarget);
++			{
++				var height = controlHeight + (i < remainder ? 1 : 0);
++				controls[i] = new WidgetBounds(x, y, controlsWidth, height);
++				y += height + policy.Gap;
++			}
+ 
+ 			return new IosMainMenuLayout(panel, controls);
+ 		}
+@@ -423,7 +442,7 @@
+ 			var resolution = Game.Renderer.Resolution;
+ 			var snapshot = IosScreenMetrics.SnapshotFor(resolution);
+ 			var policy = IosMenuLayoutPolicy.Create(true, snapshot);
+-			var layout = IosMainMenuLayout.Create(policy);
++			var layout = IosMainMenuLayout.Create(policy, mainMenuControls.Length);
+ 			languageDropdown.RemovePanel();
+ 			var parentRenderOrigin = mainMenu.Parent.RenderOrigin;
+ 			var relativePanel = IosTouchWidgetPolicy.RelativeToRoot(
+diff -ruN a/OpenRA.Test/IosMenuLayoutPolicyTest.cs b/OpenRA.Test/IosMenuLayoutPolicyTest.cs
+--- a/OpenRA.Test/IosMenuLayoutPolicyTest.cs	2026-09-10 23:26:27
++++ b/OpenRA.Test/IosMenuLayoutPolicyTest.cs	2026-09-10 23:26:27
+@@ -128,6 +128,33 @@
+ 			}
+ 		}
+ 
++		[TestCase(1558, 720, 844, 390, 47, 0, 47, 21)]
++		[TestCase(1180, 820, 1180, 820, 0, 0, 0, 20)]
++		public void IosMainMenuRedistributesFiveControlsAcrossTheOriginalPanelFootprint(
++			int effectiveWidth, int effectiveHeight, int nativeWidth, int nativeHeight,
++			double safeLeft, double safeTop, double safeRight, double safeBottom)
++		{
++			var policy = IosMenuLayoutPolicy.Create(true,
++				Snapshot(effectiveWidth, effectiveHeight, nativeWidth, nativeHeight,
++					safeLeft, safeTop, safeRight, safeBottom));
++			var six = IosMainMenuLayout.Create(policy, 6);
++			var five = IosMainMenuLayout.Create(policy, 5);
++
++			Assert.Multiple(() =>
++			{
++				Assert.That(five.Panel, Is.EqualTo(six.Panel),
++					"Removing Quit must not collapse the established main-menu frame.");
++				Assert.That(five.Controls, Has.Length.EqualTo(5));
++				Assert.That(five.Controls.Select(control => control.Height), Has.All.GreaterThan(six.Controls[0].Height),
++					"The remaining buttons should grow instead of leaving an empty sixth row.");
++				Assert.That(five.Controls[0].Y, Is.EqualTo(six.Controls[0].Y));
++				Assert.That(five.Controls[^1].Bottom, Is.EqualTo(six.Controls[^1].Bottom));
++			});
++
++			for (var i = 1; i < five.Controls.Length; i++)
++				Assert.That(five.Controls[i - 1].Bottom, Is.LessThanOrEqualTo(five.Controls[i].Y));
++		}
++
+ 		[Test]
+ 		public void IosMainMenuMeasuredLanguageLabelsFitTheButtonAndGenericPopupOnEveryDevice()
+ 		{
+diff -ruN a/OpenRA.Test/IosProductionBatchToggleTest.cs b/OpenRA.Test/IosProductionBatchToggleTest.cs
+--- a/OpenRA.Test/IosProductionBatchToggleTest.cs	2026-09-10 23:26:27
++++ b/OpenRA.Test/IosProductionBatchToggleTest.cs	2026-09-10 23:26:27
+@@ -308,7 +308,7 @@
+ 
+ 		[TestCase(false)]
+ 		[TestCase(true)]
+-		public void RequiredTouchSlotsKeepStableChromeSizeAndReadableLabels(bool expanded)
++		public void RequiredTouchSlotsKeepStableChromeSizeWithoutRedundantLabels(bool expanded)
+ 		{
+ 			foreach (var device in Devices)
+ 			{
+@@ -321,11 +321,9 @@
+ 					{
+ 						Assert.That(layout.ButtonSize.Width, Is.GreaterThanOrEqualTo(44), id);
+ 						Assert.That(layout.ButtonSize.Height, Is.GreaterThanOrEqualTo(44), id);
+-						Assert.That(layout.ShowLabel, Is.EqualTo(expanded), id);
+-						Assert.That(layout.Font, Is.EqualTo("IosTouchLabel"), id);
+-						Assert.That(layout.LabelBounds.IsEmpty, Is.EqualTo(!expanded), id);
+-						if (expanded)
+-							Assert.That(buttonBounds.Contains(layout.LabelBounds), Is.True, id);
++						Assert.That(layout.ShowLabel, Is.False, id);
++						Assert.That(layout.Font, Is.EqualTo("TinyBold"), id);
++						Assert.That(layout.LabelBounds.IsEmpty, Is.True, id);
+ 						Assert.That(buttonBounds.Contains(layout.IconBounds), Is.True, id);
+ 						Assert.That(layout.IconBounds.Size,
+ 							Is.EqualTo(new Size(expanded ? 34 : 32, expanded ? 34 : 32)), id);
+@@ -377,6 +375,10 @@
+ 					"The scroll buttons must overlay the authored button slot at the top of the bottom cap.");
+ 				Assert.That(layout.ScrollButtonLocalY(-30) - 30, Is.EqualTo(layout.BottomCapY),
+ 					"The PRODUCTION_TYPES parent offset must be applied exactly once.");
++				Assert.That(layout.ScrollButtonLocalBounds(-30, true),
++					Is.EqualTo(new WidgetBounds(89, layout.BottomCapY + 30, 77, 27)));
++				Assert.That(layout.ScrollButtonLocalBounds(-30, false),
++					Is.EqualTo(new WidgetBounds(12, layout.BottomCapY + 30, 77, 27)));
+ 				Assert.That(layout.BackgroundRows * 50 + layout.BackgroundRemainderHeight,
+ 					Is.EqualTo(layout.BottomCapY));
+ 				Assert.That(IosIngameSidebarLayoutPolicy.BackgroundRowHeights(layout),
+@@ -384,6 +386,48 @@
+ 			});
+ 		}
+ 
++		[Test]
++		public void TouchCommandBarUsesOneSlotAndGlyphCanvasForEveryCompactCommand()
++		{
++			var snapshot = new IosScreenSnapshot(
++				new Size(1564, 720), new Size(956, 440), new IosSafeAreaInsets(62, 0, 62, 21));
++			var ids = new[]
++			{
++				"GROUP_01", "GROUP_02", "GROUP_03", "GROUP_04", "GROUP_05", "PRODUCTION_X5",
++				"ATTACK_MOVE", "SCATTER", "QUEUE_ORDERS", "STOP", "CYCLE_BASE"
++			};
++
++			foreach (var expanded in new[] { false, true })
++			{
++				var layouts = ids.Select(id => TouchCommandBarSlotPolicy.Create(snapshot, id, expanded)).ToArray();
++				Assert.Multiple(() =>
++				{
++					Assert.That(layouts.Select(layout => layout.ButtonSize).Distinct().ToArray(), Has.Length.EqualTo(1),
++						$"Every touch command must occupy the same outer slot when expanded={expanded}.");
++					Assert.That(layouts.Select(layout => layout.IconBounds).Distinct().ToArray(), Has.Length.EqualTo(1),
++						$"Every touch glyph must use the same centered canvas when expanded={expanded}.");
++					Assert.That(layouts.Select(layout => layout.Font).Distinct().ToArray(), Has.Length.EqualTo(1),
++						$"Command labels must use one visual style when expanded={expanded}.");
++					Assert.That(layouts.All(layout => !layout.ShowLabel && layout.LabelBounds.IsEmpty), Is.True,
++						$"Touch command glyphs must communicate their action without duplicated labels when expanded={expanded}.");
++				});
++			}
++		}
++
++		[Test]
++		public void ClassicProductionRelayoutReanchorsBothScrollButtons()
++		{
++			var source = File.ReadAllText(Path.Combine(RepositoryRoot(), "engine", "OpenRA.Mods.Common", "Widgets",
++				"Logic", "Ingame", "ClassicProductionLogic.cs"));
++
++			StringAssert.Contains("RefreshIosSidebarLayout(widget, palette, typesContainer, scrollUp, scrollDown);", source,
++				"The live layout ticker must re-anchor both arrows after a renderer or widget relayout.");
++			StringAssert.Contains("PositionIosScrollButton(typesContainer, scrollUp, layout);", source);
++			StringAssert.Contains("PositionIosScrollButton(typesContainer, scrollDown, layout);", source);
++			StringAssert.Contains("button.Bounds = layout.ScrollButtonLocalBounds", source,
++				"Relayout must restore the complete authored slot, not only its vertical coordinate.");
++		}
++
+ 		[TestCase(false)]
+ 		[TestCase(true)]
+ 		public void TouchCommandBarPlacementIsCenteredBottomInsetAndSafeContained(bool expanded)
+@@ -516,10 +560,8 @@
+ 					Assert.That(button.IsVisible(), Is.True, id);
+ 					Assert.That(button.Bounds.Height, Is.EqualTo(rowHeight), id);
+ 					Assert.That(snapshot.SafeBounds.Contains(button.RenderBounds), Is.True, id);
+-					Assert.That(labels[id].IsVisible(), Is.EqualTo(expanded), id);
+-					Assert.That(labels[id].Font, Is.EqualTo("IosTouchLabel"), id);
+-					if (expanded)
+-						Assert.That(button.RenderBounds.Contains(labels[id].RenderBounds), Is.True, id);
++					Assert.That(labels[id].IsVisible(), Is.False, id);
++					Assert.That(labels[id].Font, Is.EqualTo("TinyBold"), id);
+ 					Assert.That(button.RenderBounds.Contains(icons[id].RenderBounds), Is.True, id);
+ 					Assert.That(icons[id].StretchToFit, Is.True, id);
+ 				});
+@@ -550,8 +592,8 @@
+ 				RepositoryRoot(), "mods", "ra2", "chrome", "ingame-player.yaml"));
+ 			foreach (var (id, collection, icon, label) in new[]
+ 			{
+-				("STOP", "commandbar-icons", "stop", "button-command-bar-stop.label"),
+-				("CYCLE_BASE", "commandbar-icons", "cycle-base", "button-selection-bar-cycle-base.label"),
++				("STOP", "ios-commandbar-glyphs", "stop", "button-command-bar-stop.label"),
++				("CYCLE_BASE", "ios-commandbar-glyphs", "cycle-base", "button-selection-bar-cycle-base.label"),
+ 			})
+ 			{
+ 				var start = layout.IndexOf($"Button@{id}:", StringComparison.Ordinal);
+@@ -699,12 +741,12 @@
+ 			StringAssert.Contains("Button@PRODUCTION_X5:", layout);
+ 			StringAssert.Contains("Logic: ProductionBatchToggleLogic", layout);
+ 			StringAssert.Contains("Text: button-command-bar-production-x5.short", layout);
+-			StringAssert.Contains("ImageCollection: production-x5-icon", layout);
++			StringAssert.Contains("ImageCollection: ios-commandbar-glyphs", layout);
+ 			StringAssert.Contains("ImageName: production-x5", layout);
+-			StringAssert.Contains("production-x5: 3, 3, 26, 26", chrome);
++			StringAssert.Contains("production-x5: 163, 3, 26, 26", chrome);
+ 			StringAssert.Contains("new(\"PRODUCTION_X5\", 48, true)", catalog);
+ 			StringAssert.Contains("BuildCountMultiplier = enabled ? 5 : 1", logic);
+-			Assert.That(File.Exists(Path.Combine(root, "mods", "ra2", "uibits", "production-x5-icon.png")), Is.True);
++			Assert.That(File.Exists(Path.Combine(root, "mods", "ra2", "uibits", "ios-commandbar-glyphs-unified.png")), Is.True);
+ 		}
+ 
+ 		[Test]
+diff -ruN a/OpenRA.Test/IosViewportActionLayoutTest.cs b/OpenRA.Test/IosViewportActionLayoutTest.cs
+--- a/OpenRA.Test/IosViewportActionLayoutTest.cs	2026-09-10 23:26:27
++++ b/OpenRA.Test/IosViewportActionLayoutTest.cs	2026-09-10 23:26:27
+@@ -337,9 +337,17 @@
+ 			var layout = File.ReadAllText(Path.Combine(root, "mods", "ra2", "chrome", "ingame-player.yaml"));
+ 
+ 			StringAssert.Contains("ios-commandbar-glyphs:", chrome);
+-			StringAssert.Contains("\tImage: commandbar-icons.png", chrome);
+-			foreach (var icon in new[] { "group-1", "group-2", "group-3", "group-4", "group-5", "attack-move", "scatter", "queue-orders" })
++			StringAssert.Contains("\tImage: ios-commandbar-glyphs-unified.png", chrome);
++			StringAssert.Contains("ios-commandbar-glyphs-highlighted:", chrome,
++				"Every stateful iOS command glyph collection must provide the highlighted collection requested by AddFactionSuffixLogic.");
++			StringAssert.Contains("\tInherits: ios-commandbar-glyphs", chrome,
++				"Highlighted iOS command glyphs must inherit the complete highlighted region map.");
++			foreach (var icon in new[]
+ 			{
++				"group-1", "group-2", "group-3", "group-4", "group-5", "production-x5",
++				"attack-move", "scatter", "queue-orders", "stop", "cycle-base"
++			})
++			{
+ 				StringAssert.Contains(icon + ":", chrome);
+ 				var iconName = "ImageName: " + icon;
+ 				var iconAt = layout.IndexOf(iconName, System.StringComparison.Ordinal);
+@@ -348,6 +356,9 @@
+ 				Assert.That(layout.Substring(collectionAt, iconAt - collectionAt), Does.Contain("ios-commandbar-glyphs"));
+ 				Assert.That(layout.Substring(collectionAt, iconAt - collectionAt), Does.Not.Contain("ios-commandbar-icons-v2"));
+ 			}
++
++			Assert.That(File.Exists(Path.Combine(root, "mods", "ra2", "uibits", "ios-commandbar-glyphs-unified.png")),
++				Is.True, "The deterministic unified glyph atlas must ship with the mod.");
+ 		}
+ 
+ 		[Test]

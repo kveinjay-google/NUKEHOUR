@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using OpenRA.Mods.Common.Installer;
 using OpenRA.Primitives;
@@ -45,6 +46,12 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 
 		[FluentReference]
 		const string AlternativeContentSources = "label-alternative-content-sources";
+
+		[FluentReference]
+		const string SelectInstallDirectory = "label-select-install-directory";
+
+		[FluentReference]
+		const string SelectedDirectoryInvalid = "label-selected-directory-invalid";
 
 		[FluentReference]
 		const string InstallingContent = "label-installing-content";
@@ -112,12 +119,14 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 
 		ModContent.ModPackage[] availablePackages;
 		IDictionary<string, bool> selectedPackages;
+		int activeOperation;
 
 		Mode visible = Mode.Progress;
 
 		[ObjectCreator.UseCtor]
 		public InstallFromSourceLogic(
-			Widget widget, ModData modData, ModContent content, Dictionary<string, ModContent.ModSource> sources)
+			Widget widget, ModData modData, ModContent content, Dictionary<string, ModContent.ModSource> sources,
+			bool chooseDirectory)
 		{
 			this.modData = modData;
 			this.content = content;
@@ -156,46 +165,81 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 
 			listLabel = listContainer.Get<LabelWidget>("LIST_MESSAGE");
 
-			DetectContentSources();
+			if (chooseDirectory)
+				ChooseContentSource();
+			else
+				DetectContentSources();
+		}
+
+		void ChooseContentSource()
+		{
+			var operation = Interlocked.Increment(ref activeOperation);
+			var prompt = FluentProvider.GetMessage(SelectInstallDirectory);
+			ShowProgressbar(prompt, () => prompt);
+			ShowBackOnly();
+
+			new Task(() =>
+			{
+				var selectedDirectory = MacOSDirectorySourceResolver.ChooseDirectory(prompt);
+				if (!IsCurrentOperation(operation))
+					return;
+
+				if (selectedDirectory == null)
+				{
+					Game.RunAfterTick(() =>
+					{
+						if (IsCurrentOperation(operation))
+							CancelOperationAndClose();
+					});
+					return;
+				}
+
+				foreach (var kv in sources.Where(source => source.Value.Type.Value == "MacOSDirectory"))
+				{
+					var path = MacOSDirectorySourceResolver.FindSourcePath(
+						kv.Value, new[] { selectedDirectory });
+					if (!IsCurrentOperation(operation))
+						return;
+
+					if (path != null && PrepareSource(kv.Key, kv.Value, path, operation))
+						return;
+				}
+
+				Game.RunAfterTick(() =>
+				{
+					if (!IsCurrentOperation(operation))
+						return;
+
+					ShowMessage(prompt, FluentProvider.GetMessage(SelectedDirectoryInvalid));
+					ShowBackRetry(ChooseContentSource);
+				});
+			}).Start();
 		}
 
 		void DetectContentSources()
 		{
+			var operation = Interlocked.Increment(ref activeOperation);
 			var message = FluentProvider.GetMessage(DetectingSources);
 			ShowProgressbar(FluentProvider.GetMessage(CheckingSources), () => message);
-			ShowBackRetry(DetectContentSources);
+			ShowBackOnly();
 
 			new Task(() =>
 			{
 				foreach (var kv in sources)
 				{
+					if (!IsCurrentOperation(operation))
+						return;
+
 					message = FluentProvider.GetMessage(SearchingSourceFor, "title", kv.Value.Title);
 
 					var sourceResolver = modData.ObjectCreator.CreateObject<ISourceResolver>($"{kv.Value.Type.Value}SourceResolver");
 
 					var path = sourceResolver.FindSourcePath(kv.Value);
-					if (path != null)
-					{
-						Log.Write("install", $"Using installer `{kv.Key}: {kv.Value.Title}` of type `{kv.Value.Type.Value}`:");
+					if (!IsCurrentOperation(operation))
+						return;
 
-						availablePackages = content.Packages.Values
-							.Where(p => p.Sources.Contains(kv.Key) && !p.IsInstalled())
-							.ToArray();
-
-						selectedPackages = availablePackages.ToDictionary(x => x.Identifier, y => y.Required);
-
-						// Ignore source if content is already installed
-						if (availablePackages.Length != 0)
-						{
-							Game.RunAfterTick(() =>
-							{
-								ShowList(kv.Value, FluentProvider.GetMessage(ContentPackageInstallation));
-								ShowContinueCancel(() => InstallFromSource(path, kv.Value));
-							});
-
-							return;
-						}
-					}
+					if (path != null && PrepareSource(kv.Key, kv.Value, path, operation))
+						return;
 				}
 
 				var missingSources = content.Packages.Values
@@ -228,10 +272,53 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 
 				Game.RunAfterTick(() =>
 				{
+					if (!IsCurrentOperation(operation))
+						return;
+
 					ShowList(FluentProvider.GetMessage(GameContentNotFound), FluentProvider.GetMessage(AlternativeContentSources), options);
 					ShowBackRetry(DetectContentSources);
 				});
 			}).Start();
+		}
+
+		bool PrepareSource(string key, ModContent.ModSource source, string path, int operation)
+		{
+			if (!IsCurrentOperation(operation))
+				return false;
+
+			Log.Write("install", $"Using installer `{key}: {source.Title}` of type `{source.Type.Value}`:");
+
+			var packages = content.Packages.Values
+				.Where(package => package.Sources.Contains(key) && !package.IsInstalled())
+				.ToArray();
+
+			// Ignore the source when all of its content is already installed.
+			if (packages.Length == 0)
+				return false;
+
+			var selected = packages.ToDictionary(package => package.Identifier, package => package.Required);
+			Game.RunAfterTick(() =>
+			{
+				if (!IsCurrentOperation(operation))
+					return;
+
+				availablePackages = packages;
+				selectedPackages = selected;
+				ShowList(source, FluentProvider.GetMessage(ContentPackageInstallation));
+				ShowContinueCancel(() => InstallFromSource(path, source));
+			});
+			return true;
+		}
+
+		bool IsCurrentOperation(int operation)
+		{
+			return Volatile.Read(ref activeOperation) == operation;
+		}
+
+		void CancelOperationAndClose()
+		{
+			Interlocked.Increment(ref activeOperation);
+			Ui.CloseWindow();
 		}
 
 		void InstallFromSource(string path, ModContent.ModSource modSource)
@@ -404,7 +491,7 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 			primaryButton.GetText = () => primaryButtonText;
 			primaryButton.Visible = true;
 
-			secondaryButton.OnClick = Ui.CloseWindow;
+			secondaryButton.OnClick = CancelOperationAndClose;
 			var secondaryButtonText = FluentProvider.GetMessage(Cancel);
 			secondaryButton.GetText = () => secondaryButtonText;
 			secondaryButton.Visible = true;
@@ -419,7 +506,18 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 			primaryButton.GetText = () => primaryButtonText;
 			primaryButton.Visible = true;
 
-			secondaryButton.OnClick = Ui.CloseWindow;
+			secondaryButton.OnClick = CancelOperationAndClose;
+			var secondaryButtonText = FluentProvider.GetMessage(Back);
+			secondaryButton.GetText = () => secondaryButtonText;
+			secondaryButton.Visible = true;
+			secondaryButton.Disabled = false;
+			Game.RunAfterTick(Ui.ResetTooltips);
+		}
+
+		void ShowBackOnly()
+		{
+			primaryButton.Visible = false;
+			secondaryButton.OnClick = CancelOperationAndClose;
 			var secondaryButtonText = FluentProvider.GetMessage(Back);
 			secondaryButton.GetText = () => secondaryButtonText;
 			secondaryButton.Visible = true;

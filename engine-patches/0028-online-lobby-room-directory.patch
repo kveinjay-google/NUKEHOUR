@@ -1,0 +1,2415 @@
+diff -ruN a/OpenRA.Game/Network/GameServer.cs b/OpenRA.Game/Network/GameServer.cs
+--- a/OpenRA.Game/Network/GameServer.cs	2026-09-09 09:01:00
++++ b/OpenRA.Game/Network/GameServer.cs	2026-09-09 09:01:00
+@@ -132,6 +132,16 @@
+ 		[FieldLoader.Ignore]
+ 		public readonly bool IsJoinable = false;
+ 
++		/// <summary>Validated public metadata for rooms obtained from the NUKE HOUR Online Lobby.</summary>
++		[FieldLoader.Ignore]
++		public readonly OnlineRoom OnlineRoom = null;
++
++		[FieldLoader.Ignore]
++		public readonly OnlineRoomCompatibilityReason OnlineCompatibilityReason = OnlineRoomCompatibilityReason.Compatible;
++
++		public bool IsOnlineRoom => OnlineRoom != null;
++		public string RoomCode => OnlineRoom?.RoomCode;
++
+ 		[FieldLoader.LoadUsing(nameof(LoadClients))]
+ 		public readonly GameClient[] Clients;
+ 
+@@ -225,6 +235,30 @@
+ 
+ 			var mapAvailable = Game.Settings.Game.AllowDownloading || Game.ModData.MapCache[Map].Status == MapStatus.Available;
+ 			IsJoinable = IsCompatible && State == 1 && mapAvailable;
++		}
++
++		public GameServer(OnlineRoom room, OnlineRoomCompatibilityIdentity localIdentity)
++		{
++			ArgumentNullException.ThrowIfNull(room);
++			ArgumentNullException.ThrowIfNull(localIdentity);
++			OnlineRoom = room;
++			OnlineCompatibilityReason = OnlineRoomCompatibility.Precheck(room, localIdentity);
++			Name = room.ServerName;
++			Address = room.Endpoint;
++			Port = room.ServerPort;
++			State = room.Status == "WAITING" ? 1 : 2;
++			MaxPlayers = room.MaxPlayers;
++			Map = room.Map;
++			Mod = room.Mod;
++			Version = room.ModVersion;
++			ModTitle = room.Mod;
++			Location = room.Region;
++			Protected = room.HasPassword;
++			Players = room.Players;
++			Clients = Array.Empty<GameClient>();
++			IsCompatible = OnlineCompatibilityReason == OnlineRoomCompatibilityReason.Compatible;
++			var mapAvailable = Game.Settings.Game.AllowDownloading || Game.ModData.MapCache[Map].Status == MapStatus.Available;
++			IsJoinable = IsCompatible && room.IsJoinable && mapAvailable;
+ 		}
+ 
+ 		public GameServer(Server.Server server)
+diff -ruN a/OpenRA.Game/Network/OnlineRoomDirectory.cs b/OpenRA.Game/Network/OnlineRoomDirectory.cs
+--- a/OpenRA.Game/Network/OnlineRoomDirectory.cs	1969-12-31 16:00:00
++++ b/OpenRA.Game/Network/OnlineRoomDirectory.cs	2026-09-09 09:01:00
+@@ -0,0 +1,325 @@
++#region Copyright & License Information
++/*
++ * Copyright (c) The OpenRA Developers and Contributors
++ * This file is part of OpenRA, which is free software. It is made
++ * available to you under the terms of the GNU General Public License
++ * as published by the Free Software Foundation, either version 3 of
++ * the License, or (at your option) any later version. For more
++ * information, see COPYING.
++ */
++#endregion
++
++using System;
++using System.Collections.Generic;
++using System.IO;
++using System.Linq;
++using System.Net;
++using System.Net.Http;
++using System.Text;
++using System.Text.Json;
++using System.Text.RegularExpressions;
++using System.Threading;
++using System.Threading.Tasks;
++
++namespace OpenRA.Network
++{
++	public enum OnlineRoomCompatibilityReason
++	{
++		Compatible,
++		HandshakeSchemaMismatch,
++		OrdersVersionMismatch,
++		EngineMismatch,
++		ModMismatch,
++		ModVersionMismatch,
++		RuntimeCapabilityMismatch,
++	}
++
++	public enum OnlineRoomDirectoryError
++	{
++		ServiceUnavailable,
++		RoomDisappeared,
++		RateLimited,
++		InvalidResponse,
++	}
++
++	public sealed class OnlineRoomDirectoryException : Exception
++	{
++		public OnlineRoomDirectoryError Error { get; }
++
++		public OnlineRoomDirectoryException(OnlineRoomDirectoryError error, string message, Exception inner = null)
++			: base(message, inner)
++		{
++			Error = error;
++		}
++	}
++
++	public sealed class OnlineRoomCompatibilityIdentity
++	{
++		public string EngineCompatibility { get; }
++		public string Mod { get; }
++		public string ModVersion { get; }
++		public string RuntimeCapability { get; }
++		public int HandshakeSchemaVersion { get; }
++		public int OrdersVersion { get; }
++
++		public OnlineRoomCompatibilityIdentity(
++			string engineCompatibility, string mod, string modVersion,
++			string runtimeCapability, int handshakeSchemaVersion, int ordersVersion)
++		{
++			EngineCompatibility = engineCompatibility;
++			Mod = mod;
++			ModVersion = modVersion;
++			RuntimeCapability = runtimeCapability;
++			HandshakeSchemaVersion = handshakeSchemaVersion;
++			OrdersVersion = ordersVersion;
++		}
++	}
++
++	public static class OnlineRoomCompatibility
++	{
++		public static string MessageKey(OnlineRoomCompatibilityReason reason) => reason switch
++		{
++			OnlineRoomCompatibilityReason.HandshakeSchemaMismatch => "label-online-room-error-handshake",
++			OnlineRoomCompatibilityReason.OrdersVersionMismatch => "label-online-room-error-orders",
++			OnlineRoomCompatibilityReason.EngineMismatch => "label-online-room-error-engine",
++			OnlineRoomCompatibilityReason.ModMismatch => "label-online-room-error-mod",
++			OnlineRoomCompatibilityReason.ModVersionMismatch => "label-online-room-error-version",
++			OnlineRoomCompatibilityReason.RuntimeCapabilityMismatch => "label-online-room-error-resources",
++			_ => null,
++		};
++
++		public static OnlineRoomCompatibilityReason Precheck(
++			OnlineRoom room, OnlineRoomCompatibilityIdentity local)
++		{
++			ArgumentNullException.ThrowIfNull(room);
++			ArgumentNullException.ThrowIfNull(local);
++			if (room.HandshakeSchemaVersion != local.HandshakeSchemaVersion)
++				return OnlineRoomCompatibilityReason.HandshakeSchemaMismatch;
++			if (room.OrdersVersion != local.OrdersVersion)
++				return OnlineRoomCompatibilityReason.OrdersVersionMismatch;
++			if (!StringComparer.Ordinal.Equals(room.EngineCompatibility, local.EngineCompatibility))
++				return OnlineRoomCompatibilityReason.EngineMismatch;
++			if (!StringComparer.Ordinal.Equals(room.Mod, local.Mod))
++				return OnlineRoomCompatibilityReason.ModMismatch;
++			if (!StringComparer.Ordinal.Equals(room.ModVersion, local.ModVersion))
++				return OnlineRoomCompatibilityReason.ModVersionMismatch;
++			if (!StringComparer.Ordinal.Equals(room.RuntimeCapability, local.RuntimeCapability))
++				return OnlineRoomCompatibilityReason.RuntimeCapabilityMismatch;
++			return OnlineRoomCompatibilityReason.Compatible;
++		}
++	}
++
++	public sealed class OnlineRoom
++	{
++		static readonly Regex RoomCodePattern = new("^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{6}$", RegexOptions.CultureInvariant);
++		static readonly Regex RegionPattern = new("^[a-z0-9]+(?:-[a-z0-9]+)*$", RegexOptions.CultureInvariant);
++
++		public string RoomId { get; set; }
++		public string RoomCode { get; set; }
++		public string ServerId { get; set; }
++		public string ServerEndpoint { get; set; }
++		public int ServerPort { get; set; }
++		public string ServerName { get; set; }
++		public string Region { get; set; }
++		public string Status { get; set; }
++		public string Map { get; set; }
++		public string Mod { get; set; }
++		public string ModVersion { get; set; }
++		public int Players { get; set; }
++		public int MaxPlayers { get; set; }
++		public bool HasPassword { get; set; }
++		public bool Ready { get; set; }
++		public string EngineCompatibility { get; set; }
++		public int HandshakeSchemaVersion { get; set; }
++		public int OrdersVersion { get; set; }
++		public string RuntimeCapability { get; set; }
++		public string Trust { get; set; }
++		public DateTime CreatedAt { get; set; }
++		public DateTime LastHeartbeatAt { get; set; }
++
++		public string Endpoint => IPAddress.TryParse(ServerEndpoint, out var address) &&
++			address.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6
++			? $"[{ServerEndpoint}]:{ServerPort}" : $"{ServerEndpoint}:{ServerPort}";
++		public bool IsJoinable => Ready && Status == "WAITING" && Players < MaxPlayers;
++		public string DisplaySummary => $"{ServerName} · {Map} · {Players}/{MaxPlayers} · {Region} · {Status}";
++
++		public bool TryGetConnectionTarget(out ConnectionTarget target) =>
++			ConnectionTarget.TryParseGameAddress(Endpoint, out target);
++
++		static string VisibleText(string value, string field, int maxLength)
++		{
++			if (string.IsNullOrWhiteSpace(value) || value.Length > maxLength || value.Any(char.IsControl))
++				throw new InvalidDataException($"Invalid Online room {field}.");
++			return value;
++		}
++
++		void Validate()
++		{
++			if (!Guid.TryParse(RoomId, out _))
++				throw new InvalidDataException("Invalid Online room id.");
++			if (!RoomCodePattern.IsMatch(RoomCode ?? ""))
++				throw new InvalidDataException("Invalid Online room code.");
++			VisibleText(ServerId, nameof(ServerId), 64);
++			if (!IPAddress.TryParse(ServerEndpoint, out _))
++				throw new InvalidDataException("Invalid Online room endpoint.");
++			if (ServerPort < 1 || ServerPort > IPEndPoint.MaxPort)
++				throw new InvalidDataException("Invalid Online room port.");
++			VisibleText(ServerName, nameof(ServerName), 64);
++			if (!RegionPattern.IsMatch(Region ?? "") || Region.Length > 32)
++				throw new InvalidDataException("Invalid Online room region.");
++			if (Status is not ("WAITING" or "IN_GAME"))
++				throw new InvalidDataException("Invalid public Online room status.");
++			VisibleText(Map, nameof(Map), 128);
++			VisibleText(Mod, nameof(Mod), 32);
++			VisibleText(ModVersion, nameof(ModVersion), 128);
++			VisibleText(EngineCompatibility, nameof(EngineCompatibility), 128);
++			VisibleText(RuntimeCapability, nameof(RuntimeCapability), 128);
++			if (Players < 0 || MaxPlayers < 1 || MaxPlayers > 64 || Players > MaxPlayers)
++				throw new InvalidDataException("Invalid Online room player capacity.");
++			if (HandshakeSchemaVersion < 1 || OrdersVersion < 1)
++				throw new InvalidDataException("Invalid Online room protocol metadata.");
++			if (!StringComparer.Ordinal.Equals(Trust, "official"))
++				throw new InvalidDataException("Untrusted Online room source.");
++			if (CreatedAt.Kind == DateTimeKind.Unspecified || LastHeartbeatAt.Kind == DateTimeKind.Unspecified)
++				throw new InvalidDataException("Invalid Online room timestamps.");
++		}
++
++		public static OnlineRoom Parse(string json)
++		{
++			try
++			{
++				var room = JsonSerializer.Deserialize<OnlineRoom>(json, OnlineRoomDirectoryClient.JsonOptions);
++				if (room == null)
++					throw new InvalidDataException("Online room response was empty.");
++				room.Validate();
++				return room;
++			}
++			catch (JsonException ex)
++			{
++				throw new InvalidDataException("Online room response was malformed.", ex);
++			}
++		}
++	}
++
++	public sealed class OnlineRoomDirectoryClient : IDisposable
++	{
++		internal static readonly JsonSerializerOptions JsonOptions = new()
++		{
++			PropertyNameCaseInsensitive = true,
++			PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
++		};
++
++		const int MaxResponseBytes = 1024 * 1024;
++		static readonly Regex RoomCodePattern = new("^[ABCDEFGHJKMNPQRSTUVWXYZ23456789]{6}$", RegexOptions.CultureInvariant);
++		readonly HttpClient httpClient;
++		readonly Uri baseUri;
++
++		public OnlineRoomDirectoryClient(HttpClient httpClient, Uri baseUri)
++		{
++			this.httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
++			this.baseUri = baseUri ?? throw new ArgumentNullException(nameof(baseUri));
++		}
++
++		public static Uri ParseBaseUri(string value)
++		{
++			if (!Uri.TryCreate(value, UriKind.Absolute, out var uri) ||
++				(uri.Scheme != Uri.UriSchemeHttps && (uri.Scheme != Uri.UriSchemeHttp || !uri.IsLoopback)) ||
++				!string.IsNullOrEmpty(uri.Query) || !string.IsNullOrEmpty(uri.Fragment))
++				throw new ArgumentException("Online Lobby must use HTTPS, except loopback development URLs.", nameof(value));
++			return uri.AbsoluteUri.EndsWith("/", StringComparison.Ordinal) ? uri : new Uri(uri.AbsoluteUri + "/");
++		}
++
++		public static bool TryNormalizeRoomCode(string value, out string normalized)
++		{
++			normalized = (value ?? "").Trim().ToUpperInvariant();
++			return RoomCodePattern.IsMatch(normalized);
++		}
++
++		static OnlineRoomDirectoryError MapStatus(HttpStatusCode status) => status switch
++		{
++			HttpStatusCode.NotFound => OnlineRoomDirectoryError.RoomDisappeared,
++			(HttpStatusCode)429 => OnlineRoomDirectoryError.RateLimited,
++			_ => OnlineRoomDirectoryError.ServiceUnavailable,
++		};
++
++		async Task<string> GetAsync(string path, CancellationToken cancellationToken)
++		{
++			try
++			{
++				using var request = new HttpRequestMessage(HttpMethod.Get, new Uri(baseUri, path));
++				using var response = await httpClient.SendAsync(
++					request, HttpCompletionOption.ResponseHeadersRead, cancellationToken).ConfigureAwait(false);
++				if (!response.IsSuccessStatusCode)
++					throw new OnlineRoomDirectoryException(
++						MapStatus(response.StatusCode), $"Online Lobby returned HTTP {(int)response.StatusCode}.");
++				if (response.Content.Headers.ContentLength > MaxResponseBytes)
++					throw new OnlineRoomDirectoryException(
++						OnlineRoomDirectoryError.InvalidResponse, "Online Lobby response exceeded its limit.");
++
++				using var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
++				using var memory = new MemoryStream();
++				var buffer = new byte[8192];
++				while (true)
++				{
++					var read = await stream.ReadAsync(buffer.AsMemory(), cancellationToken).ConfigureAwait(false);
++					if (read == 0)
++						break;
++					if (memory.Length + read > MaxResponseBytes)
++						throw new OnlineRoomDirectoryException(
++							OnlineRoomDirectoryError.InvalidResponse, "Online Lobby response exceeded its limit.");
++					memory.Write(buffer, 0, read);
++				}
++
++				return Encoding.UTF8.GetString(memory.ToArray());
++			}
++			catch (OnlineRoomDirectoryException)
++			{
++				throw;
++			}
++			catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
++			{
++				throw;
++			}
++			catch (Exception ex)
++			{
++				throw new OnlineRoomDirectoryException(
++					OnlineRoomDirectoryError.ServiceUnavailable, "Online Lobby is unavailable.", ex);
++			}
++		}
++
++		public async Task<IReadOnlyList<OnlineRoom>> GetRoomsAsync(CancellationToken cancellationToken)
++		{
++			var json = await GetAsync("v1/rooms", cancellationToken).ConfigureAwait(false);
++			try
++			{
++				using var document = JsonDocument.Parse(json);
++				if (!document.RootElement.TryGetProperty("rooms", out var rooms) || rooms.ValueKind != JsonValueKind.Array)
++					throw new InvalidDataException("Online Lobby response omitted rooms.");
++				return rooms.EnumerateArray().Select(room => OnlineRoom.Parse(room.GetRawText())).ToArray();
++			}
++			catch (Exception ex) when (ex is JsonException || ex is InvalidDataException)
++			{
++				throw new OnlineRoomDirectoryException(
++					OnlineRoomDirectoryError.InvalidResponse, "Online Lobby returned invalid room metadata.", ex);
++			}
++		}
++
++		public async Task<OnlineRoom> ResolveCodeAsync(string roomCode, CancellationToken cancellationToken)
++		{
++			if (!TryNormalizeRoomCode(roomCode, out var normalized))
++				throw new ArgumentException("Room code must contain six unambiguous characters.", nameof(roomCode));
++			var json = await GetAsync($"v1/rooms/code/{normalized}", cancellationToken).ConfigureAwait(false);
++			try
++			{
++				return OnlineRoom.Parse(json);
++			}
++			catch (InvalidDataException ex)
++			{
++				throw new OnlineRoomDirectoryException(
++					OnlineRoomDirectoryError.InvalidResponse, "Online Lobby returned invalid room metadata.", ex);
++			}
++		}
++
++		public void Dispose() => httpClient.Dispose();
++	}
++}
+diff -ruN a/OpenRA.Game/Server/OnlineLobbyRegistration.cs b/OpenRA.Game/Server/OnlineLobbyRegistration.cs
+--- a/OpenRA.Game/Server/OnlineLobbyRegistration.cs	1969-12-31 16:00:00
++++ b/OpenRA.Game/Server/OnlineLobbyRegistration.cs	2026-09-09 09:01:00
+@@ -0,0 +1,320 @@
++#region Copyright & License Information
++/*
++ * Copyright (c) The OpenRA Developers and Contributors
++ * This file is part of OpenRA, which is free software. It is made
++ * available to you under the terms of the GNU General Public License
++ * as published by the Free Software Foundation, either version 3 of
++ * the License, or (at your option) any later version. For more
++ * information, see COPYING.
++ */
++#endregion
++
++using System;
++using System.Net;
++using System.Net.Http;
++using System.Net.Http.Headers;
++using System.Text;
++using System.Text.Json;
++using System.Text.Json.Serialization;
++using System.Text.RegularExpressions;
++using System.Threading;
++using System.Threading.Tasks;
++
++namespace OpenRA.Server
++{
++	public static class OnlineLobbyRegistrationPolicy
++	{
++		public const string CredentialEnvironmentVariable = "NUKEHOUR_LOBBY_REGISTRATION_CREDENTIAL";
++		static readonly Regex SafeIdentifier = new("^[A-Za-z0-9._-]{1,64}$", RegexOptions.CultureInvariant);
++		static readonly Regex SafeRegion = new("^[a-z0-9]+(?:-[a-z0-9]+)*$", RegexOptions.CultureInvariant);
++
++		public static Uri ParseBaseUri(string value)
++		{
++			if (!Uri.TryCreate(value, UriKind.Absolute, out var uri) ||
++				(uri.Scheme != Uri.UriSchemeHttps && (uri.Scheme != Uri.UriSchemeHttp || !uri.IsLoopback)) ||
++				!string.IsNullOrEmpty(uri.Query) || !string.IsNullOrEmpty(uri.Fragment))
++				throw new ArgumentException("Online Lobby must use HTTPS, except loopback development URLs.", nameof(value));
++
++			return uri.AbsoluteUri.EndsWith("/", StringComparison.Ordinal) ? uri : new Uri(uri.AbsoluteUri + "/");
++		}
++
++		public static void Validate(ServerSettings settings, string registrationCredential)
++		{
++			ArgumentNullException.ThrowIfNull(settings);
++			if (string.IsNullOrWhiteSpace(settings.OnlineLobbyUrl))
++				return;
++
++			ParseBaseUri(settings.OnlineLobbyUrl);
++			if (!SafeIdentifier.IsMatch(settings.OnlineLobbyServerId ?? ""))
++				throw new ArgumentException("OnlineLobbyServerId must use 1-64 safe identifier characters.");
++			if (string.IsNullOrEmpty(registrationCredential) || registrationCredential.Length < 32)
++				throw new ArgumentException(
++					$"{CredentialEnvironmentVariable} must contain at least 32 characters.");
++			if (!IPAddress.TryParse(settings.OnlineLobbyPublicEndpoint, out _))
++				throw new ArgumentException("OnlineLobbyPublicEndpoint must be a numeric IPv4 or IPv6 address.");
++			var port = settings.OnlineLobbyPublicPort == 0 ? settings.ListenPort : settings.OnlineLobbyPublicPort;
++			if (port < 1 || port > IPEndPoint.MaxPort)
++				throw new ArgumentException("OnlineLobbyPublicPort must be a valid TCP port.", nameof(settings));
++			if (!SafeRegion.IsMatch(settings.OnlineLobbyRegion ?? "") || settings.OnlineLobbyRegion.Length > 32)
++				throw new ArgumentException("OnlineLobbyRegion must be a lower-case region identifier.");
++			if (settings.OnlineLobbyHeartbeatSeconds < 10 || settings.OnlineLobbyHeartbeatSeconds > 300)
++				throw new ArgumentException("OnlineLobbyHeartbeatSeconds must be between 10 and 300.", nameof(settings));
++		}
++
++		public static bool ShouldPublish(DedicatedServerOperationalState state) =>
++			state == DedicatedServerOperationalState.WaitingForPlayers ||
++			state == DedicatedServerOperationalState.InLobby ||
++			state == DedicatedServerOperationalState.InGame;
++
++		public static string ToRoomStatus(DedicatedServerOperationalState state) => state switch
++		{
++			DedicatedServerOperationalState.InGame => "IN_GAME",
++			DedicatedServerOperationalState.GameFinished => "FINISHED",
++			DedicatedServerOperationalState.Stopping or DedicatedServerOperationalState.Stopped => "OFFLINE",
++			DedicatedServerOperationalState.WaitingForPlayers or DedicatedServerOperationalState.InLobby => "WAITING",
++			_ => "STARTING",
++		};
++	}
++
++	public sealed class OnlineLobbyRoomSnapshot
++	{
++		public string ServerEndpoint { get; }
++		public int ServerPort { get; }
++		public string ServerName { get; }
++		public string Region { get; }
++		[JsonIgnore]
++		public DedicatedServerOperationalState OperationalState { get; }
++		public string Status => OnlineLobbyRegistrationPolicy.ToRoomStatus(OperationalState);
++		public string Map { get; }
++		public string Mod { get; }
++		public string ModVersion { get; }
++		public int Players { get; }
++		public int MaxPlayers { get; }
++		public bool HasPassword { get; }
++		public bool Ready { get; }
++		public string EngineCompatibility { get; }
++		public int HandshakeSchemaVersion { get; }
++		public int OrdersVersion { get; }
++		public string RuntimeCapability { get; }
++
++		public OnlineLobbyRoomSnapshot(
++			string serverEndpoint, int serverPort, string serverName, string region,
++			DedicatedServerOperationalState operationalState, string map, string mod,
++			string modVersion, int players, int maxPlayers, bool hasPassword, bool ready,
++			string engineCompatibility, int handshakeSchemaVersion, int ordersVersion,
++			string runtimeCapability)
++		{
++			ServerEndpoint = serverEndpoint;
++			ServerPort = serverPort;
++			ServerName = serverName;
++			Region = region;
++			OperationalState = operationalState;
++			Map = map;
++			Mod = mod;
++			ModVersion = modVersion;
++			Players = players;
++			MaxPlayers = maxPlayers;
++			HasPassword = hasPassword;
++			Ready = ready;
++			EngineCompatibility = engineCompatibility;
++			HandshakeSchemaVersion = handshakeSchemaVersion;
++			OrdersVersion = ordersVersion;
++			RuntimeCapability = runtimeCapability;
++		}
++	}
++
++	public sealed class OnlineLobbyRegistrationClient : IDisposable
++	{
++		sealed class RegistrationRequest
++		{
++			public string ServerId { get; init; }
++			public string ServerEndpoint { get; init; }
++			public int ServerPort { get; init; }
++			public string ServerName { get; init; }
++			public string Region { get; init; }
++			public string Status { get; init; }
++			public string Map { get; init; }
++			public string Mod { get; init; }
++			public string ModVersion { get; init; }
++			public int Players { get; init; }
++			public int MaxPlayers { get; init; }
++			public bool HasPassword { get; init; }
++			public bool Ready { get; init; }
++			public string EngineCompatibility { get; init; }
++			public int HandshakeSchemaVersion { get; init; }
++			public int OrdersVersion { get; init; }
++			public string RuntimeCapability { get; init; }
++		}
++
++		sealed class HeartbeatRequest
++		{
++			public string Status { get; init; }
++			public string Map { get; init; }
++			public int Players { get; init; }
++			public int MaxPlayers { get; init; }
++			public bool HasPassword { get; init; }
++			public bool Ready { get; init; }
++		}
++
++		sealed class RegistrationResponse
++		{
++			public string RegistrationToken { get; init; }
++		}
++
++		public sealed class LobbyRequestException : Exception
++		{
++			public HttpStatusCode StatusCode { get; }
++			public LobbyRequestException(HttpStatusCode statusCode)
++				: base($"Lobby returned HTTP {(int)statusCode}.")
++			{
++				StatusCode = statusCode;
++			}
++		}
++
++		static readonly JsonSerializerOptions JsonOptions = new()
++		{
++			PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
++			PropertyNameCaseInsensitive = true,
++		};
++
++		readonly HttpClient httpClient;
++		readonly Uri baseUri;
++		readonly string registrationCredential;
++		readonly string serverId;
++		string registrationToken;
++
++		public string LastErrorCode { get; private set; } = "";
++
++		public OnlineLobbyRegistrationClient(
++			HttpClient httpClient, Uri baseUri, string registrationCredential, string serverId)
++		{
++			this.httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
++			this.baseUri = baseUri ?? throw new ArgumentNullException(nameof(baseUri));
++			this.registrationCredential = !string.IsNullOrEmpty(registrationCredential)
++				? registrationCredential : throw new ArgumentException("Registration credential is required.", nameof(registrationCredential));
++			this.serverId = !string.IsNullOrEmpty(serverId)
++				? serverId : throw new ArgumentException("Server id is required.", nameof(serverId));
++		}
++
++		HttpRequestMessage Request(HttpMethod method, string relativePath, string token, object payload = null)
++		{
++			var request = new HttpRequestMessage(method, new Uri(baseUri, relativePath));
++			request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
++			if (payload != null)
++				request.Content = new StringContent(JsonSerializer.Serialize(payload, JsonOptions), Encoding.UTF8, "application/json");
++			return request;
++		}
++
++		async Task RegisterAsync(OnlineLobbyRoomSnapshot snapshot, CancellationToken cancellationToken)
++		{
++			var payload = new RegistrationRequest
++			{
++				ServerId = serverId,
++				ServerEndpoint = snapshot.ServerEndpoint,
++				ServerPort = snapshot.ServerPort,
++				ServerName = snapshot.ServerName,
++				Region = snapshot.Region,
++				Status = snapshot.Status,
++				Map = snapshot.Map,
++				Mod = snapshot.Mod,
++				ModVersion = snapshot.ModVersion,
++				Players = snapshot.Players,
++				MaxPlayers = snapshot.MaxPlayers,
++				HasPassword = snapshot.HasPassword,
++				Ready = snapshot.Ready,
++				EngineCompatibility = snapshot.EngineCompatibility,
++				HandshakeSchemaVersion = snapshot.HandshakeSchemaVersion,
++				OrdersVersion = snapshot.OrdersVersion,
++				RuntimeCapability = snapshot.RuntimeCapability,
++			};
++			using var request = Request(HttpMethod.Post, "v1/servers/register", registrationCredential, payload);
++			using var response = await httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
++			if (!response.IsSuccessStatusCode)
++				throw new LobbyRequestException(response.StatusCode);
++			var document = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
++			var parsed = JsonSerializer.Deserialize<RegistrationResponse>(document, JsonOptions);
++			if (string.IsNullOrEmpty(parsed?.RegistrationToken) || parsed.RegistrationToken.Length < 32)
++				throw new InvalidOperationException("Lobby registration response omitted its private session token.");
++			registrationToken = parsed.RegistrationToken;
++		}
++
++		async Task HeartbeatAsync(OnlineLobbyRoomSnapshot snapshot, CancellationToken cancellationToken)
++		{
++			var payload = new HeartbeatRequest
++			{
++				Status = snapshot.Status,
++				Map = snapshot.Map,
++				Players = snapshot.Players,
++				MaxPlayers = snapshot.MaxPlayers,
++				HasPassword = snapshot.HasPassword,
++				Ready = snapshot.Ready,
++			};
++			using var request = Request(
++				HttpMethod.Post, $"v1/servers/{Uri.EscapeDataString(serverId)}/heartbeat",
++				registrationToken, payload);
++			using var response = await httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
++			if (response.StatusCode == HttpStatusCode.NotFound)
++			{
++				registrationToken = null;
++				await RegisterAsync(snapshot, cancellationToken).ConfigureAwait(false);
++				return;
++			}
++
++			if (!response.IsSuccessStatusCode)
++				throw new LobbyRequestException(response.StatusCode);
++		}
++
++		public async Task UpdateAsync(OnlineLobbyRoomSnapshot snapshot, CancellationToken cancellationToken)
++		{
++			ArgumentNullException.ThrowIfNull(snapshot);
++			if (!OnlineLobbyRegistrationPolicy.ShouldPublish(snapshot.OperationalState))
++			{
++				await UnregisterAsync(cancellationToken).ConfigureAwait(false);
++				return;
++			}
++
++			if (registrationToken == null)
++				await RegisterAsync(snapshot, cancellationToken).ConfigureAwait(false);
++			else
++				await HeartbeatAsync(snapshot, cancellationToken).ConfigureAwait(false);
++			LastErrorCode = "";
++		}
++
++		public async Task<bool> TryUpdateAsync(OnlineLobbyRoomSnapshot snapshot, CancellationToken cancellationToken)
++		{
++			try
++			{
++				await UpdateAsync(snapshot, cancellationToken).ConfigureAwait(false);
++				return true;
++			}
++			catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
++			{
++				throw;
++			}
++			catch (LobbyRequestException ex)
++			{
++				LastErrorCode = $"LOBBY_HTTP_{(int)ex.StatusCode}";
++				return false;
++			}
++			catch
++			{
++				LastErrorCode = "LOBBY_UNAVAILABLE";
++				return false;
++			}
++		}
++
++		public async Task UnregisterAsync(CancellationToken cancellationToken)
++		{
++			if (registrationToken == null)
++				return;
++			using var request = Request(
++				HttpMethod.Post, $"v1/servers/{Uri.EscapeDataString(serverId)}/unregister", registrationToken);
++			using var response = await httpClient.SendAsync(request, cancellationToken).ConfigureAwait(false);
++			if (!response.IsSuccessStatusCode && response.StatusCode != HttpStatusCode.NotFound)
++				throw new LobbyRequestException(response.StatusCode);
++			registrationToken = null;
++		}
++
++		public void Dispose() => httpClient.Dispose();
++	}
++}
+diff -ruN a/OpenRA.Game/Settings.cs b/OpenRA.Game/Settings.cs
+--- a/OpenRA.Game/Settings.cs	2026-09-09 09:01:00
++++ b/OpenRA.Game/Settings.cs	2026-09-09 09:01:00
+@@ -63,6 +63,24 @@
+ 		[Desc("Machine-readable dedicated-server status file, relative to the support directory.")]
+ 		public string StatusFile = "status/server-status.json";
+ 
++		[Desc("HTTPS NUKE HOUR Lobby base URL. Empty disables Online registration.")]
++		public string OnlineLobbyUrl = "";
++
++		[Desc("Stable deployment identity used to update one Online room.")]
++		public string OnlineLobbyServerId = "";
++
++		[Desc("Public numeric IPv4 or IPv6 endpoint advertised through the Lobby.")]
++		public string OnlineLobbyPublicEndpoint = "";
++
++		[Desc("Public game port advertised through the Lobby. Zero uses ListenPort.")]
++		public int OnlineLobbyPublicPort = 0;
++
++		[Desc("Coarse deployment region such as asia-east or us-west.")]
++		public string OnlineLobbyRegion = "";
++
++		[Desc("Seconds between NUKE HOUR Lobby heartbeats.")]
++		public int OnlineLobbyHeartbeatSeconds = 15;
++
+ 		[Desc("Reports the game to the master server list.")]
+ 		public bool AdvertiseOnline = true;
+ 
+diff -ruN a/OpenRA.Game/Support/IosMultiplayerSmoke.cs b/OpenRA.Game/Support/IosMultiplayerSmoke.cs
+--- a/OpenRA.Game/Support/IosMultiplayerSmoke.cs	2026-09-09 09:01:00
++++ b/OpenRA.Game/Support/IosMultiplayerSmoke.cs	2026-09-09 09:01:00
+@@ -5,17 +5,21 @@
+ using System.IO;
+ using System.Linq;
+ using System.Net;
++using System.Net.Http;
+ using System.Net.NetworkInformation;
+ using System.Net.Sockets;
+ using System.Security.Cryptography;
+ using System.Text;
++using System.Threading;
++using System.Threading.Tasks;
+ using OpenRA.Network;
++using OpenRA.Server;
+ using OpenRA.Traits;
+ 
+ namespace OpenRA
+ {
+ 	public enum IosMultiplayerSmokeRole { Disabled, Host, Client }
+-	public enum IosMultiplayerSmokeDiscoveryMode { Direct, Auto }
++	public enum IosMultiplayerSmokeDiscoveryMode { Direct, Auto, OnlineList, OnlineCode }
+ 
+ 	public sealed class IosMultiplayerSmokeConfiguration
+ 	{
+@@ -37,9 +41,13 @@
+ 		public string LaunchNonce { get; private init; }
+ 		public string ParticipantNonce { get; private init; }
+ 		public string ExpectedRemoteNonce { get; private init; }
++		public string OnlineLobbyUrl { get; private init; }
++		public string OnlineServerId { get; private init; }
++		public string OnlineRoomCode { get; private init; }
+ 		public string ValidationError { get; private init; }
+ 		public bool CreatesPlayerHostedServer =>
+-			Role == IosMultiplayerSmokeRole.Host && string.IsNullOrEmpty(Endpoint);
++			Role == IosMultiplayerSmokeRole.Host &&
++			DiscoveryMode == IosMultiplayerSmokeDiscoveryMode.Auto && string.IsNullOrEmpty(Endpoint);
+ 
+ 		public static IosMultiplayerSmokeConfiguration Parse(Func<string, string> read)
+ 		{
+@@ -57,7 +65,7 @@
+ 			if (string.IsNullOrEmpty(discoveryModeText))
+ 				discoveryMode = string.IsNullOrEmpty(endpoint) ?
+ 					IosMultiplayerSmokeDiscoveryMode.Auto : IosMultiplayerSmokeDiscoveryMode.Direct;
+-			else if (!Enum.TryParse(discoveryModeText, true, out discoveryMode))
++			else if (!TryParseDiscoveryMode(discoveryModeText, out discoveryMode))
+ 				return Invalid($"Unknown multiplayer smoke discovery mode '{discoveryModeText}'.");
+ 
+ 			if (role == IosMultiplayerSmokeRole.Client &&
+@@ -65,6 +73,34 @@
+ 				!TryParseEndpoint(endpoint, out _, out _))
+ 				return Invalid("Client endpoint must use HOST:PORT format.");
+ 
++			var onlineLobbyUrl = read("OPENRA_IOS_MULTIPLAYER_SMOKE_ONLINE_LOBBY_URL")?.Trim() ?? string.Empty;
++			var onlineServerId = read("OPENRA_IOS_MULTIPLAYER_SMOKE_ONLINE_SERVER_ID")?.Trim() ?? string.Empty;
++			var onlineRoomCode = read("OPENRA_IOS_MULTIPLAYER_SMOKE_ONLINE_ROOM_CODE")?.Trim() ?? string.Empty;
++			if (discoveryMode is IosMultiplayerSmokeDiscoveryMode.OnlineList or
++				IosMultiplayerSmokeDiscoveryMode.OnlineCode)
++			{
++				try
++				{
++					onlineLobbyUrl = OnlineRoomDirectoryClient.ParseBaseUri(onlineLobbyUrl).AbsoluteUri;
++				}
++				catch (ArgumentException)
++				{
++					return Invalid("Online multiplayer smoke Lobby URL must use HTTPS.");
++				}
++
++				if (!string.IsNullOrEmpty(endpoint))
++					return Invalid("Online multiplayer smoke discovery cannot accept a direct endpoint.");
++
++				if (discoveryMode == IosMultiplayerSmokeDiscoveryMode.OnlineList &&
++					(string.IsNullOrWhiteSpace(onlineServerId) || onlineServerId.Length > 64 ||
++					onlineServerId.Any(char.IsControl)))
++					return Invalid("Online room-list smoke requires a valid server id.");
++
++				if (discoveryMode == IosMultiplayerSmokeDiscoveryMode.OnlineCode &&
++					!OnlineRoomDirectoryClient.TryNormalizeRoomCode(onlineRoomCode, out onlineRoomCode))
++					return Invalid("Online room-code smoke requires a valid six-character room code.");
++			}
++
+ 			var expectedRuntimeHash = read("OPENRA_IOS_MULTIPLAYER_SMOKE_EXPECTED_RUNTIME_HASH")?.Trim() ?? string.Empty;
+ 			if (!string.IsNullOrEmpty(expectedRuntimeHash) &&
+ 				!IosMultiplayerSmokeParticipantIdentity.IsValidRuntimeHash(expectedRuntimeHash))
+@@ -109,10 +145,19 @@
+ 				LaunchNonce = launchNonce,
+ 				ParticipantNonce = participantNonce,
+ 				ExpectedRemoteNonce = expectedRemoteNonce,
++				OnlineLobbyUrl = onlineLobbyUrl,
++				OnlineServerId = onlineServerId,
++				OnlineRoomCode = onlineRoomCode,
+ 				ValidationError = string.Empty
+ 			};
+ 		}
+ 
++		static bool TryParseDiscoveryMode(string value, out IosMultiplayerSmokeDiscoveryMode mode)
++		{
++			var normalized = value.Replace("-", string.Empty, StringComparison.Ordinal);
++			return Enum.TryParse(normalized, true, out mode);
++		}
++
+ 		public bool TryGetTarget(out ConnectionTarget target)
+ 		{
+ 			target = null;
+@@ -623,6 +668,7 @@
+ 			bool visibilityOrderIssued;
+ 			bool attackOrderIssued;
+ 			bool attackObserved;
++			bool terrainAttackFallback;
+ 			uint combatActorId;
+ 			uint enemyActorId;
+ 			CPos combatStartLocation;
+@@ -709,6 +755,13 @@
+ 
+ 			void StartClient()
+ 			{
++				if (config.DiscoveryMode is IosMultiplayerSmokeDiscoveryMode.OnlineList or
++					IosMultiplayerSmokeDiscoveryMode.OnlineCode)
++				{
++					StartOnlineClient();
++					return;
++				}
++
+ 				if (config.DiscoveryMode == IosMultiplayerSmokeDiscoveryMode.Direct)
+ 				{
+ 					if (!config.TryGetTarget(out var target))
+@@ -726,6 +779,71 @@
+ 				NearbyGamesChanged();
+ 			}
+ 
++			void StartOnlineClient()
++			{
++				discoveryStage = config.DiscoveryMode == IosMultiplayerSmokeDiscoveryMode.OnlineList ?
++					"waiting-for-online-room-list" : "waiting-for-online-room-code";
++				Write("DISCOVERING", string.Empty);
++				_ = Task.Run(ResolveAndJoinOnlineRoomAsync);
++			}
++
++			async Task ResolveAndJoinOnlineRoomAsync()
++			{
++				try
++				{
++					using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(15));
++					using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
++					using var directory = new OnlineRoomDirectoryClient(
++						http, OnlineRoomDirectoryClient.ParseBaseUri(config.OnlineLobbyUrl));
++					OnlineRoom room;
++					if (config.DiscoveryMode == IosMultiplayerSmokeDiscoveryMode.OnlineCode)
++						room = await directory.ResolveCodeAsync(config.OnlineRoomCode, timeout.Token)
++							.ConfigureAwait(false);
++					else
++					{
++						var rooms = await directory.GetRoomsAsync(timeout.Token).ConfigureAwait(false);
++						var matches = rooms.Where(candidate =>
++							string.Equals(candidate.ServerId, config.OnlineServerId, StringComparison.Ordinal)).ToArray();
++						if (matches.Length != 1)
++							throw new InvalidOperationException(
++								$"Online room list returned {matches.Length} matches for the expected server id.");
++						room = matches[0];
++					}
++
++					var identity = new OnlineRoomCompatibilityIdentity(
++						Game.EngineVersion, Game.ModData.Manifest.Id,
++						Game.ModData.Manifest.Metadata.CompatibilityOrVersion,
++						Game.ModData.RuntimeContract.ResourceCapability,
++						ProtocolVersion.HandshakeSchema, ProtocolVersion.Orders);
++					var compatibility = OnlineRoomCompatibility.Precheck(room, identity);
++					if (compatibility != OnlineRoomCompatibilityReason.Compatible)
++						throw new InvalidOperationException(
++							$"Online room compatibility precheck rejected {compatibility}.");
++					if (!room.IsJoinable)
++						throw new InvalidOperationException("Online room is not joinable.");
++					if (!room.TryGetConnectionTarget(out var target))
++						throw new InvalidOperationException("Online room endpoint is invalid.");
++
++					var stage = config.DiscoveryMode == IosMultiplayerSmokeDiscoveryMode.OnlineList ?
++						"online-room-list-matched" : "online-room-code-matched";
++					var evidenceAddress = config.DiscoveryMode == IosMultiplayerSmokeDiscoveryMode.OnlineList ?
++						$"online-list:{room.ServerId}" : $"online-code:{room.RoomCode}";
++					Game.RunAfterTick(() =>
++					{
++						if (!terminal)
++							Join(target, evidenceAddress, stage);
++					});
++				}
++				catch (Exception ex)
++				{
++					Game.RunAfterTick(() =>
++					{
++						if (!terminal)
++							Fail($"Online discovery failed: {ex.Message}");
++					});
++				}
++			}
++
+ 			void NearbyGamesChanged()
+ 			{
+ 				var games = NearbyGameNetworking.Games.ToArray();
+@@ -1115,12 +1233,47 @@
+ 					attackIssuedAtTick = world.WorldTick;
+ 					gameplayStage = "attack-issued";
+ 				}
++				else if (completedProductionObserved && combatActor != null && enemy == null &&
++					!attackOrderIssued && world.WorldTick > visibilityIssuedAtTick + 30)
++				{
++					// Large maps can place both humans outside each other's actor-visibility range.
++					// Exercise the synchronized attack-order path deterministically instead of
++					// waiting for the players to meet by chance.
++					var target = world.Map.FindTilesInAnnulus(combatActor.Location, 4, 8)
++						.FirstOrDefault(world.Map.Contains);
++					if (target != default)
++					{
++						terrainAttackFallback = true;
++						world.IssueOrder(new Order("ForceAttack", combatActor,
++							Target.FromCell(world, target), false));
++						attackOrderIssued = true;
++						attackIssuedAtTick = world.WorldTick;
++						gameplayStage = "terrain-attack-issued";
++					}
++				}
+ 
++				if (attackOrderIssued && !attackObserved && !terrainAttackFallback &&
++					world.WorldTick > attackIssuedAtTick + 30)
++				{
++					var target = world.Map.FindTilesInAnnulus(combatActor.Location, 4, 8)
++						.FirstOrDefault(world.Map.Contains);
++					if (target != default)
++					{
++						terrainAttackFallback = true;
++						world.IssueOrder(new Order("ForceAttack", combatActor,
++							Target.FromCell(world, target), false));
++						attackIssuedAtTick = world.WorldTick;
++						gameplayStage = "terrain-attack-issued";
++					}
++				}
++
+ 				if (attackOrderIssued && !attackObserved && world.WorldTick > attackIssuedAtTick)
+ 				{
+-					var currentEnemy = world.Actors.FirstOrDefault(actor => actor.ActorID == enemyActorId);
+-					attackObserved = combatActor == null || combatActor.IsDead || currentEnemy == null ||
+-						currentEnemy.IsDead || combatActor.CurrentActivity != null;
++					var currentEnemy = terrainAttackFallback ? null :
++						world.Actors.FirstOrDefault(actor => actor.ActorID == enemyActorId);
++					attackObserved = combatActor == null || combatActor.IsDead ||
++						(!terrainAttackFallback && (currentEnemy == null || currentEnemy.IsDead)) ||
++						combatActor.CurrentActivity != null;
+ 					if (attackObserved)
+ 						gameplayStage = "stable-gameplay";
+ 				}
+@@ -1285,6 +1438,7 @@
+ 					$"  \"productionObserved\": {(productionObserved ? "true" : "false")},\n" +
+ 					$"  \"completedProductionObserved\": {(completedProductionObserved ? "true" : "false")},\n" +
+ 					$"  \"attackOrderIssued\": {(attackOrderIssued ? "true" : "false")},\n" +
++					$"  \"attackTargetKind\": \"{(terrainAttackFallback ? "terrain" : "actor")}\",\n" +
+ 					$"  \"attackObserved\": {(attackObserved ? "true" : "false")},\n" +
+ 					"  \"orderRejectionObserved\": false,\n" +
+ 					$"  \"processStartedUtc\": \"{processStartedUtc:O}\",\n" +
+diff -ruN a/OpenRA.Mods.Common/WebServices.cs b/OpenRA.Mods.Common/WebServices.cs
+--- a/OpenRA.Mods.Common/WebServices.cs	2026-09-09 09:01:00
++++ b/OpenRA.Mods.Common/WebServices.cs	2026-09-09 09:01:00
+@@ -20,6 +20,7 @@
+ 	{
+ 		public readonly string ServerList = "https://master.openra.net/games";
+ 		public readonly string ServerAdvertise = "https://master.openra.net/ping";
++		public readonly string OnlineLobby = "";
+ 		public readonly string MapRepository = "https://resource.openra.net/map/";
+ 		public readonly string GameNews = "https://master.openra.net/gamenews";
+ 		public readonly string GameNewsFileName = "news.yaml";
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/IosMultiplayerBrowserLayout.cs b/OpenRA.Mods.Common/Widgets/Logic/IosMultiplayerBrowserLayout.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/IosMultiplayerBrowserLayout.cs	2026-09-09 09:01:00
++++ b/OpenRA.Mods.Common/Widgets/Logic/IosMultiplayerBrowserLayout.cs	2026-09-09 09:01:00
+@@ -18,6 +18,8 @@
+ 	{
+ 		public WidgetBounds Window { get; }
+ 		public WidgetBounds Header { get; }
++		public WidgetBounds LocalMode { get; }
++		public WidgetBounds OnlineMode { get; }
+ 		public WidgetBounds Table { get; }
+ 		public WidgetBounds TableHeader { get; }
+ 		public WidgetBounds ServerList { get; }
+@@ -26,6 +28,8 @@
+ 		public WidgetBounds Filters { get; }
+ 		public WidgetBounds Reload { get; }
+ 		public WidgetBounds PlayerCount { get; }
++		public WidgetBounds RoomCodeInput { get; }
++		public WidgetBounds RoomCodeButton { get; }
+ 		public WidgetBounds DirectConnect { get; }
+ 		public WidgetBounds CreateButton { get; }
+ 		public WidgetBounds Back { get; }
+@@ -39,7 +43,12 @@
+ 			width = Math.Max(1, width);
+ 			height = Math.Max(1, height);
+ 			Window = new WidgetBounds(0, 0, width, height);
+-			Header = new WidgetBounds(0, 0, width, Math.Min(height, policy.HeaderHeight));
++			var headerHeight = Math.Min(height, policy.HeaderHeight);
++			var modeWidth = Math.Min(3 * policy.MinimumTarget, Math.Max(0, (width - 2 * policy.Gap) / 3));
++			LocalMode = new WidgetBounds(0, 0, modeWidth, headerHeight);
++			OnlineMode = new WidgetBounds(LocalMode.Right + policy.Gap, 0, modeWidth, headerHeight);
++			var headerX = Math.Min(width, OnlineMode.Right + policy.Gap);
++			Header = new WidgetBounds(headerX, 0, Math.Max(0, width - headerX), headerHeight);
+ 			var footerY = Math.Max(Header.Bottom + policy.Gap, height - policy.FooterHeight);
+ 			Footer = new WidgetBounds(0, footerY, width, Math.Max(0, height - footerY));
+ 
+@@ -63,6 +72,10 @@
+ 			Filters = footerCells[0];
+ 			Reload = footerCells[1];
+ 			PlayerCount = footerCells[2];
++			RoomCodeInput = Filters;
++			var roomCodeButtonX = Math.Min(PlayerCount.Right, Reload.Right + policy.Gap);
++			RoomCodeButton = new WidgetBounds(
++				roomCodeButtonX, Reload.Y, PlayerCount.Right - roomCodeButtonX, Reload.Height);
+ 			DirectConnect = footerCells[3];
+ 			CreateButton = footerCells[4];
+ 			Back = footerCells[5];
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/IosTouchMenuLogic.cs b/OpenRA.Mods.Common/Widgets/Logic/IosTouchMenuLogic.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/IosTouchMenuLogic.cs	2026-09-09 09:01:00
++++ b/OpenRA.Mods.Common/Widgets/Logic/IosTouchMenuLogic.cs	2026-09-09 09:01:00
+@@ -364,7 +364,11 @@
+ 			var height = Math.Max(1, panel.Bounds.Height);
+ 			var layout = IosMultiplayerBrowserLayout.Create(width, height, policy);
+ 			if (standalone)
++			{
+ 				SetBounds(panel, "TITLE", layout.Header);
++				SetBounds(panel, "LOCAL_MODE_BUTTON", layout.LocalMode);
++				SetBounds(panel, "ONLINE_MODE_BUTTON", layout.OnlineMode);
++			}
+ 
+ 			var table = standalone ? layout.Table : new WidgetBounds(
+ 				0, 0, layout.Table.Width, Math.Max(0, height - policy.MinimumTarget - policy.Gap));
+@@ -450,6 +454,8 @@
+ 				SetBounds(panel, "FILTERS_DROPDOWNBUTTON", Offset(layout.Filters, layout.Footer.Y));
+ 				SetBounds(panel, "RELOAD_BUTTON", Offset(layout.Reload, layout.Footer.Y));
+ 				SetBounds(panel, "PLAYER_COUNT", Offset(layout.PlayerCount, layout.Footer.Y));
++				SetBounds(panel, "ROOM_CODE_INPUT", Offset(layout.RoomCodeInput, layout.Footer.Y));
++				SetBounds(panel, "ROOM_CODE_BUTTON", Offset(layout.RoomCodeButton, layout.Footer.Y));
+ 				SetBounds(panel, "DIRECTCONNECT_BUTTON", Offset(layout.DirectConnect, layout.Footer.Y));
+ 				SetBounds(panel, "CREATE_BUTTON", Offset(layout.CreateButton, layout.Footer.Y));
+ 				SetBounds(panel, "BACK_BUTTON", Offset(layout.Back, layout.Footer.Y));
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/MultiplayerLogic.cs b/OpenRA.Mods.Common/Widgets/Logic/MultiplayerLogic.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/MultiplayerLogic.cs	2026-09-09 09:01:00
++++ b/OpenRA.Mods.Common/Widgets/Logic/MultiplayerLogic.cs	2026-09-09 09:01:00
+@@ -35,6 +35,8 @@
+ 			this.onExit = onExit;
+ 
+ 			var directConnectButton = widget.Get<ButtonWidget>("DIRECTCONNECT_BUTTON");
++			directConnectButton.IsVisible = () =>
++				MultiplayerServerModePolicy.ShowsDirectIp(serverListLogic.Mode);
+ 			directConnectButton.OnClick = () =>
+ 			{
+ 				Ui.OpenWindow("DIRECTCONNECT_PANEL", new WidgetArgs
+@@ -46,6 +48,8 @@
+ 			};
+ 
+ 			var createServerButton = widget.Get<ButtonWidget>("CREATE_BUTTON");
++			createServerButton.IsVisible = () =>
++				MultiplayerServerModePolicy.ShowsLocalHosting(serverListLogic.Mode);
+ 			createServerButton.OnClick = () =>
+ 			{
+ 				Ui.OpenWindow("MULTIPLAYER_CREATESERVER_PANEL", new WidgetArgs
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/ServerListLogic.cs b/OpenRA.Mods.Common/Widgets/Logic/ServerListLogic.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/ServerListLogic.cs	2026-09-09 09:01:00
++++ b/OpenRA.Mods.Common/Widgets/Logic/ServerListLogic.cs	2026-09-09 09:01:00
+@@ -25,6 +25,16 @@
+ 
+ namespace OpenRA.Mods.Common.Widgets.Logic
+ {
++	public enum MultiplayerServerMode { Local, Online }
++
++	public static class MultiplayerServerModePolicy
++	{
++		public static bool UsesNearbyDiscovery(MultiplayerServerMode mode) => mode == MultiplayerServerMode.Local;
++		public static bool UsesOnlineDirectory(MultiplayerServerMode mode) => mode == MultiplayerServerMode.Online;
++		public static bool ShowsLocalHosting(MultiplayerServerMode mode) => mode == MultiplayerServerMode.Local;
++		public static bool ShowsDirectIp(MultiplayerServerMode mode) => mode == MultiplayerServerMode.Local;
++	}
++
+ 	public sealed class ServerListDirectory<T>
+ 	{
+ 		readonly object sync = new();
+@@ -158,6 +168,24 @@
+ 		[FluentReference]
+ 		const string SearchStatusNoGames = "label-search-status-no-games";
+ 
++		[FluentReference]
++		const string OnlineStatusNoRooms = "label-online-room-status-no-rooms";
++
++		[FluentReference]
++		const string OnlineErrorUnavailable = "label-online-room-error-unavailable";
++
++		[FluentReference]
++		const string OnlineErrorDisappeared = "label-online-room-error-disappeared";
++
++		[FluentReference]
++		const string OnlineErrorRateLimited = "label-online-room-error-rate-limited";
++
++		[FluentReference]
++		const string OnlineErrorInvalidResponse = "label-online-room-error-invalid-response";
++
++		[FluentReference]
++		const string OnlineErrorInvalidCode = "label-online-room-error-invalid-code";
++
+ 		[FluentReference("players")]
+ 		const string PlayersOnline = "label-players-online-count";
+ 
+@@ -235,10 +263,13 @@
+ 		readonly ModData modData;
+ 		readonly WebServices services;
+ 		readonly LanGameProbe lanGameProbe;
+-		readonly ServerListDirectory<GameServer> gameDirectory = new(game => game.NearbySessionId ?? game.Address);
+ 		readonly ServerListCallbackGeneration callbackGeneration = ServerListCallbackGeneration.Create();
+ 		List<GameServer> lanGames = new();
+ 		List<GameServer> peerGames = new();
++		List<GameServer> onlineGames = new();
++		OnlineRoomDirectoryClient onlineDirectory;
++		CancellationTokenSource onlineQueryCancellation;
++		long nextOnlineRefreshAt;
+ 
+ 		readonly Widget serverList;
+ 		readonly ScrollItemWidget serverTemplate;
+@@ -258,7 +289,10 @@
+ 		MapPreview currentMap;
+ 		bool showNotices;
+ 		int playerCount;
++		string statusMessage;
+ 
++		public MultiplayerServerMode Mode { get; private set; } = MultiplayerServerMode.Local;
++
+ 		enum SearchStatus { Fetching, Failed, NoGames, Hidden }
+ 
+ 		SearchStatus searchStatus = SearchStatus.Fetching;
+@@ -276,6 +310,9 @@
+ 
+ 		public string ProgressLabelText()
+ 		{
++			if (!string.IsNullOrEmpty(statusMessage))
++				return statusMessage;
++
+ 			switch (searchStatus)
+ 			{
+ 				case SearchStatus.Failed: return FluentProvider.GetMessage(SearchStatusFailed);
+@@ -308,6 +345,20 @@
+ 			unknownServerState = FluentProvider.GetMessage(UnknownServerState);
+ 
+ 			services = modData.Manifest.Get<WebServices>();
++			if (!string.IsNullOrWhiteSpace(services.OnlineLobby))
++			{
++				try
++				{
++					var httpClient = HttpClientFactory.Create();
++					httpClient.Timeout = TimeSpan.FromSeconds(10);
++					onlineDirectory = new OnlineRoomDirectoryClient(
++						httpClient, OnlineRoomDirectoryClient.ParseBaseUri(services.OnlineLobby));
++				}
++				catch (ArgumentException ex)
++				{
++					Log.Write("client", $"Online Lobby configuration rejected: {ex.Message}");
++				}
++			}
+ 
+ 			incompatibleVersionColor = ChromeMetrics.Get<Color>("IncompatibleVersionColor");
+ 			incompatibleGameColor = ChromeMetrics.Get<Color>("IncompatibleGameColor");
+@@ -365,6 +416,42 @@
+ 			progressText.IsVisible = () => searchStatus != SearchStatus.Hidden;
+ 			progressText.GetText = ProgressLabelText;
+ 
++			var localModeButton = widget.GetOrNull<ButtonWidget>("LOCAL_MODE_BUTTON");
++			if (localModeButton != null)
++			{
++				localModeButton.IsDisabled = () => Mode == MultiplayerServerMode.Local;
++				localModeButton.OnClick = () => SetMode(MultiplayerServerMode.Local);
++			}
++
++			var onlineModeButton = widget.GetOrNull<ButtonWidget>("ONLINE_MODE_BUTTON");
++			if (onlineModeButton != null)
++			{
++				onlineModeButton.IsDisabled = () => Mode == MultiplayerServerMode.Online;
++				onlineModeButton.OnClick = () => SetMode(MultiplayerServerMode.Online);
++			}
++
++			var roomCodeInput = widget.GetOrNull<TextFieldWidget>("ROOM_CODE_INPUT");
++			var roomCodeButton = widget.GetOrNull<ButtonWidget>("ROOM_CODE_BUTTON");
++			if (roomCodeInput != null)
++			{
++				roomCodeInput.IsVisible = () => Mode == MultiplayerServerMode.Online;
++				roomCodeInput.IsValid = () => string.IsNullOrEmpty(roomCodeInput.Text) ||
++					OnlineRoomDirectoryClient.TryNormalizeRoomCode(roomCodeInput.Text, out _);
++				roomCodeInput.OnEnterKey = _ =>
++				{
++					LookupRoomCode(roomCodeInput.Text);
++					return true;
++				};
++			}
++
++			if (roomCodeButton != null)
++			{
++				roomCodeButton.IsVisible = () => Mode == MultiplayerServerMode.Online;
++				roomCodeButton.IsDisabled = () => activeQuery || roomCodeInput == null ||
++					!OnlineRoomDirectoryClient.TryNormalizeRoomCode(roomCodeInput.Text, out _);
++				roomCodeButton.OnClick = () => LookupRoomCode(roomCodeInput?.Text);
++			}
++
+ 			var gs = Game.Settings.Game;
+ 			void ToggleFilterFlag(MPGameFilters f)
+ 			{
+@@ -376,6 +463,8 @@
+ 			var filtersButton = widget.GetOrNull<DropDownButtonWidget>("FILTERS_DROPDOWNBUTTON");
+ 			if (filtersButton != null)
+ 			{
++				filtersButton.IsVisible = () => Mode == MultiplayerServerMode.Local;
++
+ 				// HACK: MULTIPLAYER_FILTER_PANEL doesn't follow our normal procedure for dropdown creation
+ 				// but we still need to be able to set the dropdown width based on the parent
+ 				// The yaml should use PARENT_WIDTH instead of DROPDOWN_WIDTH
+@@ -454,7 +543,7 @@
+ 			if (playersLabel != null)
+ 			{
+ 				var playersText = new CachedTransform<int, string>(p => FluentProvider.GetMessage(PlayersOnline, "players", p));
+-				playersLabel.IsVisible = () => playerCount != 0;
++				playersLabel.IsVisible = () => Mode == MultiplayerServerMode.Local && playerCount != 0;
+ 				playersLabel.GetText = () => playersText.Update(playerCount);
+ 			}
+ 
+@@ -486,7 +575,7 @@
+ 			var ip = widget.GetOrNull<LabelWidget>("SELECTED_IP");
+ 			if (ip != null)
+ 			{
+-				ip.IsVisible = () => currentServer != null;
++				ip.IsVisible = () => currentServer != null && !currentServer.IsOnlineRoom;
+ 				ip.GetText = () => currentServer.Address;
+ 			}
+ 
+@@ -555,7 +644,7 @@
+ 			NearbyGameNetworking.StartBrowsing();
+ 			NearbyGamesChanged();
+ 
+-			RefreshServerList();
++			SetMode(MultiplayerServerMode.Local, true);
+ 		}
+ 
+ 		void NearbyGamesChanged()
+@@ -584,76 +673,186 @@
+ 
+ 		public void RefreshServerList()
+ 		{
+-			var generation = callbackGeneration.Capture();
+-			if (!callbackGeneration.IsCurrent(generation))
++			if (Mode == MultiplayerServerMode.Local)
++			{
++				statusMessage = null;
++				var nearby = ServerListNearbyMerger.Merge(
++					lanGames, peerGames, game => game.NearbySessionId ?? game.Address);
++				RefreshServerListInner(nearby.ToList());
+ 				return;
++			}
+ 
+-			var cachedGames = gameDirectory.Snapshot();
+-			if (cachedGames.Count > 0)
+-				RefreshServerListInner(cachedGames.ToList());
++			RefreshOnlineRooms();
++		}
+ 
+-			// Query in progress
+-			if (activeQuery)
++		public void SetMode(MultiplayerServerMode mode, bool force = false)
++		{
++			if (!force && Mode == mode)
+ 				return;
+ 
+-			activeQuery = true;
+-			searchStatus = SearchStatus.Fetching;
++			Mode = mode;
++			CancelOnlineQuery();
++			activeQuery = false;
++			statusMessage = null;
++			playerCount = 0;
++			SelectServer(null);
+ 
+-			var queryURL = new HttpQueryBuilder(services.ServerList)
++			if (mode == MultiplayerServerMode.Local)
++				RefreshServerList();
++			else
+ 			{
+-				{ "protocol", GameServer.ProtocolVersion },
+-				{ "engine", Game.EngineVersion },
+-				{ "mod", Game.ModData.Manifest.Id },
+-				{ "version", Game.ModData.Manifest.Metadata.CompatibilityOrVersion }
+-			}.ToString();
++				onlineGames.Clear();
++				RefreshOnlineRooms();
++			}
++		}
+ 
+-			Task.Run(async () =>
++		OnlineRoomCompatibilityIdentity LocalOnlineIdentity() => new(
++			Game.EngineVersion,
++			modData.Manifest.Id,
++			modData.Manifest.Metadata.CompatibilityOrVersion,
++			modData.RuntimeContract.ResourceCapability,
++			ProtocolVersion.HandshakeSchema,
++			ProtocolVersion.Orders);
++
++		void RefreshOnlineRooms()
++		{
++			if (Mode != MultiplayerServerMode.Online || activeQuery)
++				return;
++
++			if (onlineDirectory == null)
+ 			{
+-				List<GameServer> games = null;
+-				var querySucceeded = false;
++				ShowOnlineError(OnlineErrorUnavailable);
++				return;
++			}
+ 
++			activeQuery = true;
++			statusMessage = null;
++			searchStatus = SearchStatus.Fetching;
++			var generation = callbackGeneration.Capture();
++			var cancellation = ReplaceOnlineCancellation();
++			Task.Run(async () =>
++			{
+ 				try
+ 				{
+-					var client = HttpClientFactory.Create();
+-					var httpResponseMessage = await client.GetAsync(queryURL);
+-					var result = await httpResponseMessage.Content.ReadAsStreamAsync();
+-
+-					var yaml = MiniYaml.FromStream(result, queryURL);
+-					games = new List<GameServer>();
+-					foreach (var node in yaml)
++					var rooms = await onlineDirectory.GetRoomsAsync(cancellation.Token).ConfigureAwait(false);
++					var identity = LocalOnlineIdentity();
++					var games = new List<GameServer>();
++					foreach (var room in rooms)
+ 					{
+ 						try
+ 						{
+-							var gs = new GameServer(node.Value);
+-							if (gs.Address != null)
+-								games.Add(gs);
++							games.Add(new GameServer(room, identity));
+ 						}
+-						catch
++						catch (Exception ex)
+ 						{
+-							// Ignore any invalid games advertised.
++							Log.Write("debug", $"Ignored invalid Online room metadata: {ex.Message}");
+ 						}
+ 					}
+ 
+-					querySucceeded = true;
++					Game.RunAfterTick(() => CompleteOnlineQuery(generation, cancellation, games, null));
+ 				}
+-				catch (Exception e)
++				catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { }
++				catch (OnlineRoomDirectoryException ex)
+ 				{
+-					Log.Write("debug", $"Failed to query server list with exception: {e}");
++					Game.RunAfterTick(() => CompleteOnlineQuery(generation, cancellation, null, ex.Error));
+ 				}
++			});
++		}
+ 
+-				gameDirectory.UpdateInternet(games);
+-				Game.RunAfterTick(() =>
+-				{
+-					if (!callbackGeneration.IsCurrent(generation))
+-						return;
++		void LookupRoomCode(string value)
++		{
++			if (Mode != MultiplayerServerMode.Online || activeQuery)
++				return;
+ 
+-					activeQuery = false;
+-					var visibleGames = gameDirectory.Snapshot();
+-					RefreshServerListInner(querySucceeded || visibleGames.Count > 0 ? visibleGames.ToList() : null);
+-				});
++			if (!OnlineRoomDirectoryClient.TryNormalizeRoomCode(value, out var roomCode))
++			{
++				ShowOnlineError(OnlineErrorInvalidCode);
++				return;
++			}
++
++			if (onlineDirectory == null)
++			{
++				ShowOnlineError(OnlineErrorUnavailable);
++				return;
++			}
++
++			activeQuery = true;
++			statusMessage = null;
++			searchStatus = SearchStatus.Fetching;
++			var generation = callbackGeneration.Capture();
++			var cancellation = ReplaceOnlineCancellation();
++			Task.Run(async () =>
++			{
++				try
++				{
++					var room = await onlineDirectory.ResolveCodeAsync(roomCode, cancellation.Token).ConfigureAwait(false);
++					var game = new GameServer(room, LocalOnlineIdentity());
++					Game.RunAfterTick(() => CompleteOnlineQuery(generation, cancellation, new List<GameServer> { game }, null));
++				}
++				catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { }
++				catch (OnlineRoomDirectoryException ex)
++				{
++					Game.RunAfterTick(() => CompleteOnlineQuery(generation, cancellation, null, ex.Error));
++				}
++				catch (Exception ex)
++				{
++					Log.Write("debug", $"Online room-code lookup failed: {ex.Message}");
++					Game.RunAfterTick(() => CompleteOnlineQuery(
++						generation, cancellation, null, OnlineRoomDirectoryError.InvalidResponse));
++				}
+ 			});
+ 		}
+ 
++		CancellationTokenSource ReplaceOnlineCancellation()
++		{
++			CancelOnlineQuery();
++			onlineQueryCancellation = new CancellationTokenSource();
++			return onlineQueryCancellation;
++		}
++
++		void CancelOnlineQuery()
++		{
++			onlineQueryCancellation?.Cancel();
++			onlineQueryCancellation?.Dispose();
++			onlineQueryCancellation = null;
++		}
++
++		void CompleteOnlineQuery(
++			int generation, CancellationTokenSource cancellation,
++			List<GameServer> games, OnlineRoomDirectoryError? error)
++		{
++			if (!callbackGeneration.IsCurrent(generation) ||
++				Mode != MultiplayerServerMode.Online || cancellation != onlineQueryCancellation)
++				return;
++
++			activeQuery = false;
++			nextOnlineRefreshAt = Game.RunTime + 10000;
++			if (error.HasValue)
++			{
++				ShowOnlineError(ErrorMessageKey(error.Value));
++				return;
++			}
++
++			onlineGames = games ?? new List<GameServer>();
++			statusMessage = onlineGames.Count == 0 ? FluentProvider.GetMessage(OnlineStatusNoRooms) : null;
++			RefreshServerListInner(onlineGames.ToList());
++		}
++
++		static string ErrorMessageKey(OnlineRoomDirectoryError error) => error switch
++		{
++			OnlineRoomDirectoryError.RoomDisappeared => OnlineErrorDisappeared,
++			OnlineRoomDirectoryError.RateLimited => OnlineErrorRateLimited,
++			OnlineRoomDirectoryError.InvalidResponse => OnlineErrorInvalidResponse,
++			_ => OnlineErrorUnavailable,
++		};
++
++		void ShowOnlineError(string messageKey)
++		{
++			statusMessage = FluentProvider.GetMessage(messageKey);
++			searchStatus = SearchStatus.Failed;
++			RefreshServerListInner(null);
++		}
++
+ 		void RefreshNearbyServerList(IEnumerable<BeaconLocation> locations)
+ 		{
+ 			var nearbyGames = new List<GameServer>();
+@@ -740,8 +939,8 @@
+ 		{
+ 			var combined = ServerListNearbyMerger.Merge(
+ 				lanGames, peerGames, game => game.NearbySessionId ?? game.Address);
+-			var visibleGames = gameDirectory.UpdateNearby(combined);
+-			RefreshServerListInner(visibleGames.ToList());
++			if (Mode == MultiplayerServerMode.Local)
++				RefreshServerListInner(combined.ToList());
+ 		}
+ 
+ 		int GroupSortOrder(GameServer testEntry)
+@@ -983,7 +1182,8 @@
+ 						if (title != null)
+ 						{
+ 							var titleText = ResponsiveTextCache.WithTooltip(title);
+-							title.GetText = () => titleText.Update(game.Name, title.Bounds.Width,
++							var displayName = game.IsOnlineRoom ? $"[{game.RoomCode}] {game.Name}" : game.Name;
++							title.GetText = () => titleText.Update(displayName, title.Bounds.Width,
+ 								Game.Renderer.Fonts[title.Font]);
+ 							title.GetColor = () => canJoin ? title.TextColor : incompatibleGameColor;
+ 						}
+@@ -1074,6 +1274,9 @@
+ 			if (game == null)
+ 				return string.Empty;
+ 
++			if (game.IsOnlineRoom && !game.IsCompatible)
++				return FluentProvider.GetMessage(OnlineRoomCompatibility.MessageKey(game.OnlineCompatibilityReason));
++
+ 			if (game.State == (int)ServerState.GameStarted)
+ 			{
+ 				var totalMinutes = Math.Ceiling(game.PlayTime / 60.0);
+@@ -1105,6 +1308,9 @@
+ 
+ 		bool Filtered(GameServer game)
+ 		{
++			if (game.IsOnlineRoom)
++				return false;
++
+ 			var filters = Game.Settings.Game.MPGameFilters;
+ 			if (game.State == (int)ServerState.GameStarted && !filters.HasFlag(MPGameFilters.Started))
+ 				return true;
+@@ -1124,6 +1330,12 @@
+ 			return false;
+ 		}
+ 
++		public override void Tick()
++		{
++			if (Mode == MultiplayerServerMode.Online && !activeQuery && Game.RunTime >= nextOnlineRefreshAt)
++				RefreshOnlineRooms();
++		}
++
+ 		bool disposed;
+ 		protected override void Dispose(bool disposing)
+ 		{
+@@ -1131,6 +1343,8 @@
+ 			{
+ 				disposed = true;
+ 				callbackGeneration.Dispose();
++				CancelOnlineQuery();
++				onlineDirectory?.Dispose();
+ 				lanGameProbe?.Dispose();
+ 				NearbyGameNetworking.GamesChanged -= NearbyGamesChanged;
+ 				NearbyGameNetworking.StopBrowsing();
+diff -ruN a/OpenRA.Server/Program.cs b/OpenRA.Server/Program.cs
+--- a/OpenRA.Server/Program.cs	2026-09-09 09:01:00
++++ b/OpenRA.Server/Program.cs	2026-09-09 09:01:00
+@@ -14,6 +14,7 @@
+ using System.Globalization;
+ using System.IO;
+ using System.Linq;
++using System.Net.Http;
+ using System.Runtime.InteropServices;
+ using System.Text;
+ using System.Threading;
+@@ -93,6 +94,9 @@
+ 				throw new ArgumentOutOfRangeException(nameof(settings.MaxPlayers), "Server.MaxPlayers must be between 1 and 64.");
+ 			if (settings.IdleTimeoutSeconds < 0)
+ 				throw new ArgumentOutOfRangeException(nameof(settings.IdleTimeoutSeconds), "Server.IdleTimeoutSeconds cannot be negative.");
++			var onlineLobbyRegistrationCredential = Environment.GetEnvironmentVariable(
++				OnlineLobbyRegistrationPolicy.CredentialEnvironmentVariable);
++			OnlineLobbyRegistrationPolicy.Validate(settings, onlineLobbyRegistrationCredential);
+ 
+ 			var endpoints = DedicatedServerRuntimePolicy.ResolveEndpoints(settings.ListenAddress, settings.ListenPort).ToList();
+ 			var stopRequested = 0;
+@@ -121,11 +125,14 @@
+ 			WriteStatus(settings, modData, DedicatedServerOperationalState.Starting, 0, settings.Map);
+ 			var server = new Server(endpoints, settings, modData, ServerType.Dedicated);
+ 			WriteLineWithTimeStamp($"Listening on {settings.ListenAddress}:{settings.ListenPort}; map={server.LobbyInfo.GlobalSettings.Map}");
++			using var lobbyRegistration = CreateOnlineLobbyRegistration(
++				settings, onlineLobbyRegistrationCredential);
+ 
+ 			GC.Collect();
+ 			var gameStarted = false;
+ 			var emptySince = Stopwatch.GetTimestamp();
+ 			var lastState = DedicatedServerOperationalState.Starting;
++			var nextLobbyUpdate = 0L;
+ 			while (server.State != ServerState.ShuttingDown)
+ 			{
+ 				Thread.Sleep(250);
+@@ -143,6 +150,15 @@
+ 				}
+ 
+ 				WriteStatus(settings, modData, state, validatedClients, server.LobbyInfo.GlobalSettings.Map);
++				var now = Stopwatch.GetTimestamp();
++				if (lobbyRegistration != null && now >= nextLobbyUpdate)
++				{
++					var snapshot = CreateOnlineLobbySnapshot(
++						settings, modData, state, server.LobbyInfo.GlobalSettings.Map, validatedClients);
++					if (!lobbyRegistration.TryUpdateAsync(snapshot, CancellationToken.None).GetAwaiter().GetResult())
++						WriteLineWithTimeStamp($"Online Lobby update unavailable: {lobbyRegistration.LastErrorCode}.");
++					nextLobbyUpdate = now + settings.OnlineLobbyHeartbeatSeconds * Stopwatch.Frequency;
++				}
+ 				var terminationRequested = Volatile.Read(ref stopRequested) != 0;
+ 				if (terminationRequested || DedicatedServerRuntimePolicy.ShouldExit(
+ 					server.State, gameStarted, validatedClients,
+@@ -163,8 +179,60 @@
+ 			if (!server.WaitForShutdown(TimeSpan.FromSeconds(30)))
+ 				throw new TimeoutException("Dedicated server cleanup did not complete within 30 seconds.");
+ 
++			if (lobbyRegistration != null)
++				try
++				{
++					using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
++					lobbyRegistration.UnregisterAsync(timeout.Token).GetAwaiter().GetResult();
++				}
++				catch
++				{
++					WriteLineWithTimeStamp("Online Lobby unregister was unavailable; the room will expire automatically.");
++				}
++
+ 			WriteStatus(settings, modData, DedicatedServerOperationalState.Stopped, 0, server.LobbyInfo.GlobalSettings.Map);
+ 			WriteLineWithTimeStamp("Dedicated server stopped cleanly.");
++		}
++
++		static OnlineLobbyRegistrationClient CreateOnlineLobbyRegistration(
++			ServerSettings settings, string registrationCredential)
++		{
++			if (string.IsNullOrWhiteSpace(settings.OnlineLobbyUrl))
++				return null;
++
++			return new OnlineLobbyRegistrationClient(
++				new HttpClient { Timeout = TimeSpan.FromSeconds(5) },
++				OnlineLobbyRegistrationPolicy.ParseBaseUri(settings.OnlineLobbyUrl),
++				registrationCredential,
++				settings.OnlineLobbyServerId);
++		}
++
++		static OnlineLobbyRoomSnapshot CreateOnlineLobbySnapshot(
++			ServerSettings settings,
++			ModData modData,
++			DedicatedServerOperationalState state,
++			string map,
++			int validatedClients)
++		{
++			var publicPort = settings.OnlineLobbyPublicPort == 0
++				? settings.ListenPort : settings.OnlineLobbyPublicPort;
++			return new OnlineLobbyRoomSnapshot(
++				settings.OnlineLobbyPublicEndpoint,
++				publicPort,
++				settings.Name,
++				settings.OnlineLobbyRegion,
++				state,
++				map,
++				modData.Manifest.Id,
++				modData.Manifest.Metadata.CompatibilityOrVersion,
++				validatedClients,
++				settings.MaxPlayers,
++				!string.IsNullOrEmpty(settings.Password),
++				OnlineLobbyRegistrationPolicy.ShouldPublish(state),
++				Game.EngineVersion ?? "Unknown",
++				ProtocolVersion.HandshakeSchema,
++				ProtocolVersion.Orders,
++				modData.RuntimeContract.ResourceCapability);
+ 		}
+ 
+ 		static void WriteStatus(
+diff -ruN a/OpenRA.Test/IosMenuLayoutPolicyTest.cs b/OpenRA.Test/IosMenuLayoutPolicyTest.cs
+--- a/OpenRA.Test/IosMenuLayoutPolicyTest.cs	2026-09-09 09:01:00
++++ b/OpenRA.Test/IosMenuLayoutPolicyTest.cs	2026-09-09 09:01:00
+@@ -618,12 +618,17 @@
+ 
+ 			foreach (var region in new[]
+ 			{
+-				layout.Header, layout.Table, layout.TableHeader, layout.ServerList, layout.Details,
+-				layout.Footer, layout.Filters, layout.Reload, layout.DirectConnect, layout.CreateButton, layout.Back
++				layout.Header, layout.LocalMode, layout.OnlineMode, layout.Table, layout.TableHeader,
++				layout.ServerList, layout.Details, layout.Footer, layout.Filters, layout.Reload,
++				layout.RoomCodeInput, layout.RoomCodeButton, layout.DirectConnect, layout.CreateButton, layout.Back
+ 			})
+ 				AssertContained(layout.Window, region);
+ 
+ 			Assert.That(layout.ServerList.Bottom, Is.LessThanOrEqualTo(layout.Footer.Y));
++			Assert.That(layout.LocalMode.Right, Is.LessThanOrEqualTo(layout.OnlineMode.X));
++			Assert.That(layout.OnlineMode.Right, Is.LessThanOrEqualTo(layout.Header.X));
++			Assert.That(layout.RoomCodeInput.Right, Is.LessThanOrEqualTo(layout.Reload.X));
++			Assert.That(layout.Reload.Right, Is.LessThanOrEqualTo(layout.RoomCodeButton.X));
+ 			Assert.That(layout.Details.X, Is.GreaterThanOrEqualTo(layout.Table.Right));
+ 			Assert.That(layout.ServerColumns.First().X, Is.Zero);
+ 			Assert.That(layout.ServerColumns.Last().Right, Is.EqualTo(layout.ServerList.Width));
+@@ -631,7 +636,11 @@
+ 				Assert.That(layout.ServerColumns[i - 1].Right, Is.EqualTo(layout.ServerColumns[i].X));
+ 			foreach (var column in layout.ServerColumns)
+ 				Assert.That(column.Width / policy.LogicalPerPoint, Is.GreaterThanOrEqualTo(48));
+-			foreach (var action in new[] { layout.Filters, layout.Reload, layout.DirectConnect, layout.CreateButton, layout.Back })
++			foreach (var action in new[]
++			{
++				layout.LocalMode, layout.OnlineMode, layout.Filters, layout.Reload, layout.RoomCodeInput,
++				layout.RoomCodeButton, layout.DirectConnect, layout.CreateButton, layout.Back
++			})
+ 				AssertPhysicalTarget(action, policy);
+ 		}
+ 
+diff -ruN a/OpenRA.Test/IosMultiplayerPolicyTest.cs b/OpenRA.Test/IosMultiplayerPolicyTest.cs
+--- a/OpenRA.Test/IosMultiplayerPolicyTest.cs	2026-09-09 09:01:00
++++ b/OpenRA.Test/IosMultiplayerPolicyTest.cs	2026-09-09 09:01:00
+@@ -180,6 +180,69 @@
+ 		}
+ 
+ 		[Test]
++		public void MultiplayerSmokeValidatesOnlineRoomListAndCodeDiscovery()
++		{
++			var common = new Dictionary<string, string>
++			{
++				["OPENRA_IOS_MULTIPLAYER_SMOKE_ROLE"] = "client",
++				["OPENRA_IOS_MULTIPLAYER_SMOKE_ONLINE_LOBBY_URL"] = "https://lobby.nukehour.com/",
++				["OPENRA_IOS_MULTIPLAYER_SMOKE_LAUNCH_NONCE"] = new string('1', 32),
++				["OPENRA_IOS_MULTIPLAYER_SMOKE_PARTICIPANT_NONCE"] = new string('2', 32),
++				["OPENRA_IOS_MULTIPLAYER_SMOKE_EXPECTED_REMOTE_NONCE"] = new string('3', 32)
++			};
++
++			var listValues = new Dictionary<string, string>(common)
++			{
++				["OPENRA_IOS_MULTIPLAYER_SMOKE_DISCOVERY_MODE"] = "online-list",
++				["OPENRA_IOS_MULTIPLAYER_SMOKE_ONLINE_SERVER_ID"] = "phase3-public"
++			};
++			var list = IosMultiplayerSmokeConfiguration.Parse(
++				name => listValues.TryGetValue(name, out var value) ? value : null);
++
++			var codeValues = new Dictionary<string, string>(common)
++			{
++				["OPENRA_IOS_MULTIPLAYER_SMOKE_DISCOVERY_MODE"] = "online-code",
++				["OPENRA_IOS_MULTIPLAYER_SMOKE_ONLINE_ROOM_CODE"] = "a7k9q2"
++			};
++			var code = IosMultiplayerSmokeConfiguration.Parse(
++				name => codeValues.TryGetValue(name, out var value) ? value : null);
++
++			Assert.Multiple(() =>
++			{
++				Assert.That(list.Enabled, Is.True);
++				Assert.That(list.DiscoveryMode, Is.EqualTo(IosMultiplayerSmokeDiscoveryMode.OnlineList));
++				Assert.That(list.OnlineServerId, Is.EqualTo("phase3-public"));
++				Assert.That(list.CreatesPlayerHostedServer, Is.False);
++				Assert.That(code.Enabled, Is.True);
++				Assert.That(code.DiscoveryMode, Is.EqualTo(IosMultiplayerSmokeDiscoveryMode.OnlineCode));
++				Assert.That(code.OnlineRoomCode, Is.EqualTo("A7K9Q2"));
++			});
++		}
++
++		[Test]
++		public void MultiplayerSmokeRejectsIncompleteOnlineDiscoveryConfiguration()
++		{
++			IosMultiplayerSmokeConfiguration Parse(string mode, string lobby = null) =>
++				IosMultiplayerSmokeConfiguration.Parse(name => name switch
++				{
++					"OPENRA_IOS_MULTIPLAYER_SMOKE_ROLE" => "client",
++					"OPENRA_IOS_MULTIPLAYER_SMOKE_DISCOVERY_MODE" => mode,
++					"OPENRA_IOS_MULTIPLAYER_SMOKE_ONLINE_LOBBY_URL" => lobby,
++					"OPENRA_IOS_MULTIPLAYER_SMOKE_LAUNCH_NONCE" => new string('1', 32),
++					"OPENRA_IOS_MULTIPLAYER_SMOKE_PARTICIPANT_NONCE" => new string('2', 32),
++					"OPENRA_IOS_MULTIPLAYER_SMOKE_EXPECTED_REMOTE_NONCE" => new string('3', 32),
++					_ => null
++				});
++
++			Assert.Multiple(() =>
++			{
++				Assert.That(Parse("online-list", "https://lobby.nukehour.com/").Enabled, Is.False);
++				Assert.That(Parse("online-code", "https://lobby.nukehour.com/").Enabled, Is.False);
++				Assert.That(Parse("online-list", "http://public.example/").Enabled, Is.False);
++			});
++		}
++
++		[Test]
+ 		public void MultiplayerSmokeDerivesRuntimeIdentityWhenNoExpectedHashIsSupplied()
+ 		{
+ 			var config = IosMultiplayerSmokeConfiguration.Parse(name => name switch
+@@ -249,6 +312,10 @@
+ 			StringAssert.Contains("actor.CanBeViewedByPlayer(player)", source);
+ 			StringAssert.Contains("actor.IsTargetableBy(combatActor)", source);
+ 			StringAssert.Contains("new Order(\"Attack\"", source);
++			StringAssert.Contains("new Order(\"ForceAttack\"", source,
++				"The physical smoke must use a deterministic terrain attack fallback when distant spawn points leave no visible actor target.");
++			StringAssert.Contains("attackOrderIssued && !attackObserved && !terrainAttackFallback", source,
++				"A normal actor attack that is rejected by stance or target conditions must fall back instead of hanging the physical smoke.");
+ 			StringAssert.DoesNotContain("world.WorldTick > attackIssuedAtTick + 5", source,
+ 				"Short attack activities must be observed from the first synchronized tick.");
+ 			foreach (var field in new[]
+@@ -269,7 +336,9 @@
+ 
+ 			StringAssert.Contains("ios-host-macos-client", source);
+ 			StringAssert.Contains("macos-host-ios-client", source);
+-			StringAssert.Contains("OPENRA_IOS_MULTIPLAYER_SMOKE_DISCOVERY_MODE=direct", source);
++			StringAssert.Contains("OPENRA_IOS_MULTIPLAYER_SMOKE_DISCOVERY_MODE=\"$discovery\"", source);
++			StringAssert.Contains("launch_mac client \"$ios_lan_ip:$port\" direct", source);
++			StringAssert.Contains("launch_ios client \"$mac_lan_ip:$port\" direct", source);
+ 			StringAssert.Contains("OPENRA_IOS_MULTIPLAYER_SMOKE_REQUIRE_GAMEPLAY=true", source);
+ 			StringAssert.Contains("port=\"${OPENRA_IOS_MULTIPLAYER_SMOKE_PORT:-1234}\"", source);
+ 			StringAssert.Contains("OPENRA_DEDICATED_SMOKE_ENDPOINT", source);
+@@ -279,6 +348,23 @@
+ 				"Dedicated smoke validation must use the endpoint's dynamic port.");
+ 			StringAssert.Contains("python3 - \"$1\" \"$2\" \"$connection_port\"", source);
+ 			StringAssert.Contains("assert_journal", source);
++		}
++
++		[Test]
++		public void Phase3RunnerExercisesOnlineListAndRoomCodeWithoutDirectIp()
++		{
++			var source = File.ReadAllText(Path.Combine(RepositoryRoot(), "ios", "scripts",
++				"run-macos-ios-multiplayer-smoke.sh"));
++
++			StringAssert.Contains("OPENRA_PHASE3_LOBBY_URL", source);
++			StringAssert.Contains("OPENRA_PHASE3_SERVER_ID", source);
++			StringAssert.Contains("OPENRA_IOS_MULTIPLAYER_SMOKE_ONLINE_LOBBY_URL", source);
++			StringAssert.Contains("OPENRA_IOS_MULTIPLAYER_SMOKE_ONLINE_SERVER_ID", source);
++			StringAssert.Contains("OPENRA_IOS_MULTIPLAYER_SMOKE_ONLINE_ROOM_CODE", source);
++			StringAssert.Contains("online-list", source);
++			StringAssert.Contains("online-code", source);
++			StringAssert.Contains("online-room-list-matched", source);
++			StringAssert.Contains("online-room-code-matched", source);
+ 		}
+ 
+ 		[Test]
+diff -ruN a/OpenRA.Test/NukeHourOnlineLobbyRegistrationTest.cs b/OpenRA.Test/NukeHourOnlineLobbyRegistrationTest.cs
+--- a/OpenRA.Test/NukeHourOnlineLobbyRegistrationTest.cs	1969-12-31 16:00:00
++++ b/OpenRA.Test/NukeHourOnlineLobbyRegistrationTest.cs	2026-09-09 09:01:00
+@@ -0,0 +1,189 @@
++#region Copyright & License Information
++/*
++ * Copyright (c) The OpenRA Developers and Contributors
++ * This file is part of OpenRA, which is free software. It is made
++ * available to you under the terms of the GNU General Public License
++ * as published by the Free Software Foundation, either version 3 of
++ * the License, or (at your option) any later version. For more
++ * information, see COPYING.
++ */
++#endregion
++
++using System;
++using System.Collections.Generic;
++using System.Net;
++using System.Net.Http;
++using System.Text;
++using System.Threading;
++using System.Threading.Tasks;
++using NUnit.Framework;
++using OpenRA.Server;
++
++namespace OpenRA.Test
++{
++	[TestFixture]
++	public sealed class NukeHourOnlineLobbyRegistrationTest
++	{
++		sealed class RecordingHandler : HttpMessageHandler
++		{
++			readonly Queue<HttpResponseMessage> responses;
++			public readonly List<HttpRequestMessage> Requests = new();
++			public readonly List<string> Bodies = new();
++
++			public RecordingHandler(params HttpResponseMessage[] responses)
++			{
++				this.responses = new Queue<HttpResponseMessage>(responses);
++			}
++
++			protected override async Task<HttpResponseMessage> SendAsync(
++				HttpRequestMessage request, CancellationToken cancellationToken)
++			{
++				Requests.Add(request);
++				Bodies.Add(request.Content == null ? "" : await request.Content.ReadAsStringAsync(cancellationToken));
++				return responses.Dequeue();
++			}
++		}
++
++		static OnlineLobbyRoomSnapshot Snapshot(DedicatedServerOperationalState state = DedicatedServerOperationalState.WaitingForPlayers) =>
++			new(
++				"203.0.113.10", 4567, "Official Room", "asia-east", state,
++				"map-uid", "ra2", "nukehour-core-sha256-example", 2, 8, false, true,
++				"release-20250330", ProtocolVersion.HandshakeSchema, ProtocolVersion.Orders,
++				"ra2-presentation-capability-v2");
++
++		static HttpResponseMessage Json(HttpStatusCode status, string json = "{}") => new(status)
++		{
++			Content = new StringContent(json, Encoding.UTF8, "application/json"),
++		};
++
++		[Test]
++		public void LobbySettingsAreDisabledAndSecretFreeByDefault()
++		{
++			var settings = new ServerSettings();
++			Assert.Multiple(() =>
++			{
++				Assert.That(settings.OnlineLobbyUrl, Is.Empty);
++				Assert.That(settings.OnlineLobbyServerId, Is.Empty);
++				Assert.That(typeof(ServerSettings).GetField("OnlineLobbyRegistrationCredential"), Is.Null,
++					"Registration credentials must not be accepted as command-line settings.");
++				Assert.That(OnlineLobbyRegistrationPolicy.CredentialEnvironmentVariable,
++					Is.EqualTo("NUKEHOUR_LOBBY_REGISTRATION_CREDENTIAL"));
++				Assert.That(settings.OnlineLobbyPublicEndpoint, Is.Empty);
++				Assert.That(settings.OnlineLobbyPublicPort, Is.EqualTo(0));
++				Assert.That(settings.OnlineLobbyRegion, Is.Empty);
++				Assert.That(settings.OnlineLobbyHeartbeatSeconds, Is.EqualTo(15));
++			});
++		}
++
++		[Test]
++		public void RegistrationPolicyRequiresASecretFromTheDedicatedEnvironment()
++		{
++			var settings = new ServerSettings
++			{
++				OnlineLobbyUrl = "https://lobby.nukehour.com/",
++				OnlineLobbyServerId = "server-a",
++				OnlineLobbyPublicEndpoint = "203.0.113.10",
++				OnlineLobbyPublicPort = 4567,
++				OnlineLobbyRegion = "asia-east"
++			};
++
++			Assert.Multiple(() =>
++			{
++				Assert.That(() => OnlineLobbyRegistrationPolicy.Validate(settings, "short"),
++					Throws.ArgumentException);
++				Assert.That(() => OnlineLobbyRegistrationPolicy.Validate(settings, new string('s', 32)),
++					Throws.Nothing);
++			});
++		}
++
++		[Test]
++		public void PublicHttpsAndLoopbackHttpAreTheOnlyAllowedLobbyUrls()
++		{
++			Assert.Multiple(() =>
++			{
++				Assert.That(OnlineLobbyRegistrationPolicy.ParseBaseUri("https://lobby.nukehour.com").Scheme, Is.EqualTo("https"));
++				Assert.That(OnlineLobbyRegistrationPolicy.ParseBaseUri("http://127.0.0.1:8080").IsLoopback, Is.True);
++				Assert.That(() => OnlineLobbyRegistrationPolicy.ParseBaseUri("http://203.0.113.10:8080"), Throws.ArgumentException);
++				Assert.That(() => OnlineLobbyRegistrationPolicy.ParseBaseUri("file:///tmp/lobby"), Throws.ArgumentException);
++			});
++		}
++
++		[TestCase(DedicatedServerOperationalState.Starting, false)]
++		[TestCase(DedicatedServerOperationalState.WaitingForPlayers, true)]
++		[TestCase(DedicatedServerOperationalState.InLobby, true)]
++		[TestCase(DedicatedServerOperationalState.InGame, true)]
++		[TestCase(DedicatedServerOperationalState.GameFinished, false)]
++		[TestCase(DedicatedServerOperationalState.Stopping, false)]
++		public void RegistrationPublishesOnlyLiveReadyLifecycleStates(
++			DedicatedServerOperationalState state, bool expected)
++		{
++			Assert.That(OnlineLobbyRegistrationPolicy.ShouldPublish(state), Is.EqualTo(expected));
++		}
++
++		[Test]
++		public async Task RegistrationAndHeartbeatUsePrivateBearerTokens()
++		{
++			var handler = new RecordingHandler(
++				Json(HttpStatusCode.Created,
++					"{\"room\":{\"roomId\":\"room-id\",\"roomCode\":\"A7K9Q2\"}," +
++					"\"registrationToken\":\"session-token-that-is-private-and-long\"}"),
++				Json(HttpStatusCode.OK, "{}"));
++			using var http = new HttpClient(handler);
++			using var client = new OnlineLobbyRegistrationClient(
++				http, new Uri("https://lobby.nukehour.com/"), "official-registration-credential-long", "server-a");
++
++			await client.UpdateAsync(Snapshot(), CancellationToken.None);
++			await client.UpdateAsync(Snapshot(DedicatedServerOperationalState.InGame), CancellationToken.None);
++
++			Assert.Multiple(() =>
++			{
++				Assert.That(handler.Requests[0].RequestUri.AbsolutePath, Is.EqualTo("/v1/servers/register"));
++				Assert.That(handler.Requests[0].Headers.Authorization.Parameter, Is.EqualTo("official-registration-credential-long"));
++				Assert.That(handler.Requests[1].RequestUri.AbsolutePath, Is.EqualTo("/v1/servers/server-a/heartbeat"));
++				Assert.That(handler.Requests[1].Headers.Authorization.Parameter, Is.EqualTo("session-token-that-is-private-and-long"));
++				Assert.That(handler.Bodies[0], Does.Contain("\"handshakeSchemaVersion\":1"));
++				Assert.That(handler.Bodies[0], Does.Contain("\"ordersVersion\":23"));
++				Assert.That(handler.Bodies[0], Does.Not.Contain("runtimeContract"));
++				Assert.That(handler.Bodies[1], Does.Contain("\"status\":\"IN_GAME\""));
++			});
++		}
++
++		[Test]
++		public async Task MissingLobbyRegistrationImmediatelyReregisters()
++		{
++			var handler = new RecordingHandler(
++				Json(HttpStatusCode.Created,
++					"{\"room\":{\"roomId\":\"room-id\",\"roomCode\":\"A7K9Q2\"}," +
++					"\"registrationToken\":\"session-token-that-is-private-and-long\"}"),
++				Json(HttpStatusCode.NotFound),
++				Json(HttpStatusCode.Created,
++					"{\"room\":{\"roomId\":\"room-id-2\",\"roomCode\":\"B8M3R4\"}," +
++					"\"registrationToken\":\"replacement-session-token-private\"}"));
++			using var client = new OnlineLobbyRegistrationClient(
++				new HttpClient(handler), new Uri("https://lobby.nukehour.com/"),
++				"official-registration-credential-long", "server-a");
++
++			await client.UpdateAsync(Snapshot(), CancellationToken.None);
++			await client.UpdateAsync(Snapshot(), CancellationToken.None);
++
++			Assert.That(handler.Requests.ConvertAll(r => r.RequestUri.AbsolutePath), Is.EqualTo(new[]
++			{
++				"/v1/servers/register",
++				"/v1/servers/server-a/heartbeat",
++				"/v1/servers/register",
++			}));
++		}
++
++		[Test]
++		public void LobbyHttpFailureIsReturnedToTheMonitorAndNeverThrowsIntoGameplay()
++		{
++			var handler = new RecordingHandler(Json(HttpStatusCode.ServiceUnavailable));
++			using var client = new OnlineLobbyRegistrationClient(
++				new HttpClient(handler), new Uri("https://lobby.nukehour.com/"),
++				"official-registration-credential-long", "server-a");
++
++			Assert.That(async () => await client.TryUpdateAsync(Snapshot(), CancellationToken.None), Throws.Nothing);
++			Assert.That(client.LastErrorCode, Is.EqualTo("LOBBY_HTTP_503"));
++		}
++	}
++}
+diff -ruN a/OpenRA.Test/NukeHourOnlineMultiplayerUiTest.cs b/OpenRA.Test/NukeHourOnlineMultiplayerUiTest.cs
+--- a/OpenRA.Test/NukeHourOnlineMultiplayerUiTest.cs	1969-12-31 16:00:00
++++ b/OpenRA.Test/NukeHourOnlineMultiplayerUiTest.cs	2026-09-09 09:01:00
+@@ -0,0 +1,88 @@
++#region Copyright & License Information
++/*
++ * Copyright (c) The OpenRA Developers and Contributors
++ * This file is part of OpenRA, which is free software. It is made
++ * available to you under the terms of the GNU General Public License
++ * as published by the Free Software Foundation, either version 3 of
++ * the License, or (at your option) any later version. For more
++ * information, see COPYING.
++ */
++#endregion
++
++using System.IO;
++using NUnit.Framework;
++using OpenRA.Mods.Common.Widgets.Logic;
++using OpenRA.Network;
++
++namespace OpenRA.Test
++{
++	[TestFixture]
++	public sealed class NukeHourOnlineMultiplayerUiTest
++	{
++		static string RepositoryRoot()
++		{
++			var directory = new DirectoryInfo(TestContext.CurrentContext.TestDirectory);
++			while (directory != null && !File.Exists(Path.Combine(
++				directory.FullName, "engine", "OpenRA.Game", "Game.cs")))
++				directory = directory.Parent;
++
++			Assert.That(directory, Is.Not.Null);
++			return directory!.FullName;
++		}
++
++		[Test]
++		public void LocalAndOnlineModesHavePermanentSeparateResponsibilities()
++		{
++			Assert.Multiple(() =>
++			{
++				Assert.That(MultiplayerServerModePolicy.UsesNearbyDiscovery(MultiplayerServerMode.Local), Is.True);
++				Assert.That(MultiplayerServerModePolicy.UsesOnlineDirectory(MultiplayerServerMode.Local), Is.False);
++				Assert.That(MultiplayerServerModePolicy.ShowsLocalHosting(MultiplayerServerMode.Local), Is.True);
++				Assert.That(MultiplayerServerModePolicy.ShowsDirectIp(MultiplayerServerMode.Local), Is.True);
++				Assert.That(MultiplayerServerModePolicy.UsesNearbyDiscovery(MultiplayerServerMode.Online), Is.False);
++				Assert.That(MultiplayerServerModePolicy.UsesOnlineDirectory(MultiplayerServerMode.Online), Is.True);
++				Assert.That(MultiplayerServerModePolicy.ShowsLocalHosting(MultiplayerServerMode.Online), Is.False);
++				Assert.That(MultiplayerServerModePolicy.ShowsDirectIp(MultiplayerServerMode.Online), Is.False);
++			});
++		}
++
++		[TestCase(OnlineRoomCompatibilityReason.HandshakeSchemaMismatch, "label-online-room-error-handshake")]
++		[TestCase(OnlineRoomCompatibilityReason.OrdersVersionMismatch, "label-online-room-error-orders")]
++		[TestCase(OnlineRoomCompatibilityReason.EngineMismatch, "label-online-room-error-engine")]
++		[TestCase(OnlineRoomCompatibilityReason.ModMismatch, "label-online-room-error-mod")]
++		[TestCase(OnlineRoomCompatibilityReason.ModVersionMismatch, "label-online-room-error-version")]
++		[TestCase(OnlineRoomCompatibilityReason.RuntimeCapabilityMismatch, "label-online-room-error-resources")]
++		public void EveryCompatibilityFailureHasAStableLocalizedReason(
++			OnlineRoomCompatibilityReason reason, string expected)
++		{
++			Assert.That(OnlineRoomCompatibility.MessageKey(reason), Is.EqualTo(expected));
++		}
++
++		[Test]
++		public void MultiplayerChromeExposesModesAndCodeWithoutAnOnlineIpSurface()
++		{
++			var root = RepositoryRoot();
++			var yaml = File.ReadAllText(Path.Combine(root, "engine", "mods", "common", "chrome", "multiplayer-browser.yaml"));
++			var logic = File.ReadAllText(Path.Combine(root, "engine", "OpenRA.Mods.Common", "Widgets", "Logic", "ServerListLogic.cs"));
++
++			foreach (var id in new[]
++			{
++				"LOCAL_MODE_BUTTON", "ONLINE_MODE_BUTTON", "ROOM_CODE_INPUT", "ROOM_CODE_BUTTON",
++				"DIRECTCONNECT_BUTTON", "CREATE_BUTTON"
++			})
++				Assert.That(yaml, Does.Contain("@" + id + ":"), id);
++
++			Assert.That(logic, Does.Contain("!currentServer.IsOnlineRoom"));
++			Assert.That(logic, Does.Not.Contain("services.ServerList"),
++				"Local Multiplayer must never depend on the legacy public master server.");
++		}
++
++		[Test]
++		public void NukeHourManifestUsesTheFormalHttpsLobbyEndpoint()
++		{
++			var root = RepositoryRoot();
++			var manifest = File.ReadAllText(Path.Combine(root, "mods", "ra2", "mod.yaml"));
++			Assert.That(manifest, Does.Contain("WebServices:\n\tOnlineLobby: https://lobby.nukehour.com/"));
++		}
++	}
++}
+diff -ruN a/OpenRA.Test/NukeHourOnlineRoomDirectoryTest.cs b/OpenRA.Test/NukeHourOnlineRoomDirectoryTest.cs
+--- a/OpenRA.Test/NukeHourOnlineRoomDirectoryTest.cs	1969-12-31 16:00:00
++++ b/OpenRA.Test/NukeHourOnlineRoomDirectoryTest.cs	2026-09-09 09:01:00
+@@ -0,0 +1,174 @@
++#region Copyright & License Information
++/*
++ * Copyright (c) The OpenRA Developers and Contributors
++ * This file is part of OpenRA, which is free software. It is made
++ * available to you under the terms of the GNU General Public License
++ * as published by the Free Software Foundation, either version 3 of
++ * the License, or (at your option) any later version. For more
++ * information, see COPYING.
++ */
++#endregion
++
++using System;
++using System.Net;
++using System.Net.Http;
++using System.Text;
++using System.Threading;
++using System.Threading.Tasks;
++using NUnit.Framework;
++using OpenRA.Network;
++
++namespace OpenRA.Test
++{
++	[TestFixture]
++	public sealed class NukeHourOnlineRoomDirectoryTest
++	{
++		sealed class StaticHandler : HttpMessageHandler
++		{
++			readonly HttpResponseMessage response;
++			public Uri RequestUri { get; private set; }
++
++			public StaticHandler(HttpStatusCode status, string body)
++			{
++				response = new HttpResponseMessage(status)
++				{
++					Content = new StringContent(body, Encoding.UTF8, "application/json"),
++				};
++			}
++
++			protected override Task<HttpResponseMessage> SendAsync(
++				HttpRequestMessage request, CancellationToken cancellationToken)
++			{
++				RequestUri = request.RequestUri;
++				return Task.FromResult(response);
++			}
++		}
++
++		const string RoomJson = @"{
++			""roomId"":""6aaf2f79-84f5-4fc8-b4df-1f1b77f3d8e6"",
++			""roomCode"":""A7K9Q2"",
++			""serverId"":""server-a"",
++			""serverEndpoint"":""203.0.113.10"",
++			""serverPort"":4567,
++			""serverName"":""Official Room"",
++			""region"":""asia-east"",
++			""status"":""WAITING"",
++			""map"":""map-uid"",
++			""mod"":""ra2"",
++			""modVersion"":""nukehour-core-sha256-example"",
++			""players"":2,
++			""maxPlayers"":8,
++			""hasPassword"":false,
++			""ready"":true,
++			""engineCompatibility"":""release-20250330"",
++			""handshakeSchemaVersion"":1,
++			""ordersVersion"":23,
++			""runtimeCapability"":""ra2-presentation-capability-v2"",
++			""trust"":""official"",
++			""createdAt"":""2026-09-09T12:00:00Z"",
++			""lastHeartbeatAt"":""2026-09-09T12:00:10Z""
++		}";
++
++		static OnlineRoomCompatibilityIdentity CompatibleIdentity() => new(
++			"release-20250330", "ra2", "nukehour-core-sha256-example",
++			"ra2-presentation-capability-v2", 1, 23);
++
++		[Test]
++		public async Task RoomListParsesStrictMetadataAndKeepsEndpointOutOfDisplayText()
++		{
++			var handler = new StaticHandler(HttpStatusCode.OK, "{\"rooms\":[" + RoomJson + "]}");
++			using var client = new OnlineRoomDirectoryClient(
++				new HttpClient(handler), new Uri("https://lobby.nukehour.com/"));
++
++			var rooms = await client.GetRoomsAsync(CancellationToken.None);
++
++			Assert.That(rooms, Has.Count.EqualTo(1));
++			var room = rooms[0];
++			Assert.Multiple(() =>
++			{
++				Assert.That(room.RoomCode, Is.EqualTo("A7K9Q2"));
++				Assert.That(room.Endpoint, Is.EqualTo("203.0.113.10:4567"));
++				Assert.That(room.DisplaySummary, Does.Contain("Official Room"));
++				Assert.That(room.DisplaySummary, Does.Contain("asia-east"));
++				Assert.That(room.DisplaySummary, Does.Not.Contain("203.0.113.10"));
++				Assert.That(handler.RequestUri.AbsolutePath, Is.EqualTo("/v1/rooms"));
++			});
++		}
++
++		[Test]
++		public async Task RoomCodeLookupNormalizesAndResolves()
++		{
++			var handler = new StaticHandler(HttpStatusCode.OK, RoomJson);
++			using var client = new OnlineRoomDirectoryClient(
++				new HttpClient(handler), new Uri("https://lobby.nukehour.com/"));
++
++			var room = await client.ResolveCodeAsync("a7k9q2", CancellationToken.None);
++			Assert.That(room.RoomCode, Is.EqualTo("A7K9Q2"));
++			Assert.That(handler.RequestUri.AbsolutePath, Is.EqualTo("/v1/rooms/code/A7K9Q2"));
++			Assert.That(
++				async () => await client.ResolveCodeAsync("bad!", CancellationToken.None),
++				Throws.TypeOf<ArgumentException>());
++		}
++
++		[TestCase("release-other", "ra2", "nukehour-core-sha256-example", "ra2-presentation-capability-v2",
++			1, 23, OnlineRoomCompatibilityReason.EngineMismatch)]
++		[TestCase("release-20250330", "other", "nukehour-core-sha256-example", "ra2-presentation-capability-v2",
++			1, 23, OnlineRoomCompatibilityReason.ModMismatch)]
++		[TestCase("release-20250330", "ra2", "other", "ra2-presentation-capability-v2",
++			1, 23, OnlineRoomCompatibilityReason.ModVersionMismatch)]
++		[TestCase("release-20250330", "ra2", "nukehour-core-sha256-example", "other",
++			1, 23, OnlineRoomCompatibilityReason.RuntimeCapabilityMismatch)]
++		[TestCase("release-20250330", "ra2", "nukehour-core-sha256-example", "ra2-presentation-capability-v2",
++			2, 23, OnlineRoomCompatibilityReason.HandshakeSchemaMismatch)]
++		[TestCase("release-20250330", "ra2", "nukehour-core-sha256-example", "ra2-presentation-capability-v2",
++			1, 24, OnlineRoomCompatibilityReason.OrdersVersionMismatch)]
++		public void PrecheckRejectsEveryPublicCompatibilityMismatch(
++			string engine, string mod, string version, string capability,
++			int handshake, int orders, OnlineRoomCompatibilityReason expected)
++		{
++			var room = OnlineRoom.Parse(RoomJson);
++			var local = new OnlineRoomCompatibilityIdentity(engine, mod, version, capability, handshake, orders);
++			Assert.That(OnlineRoomCompatibility.Precheck(room, local), Is.EqualTo(expected));
++		}
++
++		[Test]
++		public void MatchingPrecheckIsOnlyAnOptimizationAndEndpointRemainsDirect()
++		{
++			var room = OnlineRoom.Parse(RoomJson);
++			Assert.Multiple(() =>
++			{
++				Assert.That(OnlineRoomCompatibility.Precheck(room, CompatibleIdentity()), Is.EqualTo(OnlineRoomCompatibilityReason.Compatible));
++				Assert.That(room.TryGetConnectionTarget(out var target), Is.True);
++				Assert.That(target.ToString(), Does.Contain("203.0.113.10"));
++				Assert.That(target.ToString(), Does.Contain("4567"));
++				Assert.That(room.TryGetConnectionTarget(out _), Is.True,
++					"a positive precheck only resolves the existing direct TCP target");
++			});
++		}
++
++		[TestCase(HttpStatusCode.ServiceUnavailable, OnlineRoomDirectoryError.ServiceUnavailable)]
++		[TestCase(HttpStatusCode.NotFound, OnlineRoomDirectoryError.RoomDisappeared)]
++		[TestCase(HttpStatusCode.TooManyRequests, OnlineRoomDirectoryError.RateLimited)]
++		public void HttpFailuresHaveStableUserFacingCategories(HttpStatusCode status, OnlineRoomDirectoryError expected)
++		{
++			var handler = new StaticHandler(status, "{}");
++			using var client = new OnlineRoomDirectoryClient(
++				new HttpClient(handler), new Uri("https://lobby.nukehour.com/"));
++
++			var exception = Assert.ThrowsAsync<OnlineRoomDirectoryException>(
++				async () => await client.GetRoomsAsync(CancellationToken.None));
++			Assert.That(exception.Error, Is.EqualTo(expected));
++		}
++
++		[Test]
++		public void PublicLobbyRequiresHttpsExceptForLoopbackDevelopment()
++		{
++			Assert.Multiple(() =>
++			{
++				Assert.That(OnlineRoomDirectoryClient.ParseBaseUri("https://lobby.nukehour.com").Scheme, Is.EqualTo("https"));
++				Assert.That(OnlineRoomDirectoryClient.ParseBaseUri("http://localhost:8080").IsLoopback, Is.True);
++				Assert.That(() => OnlineRoomDirectoryClient.ParseBaseUri("http://203.0.113.10:8080"), Throws.ArgumentException);
++			});
++		}
++	}
++}
+diff -ruN a/mods/common/chrome/multiplayer-browser.yaml b/mods/common/chrome/multiplayer-browser.yaml
+--- a/mods/common/chrome/multiplayer-browser.yaml	2026-09-09 09:01:00
++++ b/mods/common/chrome/multiplayer-browser.yaml	2026-09-09 09:01:00
+@@ -5,9 +5,24 @@
+ 	Width: 900
+ 	Height: 600
+ 	Children:
++		Button@LOCAL_MODE_BUTTON:
++			X: 20
++			Y: 10
++			Width: 110
++			Height: 31
++			Text: button-multiplayer-panel-local
++			Font: Bold
++		Button@ONLINE_MODE_BUTTON:
++			X: 135
++			Y: 10
++			Width: 110
++			Height: 31
++			Text: button-multiplayer-panel-online
++			Font: Bold
+ 		Label@TITLE:
++			X: 250
+ 			Y: 16
+-			Width: PARENT_WIDTH
++			Width: PARENT_WIDTH - 500
+ 			Height: 25
+ 			Text: label-multiplayer-title
+ 			Align: Center
+@@ -226,6 +241,19 @@
+ 					IgnoreMouseOver: True
+ 					Children:
+ 						LogicTicker@ANIMATION:
++		TextField@ROOM_CODE_INPUT:
++			X: 20
++			Y: PARENT_HEIGHT - HEIGHT - 20
++			Width: 158
++			Height: 25
++			MaxLength: 6
++		Button@ROOM_CODE_BUTTON:
++			X: 212
++			Y: PARENT_HEIGHT - HEIGHT - 20
++			Width: 232
++			Height: 25
++			Text: button-multiplayer-panel-room-code
++			Font: Bold
+ 		Label@PLAYER_COUNT:
+ 			X: 254
+ 			Y: PARENT_HEIGHT - HEIGHT - 20
+diff -ruN a/mods/common/fluent/chrome.ftl b/mods/common/fluent/chrome.ftl
+--- a/mods/common/fluent/chrome.ftl	2026-09-09 09:01:00
++++ b/mods/common/fluent/chrome.ftl	2026-09-09 09:01:00
+@@ -364,6 +364,9 @@
+ dropdownbutton-multiplayer-panel-filters = Filter Games
+ button-multiplayer-panel-directconnect = Direct IP
+ button-multiplayer-panel-create = Create
++button-multiplayer-panel-local = Local
++button-multiplayer-panel-online = Online
++button-multiplayer-panel-room-code = Join Room Code
+ 
+ ## multiplayer-browserpanels.yaml
+ checkbox-multiplayer-filter-panel-waiting-for-players = Waiting
+diff -ruN a/mods/common/fluent/common.ftl b/mods/common/fluent/common.ftl
+--- a/mods/common/fluent/common.ftl	2026-09-09 09:01:00
++++ b/mods/common/fluent/common.ftl	2026-09-09 09:01:00
+@@ -667,6 +667,18 @@
+ label-search-status-failed = Failed to query server list.
+ label-search-status-no-games = No games found. Try changing filters.
+ label-no-server-selected = No Server Selected
++label-online-room-status-no-rooms = No public rooms are available.
++label-online-room-error-unavailable = Online Lobby is unavailable. Local Multiplayer is still available.
++label-online-room-error-disappeared = This room is no longer available.
++label-online-room-error-rate-limited = Too many room requests. Please wait and try again.
++label-online-room-error-invalid-response = Online Lobby returned invalid room information.
++label-online-room-error-invalid-code = Enter a valid six-character room code.
++label-online-room-error-handshake = Incompatible handshake protocol
++label-online-room-error-orders = Incompatible gameplay protocol
++label-online-room-error-engine = Incompatible engine version
++label-online-room-error-mod = Incompatible game module
++label-online-room-error-version = Incompatible gameplay core
++label-online-room-error-resources = Incompatible imported resources
+ 
+ label-map-status-searching = Searching...
+ label-map-classification-unknown = Unknown Map
+diff -ruN a/mods/common/fluent/zh-CN/chrome.ftl b/mods/common/fluent/zh-CN/chrome.ftl
+--- a/mods/common/fluent/zh-CN/chrome.ftl	2026-09-09 09:01:00
++++ b/mods/common/fluent/zh-CN/chrome.ftl	2026-09-09 09:01:00
+@@ -364,6 +364,9 @@
+ dropdownbutton-multiplayer-panel-filters = 筛选游戏
+ button-multiplayer-panel-directconnect = IP 直连
+ button-multiplayer-panel-create = 创建
++button-multiplayer-panel-local = 局域网联机
++button-multiplayer-panel-online = 在线联机
++button-multiplayer-panel-room-code = 通过房间码加入
+ 
+ ## multiplayer-browserpanels.yaml
+ checkbox-multiplayer-filter-panel-waiting-for-players = 等待中
+diff -ruN a/mods/common/fluent/zh-CN/common.ftl b/mods/common/fluent/zh-CN/common.ftl
+--- a/mods/common/fluent/zh-CN/common.ftl	2026-09-09 09:01:00
++++ b/mods/common/fluent/zh-CN/common.ftl	2026-09-09 09:01:00
+@@ -656,6 +656,18 @@
+ label-search-status-failed = 查询服务器列表失败。
+ label-search-status-no-games = 未找到游戏，请尝试更改筛选条件。
+ label-no-server-selected = 未选择服务器
++label-online-room-status-no-rooms = 当前没有可加入的公网房间。
++label-online-room-error-unavailable = 在线大厅暂时不可用，局域网联机仍可正常使用。
++label-online-room-error-disappeared = 这个房间已经不存在。
++label-online-room-error-rate-limited = 房间查询过于频繁，请稍后重试。
++label-online-room-error-invalid-response = 在线大厅返回了无效的房间信息。
++label-online-room-error-invalid-code = 请输入有效的六位房间代码。
++label-online-room-error-handshake = 握手协议不兼容
++label-online-room-error-orders = 游戏指令协议不兼容
++label-online-room-error-engine = 引擎版本不兼容
++label-online-room-error-mod = 游戏模块不兼容
++label-online-room-error-version = 游戏核心不兼容
++label-online-room-error-resources = 导入资源不兼容
+ 
+ label-map-status-searching = 搜索中……
+ label-map-classification-unknown = 未知地图

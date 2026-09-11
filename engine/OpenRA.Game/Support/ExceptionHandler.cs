@@ -109,7 +109,10 @@ namespace OpenRA
 				var modData = Game.ModData;
 				var manifest = modData?.Manifest;
 				if (manifest != null)
-					report.AppendLine($"{manifest.Id} mod version {manifest.Metadata.Version}");
+				{
+					report.AppendLine($"{manifest.Id} product version {manifest.Metadata.DisplayVersionOrVersion}");
+					report.AppendLine($"{manifest.Id} compatibility {manifest.Metadata.CompatibilityOrVersion}");
+				}
 			});
 
 			AppendReportSection(report, "world", () =>

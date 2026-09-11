@@ -103,9 +103,6 @@ namespace OpenRA.Mods.Common.Server
 		const string UnknownMap = "notification-unknown-map";
 
 		[FluentReference]
-		const string SearchingMap = "notification-searching-map";
-
-		[FluentReference]
 		const string NotAdmin = "notification-admin-change-configuration";
 
 		[FluentReference]
@@ -518,6 +515,7 @@ namespace OpenRA.Mods.Common.Server
 
 				if (!string.Equals(request.ExpectedMapUid, currentMapUid, StringComparison.Ordinal))
 				{
+					Log.Write("server", $"[NET] Reject start: {NetworkCompatibilityReason.MapMismatch.Code()}");
 					server.SendOrderTo(conn, "SafeStartRejected", new LobbyStartRejection(
 						Session.LobbyStartBlockReason.StaleMap,
 						-1,
@@ -834,19 +832,6 @@ namespace OpenRA.Mods.Common.Server
 				var m = server.ModData.MapCache[s];
 				if (m.Status == MapStatus.Available || m.Status == MapStatus.DownloadAvailable)
 					SelectMap(m);
-				else if (server.Settings.QueryMapRepository)
-				{
-					server.SendFluentMessageTo(conn, SearchingMap);
-					var mapRepository = server.ModData.Manifest.Get<WebServices>().MapRepository;
-					var reported = false;
-					server.ModData.MapCache.QueryRemoteMapDetails(mapRepository, new[] { s }, SelectMap, _ =>
-					{
-						if (!reported)
-							QueryFailed();
-
-						reported = true;
-					});
-				}
 				else
 					QueryFailed();
 
@@ -1450,36 +1435,15 @@ namespace OpenRA.Mods.Common.Server
 			var mapCache = server.ModData.MapCache;
 			if (server.Settings.MapPool.Length > 0)
 				server.MapPool = server.Settings.MapPool.ToHashSet();
-			else if (!server.Settings.QueryMapRepository)
+			else
 				server.MapPool = mapCache
 					.Where(p => p.Status == MapStatus.Available && p.Visibility.HasFlag(MapVisibility.Lobby))
 					.Select(p => p.Uid)
 					.ToHashSet();
-			else
-				return;
 
 			var unknownMaps = server.MapPool.Where(server.MapIsUnknown).ToList();
 			if (unknownMaps.Count == 0)
 				return;
-
-			if (server.Settings.QueryMapRepository)
-			{
-				Log.Write("server", $"Querying Resource Center for information on {unknownMaps.Count} maps...");
-
-				// Query any missing maps and wait up to 10 seconds for a response
-				// Maps that have not resolved will not be valid for the initial map choice
-				var mapRepository = server.ModData.Manifest.Get<WebServices>().MapRepository;
-				mapCache.QueryRemoteMapDetails(mapRepository, unknownMaps);
-
-				var searchingMaps = server.MapPool.Where(uid => mapCache[uid].Status == MapStatus.Searching);
-				var stopwatch = Stopwatch.StartNew();
-
-				// Each time we check, some map statuses may have updated.
-#pragma warning disable CA1851 // Possible multiple enumerations of 'IEnumerable' collection
-				while (searchingMaps.Any() && stopwatch.ElapsedMilliseconds < 10000)
-					Thread.Sleep(100);
-#pragma warning restore CA1851
-			}
 
 			var stillUnknownMaps = server.MapPool.Where(server.MapIsUnknown).ToList();
 			if (stillUnknownMaps.Count != 0)

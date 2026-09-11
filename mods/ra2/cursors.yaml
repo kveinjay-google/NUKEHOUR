@@ -103,6 +103,9 @@ Cursors:
 		undeploy-silver:
 			Start: 120
 			Length: 9
+		undeploy:
+			Start: 120
+			Length: 9
 		sell:
 			Start: 129
 			Length: 10
@@ -233,6 +236,15 @@ Cursors:
 			Start: 433
 		attackmove-minimap:
 			Start: 434
+		assaultmove:
+			Start: 404
+			Length: 9
+		assaultmove-minimap:
+			Start: 434
+		assaultmove-blocked:
+			Start: 384
+		assaultmove-blocked-minimap:
+			Start: 384
 		beacon-mouseover:
 			Start: 435
 			Length: 20
@@ -282,18 +294,3 @@ Cursors:
 			Start: 392
 		joystick-tl-blocked:
 			Start: 393
-	undeploy.shp: mouse
-		undeploy:
-			Start: 0
-			Length: 7
-	assaultmove.shp: mouse
-		assaultmove:
-			Start: 0
-			Length: 9
-		assaultmove-minimap:
-			Start: 9
-		assaultmove-blocked: # TODO
-			Start: 0
-			Length: 9
-		assaultmove-blocked-minimap: # TODO
-			Start: 9

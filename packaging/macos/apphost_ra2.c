@@ -28,7 +28,7 @@ static char *find_dotnet_root(char *hostfxr_path)
 	/* .../dotnet/host/fxr/VERSION/libhostfxr.dylib -> .../dotnet */
 	char *copy = strdup(hostfxr_path);
 	char *p = copy;
-	for (int i = 0; i < 3; i++)
+	for (int i = 0; i < 4; i++)
 	{
 		char *slash = strrchr(p, '/');
 		if (!slash)

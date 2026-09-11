@@ -1,0 +1,765 @@
+diff -ruN a/OpenRA.Mods.Common/Installer/SourceResolvers/MacOSDirectorySourceResolver.cs b/OpenRA.Mods.Common/Installer/SourceResolvers/MacOSDirectorySourceResolver.cs
+--- a/OpenRA.Mods.Common/Installer/SourceResolvers/MacOSDirectorySourceResolver.cs	1969-12-31 16:00:00
++++ b/OpenRA.Mods.Common/Installer/SourceResolvers/MacOSDirectorySourceResolver.cs	2026-09-07 23:35:08
+@@ -0,0 +1,197 @@
++#region Copyright & License Information
++/*
++ * Copyright (c) The OpenRA Developers and Contributors
++ * This file is part of OpenRA, which is free software. It is made
++ * available under the terms of the GNU General Public License
++ * as published by the Free Software Foundation, either version 3 of
++ * the License, or (at your option) any later version. For more
++ * information, see COPYING.
++ */
++#endregion
++
++using System;
++using System.Collections.Generic;
++using System.Diagnostics;
++using System.IO;
++using System.Linq;
++using FS = OpenRA.FileSystem.FileSystem;
++
++namespace OpenRA.Mods.Common.Installer
++{
++	public sealed class MacOSDirectorySourceResolver : ISourceResolver
++	{
++		const int DefaultMaximumDepth = 6;
++		const int DefaultMaximumDirectories = 20000;
++
++		public string FindSourcePath(ModContent.ModSource source)
++		{
++			if (Platform.CurrentPlatform != PlatformType.OSX)
++				return null;
++
++			var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
++			return FindSourcePath(source, CommonSearchRoots(home, "/Volumes"));
++		}
++
++		public Availability GetAvailability()
++		{
++			return Platform.CurrentPlatform == PlatformType.OSX ?
++				Availability.DigitalInstall : Availability.Unavailable;
++		}
++
++		public static IEnumerable<string> CommonSearchRoots(string userProfile, string volumesRoot)
++		{
++			var roots = new[]
++			{
++				"/Applications",
++				volumesRoot,
++				Path.Combine(userProfile, "Applications"),
++				Path.Combine(userProfile, "Games"),
++				Path.Combine(userProfile, "GOG Games"),
++				Path.Combine(userProfile, "Library", "Application Support", "Steam", "steamapps", "common"),
++				Path.Combine(userProfile, "Library", "Application Support", "CrossOver", "Bottles"),
++				Path.Combine(userProfile, "Library", "Application Support", "com.isaacmarovitz.Whisky", "Bottles"),
++				Path.Combine(userProfile, "Library", "Application Support", "Porting Kit"),
++				Path.Combine(userProfile, ".wine", "drive_c"),
++			};
++
++			return roots
++				.Where(path => !string.IsNullOrWhiteSpace(path))
++				.Select(Path.GetFullPath)
++				.Distinct(StringComparer.OrdinalIgnoreCase);
++		}
++
++		public static string FindSourcePath(
++			ModContent.ModSource source, IEnumerable<string> roots,
++			int maximumDepth = DefaultMaximumDepth, int maximumDirectories = DefaultMaximumDirectories)
++		{
++			if (source == null || roots == null || source.RequiredFiles.Length == 0 ||
++				maximumDepth < 0 || maximumDirectories <= 0)
++				return null;
++
++			var pending = new Queue<(string Path, int Depth)>();
++			var queuedRoots = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
++			foreach (var root in roots.Where(path => !string.IsNullOrWhiteSpace(path)))
++			{
++				try
++				{
++					var fullPath = Path.GetFullPath(root);
++					if (queuedRoots.Add(fullPath))
++						pending.Enqueue((fullPath, 0));
++
++					if (pending.Count >= maximumDirectories)
++						break;
++				}
++				catch (Exception)
++				{
++					// Ignore malformed or inaccessible candidate roots.
++				}
++			}
++
++			var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
++			while (pending.Count != 0 && visited.Count < maximumDirectories)
++			{
++				var candidate = pending.Dequeue();
++				if (!visited.Add(candidate.Path) || !IsSearchableDirectory(candidate.Path))
++					continue;
++
++				if (IsValidSourcePath(candidate.Path, source))
++					return candidate.Path;
++
++				if (candidate.Depth >= maximumDepth)
++					continue;
++
++				var remainingDirectories = maximumDirectories - visited.Count - pending.Count;
++				if (remainingDirectories <= 0)
++					continue;
++
++				string[] children;
++				try
++				{
++					children = Directory.EnumerateDirectories(candidate.Path)
++						.Take(remainingDirectories)
++						.OrderBy(path => path, StringComparer.OrdinalIgnoreCase)
++						.ToArray();
++				}
++				catch (Exception)
++				{
++					continue;
++				}
++
++				foreach (var child in children)
++					pending.Enqueue((child, candidate.Depth + 1));
++			}
++
++			return null;
++		}
++
++		public static bool IsValidSourcePath(string path, ModContent.ModSource source)
++		{
++			if (source == null || source.RequiredFiles.Length == 0 || !Directory.Exists(path))
++				return false;
++
++			try
++			{
++				return source.RequiredFiles.All(filename =>
++					File.Exists(FS.ResolveCaseInsensitivePath(Path.Combine(path, filename))));
++			}
++			catch (Exception)
++			{
++				return false;
++			}
++		}
++
++		static bool IsSearchableDirectory(string path)
++		{
++			try
++			{
++				if (!Directory.Exists(path))
++					return false;
++
++				return (new DirectoryInfo(path).Attributes & FileAttributes.ReparsePoint) == 0;
++			}
++			catch (Exception)
++			{
++				return false;
++			}
++		}
++
++		public static string ChooseDirectory(string prompt)
++		{
++			if (Platform.CurrentPlatform != PlatformType.OSX)
++				return null;
++
++			const string Script = "on run argv\n" +
++				"activate\n" +
++				"set selectedFolder to choose folder with prompt (item 1 of argv)\n" +
++				"return POSIX path of selectedFolder\n" +
++				"end run";
++			try
++			{
++				var startInfo = new ProcessStartInfo("/usr/bin/osascript")
++				{
++					UseShellExecute = false,
++					RedirectStandardOutput = true,
++					RedirectStandardError = true,
++					CreateNoWindow = true,
++				};
++				startInfo.ArgumentList.Add("-e");
++				startInfo.ArgumentList.Add(Script);
++				startInfo.ArgumentList.Add("--");
++				startInfo.ArgumentList.Add(prompt ?? string.Empty);
++
++				using var process = Process.Start(startInfo);
++				if (process == null)
++					return null;
++
++				var output = process.StandardOutput.ReadToEnd();
++				process.WaitForExit();
++				return process.ExitCode == 0 && !string.IsNullOrWhiteSpace(output) ?
++					Path.GetFullPath(output.Trim()) : null;
++			}
++			catch (Exception)
++			{
++				return null;
++			}
++		}
++	}
++}
+diff -ruN a/OpenRA.Mods.Common/ModContent.cs b/OpenRA.Mods.Common/ModContent.cs
+--- a/OpenRA.Mods.Common/ModContent.cs	2026-09-07 23:35:08
++++ b/OpenRA.Mods.Common/ModContent.cs	2026-09-07 23:35:08
+@@ -49,6 +49,7 @@
+ 			public readonly string[] RegistryPrefixes = { string.Empty };
+ 			public readonly string RegistryKey;
+ 			public readonly string RegistryValue;
++			public readonly string[] RequiredFiles = Array.Empty<string>();
+ 
+ 			public readonly string Title;
+ 
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/Installation/InstallFromSourceLogic.cs b/OpenRA.Mods.Common/Widgets/Logic/Installation/InstallFromSourceLogic.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/Installation/InstallFromSourceLogic.cs	2026-09-07 23:35:08
++++ b/OpenRA.Mods.Common/Widgets/Logic/Installation/InstallFromSourceLogic.cs	2026-09-07 23:35:08
+@@ -13,6 +13,7 @@
+ using System.Collections.Generic;
+ using System.IO;
+ using System.Linq;
++using System.Threading;
+ using System.Threading.Tasks;
+ using OpenRA.Mods.Common.Installer;
+ using OpenRA.Primitives;
+@@ -47,6 +48,12 @@
+ 		const string AlternativeContentSources = "label-alternative-content-sources";
+ 
+ 		[FluentReference]
++		const string SelectInstallDirectory = "label-select-install-directory";
++
++		[FluentReference]
++		const string SelectedDirectoryInvalid = "label-selected-directory-invalid";
++
++		[FluentReference]
+ 		const string InstallingContent = "label-installing-content";
+ 
+ 		[FluentReference("filename")]
+@@ -112,12 +119,14 @@
+ 
+ 		ModContent.ModPackage[] availablePackages;
+ 		IDictionary<string, bool> selectedPackages;
++		int activeOperation;
+ 
+ 		Mode visible = Mode.Progress;
+ 
+ 		[ObjectCreator.UseCtor]
+ 		public InstallFromSourceLogic(
+-			Widget widget, ModData modData, ModContent content, Dictionary<string, ModContent.ModSource> sources)
++			Widget widget, ModData modData, ModContent content, Dictionary<string, ModContent.ModSource> sources,
++			bool chooseDirectory)
+ 		{
+ 			this.modData = modData;
+ 			this.content = content;
+@@ -156,46 +165,81 @@
+ 
+ 			listLabel = listContainer.Get<LabelWidget>("LIST_MESSAGE");
+ 
+-			DetectContentSources();
++			if (chooseDirectory)
++				ChooseContentSource();
++			else
++				DetectContentSources();
+ 		}
+ 
++		void ChooseContentSource()
++		{
++			var operation = Interlocked.Increment(ref activeOperation);
++			var prompt = FluentProvider.GetMessage(SelectInstallDirectory);
++			ShowProgressbar(prompt, () => prompt);
++			ShowBackOnly();
++
++			new Task(() =>
++			{
++				var selectedDirectory = MacOSDirectorySourceResolver.ChooseDirectory(prompt);
++				if (!IsCurrentOperation(operation))
++					return;
++
++				if (selectedDirectory == null)
++				{
++					Game.RunAfterTick(() =>
++					{
++						if (IsCurrentOperation(operation))
++							CancelOperationAndClose();
++					});
++					return;
++				}
++
++				foreach (var kv in sources.Where(source => source.Value.Type.Value == "MacOSDirectory"))
++				{
++					var path = MacOSDirectorySourceResolver.FindSourcePath(
++						kv.Value, new[] { selectedDirectory });
++					if (!IsCurrentOperation(operation))
++						return;
++
++					if (path != null && PrepareSource(kv.Key, kv.Value, path, operation))
++						return;
++				}
++
++				Game.RunAfterTick(() =>
++				{
++					if (!IsCurrentOperation(operation))
++						return;
++
++					ShowMessage(prompt, FluentProvider.GetMessage(SelectedDirectoryInvalid));
++					ShowBackRetry(ChooseContentSource);
++				});
++			}).Start();
++		}
++
+ 		void DetectContentSources()
+ 		{
++			var operation = Interlocked.Increment(ref activeOperation);
+ 			var message = FluentProvider.GetMessage(DetectingSources);
+ 			ShowProgressbar(FluentProvider.GetMessage(CheckingSources), () => message);
+-			ShowBackRetry(DetectContentSources);
++			ShowBackOnly();
+ 
+ 			new Task(() =>
+ 			{
+ 				foreach (var kv in sources)
+ 				{
++					if (!IsCurrentOperation(operation))
++						return;
++
+ 					message = FluentProvider.GetMessage(SearchingSourceFor, "title", kv.Value.Title);
+ 
+ 					var sourceResolver = modData.ObjectCreator.CreateObject<ISourceResolver>($"{kv.Value.Type.Value}SourceResolver");
+ 
+ 					var path = sourceResolver.FindSourcePath(kv.Value);
+-					if (path != null)
+-					{
+-						Log.Write("install", $"Using installer `{kv.Key}: {kv.Value.Title}` of type `{kv.Value.Type.Value}`:");
++					if (!IsCurrentOperation(operation))
++						return;
+ 
+-						availablePackages = content.Packages.Values
+-							.Where(p => p.Sources.Contains(kv.Key) && !p.IsInstalled())
+-							.ToArray();
+-
+-						selectedPackages = availablePackages.ToDictionary(x => x.Identifier, y => y.Required);
+-
+-						// Ignore source if content is already installed
+-						if (availablePackages.Length != 0)
+-						{
+-							Game.RunAfterTick(() =>
+-							{
+-								ShowList(kv.Value, FluentProvider.GetMessage(ContentPackageInstallation));
+-								ShowContinueCancel(() => InstallFromSource(path, kv.Value));
+-							});
+-
+-							return;
+-						}
+-					}
++					if (path != null && PrepareSource(kv.Key, kv.Value, path, operation))
++						return;
+ 				}
+ 
+ 				var missingSources = content.Packages.Values
+@@ -228,12 +272,55 @@
+ 
+ 				Game.RunAfterTick(() =>
+ 				{
++					if (!IsCurrentOperation(operation))
++						return;
++
+ 					ShowList(FluentProvider.GetMessage(GameContentNotFound), FluentProvider.GetMessage(AlternativeContentSources), options);
+ 					ShowBackRetry(DetectContentSources);
+ 				});
+ 			}).Start();
+ 		}
+ 
++		bool PrepareSource(string key, ModContent.ModSource source, string path, int operation)
++		{
++			if (!IsCurrentOperation(operation))
++				return false;
++
++			Log.Write("install", $"Using installer `{key}: {source.Title}` of type `{source.Type.Value}`:");
++
++			var packages = content.Packages.Values
++				.Where(package => package.Sources.Contains(key) && !package.IsInstalled())
++				.ToArray();
++
++			// Ignore the source when all of its content is already installed.
++			if (packages.Length == 0)
++				return false;
++
++			var selected = packages.ToDictionary(package => package.Identifier, package => package.Required);
++			Game.RunAfterTick(() =>
++			{
++				if (!IsCurrentOperation(operation))
++					return;
++
++				availablePackages = packages;
++				selectedPackages = selected;
++				ShowList(source, FluentProvider.GetMessage(ContentPackageInstallation));
++				ShowContinueCancel(() => InstallFromSource(path, source));
++			});
++			return true;
++		}
++
++		bool IsCurrentOperation(int operation)
++		{
++			return Volatile.Read(ref activeOperation) == operation;
++		}
++
++		void CancelOperationAndClose()
++		{
++			Interlocked.Increment(ref activeOperation);
++			Ui.CloseWindow();
++		}
++
+ 		void InstallFromSource(string path, ModContent.ModSource modSource)
+ 		{
+ 			var message = "";
+@@ -404,7 +491,7 @@
+ 			primaryButton.GetText = () => primaryButtonText;
+ 			primaryButton.Visible = true;
+ 
+-			secondaryButton.OnClick = Ui.CloseWindow;
++			secondaryButton.OnClick = CancelOperationAndClose;
+ 			var secondaryButtonText = FluentProvider.GetMessage(Cancel);
+ 			secondaryButton.GetText = () => secondaryButtonText;
+ 			secondaryButton.Visible = true;
+@@ -419,7 +506,18 @@
+ 			primaryButton.GetText = () => primaryButtonText;
+ 			primaryButton.Visible = true;
+ 
+-			secondaryButton.OnClick = Ui.CloseWindow;
++			secondaryButton.OnClick = CancelOperationAndClose;
++			var secondaryButtonText = FluentProvider.GetMessage(Back);
++			secondaryButton.GetText = () => secondaryButtonText;
++			secondaryButton.Visible = true;
++			secondaryButton.Disabled = false;
++			Game.RunAfterTick(Ui.ResetTooltips);
++		}
++
++		void ShowBackOnly()
++		{
++			primaryButton.Visible = false;
++			secondaryButton.OnClick = CancelOperationAndClose;
+ 			var secondaryButtonText = FluentProvider.GetMessage(Back);
+ 			secondaryButton.GetText = () => secondaryButtonText;
+ 			secondaryButton.Visible = true;
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/Installation/ModContentLogic.cs b/OpenRA.Mods.Common/Widgets/Logic/Installation/ModContentLogic.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/Installation/ModContentLogic.cs	2026-09-07 23:35:08
++++ b/OpenRA.Mods.Common/Widgets/Logic/Installation/ModContentLogic.cs	2026-09-07 23:35:08
+@@ -58,6 +58,12 @@
+ 		[FluentReference]
+ 		const string ManualInstall = "button-manual-install";
+ 
++		[FluentReference]
++		const string ChooseInstallationDirectory = "button-content-panel-choose-source";
++
++		[FluentReference]
++		const string AutomaticSearch = "button-content-panel-auto-search";
++
+ 		readonly ModContent content;
+ 		readonly ScrollPanelWidget scrollPanel;
+ 		readonly Widget template;
+@@ -96,11 +102,32 @@
+ 			sourceButton.Bounds.Y += headerHeight;
+ 			sourceButton.IsVisible = () => sourceAvailable;
+ 
+-			sourceButton.OnClick = () => Ui.OpenWindow("SOURCE_INSTALL_PANEL", new WidgetArgs
++			var chooseSourceButton = panel.Get<ButtonWidget>("CHOOSE_SOURCE_BUTTON");
++			chooseSourceButton.Bounds.Y += headerHeight;
++			var isMacOS = Platform.CurrentPlatform == PlatformType.OSX;
++			chooseSourceButton.IsVisible = () => isMacOS && sourceAvailable;
++			if (isMacOS)
+ 			{
+-				{ "sources", sources },
+-				{ "content", content },
+-			});
++				sourceButton.Bounds.X = 185;
++				sourceButton.Bounds.Width = 140;
++				var chooseText = FluentProvider.GetMessage(ChooseInstallationDirectory);
++				chooseSourceButton.GetText = () => chooseText;
++				var automaticSearchText = FluentProvider.GetMessage(AutomaticSearch);
++				sourceButton.GetText = () => automaticSearchText;
++			}
++
++			void OpenSourceInstaller(bool chooseDirectory)
++			{
++				Ui.OpenWindow("SOURCE_INSTALL_PANEL", new WidgetArgs
++				{
++					{ "sources", sources },
++					{ "content", content },
++					{ "chooseDirectory", chooseDirectory },
++				});
++			}
++
++			sourceButton.OnClick = () => OpenSourceInstaller(false);
++			chooseSourceButton.OnClick = () => OpenSourceInstaller(true);
+ 
+ 			var backButton = panel.Get<ButtonWidget>("BACK_BUTTON");
+ 			backButton.Bounds.Y += headerHeight;
+diff -ruN a/OpenRA.Test/IosProductionBatchToggleTest.cs b/OpenRA.Test/IosProductionBatchToggleTest.cs
+--- a/OpenRA.Test/IosProductionBatchToggleTest.cs	2026-09-07 23:35:08
++++ b/OpenRA.Test/IosProductionBatchToggleTest.cs	2026-09-07 23:35:08
+@@ -107,6 +107,32 @@
+ 			return directory!.FullName;
+ 		}
+ 
++		[TestCase("Building")]
++		[TestCase("Support")]
++		public void StructureQueuesLimitEachItemToOne(string queue)
++		{
++			var path = Path.Combine(RepositoryRoot(), "mods", "ra2", "rules", "player.yaml");
++			var player = MiniYaml.FromString(File.ReadAllText(path), path)
++				.Single(node => node.Key == "Player");
++			var productionQueue = player.Value.NodeWithKey($"ClassicProductionQueue@{queue}");
++
++			Assert.That(productionQueue.Value.NodeWithKey("ItemLimit").Value.Value, Is.EqualTo("1"));
++		}
++
++		[TestCase("Infantry")]
++		[TestCase("Vehicle")]
++		[TestCase("Aircraft")]
++		[TestCase("Ship")]
++		public void UnitQueuesKeepTheirDefaultBatchLimit(string queue)
++		{
++			var path = Path.Combine(RepositoryRoot(), "mods", "ra2", "rules", "player.yaml");
++			var player = MiniYaml.FromString(File.ReadAllText(path), path)
++				.Single(node => node.Key == "Player");
++			var productionQueue = player.Value.NodeWithKey($"ClassicProductionQueue@{queue}");
++
++			Assert.That(productionQueue.Value.NodeWithKeyOrDefault("ItemLimit"), Is.Null);
++		}
++
+ 		[TestCase(Modifiers.None, 1, 1)]
+ 		[TestCase(Modifiers.None, 5, 5)]
+ 		[TestCase(Modifiers.Shift, 1, 5)]
+diff -ruN a/OpenRA.Test/MacOSDirectorySourceResolverTest.cs b/OpenRA.Test/MacOSDirectorySourceResolverTest.cs
+--- a/OpenRA.Test/MacOSDirectorySourceResolverTest.cs	1969-12-31 16:00:00
++++ b/OpenRA.Test/MacOSDirectorySourceResolverTest.cs	2026-09-07 23:35:08
+@@ -0,0 +1,128 @@
++#region Copyright & License Information
++/*
++ * Copyright (c) The OpenRA Developers and Contributors
++ * This file is part of OpenRA, which is free software. It is
++ * made available under the terms of the GNU General Public License
++ * as published by the Free Software Foundation, either version 3 of
++ * the License, or (at your option) any later version. For more
++ * information, see COPYING.
++ */
++#endregion
++
++using System;
++using System.IO;
++using System.Linq;
++using NUnit.Framework;
++using OpenRA.Mods.Common;
++using OpenRA.Mods.Common.Installer;
++
++namespace OpenRA.Test
++{
++	[TestFixture]
++	public sealed class MacOSDirectorySourceResolverTest
++	{
++		string root;
++
++		[SetUp]
++		public void SetUp()
++		{
++			root = Path.Combine(Path.GetTempPath(), $"nukehour-macos-source-{Guid.NewGuid():N}");
++			Directory.CreateDirectory(root);
++		}
++
++		[TearDown]
++		public void TearDown()
++		{
++			if (Directory.Exists(root))
++				Directory.Delete(root, true);
++		}
++
++		static ModContent.ModSource Source()
++		{
++			var yaml = MiniYaml.FromString(
++				"source: Local Install\n\tType: MacOSDirectory\n\tRequiredFiles: ra2.mix, language.mix\n",
++				"MacOSDirectorySourceResolverTest").Single();
++			return new ModContent.ModSource(yaml.Value);
++		}
++
++		static void Write(string directory, string filename)
++		{
++			Directory.CreateDirectory(directory);
++			File.WriteAllText(Path.Combine(directory, filename), "retail test fixture");
++		}
++
++		[Test]
++		public void FindsCaseInsensitiveRequiredFilesInNestedDirectory()
++		{
++			var install = Path.Combine(root, "Games", "Red Alert 2");
++			Write(install, "RA2.MIX");
++			Write(install, "Language.Mix");
++
++			var found = MacOSDirectorySourceResolver.FindSourcePath(Source(), new[] { root });
++
++			Assert.That(found, Is.EqualTo(install));
++		}
++
++		[Test]
++		public void DoesNotSearchPastMaximumDepth()
++		{
++			var install = Path.Combine(root, "one", "two");
++			Write(install, "ra2.mix");
++			Write(install, "language.mix");
++
++			var found = MacOSDirectorySourceResolver.FindSourcePath(
++				Source(), new[] { root }, maximumDepth: 1);
++
++			Assert.That(found, Is.Null);
++		}
++
++		[Test]
++		public void DoesNotQueueDirectoriesPastMaximumCount()
++		{
++			var install = Path.Combine(root, "install");
++			Write(install, "ra2.mix");
++			Write(install, "language.mix");
++
++			var bounded = MacOSDirectorySourceResolver.FindSourcePath(
++				Source(), new[] { root }, maximumDirectories: 1);
++			var found = MacOSDirectorySourceResolver.FindSourcePath(
++				Source(), new[] { root }, maximumDirectories: 2);
++
++			Assert.That(bounded, Is.Null);
++			Assert.That(found, Is.EqualTo(install));
++		}
++
++		[Test]
++		public void DoesNotFollowSymbolicLinkDirectories()
++		{
++			var outside = Path.Combine(Path.GetTempPath(), $"nukehour-macos-source-target-{Guid.NewGuid():N}");
++			try
++			{
++				Write(outside, "ra2.mix");
++				Write(outside, "language.mix");
++				Directory.CreateSymbolicLink(Path.Combine(root, "linked-install"), outside);
++
++				var found = MacOSDirectorySourceResolver.FindSourcePath(Source(), new[] { root });
++
++				Assert.That(found, Is.Null);
++			}
++			finally
++			{
++				if (Directory.Exists(outside))
++					Directory.Delete(outside, true);
++			}
++		}
++
++		[Test]
++		public void CommonRootsAreBoundedAndDeduplicated()
++		{
++			var roots = MacOSDirectorySourceResolver.CommonSearchRoots("/Users/tester", "/Volumes").ToArray();
++
++			Assert.That(roots, Does.Contain("/Applications"));
++			Assert.That(roots, Does.Contain("/Volumes"));
++			Assert.That(roots, Does.Contain("/Users/tester/Library/Application Support/Steam/steamapps/common"));
++			Assert.That(roots.Distinct(StringComparer.OrdinalIgnoreCase).Count(), Is.EqualTo(roots.Length));
++			Assert.That(roots.Length, Is.LessThanOrEqualTo(10));
++		}
++	}
++}
+diff -ruN a/OpenRA.Test/Ra2ContentInstallerManifestTest.cs b/OpenRA.Test/Ra2ContentInstallerManifestTest.cs
+--- a/OpenRA.Test/Ra2ContentInstallerManifestTest.cs	2026-09-07 23:35:08
++++ b/OpenRA.Test/Ra2ContentInstallerManifestTest.cs	2026-09-07 23:35:08
+@@ -53,7 +53,8 @@
+ 			var fluent = File.ReadAllText(path);
+ 			StringAssert.Contains("自行导入", fluent);
+ 			StringAssert.Contains("尤里的复仇", fluent);
+-			StringAssert.DoesNotContain("下载", fluent);
++			StringAssert.DoesNotContain("http://", fluent.ToLowerInvariant());
++			StringAssert.DoesNotContain("https://", fluent.ToLowerInvariant());
+ 		}
+ 
+ 		[Test]
+@@ -62,6 +63,55 @@
+ 			var project = File.ReadAllText(Path.Combine(
+ 				RepositoryRoot(), "ios", "OpenRA.iOS", "OpenRA.iOS.csproj"));
+ 			Assert.That(project.Split("../../mods/ra2-content/**/*").Length - 1, Is.EqualTo(2));
++		}
++
++		[Test]
++		public void MacOSDirectorySourceSupportsBaseAndOptionalPackagesOffline()
++		{
++			var contentRoot = Path.Combine(RepositoryRoot(), "mods", "ra2-content");
++			var mod = File.ReadAllText(Path.Combine(contentRoot, "mod.yaml"));
++			var sourcePath = Path.Combine(contentRoot, "installer", "macos-directory.yaml");
++
++			Assert.That(File.Exists(sourcePath), Is.True);
++			var source = File.ReadAllText(sourcePath);
++			StringAssert.Contains("ra2content|installer/macos-directory.yaml", mod);
++			StringAssert.Contains("Type: MacOSDirectory", source);
++			StringAssert.Contains("RequiredFiles: ra2.mix, language.mix", source);
++			StringAssert.Contains("ContentPackage@base:", source);
++			StringAssert.Contains("ContentPackage@music:", source);
++			StringAssert.Contains("ContentPackage@yuri:", source);
++			StringAssert.Contains("ContentPackage@yuri-music:", source);
++			Assert.That(mod.Split("Sources: macos-directory").Length - 1, Is.EqualTo(4));
++			StringAssert.DoesNotContain("http://", source.ToLowerInvariant());
++			StringAssert.DoesNotContain("https://", source.ToLowerInvariant());
++		}
++
++		[Test]
++		public void MacOSContentManagerOffersDirectoryPickerAndAutomaticSearch()
++		{
++			var root = RepositoryRoot();
++			var layout = File.ReadAllText(Path.Combine(root, "engine", "mods", "common-content", "content.yaml"));
++			var contentLogic = File.ReadAllText(Path.Combine(root, "engine", "OpenRA.Mods.Common", "Widgets", "Logic",
++				"Installation", "ModContentLogic.cs"));
++			var sourceLogic = File.ReadAllText(Path.Combine(root, "engine", "OpenRA.Mods.Common", "Widgets", "Logic",
++				"Installation", "InstallFromSourceLogic.cs"));
++			var english = File.ReadAllText(Path.Combine(root, "engine", "mods", "common-content", "fluent", "chrome.ftl"));
++			var chinese = File.ReadAllText(Path.Combine(root, "mods", "ra2-content", "fluent", "zh-CN", "chrome.ftl"));
++
++			StringAssert.Contains("Button@CHOOSE_SOURCE_BUTTON:", layout);
++			StringAssert.Contains("Button@CHECK_SOURCE_BUTTON:", layout);
++			StringAssert.Contains("chooseDirectory", contentLogic);
++			StringAssert.Contains("ChooseContentSource", sourceLogic);
++			StringAssert.Contains("ShowBackOnly", sourceLogic);
++			StringAssert.Contains("activeOperation", sourceLogic);
++			StringAssert.Contains("button-content-panel-choose-source = Choose Installation Directory…", english);
++			StringAssert.Contains("button-content-panel-auto-search = Automatic Search", english);
++			StringAssert.Contains("label-select-install-directory", english);
++			StringAssert.Contains("label-selected-directory-invalid", english);
++			StringAssert.Contains("button-content-panel-choose-source = 选择安装目录…", chinese);
++			StringAssert.Contains("button-content-panel-auto-search = 自动搜索", chinese);
++			StringAssert.Contains("label-select-install-directory", chinese);
++			StringAssert.Contains("label-selected-directory-invalid", chinese);
+ 		}
+ 	}
+ }
+diff -ruN a/mods/common-content/content.yaml b/mods/common-content/content.yaml
+--- a/mods/common-content/content.yaml	2026-09-07 23:35:08
++++ b/mods/common-content/content.yaml	2026-09-07 23:35:08
+@@ -99,6 +99,15 @@
+ 			Height: 32
+ 			Text: button-content-panel-check-source
+ 			Font: Bold
++		Button@CHOOSE_SOURCE_BUTTON:
++			X: 30
++			Y: PARENT_HEIGHT - 52
++			Background: button-highlighted
++			Width: 140
++			Height: 32
++			Text: button-content-panel-choose-source
++			Font: Bold
++			Visible: false
+ 		Button@BACK_BUTTON:
+ 			X: PARENT_WIDTH - 140
+ 			Y: PARENT_HEIGHT - 52
+diff -ruN a/mods/common-content/fluent/chrome.ftl b/mods/common-content/fluent/chrome.ftl
+--- a/mods/common-content/fluent/chrome.ftl	2026-09-07 23:35:08
++++ b/mods/common-content/fluent/chrome.ftl	2026-09-07 23:35:08
+@@ -5,6 +5,10 @@
+ label-package-template-installed = Installed
+ label-package-template-requires-source = Requires Disc
+ button-content-panel-check-source = Detect Disc or Installation
++button-content-panel-choose-source = Choose Installation Directory…
++button-content-panel-auto-search = Automatic Search
++label-select-install-directory = Choose a Red Alert 2 installation folder
++label-selected-directory-invalid = No complete Red Alert 2 installation was found in that folder.
+ label-source-tooltip-description = Content available from:
+ button-package-download-panel-retry = Retry
+ label-content-prompt-panel-title = Install Content

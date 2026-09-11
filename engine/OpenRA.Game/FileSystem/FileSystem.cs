@@ -13,7 +13,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.ExceptionServices;
 using OpenRA.Primitives;
 
 namespace OpenRA.FileSystem
@@ -55,25 +54,6 @@ namespace OpenRA.FileSystem
 			package = null;
 			foreach (var packageLoader in packageLoaders)
 				if (packageLoader.TryParsePackage(stream, filename, this, out package))
-					return true;
-
-			return false;
-		}
-
-		public bool TryParsePackage(Stream stream, string filename, PackageReadContext readContext,
-			out IReadOnlyPackage package)
-		{
-			if (stream == null)
-				throw new ArgumentNullException(nameof(stream));
-			if (readContext == null)
-				throw new ArgumentNullException(nameof(readContext));
-			if (readContext.EnvelopePolicy == null)
-				throw new InvalidOperationException("Bounded package parsing requires an explicit envelope policy.");
-
-			package = null;
-			readContext.ThrowIfCancelledOrExpired();
-			foreach (var packageLoader in packageLoaders.OfType<IBoundedPackageLoader>())
-				if (packageLoader.TryParsePackage(stream, filename, this, readContext, out package))
 					return true;
 
 			return false;
@@ -190,26 +170,15 @@ namespace OpenRA.FileSystem
 
 		public void UnmountAll()
 		{
-			var ownedPackages = mountedPackages.Keys
-				.Where(package => !modPackages.Contains(package))
-				.ToArray();
-			var emptyFileIndex = new Cache<string, List<IReadOnlyPackage>>(
-				_ => new List<IReadOnlyPackage>());
+			foreach (var package in mountedPackages.Keys)
+				if (!modPackages.Contains(package))
+					package.Dispose();
 
 			mountedPackages.Clear();
 			explicitMounts.Clear();
 			modPackages.Clear();
-			fileIndex = emptyFileIndex;
 
-			ExceptionDispatchInfo firstFailure = null;
-			foreach (var package in ownedPackages)
-				try { package.Dispose(); }
-				catch (Exception exception)
-				{
-					firstFailure ??= ExceptionDispatchInfo.Capture(exception);
-				}
-
-			firstFailure?.Throw();
+			fileIndex = new Cache<string, List<IReadOnlyPackage>>(_ => new List<IReadOnlyPackage>());
 		}
 
 		public void TrimExcess()

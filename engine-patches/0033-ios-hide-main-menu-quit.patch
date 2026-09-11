@@ -1,0 +1,87 @@
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/MainMenuLogic.cs b/OpenRA.Mods.Common/Widgets/Logic/MainMenuLogic.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/MainMenuLogic.cs	2026-09-10 22:18:30
++++ b/OpenRA.Mods.Common/Widgets/Logic/MainMenuLogic.cs	2026-09-10 22:18:30
+@@ -203,7 +203,9 @@
+ 			}
+ 
+ 			var quitButton = mainMenu.Get<ButtonWidget>("QUIT_BUTTON");
+-			quitButton.OnClick = Game.Exit;
++			quitButton.Visible = !Platform.IsIOS;
++			if (quitButton.Visible)
++				quitButton.OnClick = Game.Exit;
+ 
+ 			languageDropdown = mainMenu.GetOrNull<DropDownButtonWidget>("LANGUAGE_DROPDOWN");
+ 			if (languageDropdown != null)
+@@ -224,14 +226,15 @@
+ 			{
+ 				if (showAboutButton)
+ 					controls.Add(aboutButton);
+-				else
++				else if (quitButton.Visible)
+ 					quitButton.Bounds.Y = aboutButton.Bounds.Y;
+ 			}
+ 
+-			controls.Add(quitButton);
++			if (quitButton.Visible)
++				controls.Add(quitButton);
+ 			mainMenuControls = controls.ToArray();
+ 			iosMainMenuLayoutEnabled = languageDropdown != null && contentButton != null &&
+-				mainMenuControls.Length == 6;
++				mainMenuControls.Length == 5;
+ 			ApplyIosMainMenuLayout();
+ 
+ 			// Singleplayer menu
+diff -ruN a/OpenRA.Test/IosMainMenuQuitPolicyTest.cs b/OpenRA.Test/IosMainMenuQuitPolicyTest.cs
+--- a/OpenRA.Test/IosMainMenuQuitPolicyTest.cs	1969-12-31 16:00:00
++++ b/OpenRA.Test/IosMainMenuQuitPolicyTest.cs	2026-09-10 22:18:30
+@@ -0,0 +1,37 @@
++#region Copyright & License Information
++/*
++ * Copyright (c) The OpenRA Developers and Contributors
++ * This file is part of OpenRA, which is free software. It is
++ * made available under the terms of the GNU General Public License
++ * as published by the Free Software Foundation, either version 3 of
++ * the License, or (at your option) any later version. For more
++ * information, see COPYING.
++ */
++#endregion
++
++using System;
++using System.IO;
++using NUnit.Framework;
++
++namespace OpenRA.Test
++{
++	[TestFixture]
++	public sealed class IosMainMenuQuitPolicyTest
++	{
++		[Test]
++		public void IosHidesQuitAndKeepsTheAdaptiveLayoutEnabled()
++		{
++			var directory = new DirectoryInfo(TestContext.CurrentContext.TestDirectory);
++			while (directory != null && !Directory.Exists(Path.Combine(directory.FullName, "OpenRA.Mods.Common")))
++				directory = directory.Parent;
++
++			var root = directory?.FullName ?? throw new InvalidOperationException("Could not locate the engine root.");
++			var mainMenu = File.ReadAllText(Path.Combine(
++				root, "OpenRA.Mods.Common", "Widgets", "Logic", "MainMenuLogic.cs"));
++
++			StringAssert.Contains("quitButton.Visible = !Platform.IsIOS", mainMenu);
++			StringAssert.Contains("if (quitButton.Visible)", mainMenu);
++			StringAssert.Contains("mainMenuControls.Length == 5", mainMenu);
++		}
++	}
++}
+diff -ruN a/OpenRA.Test/NukeHourBrandingTest.cs b/OpenRA.Test/NukeHourBrandingTest.cs
+--- a/OpenRA.Test/NukeHourBrandingTest.cs	2026-09-10 22:18:30
++++ b/OpenRA.Test/NukeHourBrandingTest.cs	2026-09-10 22:18:30
+@@ -160,7 +160,8 @@
+ 			Assert.That(source.IndexOf("controls.Add(aboutButton);", StringComparison.Ordinal),
+ 				Is.LessThan(source.IndexOf("controls.Add(quitButton);", StringComparison.Ordinal)));
+ 			Assert.That(source, Does.Contain("quitButton.Bounds.Y = aboutButton.Bounds.Y;"));
+-			Assert.That(source, Does.Contain("mainMenuControls.Length == 6"));
++			Assert.That(source, Does.Contain("quitButton.Visible = !Platform.IsIOS"));
++			Assert.That(source, Does.Contain("mainMenuControls.Length == 5"));
+ 
+ 			var methodStart = source.IndexOf("void OpenAboutPanel()", StringComparison.Ordinal);
+ 			Assert.That(methodStart, Is.GreaterThanOrEqualTo(0));

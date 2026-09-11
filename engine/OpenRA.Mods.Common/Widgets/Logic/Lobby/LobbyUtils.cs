@@ -597,25 +597,16 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 		{
 			var colorDropdown = parent.Get<DropDownButtonWidget>("COLOR");
 			colorDropdown.IsDisabled = () => (s != null && s.LockColor) || orderManager.LocalClient.IsReady;
-			colorDropdown.OnMouseDown = _ =>
+			colorDropdown.OnMouseDown = _ => colorManager.ShowClassicColorDropDown(colorDropdown, c.Color, color =>
 			{
-				var colors = colorManager.PresetColors.Take(9).ToArray();
-				var grid = Ui.LoadWidget("IOS_SKIRMISH_COLOR_GRID", null, new WidgetArgs());
-				for (var i = 0; i < colors.Length; i++)
+				if (c == orderManager.LocalClient)
 				{
-					var color = colors[i];
-					var swatch = grid.Get<ColorBlockWidget>($"SWATCH_{i}");
-					swatch.GetColor = () => color;
-					swatch.Get<ImageWidget>("SELECTED").IsVisible = () => c.Color == color;
-					swatch.OnMouseDown = _ =>
-					{
-						orderManager.IssueOrder(Order.Command($"color {c.Index} {color}"));
-						colorDropdown.RemovePanel();
-					};
+					Game.Settings.Player.Color = color;
+					Game.Settings.Save();
 				}
 
-				colorDropdown.AttachPanel(grid);
-			};
+				orderManager.IssueOrder(Order.Command($"color {c.Index} {color}"));
+			});
 
 			SetupColorWidget(colorDropdown, c);
 		}

@@ -473,7 +473,7 @@ namespace OpenRA.Test
 					Assert.That(CustomCommandBarWidget.PanelBackgroundFor(true, false, skin),
 						Is.EqualTo("ios-touch-quickbar-panel-compact-" + skin));
 					Assert.That(CustomCommandBarWidget.ButtonBackgroundFor(true, "commandbar-button-soviets", skin),
-						Is.EqualTo("ios-touch-quickbar-button-" + skin));
+						Is.Empty, "The continuous touch tray must not wrap every icon in a small square tile.");
 					Assert.That(CustomCommandBarWidget.ToggleCollectionFor(true, "commandbar-toggle-icons", skin),
 						Is.EqualTo("ios-touch-quickbar-toggle-" + skin));
 				});
@@ -533,8 +533,8 @@ namespace OpenRA.Test
 			Assert.Multiple(() =>
 			{
 				Assert.That(panel, Is.EqualTo("ios-touch-quickbar-panel-compact-yuri"));
-				Assert.That(backgrounds.Values, Has.All.EqualTo("ios-touch-quickbar-button-yuri"),
-					"Every catalog slot plus edit and collapse must be repainted.");
+				Assert.That(backgrounds.Values, Has.All.Empty,
+					"The continuous tray must not render a square tile behind every icon.");
 				Assert.That(toggle, Is.EqualTo("ios-touch-quickbar-toggle-yuri"));
 			});
 		}
@@ -570,10 +570,9 @@ namespace OpenRA.Test
 			Assert.Multiple(() =>
 			{
 				Assert.That(commandBar.Background, Is.EqualTo("ios-touch-quickbar-panel-compact-allies"));
-				Assert.That(buttons.Values.Select(button => button.Background),
-					Has.All.EqualTo("ios-touch-quickbar-button-allies"));
-				Assert.That(edit.Background, Is.EqualTo("ios-touch-quickbar-button-allies"));
-				Assert.That(collapse.Background, Is.EqualTo("ios-touch-quickbar-button-allies"));
+				Assert.That(buttons.Values.Select(button => button.Background), Has.All.Empty);
+				Assert.That(edit.Background, Is.Empty);
+				Assert.That(collapse.Background, Is.Empty);
 				Assert.That(collapseIcon.ImageCollection, Is.EqualTo("ios-touch-quickbar-toggle-allies"));
 			});
 
@@ -584,16 +583,15 @@ namespace OpenRA.Test
 
 			TouchFactionSkin.SetActive("soviets");
 			InvokePrivate(commandBar, "RefreshTouchChrome", true);
-			Assert.That(buttons.Values.Select(button => button.Background),
-				Has.All.EqualTo("ios-touch-quickbar-button-soviets"));
+			Assert.That(buttons.Values.Select(button => button.Background), Has.All.Empty);
 
 			SetPrivateField(commandBar, "expanded", true);
 			InvokePrivate(commandBar, "RefreshTouchChrome", true);
 			Assert.Multiple(() =>
 			{
 				Assert.That(commandBar.Background, Is.EqualTo("ios-touch-quickbar-panel-soviets"));
-				Assert.That(edit.Background, Is.EqualTo("ios-touch-quickbar-button-soviets"));
-				Assert.That(collapse.Background, Is.EqualTo("ios-touch-quickbar-button-soviets"));
+				Assert.That(edit.Background, Is.Empty);
+				Assert.That(collapse.Background, Is.Empty);
 			});
 		}
 

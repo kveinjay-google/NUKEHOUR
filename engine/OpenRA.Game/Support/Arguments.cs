@@ -36,14 +36,5 @@ namespace OpenRA
 		public bool Contains(string key) { return args.ContainsKey(key); }
 		public string GetValue(string key, string defaultValue) { return Contains(key) ? args[key] : defaultValue; }
 		public void ReplaceValue(string key, string value) { args[key] = value; }
-
-		public Arguments Clone()
-		{
-			var clone = new Arguments();
-			foreach (var pair in args)
-				clone.args.Add(pair.Key, pair.Value);
-
-			return clone;
-		}
 	}
 }

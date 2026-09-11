@@ -14,6 +14,7 @@ from PIL import Image, ImageChops, ImageFont, ImageStat
 
 ROOT = Path(__file__).resolve().parents[2]
 GENERATOR_PATH = ROOT / "packaging" / "generate_ios_touch_skin_assets.py"
+V3_GENERATOR_PATH = ROOT / "packaging" / "generate_ios_touch_skin_v3.py"
 ASSET_DIR = ROOT / "mods" / "ra2" / "uibits"
 CHROME_PATH = ROOT / "mods" / "ra2" / "chrome.yaml"
 METRICS_PATH = ROOT / "mods" / "ra2" / "metrics.yaml"
@@ -61,6 +62,42 @@ NORMALIZED_SIZES = {
     "quickbar": (128, 32),
 }
 MIN_FACTION_RMS_DIFFERENCE = 6.0
+
+COMMAND_GLYPH_NAMES = (
+    "group-1",
+    "group-2",
+    "group-3",
+    "group-4",
+    "group-5",
+    "production-x5",
+    "group-6",
+    "group-7",
+    "group-8",
+    "group-9",
+    "group-0",
+    "select-all",
+    "select-by-type",
+    "cycle-base",
+    "to-selection",
+    "to-last-event",
+    "cycle-harvesters",
+    "remove-from-group",
+    "attack-move",
+    "force-move",
+    "force-attack",
+    "guard",
+    "deploy",
+    "scatter",
+    "stop",
+    "queue-orders",
+    "attack-anything",
+    "defend",
+    "return-fire",
+    "hold-fire",
+    "sell",
+    "repair",
+    "beacon",
+)
 
 ACTION_NAMES = (
     "stop",
@@ -156,6 +193,15 @@ QUICKBAR_REGIONS = (
 def asset_path(kind: str, faction: str, scale: int) -> Path:
     suffix = "-2x" if scale == 2 else ""
     return ASSET_DIR / f"ios-touch-{kind}-{faction}{suffix}.png"
+
+
+def v3_asset_path(kind: str, faction: str, scale: int) -> Path:
+    suffix = "-2x" if scale == 2 else ""
+    return ASSET_DIR / f"ios-touch-{kind}-{faction}-v3{suffix}.png"
+
+
+def v3_glyph_path(faction: str) -> Path:
+    return ASSET_DIR / f"ios-commandbar-glyphs-{faction}-v3.png"
 
 
 def scaled_region(region: tuple[int, int, int, int], scale: int):
@@ -578,6 +624,62 @@ class IosTouchSkinAssetsTest(unittest.TestCase):
     def test_generator_and_all_eighteen_atlases_exist(self):
         self.require_contract_files()
 
+    def test_v3_generator_and_all_faction_atlases_exist(self):
+        self.assertTrue(V3_GENERATOR_PATH.is_file(), V3_GENERATOR_PATH)
+        for kind, faction, scale in itertools.product(KINDS, FACTIONS, (1, 2)):
+            path = v3_asset_path(kind, faction, scale)
+            with self.subTest(path=path.name):
+                self.assertTrue(path.is_file(), path)
+                with Image.open(path) as image:
+                    self.assertEqual("RGBA", image.mode)
+                    self.assertEqual(SIZES[kind][scale - 1], image.size)
+
+        for faction in FACTIONS:
+            path = v3_glyph_path(faction)
+            with self.subTest(path=path.name):
+                self.assertTrue(path.is_file(), path)
+                with Image.open(path) as image:
+                    self.assertEqual("RGBA", image.mode)
+                    self.assertEqual((2048, 128), image.size)
+
+    def test_v3_command_glyph_cells_are_visible_with_transparent_corners(self):
+        for faction in FACTIONS:
+            with Image.open(v3_glyph_path(faction)) as source:
+                atlas = source.convert("RGBA")
+                for row, column in itertools.product(range(4), range(len(COMMAND_GLYPH_NAMES))):
+                    with self.subTest(faction=faction, row=row, column=column):
+                        cell = atlas.crop((column * 32, row * 32, column * 32 + 32, row * 32 + 32))
+                        self.assertEqual(0, cell.getpixel((0, 0))[3])
+                        self.assertEqual(0, cell.getpixel((31, 31))[3])
+                        self.assertIsNotNone(cell.getchannel("A").getbbox())
+
+    def test_v3_chrome_routes_every_surface_and_glyph_to_its_faction(self):
+        collections = parse_chrome_collections()
+        for faction in FACTIONS:
+            for kind in KINDS:
+                collection = (
+                    f"ios-touch-quickbar-button-{faction}"
+                    if kind == "quickbar"
+                    else f"ios-touch-{kind}-{faction}"
+                )
+                with self.subTest(faction=faction, kind=kind):
+                    self.assertEqual(
+                        f"ios-touch-{kind}-{faction}-v3.png",
+                        collections[collection]["Image"],
+                    )
+                    self.assertEqual(
+                        f"ios-touch-{kind}-{faction}-v3-2x.png",
+                        collections[collection]["Image2x"],
+                    )
+
+            glyph_collection = f"ios-commandbar-glyphs-{faction}"
+            self.assertEqual(
+                f"ios-commandbar-glyphs-{faction}-v3.png",
+                collections[glyph_collection]["Image"],
+            )
+            for name in COMMAND_GLYPH_NAMES:
+                self.assertIn(name, collections[glyph_collection]["Regions"])
+
     def test_atlases_are_rgba_power_of_two_png_files_with_visible_pixels(self):
         self.require_contract_files()
         for kind, faction, scale in itertools.product(KINDS, FACTIONS, (1, 2)):
@@ -589,6 +691,19 @@ class IosTouchSkinAssetsTest(unittest.TestCase):
                 self.assertEqual(0, image.width & (image.width - 1))
                 self.assertEqual(0, image.height & (image.height - 1))
                 self.assertIsNotNone(image.getchannel("A").getbbox())
+
+    def test_unified_command_glyph_atlas_has_identical_transparent_cells(self):
+        path = ASSET_DIR / "ios-commandbar-glyphs-unified.png"
+        with Image.open(path) as source:
+            atlas = source.convert("RGBA")
+            self.assertEqual((512, 128), atlas.size)
+            for row in range(4):
+                for column in range(11):
+                    with self.subTest(row=row, column=column):
+                        box = (column * 32, row * 32, column * 32 + 32, row * 32 + 32)
+                        cell = atlas.crop(box)
+                        self.assertEqual(0, cell.getpixel((0, 0))[3])
+                        self.assertIsNotNone(cell.getchannel("A").getbbox())
 
     def test_unused_atlas_gutters_are_fully_transparent(self):
         self.require_contract_files()
@@ -1352,7 +1467,8 @@ class IosTouchSkinAssetsTest(unittest.TestCase):
         self.assertIn("TouchFactionSkin.JoystickCollection(skin)", joystick_source)
         self.assertIn("TouchFactionSkin.ActionCollection(skin)", action_source)
         self.assertIn("TouchFactionSkin.QuickbarPanelCollection(skin, expanded)", command_bar_source)
-        self.assertIn("TouchFactionSkin.QuickbarButtonCollection(skin)", command_bar_source)
+        self.assertNotIn("TouchFactionSkin.QuickbarButtonCollection(skin)", command_bar_source)
+        self.assertIn("var buttonBackground = string.Empty", command_bar_source)
         self.assertIn("TouchFactionSkin.QuickbarToggleCollection(skin)", command_bar_source)
         for prefix in (
             "ios-touch-actions-",
@@ -1379,15 +1495,17 @@ class IosTouchSkinAssetsTest(unittest.TestCase):
             button["key"].removeprefix("Button@"): button for button in buttons
         }
         expected_touch_icons = {
-            "GROUP_01": ("ios-commandbar-icons-v2", "group-1"),
-            "GROUP_02": ("ios-commandbar-icons-v2", "group-2"),
-            "GROUP_03": ("ios-commandbar-icons-v2", "group-3"),
-            "GROUP_04": ("ios-commandbar-icons-v2", "group-4"),
-            "GROUP_05": ("ios-commandbar-icons-v2", "group-5"),
-            "PRODUCTION_X5": ("production-x5-icon", "production-x5"),
-            "ATTACK_MOVE": ("ios-commandbar-icons-v2", "attack-move"),
-            "SCATTER": ("ios-commandbar-icons-v2", "scatter"),
-            "QUEUE_ORDERS": ("ios-commandbar-icons-v2", "queue-orders"),
+            "GROUP_01": ("ios-commandbar-glyphs", "group-1"),
+            "GROUP_02": ("ios-commandbar-glyphs", "group-2"),
+            "GROUP_03": ("ios-commandbar-glyphs", "group-3"),
+            "GROUP_04": ("ios-commandbar-glyphs", "group-4"),
+            "GROUP_05": ("ios-commandbar-glyphs", "group-5"),
+            "PRODUCTION_X5": ("ios-commandbar-glyphs", "production-x5"),
+            "ATTACK_MOVE": ("ios-commandbar-glyphs", "attack-move"),
+            "SCATTER": ("ios-commandbar-glyphs", "scatter"),
+            "QUEUE_ORDERS": ("ios-commandbar-glyphs", "queue-orders"),
+            "STOP": ("ios-commandbar-glyphs", "stop"),
+            "CYCLE_BASE": ("ios-commandbar-glyphs", "cycle-base"),
         }
         for slot_id, expected_icon in expected_touch_icons.items():
             with self.subTest(slot=slot_id):
@@ -1548,9 +1666,9 @@ class IosTouchSkinAssetsTest(unittest.TestCase):
 
             base = collections[base_name]
             with self.subTest(faction=faction, collection=base_name):
-                self.assertEqual(f"ios-touch-actions-{faction}.png", base.get("Image"))
+                self.assertEqual(f"ios-touch-actions-{faction}-v3.png", base.get("Image"))
                 self.assertEqual(
-                    f"ios-touch-actions-{faction}-2x.png",
+                    f"ios-touch-actions-{faction}-v3-2x.png",
                     base.get("Image2x"),
                 )
                 self.assertEqual(expected_regions, base.get("Regions"))
@@ -1604,11 +1722,11 @@ class IosTouchSkinAssetsTest(unittest.TestCase):
             joystick = collections.get(joystick_name, {})
             with self.subTest(faction=faction, collection=joystick_name):
                 self.assertEqual(
-                    f"ios-touch-joystick-{faction}.png",
+                    f"ios-touch-joystick-{faction}-v3.png",
                     joystick.get("Image"),
                 )
                 self.assertEqual(
-                    f"ios-touch-joystick-{faction}-2x.png",
+                    f"ios-touch-joystick-{faction}-v3-2x.png",
                     joystick.get("Image2x"),
                 )
                 self.assertEqual(expected_joystick_regions, joystick.get("Regions"))
@@ -1618,11 +1736,11 @@ class IosTouchSkinAssetsTest(unittest.TestCase):
                 button = collections.get(button_name, {})
                 with self.subTest(faction=faction, collection=button_name):
                     self.assertEqual(
-                        f"ios-touch-quickbar-{faction}.png",
+                        f"ios-touch-quickbar-{faction}-v3.png",
                         button.get("Image"),
                     )
                     self.assertEqual(
-                        f"ios-touch-quickbar-{faction}-2x.png",
+                        f"ios-touch-quickbar-{faction}-v3-2x.png",
                         button.get("Image2x"),
                     )
                     self.assertEqual(
@@ -1644,11 +1762,11 @@ class IosTouchSkinAssetsTest(unittest.TestCase):
                 panel = collections.get(panel_name, {})
                 with self.subTest(faction=faction, collection=panel_name):
                     self.assertEqual(
-                        f"ios-touch-quickbar-{faction}.png",
+						f"ios-touch-quickbar-{faction}-v3.png",
                         panel.get("Image"),
                     )
                     self.assertEqual(
-                        f"ios-touch-quickbar-{faction}-2x.png",
+						f"ios-touch-quickbar-{faction}-v3-2x.png",
                         panel.get("Image2x"),
                     )
                     actual_panel = parse_int_region(panel.get("PanelRegion", ""))
@@ -1660,11 +1778,11 @@ class IosTouchSkinAssetsTest(unittest.TestCase):
             toggle = collections.get(toggle_name, {})
             with self.subTest(faction=faction, collection=toggle_name):
                 self.assertEqual(
-                    f"ios-touch-quickbar-{faction}.png",
+                    f"ios-touch-quickbar-{faction}-v3.png",
                     toggle.get("Image"),
                 )
                 self.assertEqual(
-                    f"ios-touch-quickbar-{faction}-2x.png",
+                    f"ios-touch-quickbar-{faction}-v3-2x.png",
                     toggle.get("Image2x"),
                 )
                 self.assertEqual(expected_toggle_regions, toggle.get("Regions"))

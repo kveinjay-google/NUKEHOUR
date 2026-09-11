@@ -24,12 +24,10 @@ public sealed class IosContentFileSystemLoader : IFileSystemLoader
                 {
                     fileSystem.Mount(package.Key, package.Value);
                 }
-			catch (Exception e)
-			{
-				Console.Error.WriteLine($"OpenRA iOS could not mount '{package.Key}': {e.Message}");
-				// Missing desktop-only content must not redirect the iOS
+                catch
+                {
+                    // Missing desktop-only content must not redirect the iOS
                     // build into the unavailable content-installer mod.
                 }
-
-	}
+    }
 }

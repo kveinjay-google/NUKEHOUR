@@ -15,7 +15,6 @@ using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
-using OpenRA.Support;
 
 namespace OpenRA
 {
@@ -37,12 +36,10 @@ namespace OpenRA
 
 		RSAParameters parameters;
 		readonly string filePath;
-		readonly PlayerDatabase playerDatabase;
 
 		public LocalPlayerProfile(string filePath, PlayerDatabase playerDatabase)
 		{
 			this.filePath = filePath;
-			this.playerDatabase = playerDatabase;
 			innerState = LinkState.Uninitialized;
 
 			try
@@ -78,44 +75,8 @@ namespace OpenRA
 			if (State != LinkState.Unlinked && State != LinkState.Linked && State != LinkState.ConnectionFailed)
 				return;
 
-			Task.Run(async () =>
-			{
-				try
-				{
-					var client = HttpClientFactory.Create();
-
-					var url = playerDatabase.Profile + Fingerprint;
-					var httpResponseMessage = await client.GetAsync(url);
-					var result = await httpResponseMessage.Content.ReadAsStreamAsync();
-
-					var yaml = MiniYaml.FromStream(result, url).First();
-					if (yaml.Key == "Player")
-					{
-						innerData = FieldLoader.Load<PlayerProfile>(yaml.Value);
-						if (innerData.KeyRevoked)
-						{
-							Log.Write("debug", $"Revoking key with fingerprint {Fingerprint}");
-							DeleteKeypair();
-						}
-						else
-							innerState = LinkState.Linked;
-					}
-					else
-						innerState = LinkState.Unlinked;
-				}
-				catch (Exception e)
-				{
-					Log.Write("debug", "Failed to parse player data result with exception:");
-					Log.Write("debug", e);
-					innerState = LinkState.ConnectionFailed;
-				}
-				finally
-				{
-					onComplete?.Invoke();
-				}
-			});
-
-			innerState = LinkState.CheckingLink;
+			innerState = LinkState.Unlinked;
+			onComplete?.Invoke();
 		}
 
 		public void GenerateKeypair()

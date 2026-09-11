@@ -49,6 +49,7 @@ namespace OpenRA.Mods.Common
 			public readonly string[] RegistryPrefixes = { string.Empty };
 			public readonly string RegistryKey;
 			public readonly string RegistryValue;
+			public readonly string[] RequiredFiles = Array.Empty<string>();
 
 			public readonly string Title;
 

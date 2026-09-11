@@ -53,7 +53,8 @@ namespace OpenRA.Test
 			var fluent = File.ReadAllText(path);
 			StringAssert.Contains("自行导入", fluent);
 			StringAssert.Contains("尤里的复仇", fluent);
-			StringAssert.DoesNotContain("下载", fluent);
+			StringAssert.DoesNotContain("http://", fluent.ToLowerInvariant());
+			StringAssert.DoesNotContain("https://", fluent.ToLowerInvariant());
 		}
 
 		[Test]
@@ -62,6 +63,70 @@ namespace OpenRA.Test
 			var project = File.ReadAllText(Path.Combine(
 				RepositoryRoot(), "ios", "OpenRA.iOS", "OpenRA.iOS.csproj"));
 			Assert.That(project.Split("../../mods/ra2-content/**/*").Length - 1, Is.EqualTo(2));
+		}
+
+		[Test]
+		public void MacOSDirectorySourceSupportsBaseAndOptionalPackagesOffline()
+		{
+			var contentRoot = Path.Combine(RepositoryRoot(), "mods", "ra2-content");
+			var mod = File.ReadAllText(Path.Combine(contentRoot, "mod.yaml"));
+			var sourcePath = Path.Combine(contentRoot, "installer", "macos-directory.yaml");
+
+			Assert.That(File.Exists(sourcePath), Is.True);
+			var source = File.ReadAllText(sourcePath);
+			StringAssert.Contains("ra2content|installer/macos-directory.yaml", mod);
+			StringAssert.Contains("Type: MacOSDirectory", source);
+			StringAssert.Contains("RequiredFiles: ra2.mix, language.mix", source);
+			StringAssert.Contains("ContentPackage@base:", source);
+			StringAssert.Contains("ContentPackage@music:", source);
+			StringAssert.Contains("ContentPackage@yuri:", source);
+			StringAssert.Contains("ContentPackage@yuri-music:", source);
+			Assert.That(mod.Split("Sources: macos-directory").Length - 1, Is.EqualTo(4));
+			StringAssert.DoesNotContain("http://", source.ToLowerInvariant());
+			StringAssert.DoesNotContain("https://", source.ToLowerInvariant());
+		}
+
+		[Test]
+		public void MacOSContentManagerOffersDirectoryPickerAndAutomaticSearch()
+		{
+			var root = RepositoryRoot();
+			var layout = File.ReadAllText(Path.Combine(root, "engine", "mods", "common-content", "content.yaml"));
+			var contentLogic = File.ReadAllText(Path.Combine(root, "engine", "OpenRA.Mods.Common", "Widgets", "Logic",
+				"Installation", "ModContentLogic.cs"));
+			var sourceLogic = File.ReadAllText(Path.Combine(root, "engine", "OpenRA.Mods.Common", "Widgets", "Logic",
+				"Installation", "InstallFromSourceLogic.cs"));
+			var english = File.ReadAllText(Path.Combine(root, "engine", "mods", "common-content", "fluent", "chrome.ftl"));
+			var chinese = File.ReadAllText(Path.Combine(root, "mods", "ra2-content", "fluent", "zh-CN", "chrome.ftl"));
+
+			StringAssert.Contains("Button@CHOOSE_SOURCE_BUTTON:", layout);
+			StringAssert.Contains("Button@CHECK_SOURCE_BUTTON:", layout);
+			StringAssert.Contains("chooseDirectory", contentLogic);
+			StringAssert.Contains("ChooseContentSource", sourceLogic);
+			StringAssert.Contains("ShowBackOnly", sourceLogic);
+			StringAssert.Contains("activeOperation", sourceLogic);
+			StringAssert.Contains("button-content-panel-choose-source = Choose Installation Directory…", english);
+			StringAssert.Contains("button-content-panel-auto-search = Automatic Search", english);
+			StringAssert.Contains("label-select-install-directory", english);
+			StringAssert.Contains("label-selected-directory-invalid", english);
+			StringAssert.Contains("button-content-panel-choose-source = 选择安装目录…", chinese);
+			StringAssert.Contains("button-content-panel-auto-search = 自动搜索", chinese);
+			StringAssert.Contains("label-select-install-directory", chinese);
+			StringAssert.Contains("label-selected-directory-invalid", chinese);
+		}
+
+		[Test]
+		public void LauncherOwnedContentManagerReturnsToLauncherInsteadOfReloadingTheMod()
+		{
+			var root = RepositoryRoot();
+			var game = File.ReadAllText(Path.Combine(root, "engine", "OpenRA.Game", "Game.cs"));
+			var loader = File.ReadAllText(Path.Combine(root, "engine", "OpenRA.Mods.Common", "FileSystem",
+				"ContentInstallerFileSystemLoader.cs"));
+			var logic = File.ReadAllText(Path.Combine(root, "engine", "OpenRA.Mods.Common", "Widgets", "Logic",
+				"Installation", "ModContentLogic.cs"));
+
+			StringAssert.Contains("ContentManagerReturnToLauncher", game);
+			StringAssert.Contains("ClearContentManagerReturnToLauncher", loader);
+			StringAssert.Contains("ReturnFromContentManager", logic);
 		}
 	}
 }

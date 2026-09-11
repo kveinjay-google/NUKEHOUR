@@ -71,8 +71,7 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 				Math.Max(minimumChatHeight, preferredUtilityHeight));
 			var upperHeight = Math.Max(0, mainHeight - utilityHeight - (utilityHeight > 0 ? Gap : 0));
 
-			var reservedScrollbar = policy.IsPhone ? 0 : policy.MinimumTarget;
-			var minimumPlayerWidth = (skirmishMode ? 8 : 10) * policy.MinimumTarget;
+			var minimumPlayerWidth = 10 * policy.MinimumTarget;
 			var playersWidth = skirmishMode ?
 				2 * Math.Max(0, width - Gap) / 3 :
 				Math.Max(0, width - Gap - Math.Min(
@@ -126,6 +125,7 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 					Math.Max(0, Footer.Right - Start.Right - Gap), Footer.Height);
 			}
 
+			var reservedScrollbar = policy.IsPhone ? 0 : policy.MinimumTarget;
 			var playerRowWidth = Math.Max(0, Players.Width - reservedScrollbar);
 			PlayerRow = new WidgetBounds(0, 0, playerRowWidth, Math.Min(policy.MinimumTarget, Players.Height));
 			var columns = PlayerColumns(playerRowWidth, policy.MinimumTarget, skirmishMode);
@@ -133,9 +133,11 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 			PlayerColor = columns[1];
 			PlayerFaction = columns[2];
 			PlayerTeam = columns[3];
-			PlayerHandicap = skirmishMode ? new WidgetBounds(PlayerTeam.Right, 0, 0, policy.MinimumTarget) : columns[4];
+			PlayerHandicap = skirmishMode ?
+				new WidgetBounds(PlayerTeam.Right, 0, 0, policy.MinimumTarget) : columns[4];
 			PlayerSpawn = skirmishMode ? columns[4] : columns[5];
-			PlayerReady = skirmishMode ? new WidgetBounds(PlayerSpawn.Right, 0, 0, policy.MinimumTarget) : columns[6];
+			PlayerReady = skirmishMode ?
+				new WidgetBounds(PlayerSpawn.Right, 0, 0, policy.MinimumTarget) : columns[6];
 		}
 
 		public static IosLobbyLayout Create(int width, int height, bool compact)
@@ -155,8 +157,7 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 
 		static WidgetBounds[] PlayerColumns(int width, int minimumTarget, bool skirmishMode)
 		{
-			// Skirmish headings need room for 名称 / 颜色 / 阵营 / 队伍 / 出生点.
-			// Names commonly contain four or more characters; spawn only needs its three-character title and a letter.
+			// Names commonly contain four or more characters; spawn only needs its title and one letter.
 			var minimumUnits = skirmishMode ? new[] { 4, 2, 2, 2, 2 } : new[] { 2, 1, 3, 1, 1, 1, 1 };
 			var weights = skirmishMode ? new[] { 4, 2, 2, 2, 2 } : new[] { 3, 1, 2, 1, 1, 1, 1 };
 			var totalMinimumUnits = minimumUnits.Sum();

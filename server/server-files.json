@@ -1,0 +1,115 @@
+{
+  "schema": 1,
+  "product": "NUKE HOUR Dedicated Server",
+  "instanceModel": "one-process-one-room",
+  "targets": [
+    "linux-x64",
+    "linux-arm64"
+  ],
+  "protocol": {
+    "transportHandshake": 7,
+    "handshakeSchema": 1,
+    "orders": 23,
+    "runtimeContractSchema": 1,
+    "resourceCapability": "ra2-presentation-capability-v2"
+  },
+  "defaults": {
+    "listenAddress": "0.0.0.0",
+    "listenPort": 1234,
+    "advertiseOnline": false,
+    "advertiseLAN": false,
+    "recordReplays": false,
+    "enableSyncReports": true
+  },
+  "constraints": {
+    "listenPortRange": [
+      1,
+      65535
+    ],
+    "maxPlayersRange": [
+      1,
+      64
+    ]
+  },
+  "requiredModAssemblies": [
+    "OpenRA.Mods.Common.dll",
+    "OpenRA.Mods.Cnc.dll",
+    "OpenRA.Mods.RA2.dll"
+  ],
+  "requiredModDependencyManifests": [
+    "OpenRA.Mods.Common.deps.json",
+    "OpenRA.Mods.Cnc.deps.json",
+    "OpenRA.Mods.RA2.deps.json"
+  ],
+  "requiredPublishedFiles": [
+    "OpenRA.Server",
+    "OpenRA.Server.dll",
+    "OpenRA.Server.deps.json",
+    "OpenRA.Server.runtimeconfig.json",
+    "OpenRA.Game.dll",
+    "System.Private.CoreLib.dll",
+    "libcoreclr.so",
+    "libhostfxr.so",
+    "libhostpolicy.so"
+  ],
+  "publishedFileAllowlist": [
+    "AUTHORS",
+    "BeaconLib.dll",
+    "DiscordRPC.dll",
+    "Eluant.dll",
+    "Eluant.dll.config",
+    "FuzzyLogicLibrary.dll",
+    "ICSharpCode.SharpZipLib.dll",
+    "Linguini.Bundle.dll",
+    "Linguini.Shared.dll",
+    "Linguini.Syntax.dll",
+    "MP3Sharp.dll",
+    "Microsoft.*.dll",
+    "Mono.Nat.dll",
+    "NVorbis.dll",
+    "Newtonsoft.Json.dll",
+    "OpenRA.Game.dll",
+    "OpenRA.Game.pdb",
+    "OpenRA.Mods.Cnc.deps.json",
+    "OpenRA.Mods.Cnc.dll",
+    "OpenRA.Mods.Common.deps.json",
+    "OpenRA.Mods.Common.dll",
+    "OpenRA.Mods.RA2.deps.json",
+    "OpenRA.Mods.RA2.dll",
+    "OpenRA.Mods.RA2.pdb",
+    "OpenRA.Server",
+    "OpenRA.Server.deps.json",
+    "OpenRA.Server.dll",
+    "OpenRA.Server.pdb",
+    "OpenRA.Server.runtimeconfig.json",
+    "Pfim.dll",
+    "System.*.dll",
+    "System.dll",
+    "TagLibSharp.dll",
+    "WindowsBase.dll",
+    "createdump",
+    "libSystem.*.so",
+    "libclrjit.so",
+    "libcoreclr.so",
+    "libcoreclrtraceptprovider.so",
+    "libdbgshim.so",
+    "libhostfxr.so",
+    "libhostpolicy.so",
+    "libmscordaccore.so",
+    "libmscordbi.so",
+    "lua51.so",
+    "mscorlib.dll",
+    "netstandard.dll"
+  ],
+  "forbiddenCommercialResources": [
+    "ra2.mix",
+    "language.mix",
+    "ra2md.mix",
+    "langmd.mix",
+    "*.mix",
+    "*.bag",
+    "*.aud",
+    "*.vqa",
+    "*.exe"
+  ]
+}

@@ -1,0 +1,15 @@
+services:
+  lobby:
+    build: .
+    environment:
+      NUKEHOUR_LOBBY_REGISTRATION_TOKEN: ${NUKEHOUR_LOBBY_REGISTRATION_TOKEN:?required}
+      NUKEHOUR_LOBBY_ALLOWED_HOSTS: localhost,127.0.0.1
+    ports:
+      - "18080:8080/tcp"
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    tmpfs:
+      - /tmp

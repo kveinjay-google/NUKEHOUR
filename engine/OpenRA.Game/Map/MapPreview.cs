@@ -14,10 +14,7 @@ using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
 using System.Text;
-using System.Threading;
-using System.Threading.Tasks;
 using OpenRA.FileFormats;
 using OpenRA.FileSystem;
 using OpenRA.Graphics;
@@ -475,8 +472,7 @@ namespace OpenRA
 
 			if (cache.LoadPreviewImages && p.Contains("map.png"))
 				using (var dataStream = p.GetStream("map.png"))
-					newData.Preview = new Png(dataStream, classification == MapClassification.System ?
-						PngReadLimits.TrustedSystemMapDefault : PngReadLimits.TrustedEngineDefault);
+					newData.Preview = new Png(dataStream);
 
 			newData.ModifiedDate = File.GetLastWriteTime(p.Name);
 
@@ -562,77 +558,6 @@ namespace OpenRA
 
 			// Update the status and class unconditionally
 			innerData = newData;
-		}
-
-		public void Install(string mapRepositoryUrl, Action onSuccess)
-		{
-			if ((Status != MapStatus.DownloadError && Status != MapStatus.DownloadAvailable) || !Game.Settings.Game.AllowDownloading)
-				return;
-
-			BeginDownloadAttempt();
-			var installLocation = cache.MapLocations.FirstOrDefault(p => p.Value == MapClassification.User);
-			if (installLocation.Key is not IReadWritePackage mapInstallPackage)
-			{
-				Log.Write("debug", "Map install directory not found");
-				innerData.Status = MapStatus.DownloadError;
-				return;
-			}
-
-			Task.Run(async () =>
-			{
-				// Request the filename from the server
-				// Run in a worker thread to avoid network delays
-				var mapUrl = mapRepositoryUrl + Uid;
-				try
-				{
-					void OnDownloadProgress(long total, long received, int percentage)
-					{
-						DownloadBytes = total;
-						DownloadPercentage = percentage;
-					}
-
-					var client = HttpClientFactory.Create();
-
-					var response = await client.GetAsync(mapUrl, HttpCompletionOption.ResponseHeadersRead);
-
-					if (!response.IsSuccessStatusCode)
-					{
-						innerData.Status = MapStatus.DownloadError;
-						return;
-					}
-
-					var mapFilename = response.Content.Headers.ContentDisposition?.FileName;
-
-					// Map not found
-					if (string.IsNullOrEmpty(mapFilename))
-					{
-						innerData.Status = MapStatus.DownloadError;
-						return;
-					}
-
-					var fileStream = new MemoryStream();
-
-					await response.ReadAsStreamWithProgress(fileStream, OnDownloadProgress, CancellationToken.None);
-
-					mapInstallPackage.Update(mapFilename, fileStream.ToArray());
-					Log.Write("debug", $"Downloaded map to '{mapFilename}'");
-
-					var package = mapInstallPackage.OpenPackage(mapFilename, modData.ModFiles);
-					if (package == null)
-						innerData.Status = MapStatus.DownloadError;
-					else
-					{
-						UpdateFromMap(package, mapInstallPackage, MapClassification.User, null, GridType, null);
-						Game.RunAfterTick(onSuccess);
-					}
-				}
-				catch (Exception e)
-				{
-					Log.Write("debug", "Map installation failed with error:");
-					Log.Write("debug", e);
-					innerData.Status = MapStatus.DownloadError;
-				}
-			});
 		}
 
 		internal void BeginDownloadAttempt()

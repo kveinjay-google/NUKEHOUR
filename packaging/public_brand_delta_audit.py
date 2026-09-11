@@ -103,45 +103,6 @@ SOURCE_MAPPINGS = (
     ),
 )
 
-PROFILE_SPLIT_PATHS = (
-    "mods/ra2/audio/voices-base.yaml",
-    "mods/ra2/manifest/common.yaml",
-    "mods/ra2/manifest/filesystem-desktop.yaml",
-    "mods/ra2/manifest/filesystem-ios-base.yaml",
-    "mods/ra2/manifest/filesystem-ios-yuri.yaml",
-    "mods/ra2/manifest/gameplay-base.yaml",
-    "mods/ra2/manifest/gameplay-yuri.yaml",
-    "mods/ra2/mod.ios-base.yaml",
-    "mods/ra2/mod.ios-yuri.yaml",
-    "mods/ra2/rules/allied-infantry-base.yaml",
-    "mods/ra2/rules/defaults-base.yaml",
-    "mods/ra2/rules/proxy-actors-base.yaml",
-    "mods/ra2/rules/soviet-infantry-base.yaml",
-    "mods/ra2/rules/soviet-vehicles-base.yaml",
-    "mods/ra2/rules/world-base.yaml",
-    "mods/ra2/sequences/vehicles-base.yaml",
-    "mods/ra2/sequences/voxels-base.yaml",
-)
-
-PROFILE_SPLIT_SOURCE_MAPPINGS = tuple(
-    SourceMapping(Path(path), path, *PRIVATE_DECISION)
-    for path in PROFILE_SPLIT_PATHS
-)
-
-EXPECTED_MANIFEST_PATH_COUNT = 280
-EXPECTED_SBOM_PATH_COUNT = 277
-EXPECTED_MANIFEST_ONLY_PATHS = {
-    "en.lproj/InfoPlist.strings",
-    "mods/ra2/bits/animations/nc-impact-core.png",
-    "mods/ra2/bits/animations/nc-impact-debris.png",
-    "mods/ra2/bits/animations/nc-impact-ring.png",
-    "zh-Hans.lproj/InfoPlist.strings",
-}
-EXPECTED_SBOM_ONLY_PATHS = {
-    "ios/OpenRA.iOS/en.lproj/InfoPlist.strings",
-    "ios/OpenRA.iOS/zh-Hans.lproj/InfoPlist.strings",
-}
-
 NON_BUNDLE_ICON_PATH = Path("mods/ra2/icon.png")
 NON_BUNDLE_ICON_DECISION = PRIVATE_DECISION
 
@@ -395,61 +356,6 @@ def _validate_one_entry(
     return tuple(errors)
 
 
-def _validate_mapping_tables() -> tuple[str, ...]:
-    errors: list[str] = []
-    profile_paths = [mapping.source_path.as_posix() for mapping in PROFILE_SPLIT_SOURCE_MAPPINGS]
-    if tuple(profile_paths) != PROFILE_SPLIT_PATHS:
-        errors.append("profile split source mappings must match the fixed byte-sorted path table")
-    if profile_paths != sorted(profile_paths, key=lambda value: value.encode()):
-        errors.append("profile split source mappings must be UTF-8 byte-sorted")
-
-    mappings = (*SOURCE_MAPPINGS, *PROFILE_SPLIT_SOURCE_MAPPINGS)
-    source_paths = [mapping.source_path.as_posix() for mapping in mappings]
-    bundle_paths = [mapping.bundle_path for mapping in mappings]
-    if len(source_paths) != len(set(source_paths)):
-        errors.append("combined source mappings contain a duplicate source path")
-    if len(bundle_paths) != len(set(bundle_paths)):
-        errors.append("combined source mappings contain a duplicate bundle path")
-    return tuple(errors)
-
-
-def _validate_inventory_contract(
-    manifest_entries: dict[str, dict[str, Any]],
-    sbom_entries: dict[str, dict[str, Any]],
-) -> tuple[str, ...]:
-    errors: list[str] = []
-    manifest_paths = list(manifest_entries)
-    sbom_paths = list(sbom_entries)
-    if len(manifest_paths) != EXPECTED_MANIFEST_PATH_COUNT:
-        errors.append(
-            "manifest must contain exactly "
-            f"{EXPECTED_MANIFEST_PATH_COUNT} paths, got {len(manifest_paths)}"
-        )
-    if len(sbom_paths) != EXPECTED_SBOM_PATH_COUNT:
-        errors.append(
-            f"SBOM must contain exactly {EXPECTED_SBOM_PATH_COUNT} paths, "
-            f"got {len(sbom_paths)}"
-        )
-    if manifest_paths != sorted(manifest_paths, key=lambda value: value.encode()):
-        errors.append("manifest paths must be UTF-8 byte-sorted")
-    if sbom_paths != sorted(sbom_paths, key=lambda value: value.encode()):
-        errors.append("SBOM paths must be UTF-8 byte-sorted")
-
-    manifest_only = set(manifest_paths) - set(sbom_paths)
-    sbom_only = set(sbom_paths) - set(manifest_paths)
-    if manifest_only != EXPECTED_MANIFEST_ONLY_PATHS:
-        errors.append(
-            "manifest-only namespace mismatch: expected "
-            f"{sorted(EXPECTED_MANIFEST_ONLY_PATHS)!r}, got {sorted(manifest_only)!r}"
-        )
-    if sbom_only != EXPECTED_SBOM_ONLY_PATHS:
-        errors.append(
-            "SBOM-only namespace mismatch: expected "
-            f"{sorted(EXPECTED_SBOM_ONLY_PATHS)!r}, got {sorted(sbom_only)!r}"
-        )
-    return tuple(errors)
-
-
 def validate_source_mappings(
     source_root: Path,
     manifest_path: Path,
@@ -461,10 +367,7 @@ def validate_source_mappings(
     if errors:
         return tuple(errors)
 
-    errors.extend(_validate_mapping_tables())
-    errors.extend(_validate_inventory_contract(manifest_entries, sbom_entries))
-
-    for mapping in (*SOURCE_MAPPINGS, *PROFILE_SPLIT_SOURCE_MAPPINGS):
+    for mapping in SOURCE_MAPPINGS:
         errors.extend(
             _validate_one_entry(
                 source_root,

@@ -10,28 +10,6 @@ Container@ADVANCED_PANEL:
 			TopBottomSpacing: 5
 			ItemSpacing: 10
 			Children:
-				Background@FORUM_ACCOUNT_SECTION_HEADER:
-					X: 5
-					Width: PARENT_WIDTH - 24 - 10
-					Height: 13
-					Background: separator
-					ClickThrough: True
-					Children:
-						Label@LABEL:
-							Width: PARENT_WIDTH
-							Height: PARENT_HEIGHT
-							Font: TinyBold
-							Align: Center
-							Text: label-forum-account-section-header
-				Container@ROW:
-					Width: PARENT_WIDTH - 24
-					Height: 100
-					Children:
-						Container@PLAYER_PROFILE_CONTAINER:
-							Logic: LoadSettingsPlayerProfileLogic
-							X: 10
-							Y: 0
-				Container@SPACER:
 				Background@NETWORK_SECTION_HEADER:
 					X: 5
 					Width: PARENT_WIDTH - 24 - 10
@@ -58,15 +36,6 @@ Container@ADVANCED_PANEL:
 									Height: 20
 									Font: Regular
 									Text: checkbox-nat-discovery-container
-						Container@FETCH_NEWS_CHECKBOX_CONTAINER:
-							X: PARENT_WIDTH / 2 + 10
-							Width: PARENT_WIDTH / 2 - 20
-							Children:
-								Checkbox@FETCH_NEWS_CHECKBOX:
-									Width: PARENT_WIDTH
-									Height: 20
-									Font: Regular
-									Text: checkbox-fetch-news-container
 				Container@ROW:
 					Width: PARENT_WIDTH - 24
 					Height: 20
@@ -80,15 +49,6 @@ Container@ADVANCED_PANEL:
 									Height: 20
 									Font: Regular
 									Text: checkbox-perfgraph-container
-						Container@CHECK_VERSION_CHECKBOX_CONTAINER:
-							X: PARENT_WIDTH / 2 + 10
-							Width: PARENT_WIDTH / 2 - 20
-							Children:
-								Checkbox@CHECK_VERSION_CHECKBOX:
-									Width: PARENT_WIDTH
-									Height: 20
-									Font: Regular
-									Text: checkbox-check-version-container
 				Container@ROW:
 					Width: PARENT_WIDTH - 24
 					Height: 50
@@ -102,22 +62,6 @@ Container@ADVANCED_PANEL:
 									Height: 20
 									Font: Regular
 									Text: checkbox-perftext-container
-						Container@SENDSYSINFO_CHECKBOX_CONTAINER:
-							X: PARENT_WIDTH / 2 + 10
-							Width: PARENT_WIDTH / 2 - 20
-							Children:
-								Checkbox@SENDSYSINFO_CHECKBOX:
-									Width: PARENT_WIDTH
-									Height: 20
-									Font: Regular
-									Text: checkbox-sendsysinfo-container
-								Label@SENDSYSINFO_DESC:
-									Y: 30
-									Width: PARENT_WIDTH
-									Height: 30
-									Font: Tiny
-									WordWrap: True
-									Text: label-sendsysinfo-checkbox-container-desc
 				Container@SPACER:
 				Background@DEBUG_SECTION_HEADER:
 					X: 5

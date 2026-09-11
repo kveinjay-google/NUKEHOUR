@@ -66,22 +66,8 @@ namespace OpenRA.Graphics
 			using (stream)
 			{
 				foreach (var loader in loaders)
-				{
-					var start = stream.Position;
-					try
-					{
-						if (loader.TryParseSprite(stream, filename, out var frames, out _))
-							return frames;
-					}
-					catch (EndOfStreamException) when (stream.CanSeek)
-					{
-						stream.Position = start;
-					}
-					catch (ArgumentOutOfRangeException) when (stream.CanSeek)
-					{
-						stream.Position = start;
-					}
-				}
+					if (loader.TryParseSprite(stream, filename, out var frames, out _))
+						return frames;
 
 				return null;
 			}

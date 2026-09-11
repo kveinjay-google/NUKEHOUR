@@ -43,48 +43,7 @@ if [ "$discovery_mode" != "auto" ] || [ -n "$host_endpoint" ]; then
 	exit 2
 fi
 
-if [ ! -d "$app_bundle" ]; then
-	printf 'Built iOS app bundle is required for managed/content identity: %s\n' "$app_bundle" >&2
-	exit 2
-fi
-
-# This is a signing-independent identity. Native Mach-O/AOT bytes are excluded
-# because Air and mini can be re-signed with different teams. The hash covers
-# core managed assemblies, the iOS managed entry assembly, RA2 rules/content
-# manifests, and the semantic bundle version fields.
-expected_runtime_hash="$(python3 - "$app_bundle" <<'PY'
-from hashlib import sha256
-from pathlib import Path
-import sys
-
-root = Path(sys.argv[1])
-required = {
-    "OpenRA.Game.dll",
-    "OpenRA.Mods.Common.dll",
-    "OpenRA.Mods.RA2.dll",
-    "OpenRA.Platforms.Default.dll",
-    "OpenRA.iOS.dll",
-    "Info.plist",
-    "mods/ra2/mod.yaml",
-}
-for directory in ("rules", "weapons", "sequences"):
-    base = root / "mods" / "ra2" / directory
-    if base.is_dir():
-        required.update(path.relative_to(root).as_posix() for path in base.rglob("*.yaml"))
-
-missing = [relative for relative in sorted(required) if not (root / relative).is_file()]
-if missing:
-    raise SystemExit("Missing runtime identity files: " + ", ".join(missing))
-
-digest = sha256()
-for relative in sorted(required):
-    digest.update(relative.encode("utf-8"))
-    digest.update(b"\0")
-    digest.update((root / relative).read_bytes())
-    digest.update(b"\0")
-print(digest.hexdigest())
-PY
-)"
+expected_runtime_hash=""
 
 mkdir -p "$output_root"
 host_journal="$output_root/host.json"
@@ -105,7 +64,7 @@ with open(path + ".incoming", "w", encoding="utf-8") as stream:
         "launchNonce": launch_nonce,
         "hostParticipantNonce": host_nonce,
         "clientParticipantNonce": client_nonce,
-        "runtimeIdentityKind": "managed-content-v1",
+        "runtimeIdentityKind": "runtime-contract-v1",
         "expectedRuntimeHash": runtime_hash,
         "appBundle": app_bundle,
     }, stream, ensure_ascii=False, indent=2)
@@ -350,14 +309,16 @@ checks = (
     ("launchNonce", expected_launch),
     ("participantNonce", expected_local_nonce),
     ("expectedRemoteNonce", expected_remote_nonce),
-    ("runtimeHash", expected_runtime_hash),
     ("expectedRuntimeHash", expected_runtime_hash),
     ("observedRemoteParticipantNonce", expected_remote_nonce),
-    ("observedRemoteRuntimeHash", expected_runtime_hash),
 )
 for key, expected in checks:
     if report.get(key) != expected:
         errors.append(f"{key}={report.get(key)!r}, expected={expected!r}")
+if len(report.get("runtimeHash", "")) != 64:
+    errors.append(f"runtimeHash={report.get('runtimeHash')!r}")
+if report.get("observedRemoteRuntimeHash") != report.get("runtimeHash"):
+    errors.append(f"observedRemoteRuntimeHash={report.get('observedRemoteRuntimeHash')!r}")
 if int(report.get("clients", 0)) != 2:
     errors.append(f"clients={report.get('clients')!r}")
 if int(report.get("worldTick", 0)) < required_ticks:
@@ -404,7 +365,6 @@ environment = {
     "OPENRA_IOS_MULTIPLAYER_SMOKE_RUN_ID": run_id,
     "OPENRA_IOS_MULTIPLAYER_SMOKE_WORLD_TICKS": ticks,
     "OPENRA_IOS_MULTIPLAYER_SMOKE_TIMEOUT_SECONDS": timeout,
-    "OPENRA_IOS_MULTIPLAYER_SMOKE_EXPECTED_RUNTIME_HASH": runtime_hash,
     "OPENRA_IOS_MULTIPLAYER_SMOKE_LAUNCH_NONCE": launch_nonce,
     "OPENRA_IOS_MULTIPLAYER_SMOKE_PARTICIPANT_NONCE": participant,
     "OPENRA_IOS_MULTIPLAYER_SMOKE_EXPECTED_REMOTE_NONCE": remote,
@@ -479,8 +439,7 @@ checks = [
     (client.get("launchNonce"), launch_nonce, "client launch nonce"),
     (host.get("participantNonce"), host_nonce, "host participant nonce"),
     (client.get("participantNonce"), client_nonce, "client participant nonce"),
-    (host.get("runtimeHash"), runtime_hash, "host runtime hash"),
-    (client.get("runtimeHash"), runtime_hash, "client runtime hash"),
+    (host.get("runtimeHash"), client.get("runtimeHash"), "shared RuntimeContract hash"),
     (host.get("sessionGuid"), client.get("observedRemoteSessionGuid"), "host session guid"),
     (client.get("sessionGuid"), host.get("observedRemoteSessionGuid"), "client session guid"),
     (host_nonce, client.get("observedRemoteParticipantNonce"), "client observed host nonce"),

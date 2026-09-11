@@ -1,0 +1,352 @@
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/Ingame/ClassicProductionLogic.cs b/OpenRA.Mods.Common/Widgets/Logic/Ingame/ClassicProductionLogic.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/Ingame/ClassicProductionLogic.cs	2026-09-09 08:32:12
++++ b/OpenRA.Mods.Common/Widgets/Logic/Ingame/ClassicProductionLogic.cs	2026-09-09 08:32:12
+@@ -67,6 +67,7 @@
+ 		{
+ 			this.world = world;
+ 			palette = widget.Get<ProductionPaletteWidget>("PRODUCTION_PALETTE");
++			ApplyIosSidebarLayout(widget, palette);
+ 
+ 			var background = widget.GetOrNull("PALETTE_BACKGROUND");
+ 			var foreground = widget.GetOrNull("PALETTE_FOREGROUND");
+@@ -87,8 +88,13 @@
+ 
+ 				void UpdateBackground(int _, int icons)
+ 				{
+-					var rows = Math.Max(palette.MinimumRows, (icons + palette.Columns - 1) / palette.Columns);
+-					rows = Math.Min(rows, palette.MaximumRows);
++					var iosLayout = Platform.IsIOS
++						? IosIngameSidebarLayoutPolicy.Create(
++							IosScreenMetrics.SnapshotFor(Game.Renderer.Resolution))
++						: default;
++					var rows = Platform.IsIOS ? iosLayout.BackgroundRows :
++						Math.Min(palette.MaximumRows,
++							Math.Max(palette.MinimumRows, (icons + palette.Columns - 1) / palette.Columns));
+ 
+ 					if (background != null)
+ 					{
+@@ -105,7 +111,7 @@
+ 						if (backgroundBottom == null)
+ 							return;
+ 
+-						backgroundBottom.Bounds.Y = rows * rowHeight;
++						backgroundBottom.Bounds.Y = Platform.IsIOS ? iosLayout.BottomCapY : rows * rowHeight;
+ 						background.AddChild(backgroundBottom);
+ 					}
+ 
+@@ -161,6 +167,7 @@
+ 				scrollDown.OnClick = palette.ScrollDown;
+ 				scrollDown.IsVisible = () => palette.TotalIconCount > palette.MaxIconRowOffset * palette.Columns;
+ 				scrollDown.IsDisabled = () => !palette.CanScrollDown;
++				PositionIosScrollButton(widget, typesContainer, scrollDown);
+ 			}
+ 
+ 			var scrollUp = widget.GetOrNull<ButtonWidget>("SCROLL_UP_BUTTON");
+@@ -170,11 +177,46 @@
+ 				scrollUp.OnClick = palette.ScrollUp;
+ 				scrollUp.IsVisible = () => palette.TotalIconCount > palette.MaxIconRowOffset * palette.Columns;
+ 				scrollUp.IsDisabled = () => !palette.CanScrollUp;
++				PositionIosScrollButton(widget, typesContainer, scrollUp);
+ 			}
+ 
+ 			SetMaximumVisibleRows(palette);
+ 		}
+ 
++		static void PositionIosScrollButton(Widget productionSidebar, Widget typesContainer, ButtonWidget button)
++		{
++			if (!Platform.IsIOS)
++				return;
++
++			// PRODUCTION_TYPES is offset above the palette. Keep its scroll buttons
++			// pinned to the production panel's bottom after the panel is expanded.
++			var bottomInset = IosScreenMetrics.SnapshotFor(Game.Renderer.Resolution).LogicalPoints(4);
++			button.Bounds.Y = productionSidebar.Bounds.Height - button.Bounds.Height - bottomInset - typesContainer.Bounds.Y;
++		}
++
++		static void ApplyIosSidebarLayout(Widget productionSidebar, ProductionPaletteWidget productionPalette)
++		{
++			if (!Platform.IsIOS)
++				return;
++
++			var layout = IosIngameSidebarLayoutPolicy.Create(
++				IosScreenMetrics.SnapshotFor(Game.Renderer.Resolution));
++			productionSidebar.Bounds.X = layout.ProductionBounds.X;
++			productionSidebar.Bounds.Y = layout.ProductionBounds.Y;
++			productionSidebar.Bounds.Width = layout.ProductionBounds.Width;
++			productionSidebar.Bounds.Height = layout.ProductionBounds.Height;
++			productionPalette.MaximumRows = layout.MaximumRows;
++
++			var top = Ui.Root.GetOrNull("SIDEBAR_BACKGROUND_TOP");
++			if (top != null)
++			{
++				top.Bounds.X = layout.TopBounds.X;
++				top.Bounds.Y = layout.TopBounds.Y;
++				top.Bounds.Width = layout.TopBounds.Width;
++				top.Bounds.Height = layout.TopBounds.Height;
++			}
++		}
++
+ 		bool SelectAdjacentProductionGroup(ProductionSwipeDirection direction)
+ 		{
+ 			if (productionTypeButtons.Length < 2)
+@@ -195,6 +237,19 @@
+ 
+ 		static void SetMaximumVisibleRows(ProductionPaletteWidget productionPalette)
+ 		{
++			if (Platform.IsIOS)
++			{
++				var container = Ui.Root.GetOrNull<ContainerWidget>("SIDEBAR_PRODUCTION");
++				if (container == null)
++					return;
++
++				var layout = IosIngameSidebarLayoutPolicy.Create(
++					IosScreenMetrics.SnapshotFor(Game.Renderer.Resolution));
++				productionPalette.MaximumRows = layout.MaximumRows;
++				productionPalette.MaxIconRowOffset = layout.MaximumRows;
++				return;
++			}
++
+ 			var screenHeight = Game.Renderer.Resolution.Height;
+ 
+ 			// Get height of currently displayed icons
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/Ingame/IosIngameSidebarLayoutPolicy.cs b/OpenRA.Mods.Common/Widgets/Logic/Ingame/IosIngameSidebarLayoutPolicy.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/Ingame/IosIngameSidebarLayoutPolicy.cs	1969-12-31 16:00:00
++++ b/OpenRA.Mods.Common/Widgets/Logic/Ingame/IosIngameSidebarLayoutPolicy.cs	2026-09-09 08:32:12
+@@ -0,0 +1,69 @@
++#region Copyright & License Information
++/*
++ * Copyright (c) The OpenRA Developers and Contributors
++ * This file is part of OpenRA, which is free software. It is made
++ * available to you under the terms of the GNU General Public License
++ * as published by the Free Software Foundation, either version 3 of
++ * the License, or (at your option) any later version.
++ */
++#endregion
++
++using System;
++using OpenRA.Primitives;
++
++namespace OpenRA.Mods.Common.Widgets.Logic
++{
++	public readonly struct IosIngameSidebarLayout
++	{
++		public readonly Rectangle TopBounds;
++		public readonly Rectangle ProductionBounds;
++		public readonly int MaximumRows;
++		public readonly int BackgroundRows;
++		public readonly int BottomCapY;
++
++		public IosIngameSidebarLayout(
++			Rectangle topBounds, Rectangle productionBounds,
++			int maximumRows, int backgroundRows, int bottomCapY)
++		{
++			TopBounds = topBounds;
++			ProductionBounds = productionBounds;
++			MaximumRows = maximumRows;
++			BackgroundRows = backgroundRows;
++			BottomCapY = bottomCapY;
++		}
++	}
++
++	/// <summary>
++	/// Keeps the classic RA2 sidebar anchored to the safe right edge while allowing
++	/// the production palette to use all remaining vertical space on iOS.
++	/// </summary>
++	public static class IosIngameSidebarLayoutPolicy
++	{
++		const int SidebarWidth = 234;
++		const int TopHeight = 275;
++		const int PaletteTop = 2;
++		const int BottomCapHeight = 66;
++		const int RowHeight = 50;
++		const int MinimumRows = 4;
++
++		public static IosIngameSidebarLayout Create(IosScreenSnapshot snapshot)
++		{
++			// The sidebar is itself the edge treatment, so it must occupy the complete
++			// viewport instead of being inset like a floating touch control.
++			var viewport = new Rectangle(0, 0, snapshot.EffectiveSize.Width, snapshot.EffectiveSize.Height);
++			var width = Math.Min(SidebarWidth, viewport.Width);
++			var left = viewport.Right - width;
++			var topBounds = new Rectangle(left, viewport.Top, width, Math.Min(TopHeight, viewport.Height));
++			var productionTop = topBounds.Bottom;
++			var productionHeight = Math.Max(1, viewport.Bottom - productionTop);
++			var productionBounds = new Rectangle(left, productionTop, width, productionHeight);
++			var paletteHeight = Math.Max(RowHeight, productionHeight - PaletteTop - BottomCapHeight);
++			var maximumRows = Math.Max(MinimumRows, paletteHeight / RowHeight);
++			var bottomCapY = Math.Max(0, productionHeight - BottomCapHeight);
++			var backgroundRows = Math.Max(MinimumRows, (bottomCapY + RowHeight - 1) / RowHeight);
++
++			return new IosIngameSidebarLayout(
++				topBounds, productionBounds, maximumRows, backgroundRows, bottomCapY);
++		}
++	}
++}
+diff -ruN a/OpenRA.Test/IosContentImportContractTest.cs b/OpenRA.Test/IosContentImportContractTest.cs
+--- a/OpenRA.Test/IosContentImportContractTest.cs	2026-09-09 08:32:12
++++ b/OpenRA.Test/IosContentImportContractTest.cs	2026-09-09 08:32:12
+@@ -80,5 +80,53 @@
+ 			StringAssert.DoesNotContain("UISlider", viewController);
+ 			StringAssert.Contains("Landscape", viewController);
+ 		}
++
++		[Test]
++		public void StartupNoticeContainsApprovedBilingualDistributionWarnings()
++		{
++			var viewController = IosFile("ViewController.cs");
++
++			StringAssert.Contains("EA has not endorsed and does not support this product.", viewController);
++			StringAssert.Contains("free and open-source", viewController);
++			StringAssert.Contains("legally purchased and owned copy", viewController);
++			StringAssert.Contains("officially authorized NUKE HOUR edition", viewController);
++			StringAssert.Contains("malicious code", viewController);
++			StringAssert.Contains("EA 未认可且不支持本产品", viewController);
++			StringAssert.Contains("免费开源", viewController);
++			StringAssert.Contains("合法购买并拥有的正版游戏副本", viewController);
++			StringAssert.Contains("官方授权版本", viewController);
++			StringAssert.Contains("恶意代码", viewController);
++		}
++
++		[Test]
++		public void StartupNoticeKeepsWebsiteAndBundleVersionVisibleOutsideScrollableCopy()
++		{
++			var viewController = IosFile("ViewController.cs");
++
++			StringAssert.Contains("https://nukehour.com", viewController);
++			StringAssert.Contains("UIApplication.SharedApplication.OpenUrl", viewController);
++			StringAssert.Contains("NSBundle.MainBundle", viewController);
++			StringAssert.Contains("new UIScrollView", viewController);
++			StringAssert.Contains("noticeTitle.TranslatesAutoresizingMaskIntoConstraints = false", viewController);
++			StringAssert.Contains("version.TrailingAnchor.ConstraintEqualTo(panel.TrailingAnchor", viewController);
++			StringAssert.Contains("version.BottomAnchor.ConstraintEqualTo(panel.BottomAnchor", viewController);
++			Assert.That(viewController.IndexOf("noticeScroll.AddSubview", StringComparison.Ordinal), Is.GreaterThanOrEqualTo(0));
++			Assert.That(viewController.IndexOf("noticeActions.AddArrangedSubview(website", StringComparison.Ordinal), Is.GreaterThanOrEqualTo(0));
++			StringAssert.DoesNotContain("NUKE HOUR RA2", viewController);
++		}
++
++		[Test]
++		public void ReadyContentRequiresAnExplicitEnterGameAction()
++		{
++			var viewController = IosFile("ViewController.cs");
++			var coordinator = IosFile("IosContentImportCoordinator.cs");
++			var readyBranchStart = coordinator.IndexOf(
++				"Show(IosContentImportState.Ready, strings.ReadyMessage, status);", StringComparison.Ordinal);
++			var readyBranchEnd = coordinator.IndexOf("void ChooseBase", readyBranchStart, StringComparison.Ordinal);
++			var readyBranch = coordinator.Substring(readyBranchStart, readyBranchEnd - readyBranchStart);
++
++			StringAssert.Contains("model.State is IosContentImportState.NeedsYuriOptional or IosContentImportState.Ready", viewController);
++			StringAssert.DoesNotContain("StartGameOnce", readyBranch);
++		}
+ 	}
+ }
+diff -ruN a/OpenRA.Test/IosProductionBatchToggleTest.cs b/OpenRA.Test/IosProductionBatchToggleTest.cs
+--- a/OpenRA.Test/IosProductionBatchToggleTest.cs	2026-09-09 08:32:12
++++ b/OpenRA.Test/IosProductionBatchToggleTest.cs	2026-09-09 08:32:12
+@@ -308,7 +308,7 @@
+ 
+ 		[TestCase(false)]
+ 		[TestCase(true)]
+-		public void RequiredTouchSlotsKeepPhysicalHitSizeAndReadableLabels(bool expanded)
++		public void RequiredTouchSlotsKeepStableChromeSizeAndReadableLabels(bool expanded)
+ 		{
+ 			foreach (var device in Devices)
+ 			{
+@@ -319,20 +319,61 @@
+ 					var buttonBounds = new Rectangle(0, 0, layout.ButtonSize.Width, layout.ButtonSize.Height);
+ 					Assert.Multiple(() =>
+ 					{
+-						Assert.That(layout.ButtonSize.Width, Is.GreaterThanOrEqualTo(snapshot.LogicalPoints(44)), id);
+-						Assert.That(layout.ButtonSize.Height, Is.GreaterThanOrEqualTo(snapshot.LogicalPoints(44)), id);
++						Assert.That(layout.ButtonSize.Width, Is.GreaterThanOrEqualTo(44), id);
++						Assert.That(layout.ButtonSize.Height, Is.GreaterThanOrEqualTo(44), id);
+ 						Assert.That(layout.ShowLabel, Is.True, id);
+ 						Assert.That(layout.Font, Is.EqualTo("IosTouchLabel"), id);
+ 						Assert.That(layout.LabelBounds.IsEmpty, Is.False, id);
+ 						Assert.That(buttonBounds.Contains(layout.LabelBounds), Is.True, id);
+ 						Assert.That(buttonBounds.Contains(layout.IconBounds), Is.True, id);
+ 						Assert.That(layout.IconBounds.Size,
+-							Is.EqualTo(new Size(snapshot.LogicalPoints(26), snapshot.LogicalPoints(26))), id);
++							Is.EqualTo(new Size(26, 26)), id);
+ 					});
+ 				}
+ 			}
+ 		}
+ 
++		[Test]
++		public void TouchCommandBarKeepsNineSliceChromeAtAuthoredLogicalSize()
++		{
++			var snapshot = new IosScreenSnapshot(
++				new Size(1564, 720), new Size(956, 440), new IosSafeAreaInsets(62, 0, 62, 21));
++
++			foreach (var expanded in new[] { false, true })
++			{
++				var layout = TouchCommandBarSlotPolicy.Create(snapshot, "SCATTER", expanded);
++				Assert.Multiple(() =>
++				{
++					Assert.That(layout.ButtonSize.Width,
++						Is.EqualTo(expanded ? 48 : 44), $"width expanded={expanded}");
++					Assert.That(layout.ButtonSize.Height,
++						Is.EqualTo(expanded ? 52 : 44), $"height expanded={expanded}");
++					Assert.That(layout.IconBounds.Size,
++						Is.EqualTo(new Size(26, 26)), $"icon expanded={expanded}");
++				});
++			}
++		}
++
++		[Test]
++		public void IosProductionSidebarUsesFullViewportAndSeparatesPaletteFromBackgroundFillRows()
++		{
++			var snapshot = new IosScreenSnapshot(
++				new Size(1564, 720), new Size(956, 440), new IosSafeAreaInsets(62, 0, 62, 21));
++			var layout = IosIngameSidebarLayoutPolicy.Create(snapshot);
++
++			Assert.Multiple(() =>
++			{
++				Assert.That(layout.TopBounds, Is.EqualTo(new Rectangle(1564 - 234, 0, 234, 275)));
++				Assert.That(layout.ProductionBounds.Top, Is.EqualTo(layout.TopBounds.Bottom));
++				Assert.That(layout.ProductionBounds.Bottom, Is.EqualTo(snapshot.EffectiveSize.Height));
++				Assert.That(layout.MaximumRows, Is.EqualTo(7), "Only complete icon rows may appear above the bottom cap.");
++				Assert.That(layout.BackgroundRows, Is.EqualTo(8), "One clipped fill row closes the fractional gap.");
++				Assert.That(layout.BottomCapY, Is.EqualTo(layout.ProductionBounds.Height - 66));
++				Assert.That(layout.BackgroundRows * 50, Is.GreaterThanOrEqualTo(layout.BottomCapY));
++				Assert.That((layout.BackgroundRows - 1) * 50, Is.LessThan(layout.BottomCapY));
++			});
++		}
++
+ 		[TestCase(false)]
+ 		[TestCase(true)]
+ 		public void TouchCommandBarPlacementIsCenteredBottomInsetAndSafeContained(bool expanded)
+@@ -434,7 +475,10 @@
+ 			SetPrivateField(commandBar, "editButton", edit);
+ 			SetPrivateField(commandBar, "collapseButton", collapse);
+ 			SetPrivateField(commandBar, "collapseIcon", collapseIcon);
+-			SetPrivateField(commandBar, "visibleOrder", new List<string> { "STOP", "CYCLE_BASE" });
++			var visibleOrder = new List<string> { "STOP", "CYCLE_BASE" };
++			if (!expanded && !editing)
++				visibleOrder.Add("SCATTER");
++			SetPrivateField(commandBar, "visibleOrder", visibleOrder);
+ 			SetPrivateField(commandBar, "expanded", expanded);
+ 
+ 			var apply = typeof(CustomCommandBarWidget).GetMethod(
+@@ -442,7 +486,7 @@
+ 			Assert.That(apply, Is.Not.Null, "The production widget needs an executable touch-layout seam.");
+ 			apply!.Invoke(commandBar, new object[] { snapshot, editing, null });
+ 
+-			var rowHeight = snapshot.LogicalPoints(expanded ? 52 : 44);
++			var rowHeight = expanded ? 52 : 44;
+ 			Assert.Multiple(() =>
+ 			{
+ 				Assert.That(snapshot.SafeBounds.Contains(commandBar.RenderBounds), Is.True);
+@@ -479,6 +523,12 @@
+ 					Assert.That(buttons["SCATTER"].Bounds.Y, Is.GreaterThan(buttons["STOP"].Bounds.Y));
+ 					Assert.That(snapshot.SafeBounds.Contains(buttons["SCATTER"].RenderBounds), Is.True);
+ 				});
++			}
++
++			if (!expanded && !editing)
++			{
++				Assert.That(buttons["SCATTER"].IsVisible(), Is.True);
++				Assert.That(icons["SCATTER"].StretchToFit, Is.True);
+ 			}
+ 		}
+ 

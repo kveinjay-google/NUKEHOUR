@@ -14,32 +14,13 @@ ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "packaging" / "verify_engine_patch_delivery.py"
 README = ROOT / "engine-patches" / "README.md"
 CHECKED_IN_CANDIDATE = (
-    ROOT / "engine-patches" / "0022-ios-retail-runtime-contract.patch"
+    ROOT / "engine-patches" / "0024-runtime-contract-resource-compatibility.patch"
 )
 OFFICIAL_ROOT = "OpenRA-release-20250330"
 EXACT_ALLOWLIST = (
-    "OpenRA.Game/Game.cs",
-    "OpenRA.Game/GameInformation.cs",
-    "OpenRA.Game/Manifest.cs",
-    "OpenRA.Game/Network/GameSave.cs",
-    "OpenRA.Game/Network/GameServer.cs",
-    "OpenRA.Game/Network/Handshake.cs",
-    "OpenRA.Game/Network/ReplayRecorder.cs",
-    "OpenRA.Game/Network/Session.cs",
-    "OpenRA.Game/Network/UnitOrders.cs",
-    "OpenRA.Game/RuntimeContractStorage.cs",
-    "OpenRA.Game/Server/Server.cs",
-    "OpenRA.Game/Settings.cs",
-    "OpenRA.Mods.Common/ServerTraits/SkirmishLogic.cs",
-    "OpenRA.Mods.Common/Widgets/Logic/GameSaveBrowserLogic.cs",
-    "OpenRA.Mods.Common/Widgets/Logic/MainMenuLogic.cs",
-    "OpenRA.Mods.Common/Widgets/Logic/ReplayBrowserLogic.cs",
-    "OpenRA.Mods.Common/Widgets/Logic/ServerListLogic.cs",
-    "OpenRA.Test/RuntimeContractBuilderTest.cs",
-    "OpenRA.Test/RuntimeContractHandshakeTest.cs",
-    "OpenRA.Test/RuntimeContractPersistenceTest.cs",
-    "mods/common/fluent/chrome.ftl",
-    "mods/common/fluent/zh-CN/chrome.ftl",
+    "OpenRA.Game/Network/NukeHourNetworkCompatibility.cs",
+    "OpenRA.Test/NukeHourDirectTcpHandshakeTest.cs",
+    "OpenRA.Test/NukeHourNetworkProtocolTest.cs",
 )
 EXACT_0007_DIAGNOSTICS = (
     "Hunk #1 succeeded at 254 with fuzz 2 (offset -1 lines).",
@@ -819,7 +800,7 @@ class CheckedInDeliveryContractTest(unittest.TestCase):
     def setUpClass(cls):
         cls.verifier = load_verifier()
 
-    def test_checked_in_0022_has_the_exact_22_paired_headers(self):
+    def test_checked_in_0024_has_the_exact_three_paired_headers(self):
         self.assertTrue(
             CHECKED_IN_CANDIDATE.is_file(),
             f"Missing checked-in candidate: {CHECKED_IN_CANDIDATE}",
@@ -831,8 +812,8 @@ class CheckedInDeliveryContractTest(unittest.TestCase):
             ),
         )
 
-    def test_current_predecessor_series_has_782_safe_file_headers(self):
-        predecessors = self.verifier.select_predecessors(ROOT, 1, 21)
+    def test_current_predecessor_series_has_776_safe_file_headers(self):
+        predecessors = self.verifier.select_predecessors(ROOT, 1, 23)
         headers = tuple(
             header
             for predecessor in predecessors
@@ -841,12 +822,12 @@ class CheckedInDeliveryContractTest(unittest.TestCase):
             )
         )
 
-        self.assertEqual(782, len(headers))
+        self.assertEqual(776, len(headers))
 
-    def test_readme_pins_0022_and_the_exact_0007_diagnostics(self):
+    def test_readme_pins_0024_and_the_exact_0007_diagnostics(self):
         readme = README.read_text(encoding="utf-8")
         self.assertIn(
-            "0022-ios-retail-runtime-contract.patch", readme
+            "0024-runtime-contract-resource-compatibility.patch", readme
         )
         for path in EXACT_ALLOWLIST:
             self.assertIn(path, readme)
@@ -856,8 +837,6 @@ class CheckedInDeliveryContractTest(unittest.TestCase):
         self.assertIn(
             'git apply --check --verbose -p1 -- "$CANDIDATE"', readme
         )
-        self.assertIn("0001 through 0021", readme)
-        self.assertIn("22 unique", readme)
         self.assertEqual(
             EXACT_0007_DIAGNOSTICS,
             self.verifier.KNOWN_0007_DIAGNOSTICS,

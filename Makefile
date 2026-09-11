@@ -29,7 +29,7 @@
 #   make check-sdk-scripts
 #   make check-packaging-scripts
 
-.PHONY: check-sdk-scripts check-packaging-scripts check-variables engine all clean version check-scripts check test
+.PHONY: check-sdk-scripts check-packaging-scripts check-variables engine all clean version check-scripts check test server-build server-audit server-test server-smoke lobby-test lobby-build lobby-audit
 .DEFAULT_GOAL := all
 
 PYTHON = $(shell command -v python3 2> /dev/null)
@@ -55,6 +55,14 @@ DOTNET = dotnet
 
 RUNTIME ?= net6
 CONFIGURATION ?= Release
+SERVER_RID ?= linux-x64
+SERVER_VERSION ?= phase2-$(shell git rev-parse --short HEAD)
+SERVER_OUTPUT ?= artifacts/server
+SERVER_BUNDLE ?=
+LOBBY_RID ?= linux-x64
+LOBBY_VERSION ?= phase3-$(shell git rev-parse --short HEAD)
+LOBBY_OUTPUT ?= artifacts/lobby
+LOBBY_BUNDLE ?=
 DOTNET_RID = $(shell ${DOTNET} --info | grep RID: | cut -w -f3)
 ARCH_X64 = $(shell echo ${DOTNET_RID} | grep x64)
 
@@ -195,3 +203,27 @@ endif
 test: all
 	@echo "Testing $(MOD_ID) mod MiniYAML..."
 	@./utility.sh --check-yaml
+
+server-test:
+	@$(PYTHON) -m unittest packaging.tests.test_dedicated_server_delivery packaging.tests.test_dedicated_server_builder packaging.tests.test_dedicated_server_audit packaging.tests.test_dedicated_server_smoke
+	@DOTNET_ROLL_FORWARD=LatestMajor $(DOTNET) test engine/OpenRA.Test/OpenRA.Test.csproj -c Release --filter NukeHourDedicatedServerTest -p:NuGetAudit=false
+
+server-build: server-test
+	@$(PYTHON) packaging/server/build_server.py --output-dir "$(SERVER_OUTPUT)" --rid "$(SERVER_RID)" --version "$(SERVER_VERSION)"
+
+server-audit:
+	@test -n "$(SERVER_BUNDLE)" || (echo "Set SERVER_BUNDLE to the extracted server bundle path."; exit 2)
+	@$(PYTHON) packaging/server/audit_server_bundle.py "$(SERVER_BUNDLE)"
+
+server-smoke:
+	@$(PYTHON) tools/run_dedicated_server_smoke.py --output "$(SERVER_OUTPUT)/dedicated-server-smoke.json"
+
+lobby-test:
+	@$(PYTHON) -m unittest packaging.tests.test_online_lobby_directory packaging.tests.test_online_lobby_api packaging.tests.test_online_lobby_delivery
+
+lobby-build: lobby-test
+	@$(PYTHON) packaging/lobby/build_lobby.py --output-dir "$(LOBBY_OUTPUT)" --rid "$(LOBBY_RID)" --version "$(LOBBY_VERSION)"
+
+lobby-audit:
+	@test -n "$(LOBBY_BUNDLE)" || (echo "Set LOBBY_BUNDLE to the extracted Lobby bundle path."; exit 2)
+	@$(PYTHON) packaging/lobby/audit_lobby_bundle.py "$(LOBBY_BUNDLE)"

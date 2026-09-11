@@ -32,9 +32,6 @@ namespace OpenRA.Network
 		[FluentReference]
 		const string GameSaved = "notification-game-saved";
 
-		[FluentReference]
-		const string IncompatibleVersion = "notification-incompatible-version";
-
 		[FluentReference("player")]
 		const string GamePaused = "notification-game-paused";
 
@@ -245,12 +242,29 @@ namespace OpenRA.Network
 
 				case "HandshakeRequest":
 				{
-					// Switch to the server's mod if we need and are able to
 					var mod = Game.ModData.Manifest;
-					var request = HandshakeRequest.Deserialize(order.TargetString, order.OrderString);
+					if (!HandshakeRequest.TryDeserialize(
+						order.TargetString, order.OrderString, out var request))
+					{
+						orderManager.ServerError = NetworkCompatibilityReason.ProtocolMismatch.MessageKey();
+						orderManager.Connection.Dispose();
+						break;
+					}
 
+					// Reject unsupported or malformed protocol envelopes before considering a mod switch.
+					var envelopeCompatibility = NetworkCompatibility.ValidateEnvelope(
+						request, Game.ModData.NetworkCompatibility);
+					if (envelopeCompatibility != NetworkCompatibilityReason.Compatible)
+					{
+						Log.Write("client", $"[NET] Reject server: {envelopeCompatibility.Code()}");
+						orderManager.ServerError = envelopeCompatibility.MessageKey();
+						orderManager.Connection.Dispose();
+						break;
+					}
+
+					// Switch to the server's mod if we need and are able to.
 					var externalKey = ExternalMod.MakeKey(request.Mod, request.Version);
-					if ((request.Mod != mod.Id || request.Version != mod.Metadata.Version) &&
+					if ((request.Mod != mod.Id || request.Version != mod.Metadata.CompatibilityOrVersion) &&
 						Game.ExternalMods.TryGetValue(externalKey, out var external))
 					{
 						// The ConnectionFailedLogic will prompt the user to switch mods
@@ -259,11 +273,16 @@ namespace OpenRA.Network
 						break;
 					}
 
-					if (request.Mod == mod.Id && request.Version == mod.Metadata.Version &&
-						request.RuntimeContractCompatibilityWith(Game.ModData.RuntimeContract) !=
-							RuntimeContractCompatibilityReason.Compatible)
+					var compatibility = NetworkCompatibility.Validate(
+						request, Game.ModData.NetworkCompatibility);
+					Log.Write("client", $"[NET] Handshake schema: {request.HandshakeSchema}; " +
+						$"orders: {request.OrdersProtocol}; compatibility: {compatibility.Code()}");
+					if (NetworkCompatibility.TryGetDebugSummary(
+						request.RuntimeProfile, request.RuntimeContract, out var handshakeSummary))
+						Log.Write("client", $"[NET] Runtime {handshakeSummary}");
+					if (compatibility != NetworkCompatibilityReason.Compatible)
 					{
-						orderManager.ServerError = IncompatibleVersion;
+						orderManager.ServerError = compatibility.MessageKey();
 						orderManager.Connection.Dispose();
 						break;
 					}
@@ -287,16 +306,16 @@ namespace OpenRA.Network
 					var response = new HandshakeResponse()
 					{
 						Client = info,
+						HandshakeSchema = ProtocolVersion.HandshakeSchema,
+						EngineCompatibility = Game.EngineVersion,
 						Mod = mod.Id,
-						Version = mod.Metadata.Version,
+						Version = mod.Metadata.CompatibilityOrVersion,
+						RuntimeProfile = Game.ModData.RuntimeProfile.Serialize(),
+						RuntimeContract = Game.ModData.RuntimeContract.Serialize(),
 						Password = CurrentServerSettings.Password,
 						Fingerprint = localProfile.Fingerprint,
 						OrdersProtocol = ProtocolVersion.Orders
 					};
-					RuntimeContractHandshake.GetFields(
-						Game.ModData.RuntimeContract,
-						out response.RuntimeProfile,
-						out response.RuntimeContract);
 
 					if (request.AuthToken != null && response.Fingerprint != null)
 						response.AuthSignature = localProfile.Sign(request.AuthToken);

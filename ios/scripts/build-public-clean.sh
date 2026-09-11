@@ -3,7 +3,7 @@ set -eu
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 REPOSITORY_ROOT=$(CDPATH= cd -- "$SCRIPT_DIR/../.." && pwd)
-MANIFEST="$REPOSITORY_ROOT/packaging/public-content-manifest.json"
+MANIFEST="$REPOSITORY_ROOT/packaging/ios/public_clean_manifest.json"
 ARTIFACT_DIR="${PUBLIC_ARTIFACT_DIR:-$REPOSITORY_ROOT/artifacts/public-ios}"
 BUILD_ROOT="${PUBLIC_BUILD_ROOT:-$REPOSITORY_ROOT/artifacts/build-public}"
 APP="$BUILD_ROOT/Release/net8.0-ios/ios-arm64/OpenRA.iOS.app"
@@ -33,6 +33,7 @@ mkdir -p "$ARTIFACT_DIR" "$BUILD_ROOT"
 
 "$DOTNET" build "$REPOSITORY_ROOT/ios/OpenRA.iOS/OpenRA.iOS.csproj" \
 	-c Release \
+	-t:Rebuild \
 	-p:RuntimeIdentifier=ios-arm64 \
 	-p:PublicClean=true \
 	-p:BaseOutputPath="$BUILD_ROOT/" \

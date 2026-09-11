@@ -14,11 +14,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using ICSharpCode.SharpZipLib.Zip;
-using OpenRA.Primitives;
 
 namespace OpenRA.FileSystem
 {
-	public class ZipFileLoader : IBoundedPackageLoader
+	public class ZipFileLoader : IPackageLoader
 	{
 		const uint ZipSignature = 0x04034b50;
 
@@ -41,9 +40,6 @@ namespace OpenRA.FileSystem
 				var entry = pkg.GetEntry(filename);
 				if (entry == null)
 					return null;
-
-				if (entry.Size < 0 || entry.Size > int.MaxValue)
-					throw new InvalidDataException("ZIP entry size is not representable by the legacy reader.");
 
 				using (var z = pkg.GetInputStream(entry))
 				{
@@ -223,45 +219,6 @@ namespace OpenRA.FileSystem
 
 			package = new ReadOnlyZipFile(s, filename);
 			return true;
-		}
-
-		bool IBoundedPackageLoader.TryParsePackage(Stream stream, string filename, FileSystem context,
-			PackageReadContext readContext, out IReadOnlyPackage package)
-		{
-			if (readContext == null)
-				throw new ArgumentNullException(nameof(readContext));
-			var policy = readContext.EnvelopePolicy ?? throw new InvalidOperationException(
-				"A bounded package loader requires an explicit package envelope policy.");
-			var initialPosition = stream.Position;
-			if (stream.Length - initialPosition < 4 || stream.ReadUInt32() != ZipSignature)
-			{
-				stream.Position = initialPosition;
-				package = null;
-				return false;
-			}
-
-			stream.Position = initialPosition;
-			if (initialPosition != 0)
-				throw new InvalidDataException("A bounded ZIP stream must start at zero.");
-			var gate = DeferredOwnershipStream.Borrow(stream);
-			ValidatedZipEnvelope envelope = null;
-			try
-			{
-				envelope = BoundedZipEnvelope.Validate(gate, policy.Zip, readContext);
-				package = envelope.OpenPackage(readContext, context);
-				envelope.Dispose();
-				envelope = null;
-				gate.CommitOwnership();
-				return true;
-			}
-			catch
-			{
-				envelope?.Dispose();
-				gate.Dispose();
-				stream.Position = initialPosition;
-				package = null;
-				throw;
-			}
 		}
 
 		public static bool TryParseReadWritePackage(string filename, out IReadWritePackage package)

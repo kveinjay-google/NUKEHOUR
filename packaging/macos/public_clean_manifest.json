@@ -1,0 +1,2124 @@
+{
+  "schemaVersion": 1,
+  "profile": "macOS PublicClean",
+  "files": [
+    {
+      "source": "LICENSE",
+      "destination": "LICENSE",
+      "size": 35151,
+      "sha256": "e79e9c8a0c85d735ff98185918ec94ed7d175efc377012787aebcf3b80f0d90b",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "branding/NUKE-HOUR-1024.png",
+      "destination": "branding/NUKE-HOUR-1024.png",
+      "size": 2168676,
+      "sha256": "2ec7920648f7bf7ec10f19b15a72040c5931a04c51a20dd79ba473565391fa72",
+      "category": "project-original",
+      "license": "NUKE HOUR project"
+    },
+    {
+      "source": "engine/AUTHORS",
+      "destination": "engine/AUTHORS",
+      "size": 6160,
+      "sha256": "c12b0b0fd4c68e962bb842305041c2739b6069cbf023d51e1c9abae196eac23d",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/COPYING",
+      "destination": "engine/COPYING",
+      "size": 35151,
+      "sha256": "e79e9c8a0c85d735ff98185918ec94ed7d175efc377012787aebcf3b80f0d90b",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/VERSION",
+      "destination": "engine/VERSION",
+      "size": 17,
+      "sha256": "7f4a3b1506acfb32513f6fcbe413190818de14ccb49dd53dba6943ddf2163d2c",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/glsl/combined.frag",
+      "destination": "engine/glsl/combined.frag",
+      "size": 6403,
+      "sha256": "f01484486f1548ac16acc3270492d61f3d022983b981a96947b1c5284702b1db",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/glsl/combined.vert",
+      "destination": "engine/glsl/combined.vert",
+      "size": 2218,
+      "sha256": "c8d37bb8bbc4b7d569c321cc210786debf3f64aedcdc51a6a5c0309f00c55c91",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/glsl/model.frag",
+      "destination": "engine/glsl/model.frag",
+      "size": 802,
+      "sha256": "e1231c899183dcbe088d2c52338120c83120bc7566b0774271654c5fba9619e9",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/glsl/model.vert",
+      "destination": "engine/glsl/model.vert",
+      "size": 569,
+      "sha256": "851cf283d5672e36939c5dcd59a8e478fbc33e660397344d40f0bfdd370e2f1b",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/glsl/postprocess.vert",
+      "destination": "engine/glsl/postprocess.vert",
+      "size": 106,
+      "sha256": "db3f20e1a78638514842b829bc93b9a756c4a57a5854daae46b7757e6c33fa6d",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/glsl/postprocess_chronoshift.frag",
+      "destination": "engine/glsl/postprocess_chronoshift.frag",
+      "size": 344,
+      "sha256": "7d1558519f7d4b514f09325223feeaa7077580b6768b4899434448469c8ee822",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/glsl/postprocess_flash.frag",
+      "destination": "engine/glsl/postprocess_flash.frag",
+      "size": 284,
+      "sha256": "aef7a7092363a31789ce550ac0ee37b73ed889fbdddbb5a7f12ce76e0a41b5cb",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/glsl/postprocess_menufade.frag",
+      "destination": "engine/glsl/postprocess_menufade.frag",
+      "size": 576,
+      "sha256": "238e6419fd69adaa6355a098d35a480887da7d49bc21541a04a461f793818f01",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/glsl/postprocess_textured.vert",
+      "destination": "engine/glsl/postprocess_textured.vert",
+      "size": 256,
+      "sha256": "a2572d349767bf500d2e6d209c419dd512f55b2a96079d767531a373cb35788c",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/glsl/postprocess_textured_vortex.frag",
+      "destination": "engine/glsl/postprocess_textured_vortex.frag",
+      "size": 447,
+      "sha256": "92a9f00c3a24ce6f5c6604824d3b1a609acedfd3fffb59bbb3762e6d5379ae0c",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/glsl/postprocess_tint.frag",
+      "destination": "engine/glsl/postprocess_tint.frag",
+      "size": 250,
+      "sha256": "3056ccd87a7b4837723680d1fdfd3ef66ccac5b68b825f31a56f020204b18e43",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common-content/chrome-2x.png",
+      "destination": "engine/mods/common-content/chrome-2x.png",
+      "size": 149370,
+      "sha256": "37ce76b3a37ab15fe11c76d5bda9da903ff5339f47f45c8e3c673d1c6d1a22f1",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common-content/chrome-3x.png",
+      "destination": "engine/mods/common-content/chrome-3x.png",
+      "size": 293202,
+      "sha256": "3a3ad683bc4f7259498c146000ca13a470074ceb845de47cca585a0ed77ffbcd",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common-content/chrome.png",
+      "destination": "engine/mods/common-content/chrome.png",
+      "size": 60775,
+      "sha256": "f6b0c8578448c7148a6b5ec58346641458710d66d498467230b73aa549e33bb3",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common-content/chrome.yaml",
+      "destination": "engine/mods/common-content/chrome.yaml",
+      "size": 2604,
+      "sha256": "769057519985b1ac573e747a60e9eca8a353e40a7d47613a52b2745eff55211b",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common-content/content.yaml",
+      "destination": "engine/mods/common-content/content.yaml",
+      "size": 8285,
+      "sha256": "d34111fc3939c488ae0dd3925414301e50f787e3fd7d52c963e5f8944c9394fd",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common-content/cursor.png",
+      "destination": "engine/mods/common-content/cursor.png",
+      "size": 128,
+      "sha256": "35afede64604910d4550c1d86f0f875c145846ebed1c229a62c2295e754a405a",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common-content/cursors.yaml",
+      "destination": "engine/mods/common-content/cursors.yaml",
+      "size": 63,
+      "sha256": "f9feffc3099584d95b9ab819d5f4d74683678ac8ac601833d374e9cf36c80aea",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common-content/fluent/chrome.ftl",
+      "destination": "engine/mods/common-content/fluent/chrome.ftl",
+      "size": 875,
+      "sha256": "81dffae8b629326e54569ffe728b447b03e45ad49338c17a815ecfcf21c12585",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common-content/fluent/content.ftl",
+      "destination": "engine/mods/common-content/fluent/content.ftl",
+      "size": 44,
+      "sha256": "5145cffd5fbff5f1b689ebc98bf93a929209ddc2cae50719b00e7f12bfdfce25",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common-content/metrics.yaml",
+      "destination": "engine/mods/common-content/metrics.yaml",
+      "size": 185,
+      "sha256": "28f03628d38567e9f476829f76413451f84e7feacbc9c61f39093ef5e0949ad0",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common-content/notifications.yaml",
+      "destination": "engine/mods/common-content/notifications.yaml",
+      "size": 60,
+      "sha256": "99938664ee4ec3e147414731a5434aeeeb0b02a4c89baa3d08fe79af5ce562c4",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common-content/rules.yaml",
+      "destination": "engine/mods/common-content/rules.yaml",
+      "size": 7,
+      "sha256": "1720b56be91b3f4ec84ca713f597ae950db21eff807977fd3cb93916b0100a98",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/FreeSans.ttf",
+      "destination": "engine/mods/common/FreeSans.ttf",
+      "size": 568896,
+      "sha256": "13d65b85a5a91620906577cc5effdef8a3ed2873472b2144eda4a422ab6ff588",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/FreeSansBold.ttf",
+      "destination": "engine/mods/common/FreeSansBold.ttf",
+      "size": 283180,
+      "sha256": "16294c0eb62b33d904d4e1dfce18730e8ea1030c56731aa23c6d9a743254667f",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/assetbrowser.yaml",
+      "destination": "engine/mods/common/chrome/assetbrowser.yaml",
+      "size": 4504,
+      "sha256": "e27f91053335c73ecd6032ff3b092f8538c0098f5304743b7eb1a90bdccf102a",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/color-picker.yaml",
+      "destination": "engine/mods/common/chrome/color-picker.yaml",
+      "size": 2856,
+      "sha256": "d0f87d7bef020e276944dbbedff8d5a7a0275683e3ea4c0cd15de53b5a1bd08b",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/confirmation-dialogs.yaml",
+      "destination": "engine/mods/common/chrome/confirmation-dialogs.yaml",
+      "size": 2289,
+      "sha256": "73fa60ecc996d6660d1d978842b1d514c4f7b88154d7ada30d52b96c8a079ae5",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/connection.yaml",
+      "destination": "engine/mods/common/chrome/connection.yaml",
+      "size": 3134,
+      "sha256": "9a084016e2bf108b4c9f747fb4c3e18fb95e7575b0e1bfdb93a6b7b8323013d1",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/credits.yaml",
+      "destination": "engine/mods/common/chrome/credits.yaml",
+      "size": 976,
+      "sha256": "f052b346d1facd870298fd292ff9b28f96c5bcf07d59e8e5a091c98f2c312044",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/dropdowns.yaml",
+      "destination": "engine/mods/common/chrome/dropdowns.yaml",
+      "size": 3451,
+      "sha256": "1274814243f543db09d1b455ada9d1b2e9fd9b4fbe12cc81326758cae8933e4f",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/editor.yaml",
+      "destination": "engine/mods/common/chrome/editor.yaml",
+      "size": 21691,
+      "sha256": "30128e74af81dc211fd220027eee9923f2d8e4af09c802a24d4a7af51fa6f556",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/gamesave-browser.yaml",
+      "destination": "engine/mods/common/chrome/gamesave-browser.yaml",
+      "size": 2689,
+      "sha256": "79f79065ffe8be94541a17ac222aa469875077e2e4e3c04de2209521852de55d",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/gamesave-loading.yaml",
+      "destination": "engine/mods/common/chrome/gamesave-loading.yaml",
+      "size": 837,
+      "sha256": "4c14f997c137dde157167f9fdef2e1410547011fa42171726158fc0fc68d7e78",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/ingame-chat.yaml",
+      "destination": "engine/mods/common/chrome/ingame-chat.yaml",
+      "size": 1480,
+      "sha256": "63f1839528f4be7d2470233f5011273d047d325b9ee534d31694d726d1a06578",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/ingame-debug-hpf.yaml",
+      "destination": "engine/mods/common/chrome/ingame-debug-hpf.yaml",
+      "size": 391,
+      "sha256": "e0fa2203510ed8e793b5a4aecdeb464570b8c034940c60200cf2fd3058559b79",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/ingame-debug.yaml",
+      "destination": "engine/mods/common/chrome/ingame-debug.yaml",
+      "size": 2740,
+      "sha256": "eba5de4e25df7596214a3b9e1535743ddd8a0012067c07f9587cb8bea3eced3b",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/ingame-debuginfo.yaml",
+      "destination": "engine/mods/common/chrome/ingame-debuginfo.yaml",
+      "size": 230,
+      "sha256": "91b21b7c4e72a1713f4bed4bb06bd6cb957b899a3470044e1fdbdb4884273686",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/ingame-fmvplayer.yaml",
+      "destination": "engine/mods/common/chrome/ingame-fmvplayer.yaml",
+      "size": 184,
+      "sha256": "0a31682a2e318255b2b5dd74ac7a1d854bbeb65ccf92410530352e29b2746408",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/ingame-info-lobby-options.yaml",
+      "destination": "engine/mods/common/chrome/ingame-info-lobby-options.yaml",
+      "size": 1569,
+      "sha256": "677d1b52d661d5bbc7c99269fccda6ff02ee5eceb772e5a8a7606ae82f5a1d3d",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/ingame-info.yaml",
+      "destination": "engine/mods/common/chrome/ingame-info.yaml",
+      "size": 2463,
+      "sha256": "09cded63f4a609fe18cb3b50491f5ea390b512f1bb1c84d83daa03c19e533aa1",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/ingame-infobriefing.yaml",
+      "destination": "engine/mods/common/chrome/ingame-infobriefing.yaml",
+      "size": 618,
+      "sha256": "0cfb4085e88eb20f3345a8e92562e7dce5adbddf1a8d32abc1fb292c2caed9e3",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/ingame-infochat.yaml",
+      "destination": "engine/mods/common/chrome/ingame-infochat.yaml",
+      "size": 833,
+      "sha256": "1781532bb4871a1bbdd34767414b78ef876c8609c26332ee301922ce070c03bb",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/ingame-infoobjectives.yaml",
+      "destination": "engine/mods/common/chrome/ingame-infoobjectives.yaml",
+      "size": 873,
+      "sha256": "9c134c055863b3a9c3202524fe5769603cc5161bbdabbdca3fabe7a911fd0755",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/ingame-infoscripterror.yaml",
+      "destination": "engine/mods/common/chrome/ingame-infoscripterror.yaml",
+      "size": 755,
+      "sha256": "72c0a945a060c9c50fc393e028a79d2f72aa744537742991ff04c32102bf462a",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/ingame-infostats.yaml",
+      "destination": "engine/mods/common/chrome/ingame-infostats.yaml",
+      "size": 3813,
+      "sha256": "31e4f09d5c0d738cbe1cf4e446bc82ad3f7b48796f876a1602d50a6daaa64be6",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/ingame-menu.yaml",
+      "destination": "engine/mods/common/chrome/ingame-menu.yaml",
+      "size": 1140,
+      "sha256": "05103677bba0810c56650d4d8a94e4306aab936ce5fbbb9d2e33448d8af8c0aa",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/ingame-perf.yaml",
+      "destination": "engine/mods/common/chrome/ingame-perf.yaml",
+      "size": 369,
+      "sha256": "a13b22c98a77a2c883255b7ea883ad5e0b0a686f80000b4c51a754bb81b7e76c",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/ingame-transients.yaml",
+      "destination": "engine/mods/common/chrome/ingame-transients.yaml",
+      "size": 304,
+      "sha256": "a2754a87d05de7dd8df75fd6c3d03467860a7bb834164dfb819dd5e9045cfc55",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/ingame.yaml",
+      "destination": "engine/mods/common/chrome/ingame.yaml",
+      "size": 2358,
+      "sha256": "571c034452e9cbb673d7ee7adcc3468009c01228f7eec0773ffc4d92bfa2e9da",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/lobby-kickdialogs.yaml",
+      "destination": "engine/mods/common/chrome/lobby-kickdialogs.yaml",
+      "size": 2813,
+      "sha256": "6d059cfd7852c82bbcc094911bc71dd350c32678ec2522a83dfe8b58bd491ca9",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/lobby-mappreview.yaml",
+      "destination": "engine/mods/common/chrome/lobby-mappreview.yaml",
+      "size": 4597,
+      "sha256": "31feb7f1c35ba46a29c2b6fc649d7ba6100cb0fb7ce1fa2752f9043be726fd3f",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/lobby-music.yaml",
+      "destination": "engine/mods/common/chrome/lobby-music.yaml",
+      "size": 3837,
+      "sha256": "6cbfa038b502d69504b2a9310b7cf7f141162190eb53ba1cac21a16585593a2c",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/lobby-options.yaml",
+      "destination": "engine/mods/common/chrome/lobby-options.yaml",
+      "size": 2232,
+      "sha256": "dfac71e9a02190e2e8f405916ad8206f8200a871796a9b59abe7a34e3b425444",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/lobby-players.yaml",
+      "destination": "engine/mods/common/chrome/lobby-players.yaml",
+      "size": 8609,
+      "sha256": "abbe86df792cbebeaabbc24f24177ab19972451ba06f6aa818ecde10639a2de7",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/lobby-servers.yaml",
+      "destination": "engine/mods/common/chrome/lobby-servers.yaml",
+      "size": 4512,
+      "sha256": "1ec2f2d47ee70105a5470b974ba53a05651ba078b030450388f3af7f35cb32b1",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/lobby.yaml",
+      "destination": "engine/mods/common/chrome/lobby.yaml",
+      "size": 3243,
+      "sha256": "75a9eb6dad5a07025ce7e7901bc32aa0ed6c7dc4afa6cf77f7965a5d77d1a764",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/mainmenu-prompts.yaml",
+      "destination": "engine/mods/common/chrome/mainmenu-prompts.yaml",
+      "size": 8956,
+      "sha256": "cb8a445b81866dd06c316722d6364b53d72122bfeebcdf7ffeb29c7056609191",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/mainmenu.yaml",
+      "destination": "engine/mods/common/chrome/mainmenu.yaml",
+      "size": 6422,
+      "sha256": "01b18f2794d00390f0990445d25efec2866db256c255a6b5f7aa49444988d54d",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/map-chooser.yaml",
+      "destination": "engine/mods/common/chrome/map-chooser.yaml",
+      "size": 4176,
+      "sha256": "16d6fbfbbcddec47ef50d7ce90480013e127eb29a5ee2ff8c53e357c318a8fec",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/missionbrowser.yaml",
+      "destination": "engine/mods/common/chrome/missionbrowser.yaml",
+      "size": 6446,
+      "sha256": "99f1c78be68c5807173a674918d57d384d0b07380458babd3a53fb589f56f2d7",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/multiplayer-browser.yaml",
+      "destination": "engine/mods/common/chrome/multiplayer-browser.yaml",
+      "size": 6251,
+      "sha256": "943dd5e9570d11aace740dbf2e86c622e133929d12954d0c5127740db6e08fbb",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/multiplayer-browserpanels.yaml",
+      "destination": "engine/mods/common/chrome/multiplayer-browserpanels.yaml",
+      "size": 1716,
+      "sha256": "14afc9c91c4560731f9579f2980abc6ee305adef6d484bcba7497059c03e0330",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/multiplayer-createserver.yaml",
+      "destination": "engine/mods/common/chrome/multiplayer-createserver.yaml",
+      "size": 4578,
+      "sha256": "9e955f1c7e6f77ef0d273babf8347b7dafdd1f02e3b454575e10c7d0c69fcfe3",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/multiplayer-directconnect.yaml",
+      "destination": "engine/mods/common/chrome/multiplayer-directconnect.yaml",
+      "size": 1080,
+      "sha256": "39e906d3c29b70c0966407580b71df37d1ded63c8fc4904492d164d302788d02",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/musicplayer.yaml",
+      "destination": "engine/mods/common/chrome/musicplayer.yaml",
+      "size": 3700,
+      "sha256": "b73792f13a0f3e39223b854dd4870ac2bc7d613dbf42e58d7158ffb3cbae71aa",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/playerprofile.yaml",
+      "destination": "engine/mods/common/chrome/playerprofile.yaml",
+      "size": 4730,
+      "sha256": "cbe19c02119fb25b5f07879e4c3025e1a9e1de7bc8a2fbacfb09cf69821961a5",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/replaybrowser.yaml",
+      "destination": "engine/mods/common/chrome/replaybrowser.yaml",
+      "size": 6197,
+      "sha256": "d6977399046034cf6ca77673385d2799562671b60a9d5954494929864d2b7ca0",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/settings-advanced.yaml",
+      "destination": "engine/mods/common/chrome/settings-advanced.yaml",
+      "size": 4950,
+      "sha256": "0f37180a803160fff3620c49d129790b27718f480118a4515a37807e6a6ebdc2",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/settings-audio.yaml",
+      "destination": "engine/mods/common/chrome/settings-audio.yaml",
+      "size": 3921,
+      "sha256": "0322a8f983dd042b657c5696e1964b8559b7d7481f981ee53ca5804f8ea7c9b6",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/settings-display.yaml",
+      "destination": "engine/mods/common/chrome/settings-display.yaml",
+      "size": 10598,
+      "sha256": "85732b9e1e4bc3147c1971aeda8074fe205ed3c7ebf903f107c9dc6c29d0fcf9",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/settings-hotkeys.yaml",
+      "destination": "engine/mods/common/chrome/settings-hotkeys.yaml",
+      "size": 4156,
+      "sha256": "4f621ba8464811a81df8d875d4d1fe884b648640474b11c4596ff3caaf9dde92",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/settings-input.yaml",
+      "destination": "engine/mods/common/chrome/settings-input.yaml",
+      "size": 9000,
+      "sha256": "6a27110964e2bd8eb93b35dfb69b0b1cff4c852ff9b3d35eda1c74678864a48b",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/settings.yaml",
+      "destination": "engine/mods/common/chrome/settings.yaml",
+      "size": 1182,
+      "sha256": "52e6759f4e117ca79a6785ff66e7c0dc05f7846dd6fb74a118b05da442156875",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/text-notifications.yaml",
+      "destination": "engine/mods/common/chrome/text-notifications.yaml",
+      "size": 807,
+      "sha256": "6a409ceb38c413ea2906678986c66f5907720479331b41f9bada1a006c596778",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/chrome/tooltips.yaml",
+      "destination": "engine/mods/common/chrome/tooltips.yaml",
+      "size": 5764,
+      "sha256": "22c6ec6191ab54a0582b18feb55af9915c7bb3db70aaac2ed6386d983e0aeadf",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/fluent/chrome.ftl",
+      "destination": "engine/mods/common/fluent/chrome.ftl",
+      "size": 25785,
+      "sha256": "4aace28d0ac4c12042934d640c2451ac8f75eb482cb1070e1ad737153fd7a8a7",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/fluent/common.ftl",
+      "destination": "engine/mods/common/fluent/common.ftl",
+      "size": 36308,
+      "sha256": "9b5059b522faba292f98d0233499d0cf805afe268a43bb93747502192d6e8a62",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/fluent/hotkeys.ftl",
+      "destination": "engine/mods/common/fluent/hotkeys.ftl",
+      "size": 8815,
+      "sha256": "9dfebd29d64d25159373f566cccfc7cca39ba14b5c3ab448cbcfbe8b1c1b4f0d",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/fluent/rules.ftl",
+      "destination": "engine/mods/common/fluent/rules.ftl",
+      "size": 1709,
+      "sha256": "b9b0a8be69d9a650d0af9b44eabaeb98d0276affd155c55a690c83e609126a4f",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/fluent/zh-CN/chrome.ftl",
+      "destination": "engine/mods/common/fluent/zh-CN/chrome.ftl",
+      "size": 25069,
+      "sha256": "c380e5214628d26f7f973621d880e6d5145ff7fd0d524f041cb9d477383e3183",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/fluent/zh-CN/common.ftl",
+      "destination": "engine/mods/common/fluent/zh-CN/common.ftl",
+      "size": 29601,
+      "sha256": "5a6dd8cbf5162d940d680c383fd7807b1fc0e35569dcdbf0b1b95bc7a1b0b2e6",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/fluent/zh-CN/hotkeys.ftl",
+      "destination": "engine/mods/common/fluent/zh-CN/hotkeys.ftl",
+      "size": 8854,
+      "sha256": "28cddf2c95f90458f0f5a619d0ca4966b6fe7ea0ae42f319abb098dd0f077c29",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/fluent/zh-CN/rules.ftl",
+      "destination": "engine/mods/common/fluent/zh-CN/rules.ftl",
+      "size": 1563,
+      "sha256": "365636a8f9f17e5c0059c75994930367db9fd80a6fb6ca8fe243d0e16ecddf98",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/hotkeys/chat.yaml",
+      "destination": "engine/mods/common/hotkeys/chat.yaml",
+      "size": 479,
+      "sha256": "8cd84f5adefd977b25aa6cc8002da4c0e5560a82e653b31ff5bd4f5c4f04c4ea",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/hotkeys/control-groups.yaml",
+      "destination": "engine/mods/common/hotkeys/control-groups.yaml",
+      "size": 7480,
+      "sha256": "5c25f78379e0fa21333e2bb43db97ffc8d96cb5ce79ef3f048ccd891367b17b4",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/hotkeys/editor.yaml",
+      "destination": "engine/mods/common/hotkeys/editor.yaml",
+      "size": 1889,
+      "sha256": "db009113cac73c5cb561cc0061bab0144806fe0fe0d6a58967ae5ddae04f35a4",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/hotkeys/game.yaml",
+      "destination": "engine/mods/common/hotkeys/game.yaml",
+      "size": 2817,
+      "sha256": "04ecdd9d4a4e6f62f7c322d73f3cbcaf617aa128c57aeab142c2c946008e0ed9",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/hotkeys/observer.yaml",
+      "destination": "engine/mods/common/hotkeys/observer.yaml",
+      "size": 1669,
+      "sha256": "91e8d62444716b0686b5b0c23754cc86e2cb97ce5b095b07ba73790aee7a3ce5",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/hotkeys/production-common.yaml",
+      "destination": "engine/mods/common/hotkeys/production-common.yaml",
+      "size": 2853,
+      "sha256": "f22f824561949e1abe2df053aa2c32fc401eeb0c57d6ec5787ef27354b4efb0a",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/hotkeys/supportpowers.yaml",
+      "destination": "engine/mods/common/hotkeys/supportpowers.yaml",
+      "size": 623,
+      "sha256": "507af34575ee6f80dfc2fc8fd9b60a30d6d27dc3b058c251472eba996b748b8b",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/hotkeys/viewport.yaml",
+      "destination": "engine/mods/common/hotkeys/viewport.yaml",
+      "size": 2448,
+      "sha256": "adf9e0c521d078b4eb3118fcf6f593db5e88553357240a667ad138a922e71a1f",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/metrics.yaml",
+      "destination": "engine/mods/common/metrics.yaml",
+      "size": 1683,
+      "sha256": "20fd2aec9d2488bcb9478c342530b9a7ad7aaff97897431d9d6c650618159549",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "engine/mods/common/scripts/utils.lua",
+      "destination": "engine/mods/common/scripts/utils.lua",
+      "size": 1660,
+      "sha256": "9c359f3efadb6361b381070a18f46040ff4436c3b0c0c73233835d5e621dd776",
+      "category": "engine-source",
+      "license": "GPL-3.0-only"
+    },
+    {
+      "source": "launch-game.sh",
+      "destination": "launch-game.sh",
+      "size": 2266,
+      "sha256": "62d88c6491fcc99b7d25d1ae9ad816da29653d34d2cdade01d08a644ab850faa",
+      "category": "project-original",
+      "license": "NUKE HOUR project"
+    },
+    {
+      "source": "mod.config",
+      "destination": "mod.config",
+      "size": 1596,
+      "sha256": "835a497f5c75590a87cc7cfde5e64629f3b4993ccb7674cf4523c4266a087526",
+      "category": "project-original",
+      "license": "NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2-content/fluent/chrome.ftl",
+      "destination": "mods/ra2-content/fluent/chrome.ftl",
+      "size": 583,
+      "sha256": "e736f51e7146764571531e0fec54243baa09074405ae16c80e2b6e56d58343d5",
+      "category": "project-original",
+      "license": "NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2-content/fluent/zh-CN/chrome.ftl",
+      "destination": "mods/ra2-content/fluent/zh-CN/chrome.ftl",
+      "size": 1456,
+      "sha256": "9081453ce6d63849ef13cb8a54d5ac48c741971ca95c67182e6586e0aa6b6d23",
+      "category": "project-original",
+      "license": "NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2-content/installer/firstdecade.yaml",
+      "destination": "mods/ra2-content/installer/firstdecade.yaml",
+      "size": 713,
+      "sha256": "249d347b877f69dadb1133a2f758fbee513497357aa693cbf11194ca1126f127",
+      "category": "project-original",
+      "license": "NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2-content/installer/macos-directory.yaml",
+      "destination": "mods/ra2-content/installer/macos-directory.yaml",
+      "size": 684,
+      "sha256": "908f424babfa45f86bc12e071d95ace4972bbad0fb26a26a93214184e1411e28",
+      "category": "project-original",
+      "license": "NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2-content/installer/origin.yaml",
+      "destination": "mods/ra2-content/installer/origin.yaml",
+      "size": 996,
+      "sha256": "b98064dc3c9f2490544b2638d3c9f5939ca20d5fe6f44e11a2a8d24416ce5761",
+      "category": "project-original",
+      "license": "NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2-content/installer/ra2-disk.yaml",
+      "destination": "mods/ra2-content/installer/ra2-disk.yaml",
+      "size": 646,
+      "sha256": "739f068406bf887cafa51ad25e4144460903edae06de2c6c6bc1718298807d09",
+      "category": "project-original",
+      "license": "NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2-content/mod.yaml",
+      "destination": "mods/ra2-content/mod.yaml",
+      "size": 2647,
+      "sha256": "1d10ca5e8b6cf901935bc8871b6cdb7cc30a315799f39af11ab9ba67d4c1a505",
+      "category": "project-original",
+      "license": "NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2-public/fluent/legal.ftl",
+      "destination": "mods/ra2-public/fluent/legal.ftl",
+      "size": 441,
+      "sha256": "f9534118ff0a44002f9e632a6904be22ada15f1a16dc2b4e4b569d79db37deea",
+      "category": "project-original",
+      "license": "NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2-public/fluent/zh-CN/legal.ftl",
+      "destination": "mods/ra2-public/fluent/zh-CN/legal.ftl",
+      "size": 427,
+      "sha256": "91270c15c9d092055c948b33da09dbbd1b9ced0d62cca976740ea0860412145f",
+      "category": "project-original",
+      "license": "NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/AUTHORS",
+      "destination": "mods/ra2/AUTHORS",
+      "size": 597,
+      "sha256": "170aff3aa3b0e881cc0a6961b62ee319cfe464d1f4ff22781c19038df288e539",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/audio/music.yaml",
+      "destination": "mods/ra2/audio/music.yaml",
+      "size": 569,
+      "sha256": "652203293201774f118405375fa16424b8a15f27e29814d9f6daaa9dfcdb8a7e",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/audio/notifications.yaml",
+      "destination": "mods/ra2/audio/notifications.yaml",
+      "size": 3491,
+      "sha256": "60223c8af796f6487955637647c889ae22f1bffca4f01f3a5b98126a5a5182c2",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/audio/voices.yaml",
+      "destination": "mods/ra2/audio/voices.yaml",
+      "size": 13232,
+      "sha256": "8af108c3c861fdeca8f636fc3f8d5318f9d8ad172afb2a8c8b9ccf242f944ba3",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/bits/animations/nc-impact-core.png",
+      "destination": "mods/ra2/bits/animations/nc-impact-core.png",
+      "size": 173982,
+      "sha256": "30f790a756b8dbd79a08f4734dc1778a3966808d6b3a82e3480823e28578d93b",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/bits/animations/nc-impact-debris.png",
+      "destination": "mods/ra2/bits/animations/nc-impact-debris.png",
+      "size": 34090,
+      "sha256": "c8bae7db9c20b5d147ad5a946b56f6a8e37694253f6aec2af8b6181635e15323",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/bits/animations/nc-impact-ring.png",
+      "destination": "mods/ra2/bits/animations/nc-impact-ring.png",
+      "size": 95954,
+      "sha256": "bb906789d33dfb7fb68c8aa07a636e6623afd17e37808f2d64340d7ba2c78797",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/chrome.yaml",
+      "destination": "mods/ra2/chrome.yaml",
+      "size": 112436,
+      "sha256": "4849239c46a373eaca4946f3265639c4fdc4bd0beb0e3fa8425ca5f878d170b0",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/chrome/gamesave-loading.yaml",
+      "destination": "mods/ra2/chrome/gamesave-loading.yaml",
+      "size": 942,
+      "sha256": "30a15792d130bf343482575d81ccead7d752b77606f84f83315fef5ed979f9a6",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/chrome/ingame-chat.yaml",
+      "destination": "mods/ra2/chrome/ingame-chat.yaml",
+      "size": 1542,
+      "sha256": "38f9908c2ec6e986d48e540ad99f2722c38859d75329fd247e3e92261ad55701",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/chrome/ingame-debug.yaml",
+      "destination": "mods/ra2/chrome/ingame-debug.yaml",
+      "size": 2856,
+      "sha256": "79cef049969871d5d0a0a6ed46fb45160319bbef9e5ea298ba248726cc2cb249",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/chrome/ingame-info.yaml",
+      "destination": "mods/ra2/chrome/ingame-info.yaml",
+      "size": 3370,
+      "sha256": "c985d91360fa57f89d911802d5b7bee1461f61b693463dfcece73e392ae3fad4",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/chrome/ingame-menu.yaml",
+      "destination": "mods/ra2/chrome/ingame-menu.yaml",
+      "size": 1999,
+      "sha256": "365b4aa7b65fcc43d46e358111c73a6fdad8e2de02da164cbba37f4ef55602f8",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/chrome/ingame-observer.yaml",
+      "destination": "mods/ra2/chrome/ingame-observer.yaml",
+      "size": 24385,
+      "sha256": "51a5791c1e17c94e6c67547e5890ea79d60c15769eedc57a4842c9f699b88dc8",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/chrome/ingame-player.yaml",
+      "destination": "mods/ra2/chrome/ingame-player.yaml",
+      "size": 42433,
+      "sha256": "bb2f2fec0213224b28910c9582c5813061a480b191775e6fa9bc028469393993",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/chrome/ingame.yaml",
+      "destination": "mods/ra2/chrome/ingame.yaml",
+      "size": 4809,
+      "sha256": "f088740f4e2d373226d366546ac1fa6be415b33b8aca698ab3a01037d3ed6183",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/chrome/mainmenu-prerelease-notification.yaml",
+      "destination": "mods/ra2/chrome/mainmenu-prerelease-notification.yaml",
+      "size": 1271,
+      "sha256": "d76733481a7fc3da887e18dfe48fa5b8c1eb9efa9919ba9a206c79fd259cc522",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/chrome/mainmenu.yaml",
+      "destination": "mods/ra2/chrome/mainmenu.yaml",
+      "size": 6428,
+      "sha256": "edc79978ebb2014f485c76d4dd7091ce3868d043bb72b14dcd006b56d4f9e6fe",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/chrome/settings-advanced.yaml",
+      "destination": "mods/ra2/chrome/settings-advanced.yaml",
+      "size": 5994,
+      "sha256": "216855dae536f3e424de943f5b63c2356f64e485506586d490a91809c096b6e2",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/chrome/settings.yaml",
+      "destination": "mods/ra2/chrome/settings.yaml",
+      "size": 1461,
+      "sha256": "07bc06b70f7e8e925b9f7a965c46f3849aad445efaf420b5319123178a6e0f03",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/cursors.yaml",
+      "destination": "mods/ra2/cursors.yaml",
+      "size": 4323,
+      "sha256": "9714e17e1c81d48f50502d49afde4b2baa34dffa58d681b2382d179e7df98bac",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project",
+      "transform": "public-clean-cursors",
+      "sourceSize": 4385,
+      "sourceSha256": "1a0e96910c9c0d4740b0872352b1ff3196bb42fa1f6695580998175a4c28ab0b"
+    },
+    {
+      "source": "mods/ra2/fluent/assetbrowser.ftl",
+      "destination": "mods/ra2/fluent/assetbrowser.ftl",
+      "size": 159,
+      "sha256": "5483f3a081d30ef5c0952cd2ede3164bb7e645a977185480227372be65e0639d",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/fluent/chrome.ftl",
+      "destination": "mods/ra2/fluent/chrome.ftl",
+      "size": 12547,
+      "sha256": "42c18c589b6c857c69cf7f5ccd8615ff36a25bd1422419fca7dae511b3663029",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/fluent/hotkeys.ftl",
+      "destination": "mods/ra2/fluent/hotkeys.ftl",
+      "size": 399,
+      "sha256": "557189f7d55d90b20bd5367ab2943abdb084c61d541e464973e5ae6a2e8500c6",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/fluent/mod.ftl",
+      "destination": "mods/ra2/fluent/mod.ftl",
+      "size": 650,
+      "sha256": "d0a185ef43d51e5e8f6661517ec7c08366c06196aa333fc211f69d8441a367e4",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/fluent/rules.ftl",
+      "destination": "mods/ra2/fluent/rules.ftl",
+      "size": 28211,
+      "sha256": "efdc9fa4691c13b20f26e62c35649032d3d08860f7ba7a6af63ba155f046ce8d",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/fluent/zh-CN/assetbrowser.ftl",
+      "destination": "mods/ra2/fluent/zh-CN/assetbrowser.ftl",
+      "size": 169,
+      "sha256": "743354a17b787981abadb81241e946e3810176d5616a5f08fd25dfd9043136fa",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/fluent/zh-CN/chrome.ftl",
+      "destination": "mods/ra2/fluent/zh-CN/chrome.ftl",
+      "size": 12114,
+      "sha256": "1e72b1f866e9807a0cd52853def51ffd425ffe07c06bb69260d1b3cb3eb1aa93",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/fluent/zh-CN/hotkeys.ftl",
+      "destination": "mods/ra2/fluent/zh-CN/hotkeys.ftl",
+      "size": 422,
+      "sha256": "ef54492e1b7d85b25d1ae4687194fdf57953ffbd920d8bd682c8e2442fabc5de",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/fluent/zh-CN/mod.ftl",
+      "destination": "mods/ra2/fluent/zh-CN/mod.ftl",
+      "size": 677,
+      "sha256": "742db5f45a2334da19fc435fe2ff3e519a2a721f8e0ff02f26dab1e4579092b7",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/fluent/zh-CN/rules.ftl",
+      "destination": "mods/ra2/fluent/zh-CN/rules.ftl",
+      "size": 27483,
+      "sha256": "c0b68a371f948d894cb06c6c4402da92afba50ff6ef5f4d686deeef36fe7d098",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/fonts/NotoSansCJKsc-Bold.otf",
+      "destination": "mods/ra2/fonts/NotoSansCJKsc-Bold.otf",
+      "size": 17002248,
+      "sha256": "b5f0d1a190a7f9b43c310a8850630af12553df32c4c050543f9059732d9b4c0a",
+      "category": "redistributable-third-party",
+      "license": "SIL Open Font License 1.1"
+    },
+    {
+      "source": "mods/ra2/fonts/NotoSansCJKsc-Regular.otf",
+      "destination": "mods/ra2/fonts/NotoSansCJKsc-Regular.otf",
+      "size": 16437364,
+      "sha256": "2c76254f6fc379fddfce0a7e84fb5385bb135d3e399294f6eeb6680d0365b74b",
+      "category": "redistributable-third-party",
+      "license": "SIL Open Font License 1.1"
+    },
+    {
+      "source": "mods/ra2/fonts/OFL.txt",
+      "destination": "mods/ra2/fonts/OFL.txt",
+      "size": 4301,
+      "sha256": "6a73f9541c2de74158c0e7cf6b0a58ef774f5a780bf191f2d7ec9cc53efe2bf2",
+      "category": "redistributable-third-party",
+      "license": "SIL Open Font License 1.1"
+    },
+    {
+      "source": "mods/ra2/hotkeys.yaml",
+      "destination": "mods/ra2/hotkeys.yaml",
+      "size": 800,
+      "sha256": "f98d66fda10e06821aa037df68a3f74f2bd3635451d811bd503eceb4b9ff8e50",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/icon.png",
+      "destination": "mods/ra2/icon.png",
+      "size": 2626,
+      "sha256": "edc7f2d9a651b7e6d8ff6eeedf501cbc57fa3bfc5af7e2ef7372005a6e1013a8",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/metrics.yaml",
+      "destination": "mods/ra2/metrics.yaml",
+      "size": 730,
+      "sha256": "b22ccd95b535ff29f4874693e69252893f8480e572efe35b582f3711cdcaded1",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/mod.yaml",
+      "destination": "mods/ra2/mod.yaml",
+      "size": 9101,
+      "sha256": "4d7148bbe5ff2d8c3241ca7a212f9587c287bf8c0f18c8e5635a59af28205c69",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project",
+      "transform": "public-clean-mod",
+      "sourceSize": 9221,
+      "sourceSha256": "bd24c25f25395c4a9a7c946961be5be2bca708e6a86f4facedc2badc1abf1bd6"
+    },
+    {
+      "source": "mods/ra2/rules/ai-profiles.yaml",
+      "destination": "mods/ra2/rules/ai-profiles.yaml",
+      "size": 12753,
+      "sha256": "07d0233e60a9826d725ea50cd950a31e19d5ee4b386cd71870e3751de913b566",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/rules/ai.yaml",
+      "destination": "mods/ra2/rules/ai.yaml",
+      "size": 3834,
+      "sha256": "afcf48baec31d0ebaf3a0e139774cc4cdebca3dc1dc8ca3a3c5ef8aa5c5bd995",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/rules/aircraft.yaml",
+      "destination": "mods/ra2/rules/aircraft.yaml",
+      "size": 7656,
+      "sha256": "db498da3c3569dbf89d1f3f95148ab1272582f9ec50da704142dd1970bdcfed7",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/rules/allied-infantry.yaml",
+      "destination": "mods/ra2/rules/allied-infantry.yaml",
+      "size": 15008,
+      "sha256": "84cff40c9c20ec22b6fdd11ae46cf0030e16710c7a4e8390757b1b2e3536ddae",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/rules/allied-naval.yaml",
+      "destination": "mods/ra2/rules/allied-naval.yaml",
+      "size": 6063,
+      "sha256": "b72e113c35896caf69ae3269a6991681a310f89f54a10a75c1f7a9535b74ebc3",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/rules/allied-structures.yaml",
+      "destination": "mods/ra2/rules/allied-structures.yaml",
+      "size": 25910,
+      "sha256": "58bb43d1bac00e8d0e798c30124dca7e5d410a6db62d955145fb4d809e36694a",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/rules/allied-vehicles.yaml",
+      "destination": "mods/ra2/rules/allied-vehicles.yaml",
+      "size": 11900,
+      "sha256": "de894640a713105f313433a0831f110a299b460e1c441aade42905701a9f4658",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/rules/animals.yaml",
+      "destination": "mods/ra2/rules/animals.yaml",
+      "size": 1094,
+      "sha256": "bc8b1e3514534178b7cf3d5c205913830402933526df063c4d65dbc51a974066",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/rules/bridges.yaml",
+      "destination": "mods/ra2/rules/bridges.yaml",
+      "size": 6551,
+      "sha256": "14927fc4ab2fc082b4fd7d2e647492e88cbc4d69f3e81c0f99e5975baea394ee",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/rules/civilian-naval.yaml",
+      "destination": "mods/ra2/rules/civilian-naval.yaml",
+      "size": 775,
+      "sha256": "870fcfb0a471d943015f02448c96df96b86f3701c4591317a6806e9587859b33",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/rules/civilian-props.yaml",
+      "destination": "mods/ra2/rules/civilian-props.yaml",
+      "size": 8681,
+      "sha256": "538a687be1b8fb8530d8daaa1a86bb092f365440683abbb2ac15d8ff0f07bcdd",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/rules/civilian-structures.yaml",
+      "destination": "mods/ra2/rules/civilian-structures.yaml",
+      "size": 68036,
+      "sha256": "5cdf8fcc2448ff60d33d17376f028cbd4f02cf3d37f3cf8447edd63ab54f56df",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/rules/civilian-vehicles.yaml",
+      "destination": "mods/ra2/rules/civilian-vehicles.yaml",
+      "size": 1825,
+      "sha256": "9fcc88e82f6d2fe12ac28a5d7c7cd1dc1ca0ad87bffd6971b730675a26ed936a",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/rules/civilians.yaml",
+      "destination": "mods/ra2/rules/civilians.yaml",
+      "size": 2042,
+      "sha256": "bf37d3f68c76b16ffac16c7df76b2b6a24123e3c0859b1330f469267f2f79e3a",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/rules/defaults.yaml",
+      "destination": "mods/ra2/rules/defaults.yaml",
+      "size": 29110,
+      "sha256": "1b4f61f869754b333176fd37058eb02fcc64b30f4a96236fd83b4caf3d23a8c6",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/rules/misc.yaml",
+      "destination": "mods/ra2/rules/misc.yaml",
+      "size": 4137,
+      "sha256": "653de8be22ba5d013c4cbc98f57f32b55c12204091881af6371855368ade16ca",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/rules/palettes.yaml",
+      "destination": "mods/ra2/rules/palettes.yaml",
+      "size": 3878,
+      "sha256": "e7c062869b5f714ee32940283a193ab07f42711840d2e407e85fcbb33555e249",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/rules/player.yaml",
+      "destination": "mods/ra2/rules/player.yaml",
+      "size": 3487,
+      "sha256": "42b182b7c353afdf2c591099f83cc1dff51d2d0deb7c4eb76151e0c77c7a9898",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/rules/proxy-actors.yaml",
+      "destination": "mods/ra2/rules/proxy-actors.yaml",
+      "size": 319,
+      "sha256": "1aa6110f77972d8f698b33ab4fbec0a93f8f40e6d2f8d4c4b4d6b39aeb1a2b79",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/rules/soviet-infantry.yaml",
+      "destination": "mods/ra2/rules/soviet-infantry.yaml",
+      "size": 10667,
+      "sha256": "e13ffb6fefdea6c51d8dcf737ffd0313dc45ce3d4b2a2a3e9fb8449c3c3c4ab3",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/rules/soviet-naval.yaml",
+      "destination": "mods/ra2/rules/soviet-naval.yaml",
+      "size": 7384,
+      "sha256": "bd136439d7c4f459a2572a8ff1e80de20eeb42a3e6ae76cdb0c7bb8f3ba1dd5e",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/rules/soviet-structures.yaml",
+      "destination": "mods/ra2/rules/soviet-structures.yaml",
+      "size": 24097,
+      "sha256": "4dc9aaceef3079e48f5e2111c4317bf2b2b4c71c662322bc92198189f382530b",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/rules/soviet-vehicles.yaml",
+      "destination": "mods/ra2/rules/soviet-vehicles.yaml",
+      "size": 11843,
+      "sha256": "373fbdef57c090ca382a08b774c901cb905bbc53f656616554c13bb568c1de59",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/rules/tech-structures.yaml",
+      "destination": "mods/ra2/rules/tech-structures.yaml",
+      "size": 4460,
+      "sha256": "6d3a1fcdfdb53def74849a9954d4a08107bf0659b82f30feb6c0d1c99a66a8d8",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/rules/trees.yaml",
+      "destination": "mods/ra2/rules/trees.yaml",
+      "size": 823,
+      "sha256": "60d56e487a9e0e7a6cd76c71cb0f2874d4616847831ca6454828ecfb1c871ebf",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/rules/world.yaml",
+      "destination": "mods/ra2/rules/world.yaml",
+      "size": 11326,
+      "sha256": "55ed4dca1c2a4c4053db5dfa8d21462d0a60e956361d9cf1839912a180a9034b",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/rules/yuri-infantry.yaml",
+      "destination": "mods/ra2/rules/yuri-infantry.yaml",
+      "size": 4994,
+      "sha256": "ccd53ee9f6113e94f13e93845fb51608575ee7b799a00ad8e6567c9c5627f656",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/rules/yuri-naval.yaml",
+      "destination": "mods/ra2/rules/yuri-naval.yaml",
+      "size": 4551,
+      "sha256": "81481bb276b662186435f2803bee1cdf2508152e5ef822916e27c3cd08dcd46e",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/rules/yuri-structures.yaml",
+      "destination": "mods/ra2/rules/yuri-structures.yaml",
+      "size": 19268,
+      "sha256": "b7332fa29fdb2113726bf319b955dd326991188fc0cc5ed3071631dc05a53b5b",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/rules/yuri-vehicles.yaml",
+      "destination": "mods/ra2/rules/yuri-vehicles.yaml",
+      "size": 9841,
+      "sha256": "7d7aec73f7942676c69af5308349863e06b683900ccd57e2a89f6ec8e4e7c46b",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/sequences/aircraft.yaml",
+      "destination": "mods/ra2/sequences/aircraft.yaml",
+      "size": 452,
+      "sha256": "025ca748109ee99f156959dbca1a6ca88f1824fe24ebad0be76b78a8ae1fb807",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/sequences/allied-infantry.yaml",
+      "destination": "mods/ra2/sequences/allied-infantry.yaml",
+      "size": 4858,
+      "sha256": "03275435590d1d84ec3f926b951bf112ddcef04dc0c515b941d5bbf6c58030ca",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/sequences/allied-structures.yaml",
+      "destination": "mods/ra2/sequences/allied-structures.yaml",
+      "size": 16955,
+      "sha256": "a9941dcf1cf7d39337d9257465062125fd0c08e82519a8f8a149d0d5cb79d951",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/sequences/animals.yaml",
+      "destination": "mods/ra2/sequences/animals.yaml",
+      "size": 877,
+      "sha256": "6f2df1555063403cce01157929acd40b508ed93461fb5f94930928791e09762d",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/sequences/bridges.yaml",
+      "destination": "mods/ra2/sequences/bridges.yaml",
+      "size": 7857,
+      "sha256": "d5816936b7a90c3938b532bf654459568e1a6b73c1826c6e6eb35929707fff55",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/sequences/civilian-props.yaml",
+      "destination": "mods/ra2/sequences/civilian-props.yaml",
+      "size": 6041,
+      "sha256": "bf2f9fbe7c1fc46d3667c889cd3112b2b4fc99b79da8d4bfa3e19eddfd396819",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/sequences/civilian-structures.yaml",
+      "destination": "mods/ra2/sequences/civilian-structures.yaml",
+      "size": 45614,
+      "sha256": "265ae0c84a8b653c5eab643dfc47e4c5de579d89fa17b88f827ba79e0037b780",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/sequences/civilians.yaml",
+      "destination": "mods/ra2/sequences/civilians.yaml",
+      "size": 2886,
+      "sha256": "4ce4feb7f0cb03fccdb605af7d0007bb418edb9b981382bca18d6d484a101232",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/sequences/defaults.yaml",
+      "destination": "mods/ra2/sequences/defaults.yaml",
+      "size": 4096,
+      "sha256": "0675fb11969535c164e8d3c30f7d085f026a9cab85a8fcdb6fa97534229a2b4a",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/sequences/misc.yaml",
+      "destination": "mods/ra2/sequences/misc.yaml",
+      "size": 15931,
+      "sha256": "946f1fbac3564d89f4d44bb643d25fc9ed334f8a7e5738e47b04318403b90c44",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/sequences/soviet-infantry.yaml",
+      "destination": "mods/ra2/sequences/soviet-infantry.yaml",
+      "size": 2504,
+      "sha256": "e4a6e8ed4d456aa4e5019316f01874c0bc9c4fada1a115d9cfeb7f63858df3ef",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/sequences/soviet-structures.yaml",
+      "destination": "mods/ra2/sequences/soviet-structures.yaml",
+      "size": 16102,
+      "sha256": "d7424606c0a7ed803be43361e4e24321033930256947795dec8616ad2c288021",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/sequences/tech-structures.yaml",
+      "destination": "mods/ra2/sequences/tech-structures.yaml",
+      "size": 3082,
+      "sha256": "7bda80fb57c6a9a26915be2180c570aa1736a32d88deec712be75a53140f75b4",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/sequences/trees.yaml",
+      "destination": "mods/ra2/sequences/trees.yaml",
+      "size": 3727,
+      "sha256": "5ee546b98d70473a1eeac8a3f40caf4e6fd5521ae824dae300ec34202820781f",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/sequences/vehicles.yaml",
+      "destination": "mods/ra2/sequences/vehicles.yaml",
+      "size": 5432,
+      "sha256": "39e0f87a785572b3c41e9b4b57bc19a0167d9fe4908c8c2671618ad53a2cbf3c",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/sequences/voxels.yaml",
+      "destination": "mods/ra2/sequences/voxels.yaml",
+      "size": 2390,
+      "sha256": "2c66ce26eff7fd3b3147ab38c5f31d0813cf75ed6a7237c9c8cc9c67c7ab0b2d",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/sequences/yuri-infantry.yaml",
+      "destination": "mods/ra2/sequences/yuri-infantry.yaml",
+      "size": 2140,
+      "sha256": "a5574fbcfade1e670372d8f2a146c92ce7ce9bc223ea9d644df21bd4046a65fb",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/sequences/yuri-structures.yaml",
+      "destination": "mods/ra2/sequences/yuri-structures.yaml",
+      "size": 13618,
+      "sha256": "6f9966f4b5281bb7013a1cf0c5954925b5b86788f0a93f606ff82091cabd3cee",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/tilesets/snow.yaml",
+      "destination": "mods/ra2/tilesets/snow.yaml",
+      "size": 271925,
+      "sha256": "400dacb90ea59f9cf9d02fbf117298358bcf561cb8d0b1f06256e05688177424",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/tilesets/temperat.yaml",
+      "destination": "mods/ra2/tilesets/temperat.yaml",
+      "size": 285984,
+      "sha256": "ffeb8fd51958bacc4502667307a1d6e845f9e31acef67e6ab052e6548a9d16e5",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/tilesets/urban.yaml",
+      "destination": "mods/ra2/tilesets/urban.yaml",
+      "size": 301770,
+      "sha256": "fdcbcf70461ecc61bbf7d824a50473d9f7d7c2abf0ad709319110f65493d9cb8",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/NUCLEAR-CRISIS-BG-01.png",
+      "destination": "mods/ra2/uibits/NUCLEAR-CRISIS-BG-01.png",
+      "size": 2839351,
+      "sha256": "eb8bb0ae522f363c271475e83485e4e9166f7107df5f74c03eb88cc7376a9582",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/NUCLEAR-CRISIS-BG-02.png",
+      "destination": "mods/ra2/uibits/NUCLEAR-CRISIS-BG-02.png",
+      "size": 2423497,
+      "sha256": "4d1861a1a6dacdb6e76879cc73ca5fd386734e6be79d79fff69e6b177c4e333c",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/NUCLEAR-CRISIS-BG-03.png",
+      "destination": "mods/ra2/uibits/NUCLEAR-CRISIS-BG-03.png",
+      "size": 2471818,
+      "sha256": "c64dae7c4a3a2d14ea365b0d952847a842cb3f88a648ce64029d7d90bcfb694f",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/NUCLEAR-CRISIS-BG-04.png",
+      "destination": "mods/ra2/uibits/NUCLEAR-CRISIS-BG-04.png",
+      "size": 3849759,
+      "sha256": "03ec46b327505c362e1354c320f045ba9573d30ba1dd732b20c6e5d2d4600dc1",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/NUCLEAR-CRISIS-BG-05.png",
+      "destination": "mods/ra2/uibits/NUCLEAR-CRISIS-BG-05.png",
+      "size": 3491363,
+      "sha256": "a77f835450fb3d70163aefede38cc1340b997f918a5b4dfb37b7ce6d2f274c65",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/NUCLEAR-CRISIS-BG-06.png",
+      "destination": "mods/ra2/uibits/NUCLEAR-CRISIS-BG-06.png",
+      "size": 3146667,
+      "sha256": "3acdab1823e39ff97f538b0c862177825011ef2ebfae09abac8c2d87e4c2a2c4",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/NUCLEAR-CRISIS-BG-07.png",
+      "destination": "mods/ra2/uibits/NUCLEAR-CRISIS-BG-07.png",
+      "size": 3128772,
+      "sha256": "527bee29fbe237ed0ea6c501e1302491e8a1a530ea602a5b723aae199977375f",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/NUCLEAR-CRISIS-BG-08.png",
+      "destination": "mods/ra2/uibits/NUCLEAR-CRISIS-BG-08.png",
+      "size": 3168553,
+      "sha256": "3ff2770f15d1938730952fbe3fb676c1bde6ece415638484eda646d69847df3e",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/NUCLEAR-CRISIS-BG-09.png",
+      "destination": "mods/ra2/uibits/NUCLEAR-CRISIS-BG-09.png",
+      "size": 2848048,
+      "sha256": "27b105e4d143cd958898b6ca58cc74f593d9da70dbe919e561756174eeb0788c",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/buttons.png",
+      "destination": "mods/ra2/uibits/buttons.png",
+      "size": 11431,
+      "sha256": "85cbfe493165ca19331f10b3de3e85b08ba2afaed71d40e17583b77bac18b41e",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/chrome.fps-pre.png",
+      "destination": "mods/ra2/uibits/chrome.fps-pre.png",
+      "size": 750997,
+      "sha256": "02f96081a41ee39635df6b844cf267b71342c49764b4841d1aedf017efa889c3",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/chrome.png",
+      "destination": "mods/ra2/uibits/chrome.png",
+      "size": 740579,
+      "sha256": "6329792d850adf4dde2652daba308fe42b05b1844f30d74b6488bbc24724d360",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/commandbar-bar-v2.png",
+      "destination": "mods/ra2/uibits/commandbar-bar-v2.png",
+      "size": 20633,
+      "sha256": "d212c5d58e1e7ca0120b3de1cf31132b96d779af25b82169c706e46ca3115b52",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/commandbar-chrome.png",
+      "destination": "mods/ra2/uibits/commandbar-chrome.png",
+      "size": 10213,
+      "sha256": "b37ad0165d17b634a22e0e5e37bd8a9c7973d25cd2591eed7f60692a997f9398",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/commandbar-icons-remastered.png",
+      "destination": "mods/ra2/uibits/commandbar-icons-remastered.png",
+      "size": 136894,
+      "sha256": "aba5ab66c229c7428541248b7988c4700ce67956b9bffd039de249daab927387",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/commandbar-icons.png",
+      "destination": "mods/ra2/uibits/commandbar-icons.png",
+      "size": 5737,
+      "sha256": "af6d27aa0418e3451920d7c46806f8a3a02d21df8a54ff4f35d4b846dbf3d3f1",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/commandbar-panel-compact.png",
+      "destination": "mods/ra2/uibits/commandbar-panel-compact.png",
+      "size": 373,
+      "sha256": "56f0bb0aa793282cf10a7d3eaff31525d883f718ba7a6a526c9ae0732cb5fd61",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/commandbar-panel.png",
+      "destination": "mods/ra2/uibits/commandbar-panel.png",
+      "size": 339,
+      "sha256": "2494c48ac1ea02f3f3266c0d13987081afe77215ec9c4551ea9edcb2c8121bb6",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/commandbar-toggle-icons.png",
+      "destination": "mods/ra2/uibits/commandbar-toggle-icons.png",
+      "size": 3102,
+      "sha256": "371e9df8e411c0607f9700c23ebd1186c41450ea74132f06bcb93419403aa615",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/dialog.png",
+      "destination": "mods/ra2/uibits/dialog.png",
+      "size": 135548,
+      "sha256": "d020f91b684951c4e41c2e7f379fe99e0b37dc90e1953c6ad9a5aa05b0f8accb",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/ios-commandbar-icons-v2.png",
+      "destination": "mods/ra2/uibits/ios-commandbar-icons-v2.png",
+      "size": 44556,
+      "sha256": "3cc75fa7aac7bfe96309ad54db17ee366cb41f7d77ac127739f21e48f3d8ba5c",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/ios-joystick-command-icons.png",
+      "destination": "mods/ra2/uibits/ios-joystick-command-icons.png",
+      "size": 404193,
+      "sha256": "a7eac98198fb14aa086b17c7576988dfa8c3cd48090c398da163e439546a793b",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/ios-touch-actions-allies-2x.png",
+      "destination": "mods/ra2/uibits/ios-touch-actions-allies-2x.png",
+      "size": 206015,
+      "sha256": "b9a150b3616b329a20adf0d2ef532d4e3b9d2f09a3ca4b1256b71dcc3e7aa5e4",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/ios-touch-actions-allies.png",
+      "destination": "mods/ra2/uibits/ios-touch-actions-allies.png",
+      "size": 85842,
+      "sha256": "debab3e6bbe86bd7e99ad1c0e5821b792b2085daad713a18ce1504f685723d60",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/ios-touch-actions-soviets-2x.png",
+      "destination": "mods/ra2/uibits/ios-touch-actions-soviets-2x.png",
+      "size": 186189,
+      "sha256": "09275b482ac2f14ff877fedd332cdbc84fd4dbab45a9a7f3a80b98ca11c94251",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/ios-touch-actions-soviets.png",
+      "destination": "mods/ra2/uibits/ios-touch-actions-soviets.png",
+      "size": 79717,
+      "sha256": "6c4a87cb380a1b08de0cdca2aceb3a04419157e139a6c135bfc3f319d7c4fe52",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/ios-touch-actions-yuri-2x.png",
+      "destination": "mods/ra2/uibits/ios-touch-actions-yuri-2x.png",
+      "size": 204495,
+      "sha256": "bd911cf4fb22f4134bd465123aa766eb0b76f3500c9624c878e6f142e403605b",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/ios-touch-actions-yuri.png",
+      "destination": "mods/ra2/uibits/ios-touch-actions-yuri.png",
+      "size": 85860,
+      "sha256": "567a306d9424392b508e8b7c55f007eb5db8f7cb3017a3e988c6a454030198e6",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/ios-touch-joystick-allies-2x.png",
+      "destination": "mods/ra2/uibits/ios-touch-joystick-allies-2x.png",
+      "size": 123495,
+      "sha256": "20441f5036c137d2524f65f67bdd92e7f4d0d06691c588bb0e2b696b7944b1c8",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/ios-touch-joystick-allies.png",
+      "destination": "mods/ra2/uibits/ios-touch-joystick-allies.png",
+      "size": 43596,
+      "sha256": "5733177aa3d0b98f606377ce0bb6a4e5ec8fa6ae4f3f761a5ec3dd2ce1d36f30",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/ios-touch-joystick-soviets-2x.png",
+      "destination": "mods/ra2/uibits/ios-touch-joystick-soviets-2x.png",
+      "size": 51589,
+      "sha256": "dde3fb97016ed5f41e3a65439a22ca94523132aa5eb6d1b5fb139e7505997aba",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/ios-touch-joystick-soviets.png",
+      "destination": "mods/ra2/uibits/ios-touch-joystick-soviets.png",
+      "size": 21754,
+      "sha256": "6130273ce648e9e43c63f21898317775216f5bd1e94a6a65c9dc32b62524531b",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/ios-touch-joystick-yuri-2x.png",
+      "destination": "mods/ra2/uibits/ios-touch-joystick-yuri-2x.png",
+      "size": 75032,
+      "sha256": "baa4a72f9385da5d5effcb11b9e6e751c9d54657b90933e05e16237f40a3eca6",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/ios-touch-joystick-yuri.png",
+      "destination": "mods/ra2/uibits/ios-touch-joystick-yuri.png",
+      "size": 31150,
+      "sha256": "35821140021b120796039494b27db202e590f953a5d513e2dc1cd0f1cf7f81bc",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/ios-touch-quickbar-allies-2x.png",
+      "destination": "mods/ra2/uibits/ios-touch-quickbar-allies-2x.png",
+      "size": 52264,
+      "sha256": "91299efb68947c3c552f4e817a6f00cc20a9ea8bf68f7d93928e801bd456f842",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/ios-touch-quickbar-allies.png",
+      "destination": "mods/ra2/uibits/ios-touch-quickbar-allies.png",
+      "size": 23938,
+      "sha256": "e4a83ae3f2506bbed34cc26d037dd30cc53f14eb5f668ecd29f21aeba4df9231",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/ios-touch-quickbar-soviets-2x.png",
+      "destination": "mods/ra2/uibits/ios-touch-quickbar-soviets-2x.png",
+      "size": 41990,
+      "sha256": "31594604d2b20c9b9840bad9e4e9cde1c0f3a5e274bb6deaad2eb25187b69c88",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/ios-touch-quickbar-soviets.png",
+      "destination": "mods/ra2/uibits/ios-touch-quickbar-soviets.png",
+      "size": 21554,
+      "sha256": "1947c115c4578e05bc69e18984225b83159d4bd740a810940fc3ebe801ae5da3",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/ios-touch-quickbar-yuri-2x.png",
+      "destination": "mods/ra2/uibits/ios-touch-quickbar-yuri-2x.png",
+      "size": 59038,
+      "sha256": "aeef998a9565c031d00c11fc8429089834cae9d09eefb86e8c47fcc249a77c69",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/ios-touch-quickbar-yuri.png",
+      "destination": "mods/ra2/uibits/ios-touch-quickbar-yuri.png",
+      "size": 28830,
+      "sha256": "5ced1b51d6598ca16de44e0cfffdff2bc1e61d4c21db378785a777482b2cb2cd",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/ios-viewport-joystick.png",
+      "destination": "mods/ra2/uibits/ios-viewport-joystick.png",
+      "size": 29803,
+      "sha256": "fb4574cd5d0b00801175670c88da82970012c30c3302e13d50a2ccd1cb3724cc",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/menubg1.png",
+      "destination": "mods/ra2/uibits/menubg1.png",
+      "size": 3358000,
+      "sha256": "cfc59a7ce11dcf17f42a80649d2868de85cc037dc2e3cc022c26956ae3f24a9b",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/menubg2.png",
+      "destination": "mods/ra2/uibits/menubg2.png",
+      "size": 3796657,
+      "sha256": "335c4531a7242f08dec8dddbc8ba70fd50a4838d09db69d6863227ca8a3b71a4",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/menubg3.png",
+      "destination": "mods/ra2/uibits/menubg3.png",
+      "size": 3378766,
+      "sha256": "02c65bcf6180eb8d5c136742f3444eb517e646fa1bf737134ffdfc61d7b04a79",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/menubg4.png",
+      "destination": "mods/ra2/uibits/menubg4.png",
+      "size": 3891127,
+      "sha256": "cdbdfd920853ca1dbcb8c2337ac7f86832c74f98ef2d9ddc0df8c056d4d26914",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/menubuttons.gold-bak.png",
+      "destination": "mods/ra2/uibits/menubuttons.gold-bak.png",
+      "size": 1108,
+      "sha256": "6655390615720172b990e01e8d1df412da4ab63d89101d70a1ca264236af2e05",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/menubuttons.png",
+      "destination": "mods/ra2/uibits/menubuttons.png",
+      "size": 1081,
+      "sha256": "281210452622c00cd087a2674768856c3f453bf0df2ae2b04a9a9fd7e8e8bb5e",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/menupanel.gold-bak.png",
+      "destination": "mods/ra2/uibits/menupanel.gold-bak.png",
+      "size": 1300,
+      "sha256": "298f3b3b1304604ec3167b406707b416dbd9922f4f17baa4b6bd3884f362ce26",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/menupanel.png",
+      "destination": "mods/ra2/uibits/menupanel.png",
+      "size": 1319,
+      "sha256": "cc73a98b729436764f0a10f95ddc30f8bc5d3aa7bc0e37d18afb09f4c41857bd",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/musicplayer.png",
+      "destination": "mods/ra2/uibits/musicplayer.png",
+      "size": 708,
+      "sha256": "34dbd233f2e721602fa244c54b87bf08b61596c4a1596ab1b8b5c9c1a00cf902",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/production-x5-icon.png",
+      "destination": "mods/ra2/uibits/production-x5-icon.png",
+      "size": 2092,
+      "sha256": "10bd4117540a5c25715f937b4c891a638c43a4170a3ca091a8fa25b99287dea5",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/settingspanel.png",
+      "destination": "mods/ra2/uibits/settingspanel.png",
+      "size": 2496,
+      "sha256": "9b09d3a3a4669ce16a0e670315ce66a4c799a81c303c08668f0b170f6e33ab45",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/spawnpoints.png",
+      "destination": "mods/ra2/uibits/spawnpoints.png",
+      "size": 6163,
+      "sha256": "acb4d2e7876e744f96c9be206c7343d28f2ffc61eb21d448ef37c093c1fd0ff8",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/uibits/strategic.png",
+      "destination": "mods/ra2/uibits/strategic.png",
+      "size": 3461,
+      "sha256": "880f3d1bd09409dd0f76f249a3e18af206293a3a9333a633d3db99d1342a6b74",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/weapons/bullets.yaml",
+      "destination": "mods/ra2/weapons/bullets.yaml",
+      "size": 5223,
+      "sha256": "5b2392150e0ada3370cab8bdfd651209793d74a45d8f6d853616a111b2343934",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/weapons/defaults.yaml",
+      "destination": "mods/ra2/weapons/defaults.yaml",
+      "size": 3324,
+      "sha256": "a5ff5ca1394be1cb9e84ce470589c46e1714cfd1c3e1ed4bcccea2b5825defee",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/weapons/explosions.yaml",
+      "destination": "mods/ra2/weapons/explosions.yaml",
+      "size": 10655,
+      "sha256": "068bfdefc32759a6337d5fd7e3d63161076c84b5b33f111e295af9c0540a479e",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/weapons/flaks.yaml",
+      "destination": "mods/ra2/weapons/flaks.yaml",
+      "size": 777,
+      "sha256": "a1e17fbbd01d89db425c706ac6cc08ab80215cbdd17ccb45c850777325230fd4",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/weapons/gatling.yaml",
+      "destination": "mods/ra2/weapons/gatling.yaml",
+      "size": 1266,
+      "sha256": "59565979930cb83f7229cb223cc0414b1a40cf33739f63708e3c8bf36c123d34",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/weapons/melee.yaml",
+      "destination": "mods/ra2/weapons/melee.yaml",
+      "size": 2674,
+      "sha256": "91c13c331c8dc87dc6aacabc01599dc9a7c139aa3c8b02b41cb2dd7adab84a33",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/weapons/mgs.yaml",
+      "destination": "mods/ra2/weapons/mgs.yaml",
+      "size": 2405,
+      "sha256": "ed1359e38a28c6304b99b01a105c892fd9690c7cb2c4aef8fbbe040154d1ec07",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/weapons/misc.yaml",
+      "destination": "mods/ra2/weapons/misc.yaml",
+      "size": 4009,
+      "sha256": "d5053839f5d0a361e1c34206853361a5dc76af164385389cf6a48adaa8ecd058",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/weapons/missiles.yaml",
+      "destination": "mods/ra2/weapons/missiles.yaml",
+      "size": 5349,
+      "sha256": "f9a7d61e2ccbf4804b6a3d5f1fd40a7bc81e71a90ed6b848f19cc09f55c414f5",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/weapons/yuri.yaml",
+      "destination": "mods/ra2/weapons/yuri.yaml",
+      "size": 4665,
+      "sha256": "edda70d8b77f1409d6e53f6e1203dbefdcd7b730f4e4b78a12ec1fb1f9d9054f",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    },
+    {
+      "source": "mods/ra2/weapons/zaps.yaml",
+      "destination": "mods/ra2/weapons/zaps.yaml",
+      "size": 5685,
+      "sha256": "e664329d0f5ca9966d9a7cd882062bbf9138ddbf0c1cfdbff7543d8c71626e74",
+      "category": "project-original",
+      "license": "GPL-3.0-only / NUKE HOUR project"
+    }
+  ]
+}

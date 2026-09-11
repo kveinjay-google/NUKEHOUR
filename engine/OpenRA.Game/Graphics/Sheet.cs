@@ -11,7 +11,6 @@
 
 using System;
 using System.IO;
-using OpenRA.FileSystem;
 using OpenRA.FileFormats;
 using OpenRA.Primitives;
 
@@ -50,7 +49,7 @@ namespace OpenRA.Graphics
 
 		public Sheet(SheetType type, Stream stream)
 		{
-			var png = new Png(stream, PngReadLimits.TrustedChromeDefault);
+			var png = new Png(stream);
 			Size = new Size(png.Width, png.Height);
 			data = new byte[4 * Size.Width * Size.Height];
 			Util.FastCopyIntoSprite(new Sprite(this, new Rectangle(0, 0, png.Width, png.Height), TextureChannel.Red), png);

@@ -11,6 +11,29 @@ PREFERENCES = (("System", "System"), ("简体中文", "zh-CN"), ("English", "en"
 LANGUAGES = PREFERENCES
 
 EN: dict[str, str] = {
+    '使用与发行声明': 'Use and Distribution Notice',
+    '请在继续前阅读以下重要信息': 'Please read this important information before continuing',
+    '官方网站': 'Official Website',
+    '继续': 'Continue',
+    '同意并继续': 'Agree and Continue',
+    '''NUKE HOUR 是完全独立开发、完全免费且开源的软件项目。
+
+EA 未认可且不支持本产品。本项目与 EA、Apple 或 Google 不存在隶属、赞助、授权或支持关系。
+
+本软件不包含任何第三方零售游戏文件。用户必须从自己合法购买并拥有的正版游戏副本中手动导入兼容文件。界面中出现的游戏或软件名称仅用于说明可兼容导入文件的来源，不代表关联、授权、认可或支持。
+
+本软件完全免费开源。从任何地方付费购买本软件都属于受骗上当；请向作者举报销售者，并向销售渠道申请退款。
+
+请只从 NUKE HOUR 官方网站下载官方授权版本。不要从官方网站以外的任何地方下载安装，以防软件被篡改或植入恶意代码。''':
+        '''NUKE HOUR is a completely independent, free, and open-source software project.
+
+EA has not endorsed and does not support this product. This project is not affiliated with, sponsored by, authorized by, or supported by EA, Apple, or Google.
+
+This software contains no third-party retail game files. Users must manually import compatible files from a legally purchased and owned copy of the original game. Game or software names shown in the interface are plain-text references used only to identify compatible import sources; they do not imply affiliation, authorization, endorsement, or support.
+
+This software is entirely free and open source. If anyone charges you for this software, you have been deceived. Please report the seller to the author and request a refund from the marketplace or payment provider.
+
+Download only the official authorized version from the NUKE HOUR website. Do not install copies obtained elsewhere, because they may have been modified or contain malicious code.''',
     '中': 'Medium',
     '低': 'Low',
     '快': 'Fast',
@@ -97,13 +120,24 @@ EN: dict[str, str] = {
     '启动失败': 'Launch failed',
     '回放控制': 'Replay Controls',
     '回放管理': 'Replays',
-    '在线服务': 'Online Services',
     '地图管理': 'Maps',
     '垂直同步': 'VSync',
     '多人联机': 'Multiplayer',
     '存档管理': 'Saves',
     '导入失败': 'Import failed',
     '导入成功': 'Import successful',
+    '导入游戏目录…': 'Import Game Folder…',
+    '选择 MIX / 地图…': 'Choose MIX / Maps…',
+    '基础游戏': 'Base Game',
+    '音乐': 'Music',
+    '尤里的复仇': "Yuri's Revenge",
+    '地图': 'Maps',
+    '选择游戏目录或已挂载光盘': 'Choose a game folder or mounted disc',
+    '选择零售内容文件': 'Choose retail content files',
+    '零售内容与地图': 'Retail Content and Maps',
+    '基础内容已就绪，现在可以开始游戏。': 'Base content is ready. You can now play.',
+    '仍缺少核心文件': 'Core Files Still Missing',
+    '需要导入游戏内容': 'Game Content Required',
     '常用尺寸': 'Common Sizes',
     '开始游戏': 'Play',
     '性能调试': 'Performance Debug',
@@ -217,6 +251,9 @@ EN: dict[str, str] = {
     '格式 宽,高': 'Format: width,height',
     '模拟性能日志': 'Simulate Perf Log',
     '没有可用地图': 'No maps available',
+    '尚无可用地图': 'No maps imported',
+    '当前没有可用地图。请先在“地图管理”或“内容管理”中导入合法地图。':
+        'No maps are currently available. Import a legal map from Maps or Content first.',
     '游戏事件通知': 'Game Event Notifications',
     '玩家信息未知': 'Player info unknown',
     '界面反馈通知': 'UI Feedback Notifications',
@@ -224,7 +261,6 @@ EN: dict[str, str] = {
     '红色警戒 2': 'Red Alert 2',
     '自动（推荐）': 'Auto (Recommended)',
     '自定义 AI': 'Custom AI',
-    '获取社区新闻': 'Fetch Community News',
     '规模随机加成': 'Size Random Bonus',
     '进攻小队规模': 'Attack Squad Size',
     '进攻尝试间隔': 'Attack Attempt Interval',
@@ -247,12 +283,12 @@ EN: dict[str, str] = {
         'Classic: left select/order, right cancel; hold right and swipe to pan quickly  |  Modern: left select, right order',
     '无限制（默认）': 'Unlimited (Default)',
     '正在启动游戏…': 'Starting game…',
+    '游戏已启动': 'Game started',
+    '已返回启动器': 'Returned to launcher',
     '游戏内设置面板': 'In-Game Settings',
     '缺少 .NET': 'Missing .NET',
-    '自动检查新版本': 'Auto-Check Updates',
     '5000（默认）': '5000 (Default)',
     '○ 服务器未启动': '○ Server not running',
-    '发送匿名系统信息': 'Send Anonymous System Info',
     '新建 AI 配置': 'New AI Profile',
     '暂停菜单背景动画': 'Pause Menu Background Animation',
     '禁用系统硬件光标': 'Disable Hardware Cursor',
@@ -315,7 +351,6 @@ EN: dict[str, str] = {
     '浏览单位、动画与音频素材（引擎内置工具）': 'Browse units, animations, and audio assets (built-in engine tool)',
     '输出 perf.log（仅排查卡顿需要）': 'Write perf.log (only needed when diagnosing stutter)',
     '选「是」将强制退出旧进程并重新启动；\n': 'Choose Yes to force-quit the old process and restart;\n',
-    '帮助开发者了解硬件与系统环境，不含个人隐私': 'Helps developers understand hardware and system environment; no personal data',
     '未找到游戏启动脚本：\n{GAME_SH}': 'Game launch script not found:\n{GAME_SH}',
     '玩家地图（{len(custom)} 张）': 'Player maps ({len(custom)})',
     '端口需为 1024-65535 之间的数字': 'Port must be a number between 1024 and 65535',
@@ -402,8 +437,6 @@ EN: dict[str, str] = {
         'Customize in-game hotkeys; changes write to the config immediately.',
     '调整电脑对手的经济、生产与进攻参数，并保存为可选人格。':
         'Tune AI economy, production, and attack settings, and save as selectable personalities.',
-    '网络端口映射、在线服务、性能调试与开发者选项。':
-        'NAT port mapping, online services, performance debugging, and developer options.',
     '回放、存档、地图、素材浏览器等附加功能入口。':
         'Entry points for replays, saves, maps, asset browser, and other extras.',
     '关闭启动器。若游戏正在运行，不会强制退出游戏进程。':
@@ -488,12 +521,6 @@ EN: dict[str, str] = {
         'Modifier key required for wheel-zoom. None = zoom with the wheel alone.',
     '开房联机时尝试通过 NAT-PMP/UPnP 在路由器上自动映射端口，方便好友连入。':
         'When hosting, try NAT-PMP/UPnP so friends can connect through your router.',
-    '启动时从社区服务器拉取新闻与公告。':
-        'Fetch community news and announcements on launch.',
-    '自动检查游戏/引擎是否有新版本可更新。':
-        'Automatically check for game/engine updates.',
-    '向开发团队发送匿名硬件与系统信息，帮助改进兼容性；不含个人隐私内容。':
-        'Send anonymous hardware/OS info to the development team to improve compatibility — no personal data.',
     '游戏内叠加性能曲线图，用于排查掉帧与卡顿。':
         'Overlay a performance graph in-game to diagnose hitching.',
     '游戏内显示帧时、更新耗时等性能文字。':
@@ -711,6 +738,12 @@ EN: dict[str, str] = {
     '官方地图（{count} 张，只读）': 'Official maps ({count}, read-only)',
     '玩家地图（{count} 张）': 'Player maps ({count})',
     '缺失核心文件：{files}': 'Missing core files: {files}',
+    '缺少核心文件：{files}': 'Missing core files: {files}',
+    '还需要：{files}': 'Still required: {files}',
+    '请先导入你合法持有的游戏文件：{files}':
+        'First import the legally owned game files: {files}',
+    '从你合法持有的游戏目录、光盘或 MIX 文件离线导入；文件不会上传':
+        'Import offline from your legally owned game folder, disc, or MIX files; nothing is uploaded',
     '{name}（{players} 人）': '{name} ({players} players)',
     '本机 IP：{addresses}': 'Local IP: {addresses}',
 }

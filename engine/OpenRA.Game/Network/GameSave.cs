@@ -123,9 +123,6 @@ namespace OpenRA.Network
 				lastSyncPacket = rs.ReadBytes(Order.SyncHashOrderLength);
 
 				var globalSettings = MiniYaml.FromString(rs.ReadLengthPrefixedString(Encoding.UTF8, Connection.MaxOrderLength), $"{filepath}:globalSettings");
-				if (globalSettings.Count != 1)
-					throw new InvalidDataException("Invalid orasav global settings");
-
 				GlobalSettings = Session.Global.Deserialize(globalSettings[0].Value);
 
 				var slots = MiniYaml.FromString(rs.ReadLengthPrefixedString(Encoding.UTF8, Connection.MaxOrderLength), $"{filepath}:slots");
@@ -155,13 +152,6 @@ namespace OpenRA.Network
 				ordersStream.Write(rs.ReadBytes(metadataOffset), 0, metadataOffset);
 			}
 		}
-
-		public RuntimeContractCompatibilityReason RuntimeContractCompatibilityWith(
-			RuntimeContractIdentity activeRuntimeContract) =>
-			RuntimeContractStorage.Compatibility(
-				activeRuntimeContract,
-				GlobalSettings?.RuntimeProfile,
-				GlobalSettings?.RuntimeContract);
 
 		public void StartGame(Session lobbyInfo, MapPreview map)
 		{
@@ -294,47 +284,39 @@ namespace OpenRA.Network
 			// - File offset of metadata start marker
 			// - File offset of custom trait data
 			// - Metadata end marker
-			var ordersPosition = ordersStream.Position;
-			try
+			using (var file = File.Create(path))
 			{
-				using (var file = File.Create(path))
-				{
-					ordersStream.Seek(0, SeekOrigin.Begin);
-					ordersStream.CopyTo(file);
-					file.Write(MetadataMarker);
-					file.Write(LastOrdersFrame);
-					file.Write(LastSyncFrame);
-					file.Write(lastSyncPacket, 0, Order.SyncHashOrderLength);
+				ordersStream.Seek(0, SeekOrigin.Begin);
+				ordersStream.CopyTo(file);
+				file.Write(MetadataMarker);
+				file.Write(LastOrdersFrame);
+				file.Write(LastSyncFrame);
+				file.Write(lastSyncPacket, 0, Order.SyncHashOrderLength);
 
-					var globalSettingsNodes = new List<MiniYamlNode>() { GlobalSettings.Serialize() };
-					file.WriteLengthPrefixedString(Encoding.UTF8, globalSettingsNodes.WriteToString());
+				var globalSettingsNodes = new List<MiniYamlNode>() { GlobalSettings.Serialize() };
+				file.WriteLengthPrefixedString(Encoding.UTF8, globalSettingsNodes.WriteToString());
 
-					var slotNodes = Slots
-						.Select(s => s.Value.Serialize())
-						.ToList();
-					file.WriteLengthPrefixedString(Encoding.UTF8, slotNodes.WriteToString());
+				var slotNodes = Slots
+					.Select(s => s.Value.Serialize())
+					.ToList();
+				file.WriteLengthPrefixedString(Encoding.UTF8, slotNodes.WriteToString());
 
-					var slotClientNodes = SlotClients
-						.Select(s => s.Value.Serialize(s.Key))
-						.ToList();
-					file.WriteLengthPrefixedString(Encoding.UTF8, slotClientNodes.WriteToString());
+				var slotClientNodes = SlotClients
+					.Select(s => s.Value.Serialize(s.Key))
+					.ToList();
+				file.WriteLengthPrefixedString(Encoding.UTF8, slotClientNodes.WriteToString());
 
-					var traitDataOffset = file.Length;
-					file.Write(TraitDataMarker);
+				var traitDataOffset = file.Length;
+				file.Write(TraitDataMarker);
 
-					var traitDataNodes = TraitData
-						.Select(kv => new MiniYamlNode(kv.Key.ToStringInvariant(), kv.Value))
-						.ToList();
-					file.WriteLengthPrefixedString(Encoding.UTF8, traitDataNodes.WriteToString());
+				var traitDataNodes = TraitData
+					.Select(kv => new MiniYamlNode(kv.Key.ToStringInvariant(), kv.Value))
+					.ToList();
+				file.WriteLengthPrefixedString(Encoding.UTF8, traitDataNodes.WriteToString());
 
-					file.Write((int)ordersStream.Length);
-					file.Write((int)traitDataOffset);
-					file.Write(EOFMarker);
-				}
-			}
-			finally
-			{
-				ordersStream.Position = ordersPosition;
+				file.Write((int)ordersStream.Length);
+				file.Write((int)traitDataOffset);
+				file.Write(EOFMarker);
 			}
 		}
 	}

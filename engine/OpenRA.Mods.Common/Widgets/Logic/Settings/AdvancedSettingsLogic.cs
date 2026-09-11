@@ -61,7 +61,6 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 				ds.SyncCheckBotModuleCode = dds.SyncCheckBotModuleCode;
 				ds.BotDebug = dds.BotDebug;
 				ds.LuaDebug = dds.LuaDebug;
-				ds.CheckVersion = dds.CheckVersion;
 				ds.EnableDebugCommandsInReplays = dds.EnableDebugCommandsInReplays;
 				ds.EnableSimulationPerfLogging = dds.EnableSimulationPerfLogging;
 			};

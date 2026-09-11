@@ -14,10 +14,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Runtime.ExceptionServices;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using OpenRA.FileSystem;
 using OpenRA.Graphics;
 using OpenRA.Primitives;
@@ -25,21 +22,6 @@ using OpenRA.Support;
 
 namespace OpenRA
 {
-	internal interface IMapPreviewWorkerSynchronization : IDisposable
-	{
-		void WaitForWake();
-		void Wake();
-	}
-
-	sealed class MapPreviewWorkerSynchronization : IMapPreviewWorkerSynchronization
-	{
-		readonly AutoResetEvent wake = new(false);
-
-		public void WaitForWake() => wake.WaitOne();
-		public void Wake() => wake.Set();
-		public void Dispose() => wake.Dispose();
-	}
-
 	public sealed class MapCache : IEnumerable<MapPreview>, IDisposable
 	{
 		public static readonly MapPreview UnknownMap = new(null, null, MapGridType.Rectangular, null);
@@ -49,17 +31,9 @@ namespace OpenRA
 
 		readonly Cache<string, MapPreview> previews;
 		readonly ModData modData;
-		SheetBuilder sheetBuilder;
-		readonly ModDataRenderingMode renderingMode;
-		readonly IGameLifecycleDispatchLane lifecycleLane;
-		IMapPreviewWorkerSynchronization previewWorkerWake;
+		readonly SheetBuilder sheetBuilder;
 		Thread previewLoaderThread;
 		bool previewLoaderThreadShutDown = true;
-		bool previewDrainRequested;
-		bool previewResourcesDisposed;
-		int pendingLifecycleActions;
-		Exception previewDrainFailure;
-		TaskCompletionSource<object> previewDrain = CompletedDrain();
 		readonly object syncRoot = new();
 		readonly Queue<MapPreview> generateMinimap = new();
 
@@ -92,56 +66,12 @@ namespace OpenRA
 		}
 
 		public MapCache(ModData modData)
-			: this(
-				modData,
-				ModDataRenderingMode.Game,
-				new LegacyGameLifecycleDispatchLane(),
-				Game.Settings.Graphics.SheetSize)
-		{ }
-
-		internal MapCache(
-			ModData modData,
-			ModDataRenderingMode renderingMode,
-			IGameLifecycleDispatchLane lifecycleLane,
-			int graphicsSheetSize)
-			: this(modData, renderingMode, lifecycleLane, graphicsSheetSize, null)
-		{ }
-
-		internal MapCache(
-			ModData modData,
-			ModDataRenderingMode renderingMode,
-			IGameLifecycleDispatchLane lifecycleLane,
-			int graphicsSheetSize,
-			IMapPreviewWorkerSynchronization previewWorkerSynchronization)
 		{
-			this.modData = modData ?? throw new ArgumentNullException(nameof(modData));
-			if (!Enum.IsDefined(typeof(ModDataRenderingMode), renderingMode))
-				throw new ArgumentOutOfRangeException(nameof(renderingMode));
-			if (renderingMode != ModDataRenderingMode.Game && previewWorkerSynchronization != null)
-				throw new ArgumentException(
-					"Preview worker synchronization is only valid in game rendering mode.",
-					nameof(previewWorkerSynchronization));
+			this.modData = modData;
 
-			this.renderingMode = renderingMode;
-			this.lifecycleLane = lifecycleLane ?? RejectingGameLifecycleDispatchLane.Instance;
-			LoadPreviewImages = renderingMode == ModDataRenderingMode.Game;
-
-			var gridType = Exts.Lazy(() => modData.Manifest.Get<MapGrid>(modData.ObjectCreator).Type);
+			var gridType = Exts.Lazy(() => modData.Manifest.Get<MapGrid>().Type);
 			previews = new Cache<string, MapPreview>(uid => new MapPreview(modData, uid, gridType.Value, this));
-			if (renderingMode == ModDataRenderingMode.Game)
-			{
-				if (graphicsSheetSize <= 0)
-					throw new ArgumentOutOfRangeException(nameof(graphicsSheetSize));
-				sheetBuilder = new SheetBuilder(SheetType.BGRA, graphicsSheetSize);
-				previewWorkerWake = previewWorkerSynchronization ?? new MapPreviewWorkerSynchronization();
-			}
-		}
-
-		static TaskCompletionSource<object> CompletedDrain()
-		{
-			var result = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
-			result.SetResult(null);
-			return result;
+			sheetBuilder = new SheetBuilder(SheetType.BGRA);
 		}
 
 		public void UpdateMaps()
@@ -156,7 +86,7 @@ namespace OpenRA
 			if (!modData.Manifest.Contains<MapGrid>())
 				return;
 
-			var mapGrid = modData.Manifest.Get<MapGrid>(modData.ObjectCreator);
+			var mapGrid = modData.Manifest.Get<MapGrid>();
 
 			// Enumerate map directories
 			foreach (var kv in modData.Manifest.MapFolders)
@@ -301,223 +231,68 @@ namespace OpenRA
 						yield return mapPackage;
 		}
 
-		public void QueryRemoteMapDetails(string repositoryUrl, IEnumerable<string> uids,
-			Action<MapPreview> mapDetailsReceived = null, Action<MapPreview> mapQueryFailed = null)
-		{
-			var queryUids = uids.Distinct()
-				.Where(uid => uid != null)
-				.Select(uid => previews[uid])
-				.Where(p => p.Status == MapStatus.Unavailable)
-				.Select(p => p.Uid)
-				.ToList();
-
-			foreach (var uid in queryUids)
-				previews[uid].UpdateRemoteSearch(MapStatus.Searching, null, null);
-
-			Task.Run(async () =>
-			{
-				var client = HttpClientFactory.Create();
-				var stringPool = new HashSet<string>(); // Reuse common strings in YAML
-				var buffer = new StringBuilder();
-
-				// Limit each query to 50 maps at a time to avoid request size limits
-				for (var i = 0; i < queryUids.Count; i += 50)
-				{
-					var batchUids = queryUids.Skip(i).Take(50).ToList();
-					var url = repositoryUrl + "hash/" + string.Join(",", batchUids) + "/yaml";
-
-					using (new PerfTimer("RemoteMapDetails"))
-					{
-						try
-						{
-							await using (var resultStream = await client.GetStreamAsync(url))
-							{
-								using (var resultReader = new StreamReader(resultStream))
-								{
-									while (true)
-									{
-										var line = await resultReader.ReadLineAsync();
-										if (line == null || !line.StartsWith('\t'))
-										{
-											var yaml = MiniYaml.FromString(buffer.ToString(), url, stringPool: stringPool);
-											buffer.Clear();
-											foreach (var kv in yaml)
-												previews[kv.Key].UpdateRemoteSearch(MapStatus.DownloadAvailable, kv.Value, modData.Manifest.MapCompatibility, mapDetailsReceived);
-
-											if (line == null)
-												break;
-										}
-
-										buffer.Append(line);
-										buffer.Append('\n');
-									}
-								}
-							}
-
-							foreach (var uid in batchUids)
-							{
-								var p = previews[uid];
-								if (p.Status != MapStatus.DownloadAvailable)
-									p.UpdateRemoteSearch(MapStatus.Unavailable, null, null);
-							}
-						}
-						catch (Exception e)
-						{
-							Log.Write("debug", "Remote map query failed with error:");
-							Log.Write("debug", e);
-							Log.Write("debug", $"URL was: {url}");
-
-							foreach (var uid in batchUids)
-							{
-								var p = previews[uid];
-								p.UpdateRemoteSearch(MapStatus.Unavailable, null, null);
-								mapQueryFailed?.Invoke(p);
-							}
-						}
-					}
-				}
-			});
-		}
-
 		void LoadAsyncInternal()
 		{
 			Log.Write("debug", "MapCache.LoadAsyncInternal started");
-			Exception failure = null;
 
-			try
+			// Milliseconds to wait on one loop when nothing to do
+			const int EmptyDelay = 50;
+
+			// Keep the thread alive for at least 5 seconds after the last minimap generation
+			const int MaxKeepAlive = 5000 / EmptyDelay;
+			var keepAlive = MaxKeepAlive;
+
+			while (true)
 			{
-				while (true)
-				{
-					List<MapPreview> todo = null;
-					lock (syncRoot)
-					{
-						if (generateMinimap.Count == 0)
-						{
-							if (previewDrainRequested)
-								break;
-						}
-						else
-						{
-							todo = generateMinimap.Where(p => p.GetMinimap() == null).ToList();
-							generateMinimap.Clear();
-						}
-					}
-
-					if (todo == null)
-					{
-						previewWorkerWake.WaitForWake();
-						continue;
-					}
-
-					// Render the minimap into the shared sheet through the ModData-owned lane.
-					foreach (var p in todo)
-					{
-						if (p.Preview != null)
-						{
-							PostLifecycleAction(() =>
-							{
-								try
-								{
-									p.SetMinimap(sheetBuilder.Add(p.Preview));
-								}
-								catch (Exception e)
-								{
-									Log.Write("debug", "Failed to load minimap with exception:");
-									Log.Write("debug", e);
-									throw;
-								}
-							});
-						}
-					}
-				}
-			}
-			catch (Exception exception)
-			{
-				failure = exception;
+				List<MapPreview> todo;
 				lock (syncRoot)
 				{
-					previewDrainRequested = true;
+					todo = generateMinimap.Where(p => p.GetMinimap() == null).ToList();
 					generateMinimap.Clear();
-				}
-
-				Log.Write("debug", "Map preview worker failed while dispatching lifecycle work:");
-				Log.Write("debug", exception);
-			}
-			finally
-			{
-				// Release the buffer on the same lifecycle lane as every upload.
-				try { PostLifecycleAction(sheetBuilder.Current.ReleaseBuffer); }
-				catch (Exception exception)
-				{
-					failure ??= exception;
-					Log.Write("debug", "Map preview buffer release was rejected by the lifecycle lane:");
-					Log.Write("debug", exception);
-				}
-
-				lock (syncRoot)
-				{
-					previewDrainFailure ??= failure;
-					previewLoaderThread = null;
-					previewLoaderThreadShutDown = true;
-					TryCompletePreviewDrain();
-				}
-
-				Log.Write("debug", "MapCache.LoadAsyncInternal ended");
-			}
-		}
-
-		void PostLifecycleAction(Action action)
-		{
-			lock (syncRoot)
-				pendingLifecycleActions++;
-
-			try
-			{
-				lifecycleLane.Post(() =>
-				{
-					Exception failure = null;
-					try
+					if (keepAlive > 0)
+						keepAlive--;
+					if (keepAlive == 0 && todo.Count == 0)
 					{
-						action();
+						previewLoaderThreadShutDown = true;
+						break;
 					}
-					catch (Exception exception)
-					{
-						failure = exception;
-						throw;
-					}
-					finally
-					{
-						lock (syncRoot)
-						{
-							previewDrainFailure ??= failure;
-							pendingLifecycleActions--;
-							TryCompletePreviewDrain();
-						}
-					}
-				});
-			}
-			catch (Exception exception)
-			{
-				lock (syncRoot)
-				{
-					previewDrainFailure ??= exception;
-					pendingLifecycleActions--;
-					TryCompletePreviewDrain();
 				}
 
-				throw;
-			}
-		}
-
-		void TryCompletePreviewDrain()
-		{
-			if (previewLoaderThreadShutDown && pendingLifecycleActions == 0 && generateMinimap.Count == 0)
-			{
-				if (previewDrainFailure != null)
-					previewDrain.TrySetException(previewDrainFailure);
+				if (todo.Count == 0)
+				{
+					Thread.Sleep(EmptyDelay);
+					continue;
+				}
 				else
-					previewDrain.TrySetResult(null);
+					keepAlive = MaxKeepAlive;
+
+				// Render the minimap into the shared sheet
+				foreach (var p in todo)
+				{
+					if (p.Preview != null)
+					{
+						Game.RunAfterTick(() =>
+						{
+							try
+							{
+								p.SetMinimap(sheetBuilder.Add(p.Preview));
+							}
+							catch (Exception e)
+							{
+								Log.Write("debug", "Failed to load minimap with exception:");
+								Log.Write("debug", e);
+							}
+						});
+					}
+
+					// Yuck... But this helps the UI Jank when opening the map selector significantly.
+					Thread.Sleep(Environment.ProcessorCount == 1 ? 25 : 5);
+				}
 			}
+
+			// Release the buffer by forcing changes to be written out to the texture, allowing the buffer to be reclaimed by GC.
+			Game.RunAfterTick(sheetBuilder.Current.ReleaseBuffer);
+			Log.Write("debug", "MapCache.LoadAsyncInternal ended");
 		}
 
 		public string GetUpdatedMap(string uid)
@@ -538,101 +313,27 @@ namespace OpenRA
 
 		public void CacheMinimap(MapPreview preview)
 		{
-			if (renderingMode != ModDataRenderingMode.Game)
-				throw new InvalidOperationException("Map previews are unavailable in no-render mode.");
-
+			bool launchPreviewLoaderThread;
 			lock (syncRoot)
 			{
-				if (previewDrainRequested || previewResourcesDisposed || sheetBuilder == null)
-					throw new ObjectDisposedException(nameof(MapCache));
+				generateMinimap.Enqueue(preview);
+				launchPreviewLoaderThread = previewLoaderThreadShutDown;
+				previewLoaderThreadShutDown = false;
+			}
 
-				if (previewLoaderThreadShutDown)
+			if (launchPreviewLoaderThread)
+				Game.RunAfterTick(() =>
 				{
-					previewLoaderThreadShutDown = false;
-					previewDrainFailure = null;
-					previewDrain = new TaskCompletionSource<object>(TaskCreationOptions.RunContinuationsAsynchronously);
-					var worker = new Thread(LoadAsyncInternal)
+					// Wait for any existing thread to exit before starting a new one.
+					previewLoaderThread?.Join();
+
+					previewLoaderThread = new Thread(LoadAsyncInternal)
 					{
 						Name = "Map Preview Loader",
 						IsBackground = true
 					};
-					previewLoaderThread = worker;
-					try { worker.Start(); }
-					catch (Exception exception)
-					{
-						previewLoaderThread = null;
-						previewLoaderThreadShutDown = true;
-						previewDrainFailure = exception;
-						TryCompletePreviewDrain();
-
-						throw;
-					}
-				}
-
-				generateMinimap.Enqueue(preview);
-				previewWorkerWake.Wake();
-			}
-		}
-
-		internal Task BeginPreviewDrainAsync()
-		{
-			lock (syncRoot)
-			{
-				previewDrainRequested = true;
-				previewWorkerWake?.Wake();
-				TryCompletePreviewDrain();
-				return previewDrain.Task;
-			}
-		}
-
-		static void DisposeOwned(IDisposable owned, ref Exception failure)
-		{
-			if (owned == null)
-				return;
-
-			try { owned.Dispose(); }
-			catch (Exception exception) { failure ??= exception; }
-		}
-
-		internal void DisposePreviewResourcesOnGameThread()
-		{
-			if (previewResourcesDisposed)
-				return;
-			if (!lifecycleLane.IsCurrentThread)
-				throw new InvalidOperationException("Map preview resources must be disposed on their lifecycle thread.");
-			if (!BeginPreviewDrainAsync().IsCompleted)
-				throw new InvalidOperationException("Map preview resources cannot be disposed before their drain completes.");
-
-			MapPreview[] ownedPreviews;
-			MapDirectoryTracker[] ownedTrackers;
-			SheetBuilder ownedSheetBuilder;
-			IMapPreviewWorkerSynchronization ownedWorkerWake;
-			lock (syncRoot)
-			{
-				if (previewResourcesDisposed)
-					return;
-
-				previewResourcesDisposed = true;
-				ownedPreviews = previews.Values.ToArray();
-				previews.Clear();
-				ownedTrackers = mapDirectoryTrackers.ToArray();
-				mapDirectoryTrackers.Clear();
-				ownedSheetBuilder = sheetBuilder;
-				sheetBuilder = null;
-				ownedWorkerWake = previewWorkerWake;
-				previewWorkerWake = null;
-			}
-
-			Exception failure = null;
-			foreach (var preview in ownedPreviews)
-				DisposeOwned(preview, ref failure);
-			foreach (var tracker in ownedTrackers)
-				DisposeOwned(tracker, ref failure);
-			DisposeOwned(ownedSheetBuilder, ref failure);
-			DisposeOwned(ownedWorkerWake, ref failure);
-
-			if (failure != null)
-				ExceptionDispatchInfo.Capture(failure).Throw();
+					previewLoaderThread.Start();
+				});
 		}
 
 		bool IsSuitableInitialMap(MapPreview map)
@@ -697,7 +398,26 @@ namespace OpenRA
 
 		public void Dispose()
 		{
-			DisposePreviewResourcesOnGameThread();
+			if (previewLoaderThread == null)
+			{
+				sheetBuilder.Dispose();
+				return;
+			}
+
+			foreach (var p in previews.Values)
+				p.Dispose();
+
+			foreach (var t in mapDirectoryTrackers)
+				t.Dispose();
+
+			// We need to let the loader thread exit before we can dispose our sheet builder.
+			// Ideally we should dispose our resources before returning, but we don't to block waiting on the loader thread to exit.
+			// Instead, we'll queue disposal to be run once it has exited.
+			ThreadPool.QueueUserWorkItem(_ =>
+			{
+				previewLoaderThread.Join();
+				Game.RunAfterTick(sheetBuilder.Dispose);
+			});
 		}
 	}
 }

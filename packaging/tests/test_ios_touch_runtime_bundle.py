@@ -32,15 +32,17 @@ COMMAND_SLOTS = (
 	"STANCE_RETURNFIRE", "STANCE_HOLDFIRE", "SELL", "REPAIR", "BEACON",
 )
 SEMANTIC_SHORTCUTS = {
-	"GROUP_01": ("ios-commandbar-icons-v2", "group-1"),
-	"GROUP_02": ("ios-commandbar-icons-v2", "group-2"),
-	"GROUP_03": ("ios-commandbar-icons-v2", "group-3"),
-	"GROUP_04": ("ios-commandbar-icons-v2", "group-4"),
-	"GROUP_05": ("ios-commandbar-icons-v2", "group-5"),
-	"PRODUCTION_X5": ("production-x5-icon", "production-x5"),
-	"ATTACK_MOVE": ("ios-commandbar-icons-v2", "attack-move"),
-	"SCATTER": ("ios-commandbar-icons-v2", "scatter"),
-	"QUEUE_ORDERS": ("ios-commandbar-icons-v2", "queue-orders"),
+	"GROUP_01": ("ios-commandbar-glyphs", "group-1"),
+	"GROUP_02": ("ios-commandbar-glyphs", "group-2"),
+	"GROUP_03": ("ios-commandbar-glyphs", "group-3"),
+	"GROUP_04": ("ios-commandbar-glyphs", "group-4"),
+	"GROUP_05": ("ios-commandbar-glyphs", "group-5"),
+	"PRODUCTION_X5": ("ios-commandbar-glyphs", "production-x5"),
+	"ATTACK_MOVE": ("ios-commandbar-glyphs", "attack-move"),
+	"SCATTER": ("ios-commandbar-glyphs", "scatter"),
+	"QUEUE_ORDERS": ("ios-commandbar-glyphs", "queue-orders"),
+	"STOP": ("ios-commandbar-glyphs", "stop"),
+	"CYCLE_BASE": ("ios-commandbar-glyphs", "cycle-base"),
 }
 ACTION_ATLAS_GLYPHS = {
 	"STOP": "ios-stop",
@@ -122,7 +124,7 @@ ASSEMBLY_METADATA = {
 		"OpenRA.Mods.Common.Widgets.TouchFactionSkin": {"methods": {
 			"Resolve", "ResolveForPlayer", "ActionCollection", "JoystickCollection",
 			"QuickbarPanelCollection", "QuickbarButtonCollection",
-			"QuickbarToggleCollection",
+			"QuickbarToggleCollection", "CommandGlyphCollection",
 		}},
 		"OpenRA.Mods.Common.Widgets.IosViewportControlsLayout": {"methods": {
 			"NormalizeJoystickPoints", "ShouldRefreshForJoystickSize",
@@ -190,6 +192,8 @@ ASSEMBLY_METADATA = {
 			{"ios-touch-quickbar-button-"},
 		("OpenRA.Mods.Common.Widgets.TouchFactionSkin", "QuickbarToggleCollection"):
 			{"ios-touch-quickbar-toggle-"},
+		("OpenRA.Mods.Common.Widgets.TouchFactionSkin", "CommandGlyphCollection"):
+			{"ios-commandbar-glyphs-"},
 		("OpenRA.Mods.Common.Widgets.VirtualViewportJoystickWidget", ".ctor"):
 			{"ios-touch-joystick-allies"},
 		(
@@ -569,6 +573,36 @@ def arm64_macho():
 
 def touch_chrome_text():
 	lines = [
+		"commandbar-icons:",
+		"\tImage: commandbar-icons-remastered.png",
+		"\tRegions:",
+		"\t\tgroup-1: 0, 0, 26, 26",
+		"\t\tgroup-2: 26, 0, 26, 26",
+		"\t\tgroup-3: 52, 0, 26, 26",
+		"\t\tgroup-4: 78, 0, 26, 26",
+		"\t\tgroup-5: 104, 0, 26, 26",
+		"\t\tattack-move: 468, 0, 26, 26",
+		"\t\tscatter: 598, 0, 26, 26",
+		"\t\tqueue-orders: 650, 0, 26, 26",
+		"\t\tproduction-x5: 156, 0, 26, 26",
+		"\t\tstop: 702, 0, 26, 26",
+		"\t\tcycle-base: 338, 0, 26, 26",
+		"",
+		"ios-commandbar-glyphs:",
+		"\tImage: ios-commandbar-glyphs-unified.png",
+		"\tRegions:",
+		"\t\tgroup-1: 3, 3, 26, 26",
+		"\t\tgroup-2: 35, 3, 26, 26",
+		"\t\tgroup-3: 67, 3, 26, 26",
+		"\t\tgroup-4: 99, 3, 26, 26",
+		"\t\tgroup-5: 131, 3, 26, 26",
+		"\t\tproduction-x5: 163, 3, 26, 26",
+		"\t\tattack-move: 195, 3, 26, 26",
+		"\t\tscatter: 227, 3, 26, 26",
+		"\t\tqueue-orders: 259, 3, 26, 26",
+		"\t\tstop: 291, 3, 26, 26",
+		"\t\tcycle-base: 323, 3, 26, 26",
+		"",
 		"ios-commandbar-icons-v2:",
 		"\tImage: ios-commandbar-icons-v2.png",
 		"\tRegions:",
@@ -591,9 +625,24 @@ def touch_chrome_text():
 	)
 	for faction in FACTIONS:
 		lines.extend((
+			f"ios-commandbar-glyphs-{faction}:",
+			f"\tImage: ios-commandbar-glyphs-{faction}-v3.png",
+			"\tRegions:",
+		))
+		for index, name in enumerate((
+			"group-1", "group-2", "group-3", "group-4", "group-5", "production-x5",
+			"group-6", "group-7", "group-8", "group-9", "group-0", "select-all",
+			"select-by-type", "cycle-base", "to-selection", "to-last-event",
+			"cycle-harvesters", "remove-from-group", "attack-move", "force-move",
+			"force-attack", "guard", "deploy", "scatter", "stop", "queue-orders",
+			"attack-anything", "defend", "return-fire", "hold-fire", "sell", "repair", "beacon",
+		)):
+			lines.append(f"\t\t{name}: {index * 32 + 3}, 3, 26, 26")
+		lines.append("")
+		lines.extend((
 			f"ios-touch-actions-{faction}:",
-			f"\tImage: ios-touch-actions-{faction}.png",
-			f"\tImage2x: ios-touch-actions-{faction}-2x.png",
+			f"\tImage: ios-touch-actions-{faction}-v3.png",
+			f"\tImage2x: ios-touch-actions-{faction}-v3-2x.png",
 			"\tRegions:",
 		))
 		for column, action in enumerate(action_names):
@@ -608,31 +657,31 @@ def touch_chrome_text():
 				lines.append(f"\t\t{action}{suffix}: {column * 64}, {row * 64}, 56, 56")
 		lines.extend((
 			"", f"ios-touch-joystick-{faction}:",
-			f"\tImage: ios-touch-joystick-{faction}.png",
-			f"\tImage2x: ios-touch-joystick-{faction}-2x.png",
+			f"\tImage: ios-touch-joystick-{faction}-v3.png",
+			f"\tImage2x: ios-touch-joystick-{faction}-v3-2x.png",
 			"\tRegions:", "\t\tbase: 0, 0, 144, 144",
 			"\t\tthumb: 160, 0, 64, 64", "\t\tthumb-active: 160, 72, 64, 64", "",
 		))
 		for index, suffix in enumerate(button_states):
 			lines.extend((
 				f"ios-touch-quickbar-button-{faction}{suffix}:",
-				f"\tImage: ios-touch-quickbar-{faction}.png",
-				f"\tImage2x: ios-touch-quickbar-{faction}-2x.png",
+				f"\tImage: ios-touch-quickbar-{faction}-v3.png",
+				f"\tImage2x: ios-touch-quickbar-{faction}-v3-2x.png",
 				f"\tPanelRegion: {index * 64}, 0, 0, 0, 48, 52, 0, 0",
 				"\tPanelSides: Center", "",
 			))
 		lines.extend((
 			f"ios-touch-quickbar-panel-{faction}:",
-			f"\tImage: ios-touch-quickbar-{faction}.png",
-			f"\tImage2x: ios-touch-quickbar-{faction}-2x.png",
+			f"\tImage: ios-touch-quickbar-{faction}-v3.png",
+			f"\tImage2x: ios-touch-quickbar-{faction}-v3-2x.png",
 			"\tPanelRegion: 0, 64, 12, 12, 104, 40, 12, 12", "",
 			f"ios-touch-quickbar-panel-compact-{faction}:",
-			f"\tImage: ios-touch-quickbar-{faction}.png",
-			f"\tImage2x: ios-touch-quickbar-{faction}-2x.png",
+			f"\tImage: ios-touch-quickbar-{faction}-v3.png",
+			f"\tImage2x: ios-touch-quickbar-{faction}-v3-2x.png",
 			"\tPanelRegion: 128, 64, 12, 12, 104, 40, 12, 12", "",
 			f"ios-touch-quickbar-toggle-{faction}:",
-			f"\tImage: ios-touch-quickbar-{faction}.png",
-			f"\tImage2x: ios-touch-quickbar-{faction}-2x.png",
+			f"\tImage: ios-touch-quickbar-{faction}-v3.png",
+			f"\tImage2x: ios-touch-quickbar-{faction}-v3-2x.png",
 			"\tRegions:", "\t\tcollapse: 259, 67, 26, 26",
 			"\t\texpand: 291, 67, 26, 26", "",
 		))
@@ -1305,11 +1354,12 @@ public sealed class IosLobbyLayout
 {
 	void CreateColumns(IosMenuLayoutPolicy policy)
 	{
+		var minimumPlayerWidth = 10 * policy.MinimumTarget;
 		var playersWidth = skirmishMode ?
 			2 * Math.Max(0, width - Gap) / 3 :
 			10 * policy.MinimumTarget;
-		var minimumUnits = skirmishMode ? new[] { 4, 2, 2, 2, 2 } : new[] { 2, 1, 3, 1, 1, 1, 1 };
-		var totalMinimumUnits = minimumUnits.Sum();
+		var minimumUnits = skirmishMode ?
+			new[] { 4, 2, 2, 2, 2 } : new[] { 2, 1, 3, 1, 1, 1, 1 };
 	}
 }
 """,
@@ -1525,7 +1575,7 @@ class IosTouchRuntimeBundleAuditTest(unittest.TestCase):
 		for faction in FACTIONS:
 			for kind, sizes in ASSET_SIZES.items():
 				for scale, size in (("", sizes[0]), ("-2x", sizes[1])):
-					name = f"ios-touch-{kind}-{faction}{scale}.png"
+					name = f"ios-touch-{kind}-{faction}-v3{scale}.png"
 					data = png_bytes(*size, seed=seed)
 					seed += 1
 					self._write_pair(
@@ -1534,7 +1584,11 @@ class IosTouchRuntimeBundleAuditTest(unittest.TestCase):
 						data,
 					)
 
-		for name in ("ios-commandbar-icons-v2.png", "production-x5-icon.png"):
+		for name in (
+			"commandbar-icons.png", "ios-commandbar-icons-v2.png", "production-x5-icon.png",
+			"ios-commandbar-glyphs-unified.png", "ios-commandbar-glyphs-allies-v3.png",
+			"ios-commandbar-glyphs-soviets-v3.png", "ios-commandbar-glyphs-yuri-v3.png",
+		):
 			data = (ROOT / "mods/ra2/uibits" / name).read_bytes()
 			self._write_pair(
 				Path("mods/ra2/uibits") / name,
@@ -2091,7 +2145,7 @@ class IosTouchRuntimeBundleAuditTest(unittest.TestCase):
 		self.assert_error("faction dropdown must use factionpicker")
 
 	def test_rejects_a_missing_or_extra_touch_asset(self):
-		(self.app / "mods/ra2/uibits/ios-touch-actions-allies.png").unlink()
+		(self.app / "mods/ra2/uibits/ios-touch-actions-allies-v3.png").unlink()
 		self.assert_error("touch asset is missing")
 
 		data = png_bytes(32, 32, seed=222)
@@ -2099,17 +2153,17 @@ class IosTouchRuntimeBundleAuditTest(unittest.TestCase):
 		self.assert_error("exactly 18")
 
 	def test_rejects_an_extra_touch_asset_outside_the_canonical_directory(self):
-		extra = self.app / "nested/concepts/ios-touch-actions-allies.png"
+		extra = self.app / "nested/concepts/ios-touch-actions-allies-v3.png"
 		extra.parent.mkdir(parents=True)
 		extra.write_bytes(png_bytes(512, 512, seed=223))
 		self.assert_error("exactly 18")
 
 	def test_rejects_a_touch_asset_hash_mismatch(self):
-		(self.app / "mods/ra2/uibits/ios-touch-actions-allies.png").write_bytes(b"tampered")
+		(self.app / "mods/ra2/uibits/ios-touch-actions-allies-v3.png").write_bytes(b"tampered")
 		self.assert_error("touch asset hash mismatch")
 
 	def test_rejects_wrong_ihdr_mode_or_dimensions(self):
-		name = Path("mods/ra2/uibits/ios-touch-joystick-yuri.png")
+		name = Path("mods/ra2/uibits/ios-touch-joystick-yuri-v3.png")
 		bad = png_bytes(256, 256, seed=2, bit_depth=16, color_type=2)
 		(self.source / name).write_bytes(bad)
 		(self.app / name).write_bytes(bad)
@@ -2141,7 +2195,7 @@ class IosTouchRuntimeBundleAuditTest(unittest.TestCase):
 			Path("mods/ra2/chrome.yaml"), Path("mods/ra2/chrome.yaml"),
 			lambda text: text.replace(
 				"\t\tgroup-1: 3, 3, 26, 26\n",
-				"\t\tgroup-1: 250, 120, 26, 26\n",
+				"\t\tgroup-1: 1010, 120, 26, 26\n",
 				1,
 			),
 		)
@@ -2151,13 +2205,13 @@ class IosTouchRuntimeBundleAuditTest(unittest.TestCase):
 		def remove_yuri_stop(text):
 			return text.replace(
 				"ios-touch-actions-yuri:\n"
-				"\tImage: ios-touch-actions-yuri.png\n"
-				"\tImage2x: ios-touch-actions-yuri-2x.png\n"
+				"\tImage: ios-touch-actions-yuri-v3.png\n"
+				"\tImage2x: ios-touch-actions-yuri-v3-2x.png\n"
 				"\tRegions:\n"
 				"\t\tios-stop: 0, 0, 56, 56\n",
 				"ios-touch-actions-yuri:\n"
-				"\tImage: ios-touch-actions-yuri.png\n"
-				"\tImage2x: ios-touch-actions-yuri-2x.png\n"
+				"\tImage: ios-touch-actions-yuri-v3.png\n"
+				"\tImage2x: ios-touch-actions-yuri-v3-2x.png\n"
 				"\tRegions:\n",
 				1,
 			)
@@ -2172,15 +2226,15 @@ class IosTouchRuntimeBundleAuditTest(unittest.TestCase):
 		def remove_active_thumb(text):
 			return text.replace(
 				"ios-touch-joystick-yuri:\n"
-				"\tImage: ios-touch-joystick-yuri.png\n"
-				"\tImage2x: ios-touch-joystick-yuri-2x.png\n"
+				"\tImage: ios-touch-joystick-yuri-v3.png\n"
+				"\tImage2x: ios-touch-joystick-yuri-v3-2x.png\n"
 				"\tRegions:\n"
 				"\t\tbase: 0, 0, 144, 144\n"
 				"\t\tthumb: 160, 0, 64, 64\n"
 				"\t\tthumb-active: 160, 72, 64, 64\n",
 				"ios-touch-joystick-yuri:\n"
-				"\tImage: ios-touch-joystick-yuri.png\n"
-				"\tImage2x: ios-touch-joystick-yuri-2x.png\n"
+				"\tImage: ios-touch-joystick-yuri-v3.png\n"
+				"\tImage2x: ios-touch-joystick-yuri-v3-2x.png\n"
 				"\tRegions:\n"
 				"\t\tbase: 0, 0, 144, 144\n"
 				"\t\tthumb: 160, 0, 64, 64\n",
@@ -2197,14 +2251,14 @@ class IosTouchRuntimeBundleAuditTest(unittest.TestCase):
 		def remove_expand(text):
 			return text.replace(
 				"ios-touch-quickbar-toggle-yuri:\n"
-				"\tImage: ios-touch-quickbar-yuri.png\n"
-				"\tImage2x: ios-touch-quickbar-yuri-2x.png\n"
+				"\tImage: ios-touch-quickbar-yuri-v3.png\n"
+				"\tImage2x: ios-touch-quickbar-yuri-v3-2x.png\n"
 				"\tRegions:\n"
 				"\t\tcollapse: 259, 67, 26, 26\n"
 				"\t\texpand: 291, 67, 26, 26\n",
 				"ios-touch-quickbar-toggle-yuri:\n"
-				"\tImage: ios-touch-quickbar-yuri.png\n"
-				"\tImage2x: ios-touch-quickbar-yuri-2x.png\n"
+				"\tImage: ios-touch-quickbar-yuri-v3.png\n"
+				"\tImage2x: ios-touch-quickbar-yuri-v3-2x.png\n"
 				"\tRegions:\n"
 				"\t\tcollapse: 259, 67, 26, 26\n",
 				1,
@@ -2286,12 +2340,12 @@ class IosTouchRuntimeBundleAuditTest(unittest.TestCase):
 		def nest_files_under_a_bogus_node(text):
 			return text.replace(
 				"ios-touch-actions-allies:\n"
-				"\tImage: ios-touch-actions-allies.png\n"
-				"\tImage2x: ios-touch-actions-allies-2x.png\n",
+				"\tImage: ios-touch-actions-allies-v3.png\n"
+				"\tImage2x: ios-touch-actions-allies-v3-2x.png\n",
 				"ios-touch-actions-allies:\n"
 				"\tBogus:\n"
-				"\t\tImage: ios-touch-actions-allies.png\n"
-				"\t\tImage2x: ios-touch-actions-allies-2x.png\n",
+				"\t\tImage: ios-touch-actions-allies-v3.png\n"
+				"\t\tImage2x: ios-touch-actions-allies-v3-2x.png\n",
 				1,
 			)
 
@@ -2305,15 +2359,15 @@ class IosTouchRuntimeBundleAuditTest(unittest.TestCase):
 		def nest_regions_under_a_bogus_node(text):
 			return text.replace(
 				"ios-touch-joystick-allies:\n"
-				"\tImage: ios-touch-joystick-allies.png\n"
-				"\tImage2x: ios-touch-joystick-allies-2x.png\n"
+				"\tImage: ios-touch-joystick-allies-v3.png\n"
+				"\tImage2x: ios-touch-joystick-allies-v3-2x.png\n"
 				"\tRegions:\n"
 				"\t\tbase: 0, 0, 144, 144\n"
 				"\t\tthumb: 160, 0, 64, 64\n"
 				"\t\tthumb-active: 160, 72, 64, 64\n",
 				"ios-touch-joystick-allies:\n"
-				"\tImage: ios-touch-joystick-allies.png\n"
-				"\tImage2x: ios-touch-joystick-allies-2x.png\n"
+				"\tImage: ios-touch-joystick-allies-v3.png\n"
+				"\tImage2x: ios-touch-joystick-allies-v3-2x.png\n"
 				"\tBogus:\n"
 				"\t\tRegions:\n"
 				"\t\t\tbase: 0, 0, 144, 144\n"
@@ -2347,12 +2401,12 @@ class IosTouchRuntimeBundleAuditTest(unittest.TestCase):
 			Path("mods/ra2/chrome.yaml"), Path("mods/ra2/chrome.yaml"),
 			lambda text: text.replace(
 				"ios-touch-quickbar-panel-yuri:\n"
-				"\tImage: ios-touch-quickbar-yuri.png\n"
-				"\tImage2x: ios-touch-quickbar-yuri-2x.png\n"
+				"\tImage: ios-touch-quickbar-yuri-v3.png\n"
+				"\tImage2x: ios-touch-quickbar-yuri-v3-2x.png\n"
 				"\tPanelRegion: 0, 64, 12, 12, 104, 40, 12, 12\n",
 				"ios-touch-quickbar-panel-yuri:\n"
-				"\tImage: ios-touch-quickbar-yuri.png\n"
-				"\tImage2x: ios-touch-quickbar-yuri-2x.png\n"
+				"\tImage: ios-touch-quickbar-yuri-v3.png\n"
+				"\tImage2x: ios-touch-quickbar-yuri-v3-2x.png\n"
 				"\tBogus:\n"
 				"\t\tPanelRegion: 0, 64, 12, 12, 104, 40, 12, 12\n",
 				1,
@@ -2617,7 +2671,7 @@ class IosTouchRuntimeBundleAuditTest(unittest.TestCase):
 			Path("mods/ra2/chrome/ingame-player.yaml"),
 			Path("mods/ra2/chrome/ingame-player.yaml"),
 			lambda text: text.replace(
-				"ImageCollection: production-x5-icon",
+				"ImageCollection: ios-commandbar-glyphs",
 				"ImageCollection: ios-commandbar-icons-v2",
 			),
 		)
@@ -2630,10 +2684,10 @@ class IosTouchRuntimeBundleAuditTest(unittest.TestCase):
 		def add_decoy(text):
 			return text.replace(
 				"\t\t\t\t\t\t\t\tImage@ICON:\n"
-				"\t\t\t\t\t\t\t\t\tImageCollection: production-x5-icon\n"
+				"\t\t\t\t\t\t\t\t\tImageCollection: ios-commandbar-glyphs\n"
 				"\t\t\t\t\t\t\t\t\tImageName: production-x5",
 				"\t\t\t\t\t\t\t\tImage@DECOY:\n"
-				"\t\t\t\t\t\t\t\t\tImageCollection: production-x5-icon\n"
+				"\t\t\t\t\t\t\t\t\tImageCollection: ios-commandbar-glyphs\n"
 				"\t\t\t\t\t\t\t\t\tImageName: production-x5\n"
 				"\t\t\t\t\t\t\t\tImage@ICON:\n"
 				"\t\t\t\t\t\t\t\t\tImageCollection: commandbar-icons\n"
@@ -2982,12 +3036,6 @@ class IosTouchRuntimeBundleAuditTest(unittest.TestCase):
 		(self.app / "NUCLEAR-CRISIS").write_bytes(b"not-macho")
 		self.assert_error("arm64 Mach-O")
 
-	def test_rejects_an_aot_module_bound_to_a_stale_managed_mvid(self):
-		(self.app / "OpenRA.Mods.RA2.aotdata.arm64").write_bytes(
-			b"\x00OpenRA.Game\x00FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF\x00"
-		)
-		self.assert_error("AOT dependency MVID mismatch")
-
 	def test_rejects_a_truncated_macho_with_valid_magic_and_cpu(self):
 		(self.app / "NUCLEAR-CRISIS").write_bytes(
 			struct.pack("<Ii", 0xFEEDFACF, 0x0100000C)
@@ -3103,7 +3151,7 @@ class IosTouchRuntimeBundleAuditTest(unittest.TestCase):
 		self.assertIn("symlink", "\n".join(errors).casefold())
 
 	def test_cli_returns_nonzero_for_a_failed_audit(self):
-		(self.app / "mods/ra2/uibits/ios-touch-actions-allies.png").unlink()
+		(self.app / "mods/ra2/uibits/ios-touch-actions-allies-v3.png").unlink()
 		result = subprocess.run(
 			(
 				"python3", str(SCRIPT), str(self.app), "--source-root", str(self.source),
@@ -3116,47 +3164,6 @@ class IosTouchRuntimeBundleAuditTest(unittest.TestCase):
 
 
 class IosTouchRuntimeBundleProjectTargetTest(unittest.TestCase):
-	def test_incremental_aot_invalidates_the_complete_hard_bound_closure(self):
-		root = ElementTree.parse(PROJECT).getroot()
-		target = root.find("./Target[@Name='InvalidateIosAotDependencyClosure']")
-		self.assertIsNotNone(target)
-		self.assertEqual("_AOTCompile", target.get("BeforeTargets"))
-		self.assertEqual("_LoadLinkerOutput", target.get("DependsOnTargets"))
-		self.assertEqual("@(_AssembliesToAOT)", target.get("Inputs"))
-		self.assertEqual(
-			"$(DeviceSpecificIntermediateOutputPath)aot-dependency-closure.stamp",
-			target.get("Outputs"),
-		)
-		self.assertIn("$(RuntimeIdentifier)", target.get("Condition", ""))
-		self.assertNotIn("$(PublicClean)", target.get("Condition", ""))
-
-		delete = target.find("Delete")
-		self.assertIsNotNone(delete)
-		self.assertCountEqual(
-			(
-				"@(_AssembliesToAOT->'%(AOTData)')",
-				"@(_AssembliesToAOT->'%(AOTAssembly)')",
-				"@(_AssembliesToAOT->'%(LLVMFile)')",
-				"@(_AssembliesToAOT->'%(ObjectFile)')",
-			),
-			delete.get("Files", "").split(";"),
-		)
-
-		stamp_target = root.find("./Target[@Name='StampIosAotDependencyClosure']")
-		self.assertIsNotNone(stamp_target)
-		self.assertEqual("_AOTCompile", stamp_target.get("AfterTargets"))
-		stamp_condition = stamp_target.get("Condition", "")
-		for required in (
-			"$(RuntimeIdentifier)", "$(_RunAotCompiler)", "$(IsMacEnabled)",
-			"@(_AssembliesToAOT)",
-		):
-			self.assertIn(required, stamp_condition)
-		self.assertNotIn("_IosAotDependencyClosureInvalidated", stamp_condition)
-		touch = stamp_target.find("Touch")
-		self.assertIsNotNone(touch)
-		self.assertEqual(target.get("Outputs"), touch.get("Files"))
-		self.assertEqual("true", touch.get("AlwaysCreate"))
-
 	def test_target_runs_after_bundle_and_loading_audit_but_before_codesign(self):
 		root = ElementTree.parse(PROJECT).getroot()
 		target = root.find("./Target[@Name='AuditPersonalIosTouchRuntimeBundle']")

@@ -58,6 +58,43 @@ class LauncherLanguagePolicyTest(unittest.TestCase):
         self.assertEqual("en", launcher_i18n.resolve_language("en", "zh-Hans-CN"))
         self.assertEqual("zh-CN", launcher_i18n.resolve_language("zh-CN", "en-US"))
 
+    def test_visible_language_switcher_is_bilingual_and_system_aware(self):
+        self.assertEqual("en", launcher.language_switch_target("zh-CN"))
+        self.assertEqual("zh-CN", launcher.language_switch_target("en"))
+        self.assertEqual("zh-CN", launcher.language_switch_target("en-US"))
+        self.assertEqual("简体中文", launcher.language_switch_label("zh-CN"))
+        self.assertEqual("English", launcher.language_switch_label("en"))
+        self.assertEqual(
+            "zh-CN", launcher_i18n.resolve_language("System", "zh-Hans-CN"))
+        self.assertEqual("en", launcher_i18n.resolve_language("System", "en-US"))
+
+    def test_toggle_routes_explicit_preference_through_atomic_persistence(self):
+        source = inspect.getsource(launcher.Launcher._change_language_preference)
+
+        self.assertIn("preference = i18n.normalize_preference(preference)", source)
+        self.assertIn('if preference == "System":', source)
+        self.assertIn("persist_language_preference(preference)", source)
+        self.assertIn('self.saved["Game"]["Language"] = preference', source)
+
+    def test_toggle_reports_persistence_failure_with_a_localized_dialog(self):
+        subject = mock.Mock(effective_language="zh-CN")
+        subject._change_language_preference.side_effect = PermissionError("denied")
+
+        with mock.patch.object(launcher.messagebox, "showerror") as showerror:
+            launcher.Launcher._toggle_language(subject)
+
+        subject._change_language_preference.assert_called_once_with("en")
+        showerror.assert_called_once_with(launcher._tr("操作失败"), "denied", parent=subject)
+
+    def test_toggle_switches_english_to_chinese_without_an_error_dialog(self):
+        subject = mock.Mock(effective_language="en")
+
+        with mock.patch.object(launcher.messagebox, "showerror") as showerror:
+            launcher.Launcher._toggle_language(subject)
+
+        subject._change_language_preference.assert_called_once_with("zh-CN")
+        showerror.assert_not_called()
+
     def test_malformed_language_tags_fail_closed(self):
         malformed = ("zh-", "zh--CN", "zh-中文", "zh-ThisSubtagIsTooLong")
         for value in malformed:
@@ -130,6 +167,48 @@ class LauncherLanguagePolicyTest(unittest.TestCase):
             )
             self.assertFalse(settings.with_suffix(".yaml.tmp").exists())
 
+    def test_language_persistence_strips_only_retired_background_service_keys(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            settings = Path(temporary) / "settings.yaml"
+            settings.write_text(
+                "Player:\n\tName: FetchNews remains a player value\n"
+                "Game:\n\tLanguage: zh-CN\n\tFetchNews: True\n"
+                "\tPauseShellmap: True\n"
+                "Debug:\n\tCheckVersion: True\n\tSendSystemInformation: True\n"
+                "\tPerfText: True\n"
+                "Extension:\n\tFetchNews: custom extension value\n"
+                "\tCheckVersion: custom extension value\n",
+                encoding="utf-8",
+            )
+
+            launcher.persist_language_preference("en", str(settings))
+
+            self.assertEqual(
+                "Player:\n\tName: FetchNews remains a player value\n"
+                "Game:\n\tLanguage: en\n\tPauseShellmap: True\n"
+                "Debug:\n\tPerfText: True\n"
+                "Extension:\n\tFetchNews: custom extension value\n"
+                "\tCheckVersion: custom extension value\n",
+                settings.read_text(encoding="utf-8"),
+            )
+
+    def test_hotkey_persistence_also_strips_retired_launcher_settings(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            settings = Path(temporary) / "settings.yaml"
+            settings.write_text(
+                "Game:\n\tLanguage: en\n\tFetchNews: True\n"
+                "Debug:\n\tCheckVersion: True\n\tSendSystemInformation: True\n",
+                encoding="utf-8",
+            )
+            with mock.patch.object(launcher, "SETTINGS_FILE", str(settings)):
+                launcher.save_user_keys({"SelectAllUnits": "A"})
+
+            self.assertEqual(
+                "Game:\n\tLanguage: en\nDebug:\n"
+                "Keys:\n\tSelectAllUnits: A\n",
+                settings.read_text(encoding="utf-8"),
+            )
+
     def test_preference_persistence_fails_closed_on_existing_file_read_error(self):
         with tempfile.TemporaryDirectory() as temporary:
             settings = Path(temporary) / "settings.yaml"
@@ -195,23 +274,126 @@ class LauncherLanguagePolicyTest(unittest.TestCase):
         self.assertEqual("Easy · Turtle", launcher.profile_display_name(builtin, "en"))
         self.assertEqual("我的 AI", launcher.profile_display_name(custom, "en"))
 
-    def test_language_specific_defaults_do_not_translate_saved_values(self):
-        self.assertEqual("指挥官", launcher.default_player_name("zh-CN"))
-        self.assertEqual("Commander", launcher.default_player_name("en"))
+    def test_player_default_is_branded_and_room_default_stays_localized(self):
+        self.assertEqual("NUKE HOUR", launcher.default_player_name("zh-CN"))
+        self.assertEqual("NUKE HOUR", launcher.default_player_name("en"))
         self.assertEqual("红色警戒2 房间", launcher.default_room_name("zh-CN"))
         self.assertEqual("Red Alert 2 Room", launcher.default_room_name("en"))
 
+    def test_generated_player_names_migrate_but_custom_names_are_preserved(self):
+        cases = {
+            "": "NUKE HOUR",
+            "Commander": "NUKE HOUR",
+            "指挥官": "NUKE HOUR",
+            "Field Marshal": "Field Marshal",
+        }
+        for original, expected in cases.items():
+            with self.subTest(original=original):
+                self.assertEqual(
+                    expected,
+                    launcher.migrate_legacy_player_name(original),
+                )
+
+    def test_loaded_player_name_defaults_and_legacy_values_are_migrated(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            settings = Path(temporary) / "settings.yaml"
+            with mock.patch.object(launcher, "SETTINGS_FILE", str(settings)):
+                self.assertEqual(
+                    "NUKE HOUR",
+                    launcher.load_settings()["Player"]["Name"],
+                )
+
+                cases = {
+                    "Player:\n\tColor: C82020\n": "NUKE HOUR",
+                    "Player:\n\tName: \n": "NUKE HOUR",
+                    "Player:\n\tName: Commander\n": "NUKE HOUR",
+                    "Player:\n\tName: 指挥官\n": "NUKE HOUR",
+                    "Player:\n\tName: Field Marshal\n": "Field Marshal",
+                }
+                for contents, expected in cases.items():
+                    with self.subTest(contents=contents):
+                        settings.write_text(contents, encoding="utf-8")
+                        self.assertEqual(
+                            expected,
+                            launcher.load_settings()["Player"]["Name"],
+                        )
+
+    def test_migrated_default_name_remains_tracked_by_the_launcher(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            settings = Path(temporary) / "settings.yaml"
+            settings.write_text(
+                "Player:\n\tName: Commander\n",
+                encoding="utf-8",
+            )
+            with mock.patch.object(launcher, "SETTINGS_FILE", str(settings)):
+                saved = launcher.load_settings()
+
+        subject = mock.Mock()
+        subject.saved = saved
+        subject.language_preference = "en"
+        subject.effective_language = "en"
+        subject.vars = {}
+
+        def string_var(*, value):
+            variable = mock.Mock()
+            variable.get.return_value = value
+            return variable
+
+        with mock.patch.object(launcher.tk, "StringVar", side_effect=string_var):
+            launcher.Launcher._make_vars(subject)
+
+        self.assertTrue(subject.player_name_is_default)
+        self.assertEqual("NUKE HOUR", subject.vars["player_name"].get())
+
+    def test_build_arguments_migrate_generated_names_and_preserve_custom_names(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            settings = Path(temporary) / "settings.yaml"
+            with mock.patch.object(launcher, "SETTINGS_FILE", str(settings)):
+                saved = launcher.load_settings()
+
+        subject = mock.Mock()
+        subject.saved = saved
+        subject.language_preference = "en"
+        subject.system_language_tag = "en-US"
+        subject.effective_language = "en"
+        subject.vars = {}
+        subject._auto_ui_scale.return_value = "1"
+
+        def string_var(*, value):
+            variable = mock.Mock()
+            variable.get.return_value = value
+            return variable
+
+        with mock.patch.object(launcher.tk, "StringVar", side_effect=string_var):
+            launcher.Launcher._make_vars(subject)
+
+        cases = {
+            "": "NUKE HOUR",
+            "Commander": "NUKE HOUR",
+            "指挥官": "NUKE HOUR",
+            "Field Marshal": "Field Marshal",
+        }
+        for player_name, expected in cases.items():
+            with self.subTest(player_name=player_name):
+                subject.vars["player_name"].get.return_value = player_name
+                arguments = launcher.Launcher.build_args(subject)
+                self.assertIn(
+                    f"Player.Name={expected}",
+                    arguments,
+                )
+                self.assertIn(launcher.support_dir_launch_arg(), arguments)
+
     def test_switching_language_updates_only_unsaved_generated_defaults(self):
         self.assertEqual(
-            "Commander",
+            "NUKE HOUR",
             launcher.switch_localized_default(
-                "指挥官", True, "指挥官", "zh-CN", "en"
+                "NUKE HOUR", True, launcher.BRAND_NAME, "zh-CN", "en"
             ),
         )
         self.assertEqual(
-            "指挥官",
+            "NUKE HOUR",
             launcher.switch_localized_default(
-                "指挥官", False, "指挥官", "zh-CN", "en"
+                "NUKE HOUR", False, launcher.BRAND_NAME, "zh-CN", "en"
             ),
         )
         self.assertEqual(
@@ -349,7 +531,7 @@ class LauncherLanguagePolicyTest(unittest.TestCase):
         self.assertIn("variable=self.sk_count_var", source)
 
     def test_language_change_rebuild_is_in_process_and_not_deferred(self):
-        source = inspect.getsource(launcher.Launcher._change_language)
+        source = inspect.getsource(launcher.Launcher._change_language_preference)
         self.assertNotIn("Popen", source)
         self.assertNotIn("after(", source)
         self.assertIn("current_page", source)

@@ -18,9 +18,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading;
-using System.Threading.Tasks;
 using OpenRA;
 using OpenRA.FileFormats;
 using OpenRA.Network;
@@ -66,15 +64,6 @@ namespace OpenRA.Server
 		const string IncorrectPassword = "notification-incorrect-password";
 
 		[FluentReference]
-		const string IncompatibleMod = "notification-incompatible-mod";
-
-		[FluentReference]
-		const string IncompatibleVersion = "notification-incompatible-version";
-
-		[FluentReference]
-		const string IncompatibleProtocol = "notification-incompatible-protocol";
-
-		[FluentReference]
 		const string Banned = "notification-you-were-banned";
 
 		[FluentReference]
@@ -88,9 +77,6 @@ namespace OpenRA.Server
 
 		[FluentReference]
 		const string RequiresAuthentication = "notification-requires-authentication";
-
-		[FluentReference]
-		const string NoPermission = "notification-no-permission-to-join";
 
 		[FluentReference("command")]
 		const string UnknownServerCommand = "notification-unknown-server-command";
@@ -116,8 +102,6 @@ namespace OpenRA.Server
 		[FluentReference]
 		const string GameStarted = "notification-game-started";
 
-		static readonly UTF8Encoding StrictUtf8 = new(false, true);
-
 		public readonly MersenneTwister Random = new();
 		public readonly ServerType Type;
 		public bool IsMultiplayer => Type == ServerType.Dedicated || Type == ServerType.Multiplayer;
@@ -141,13 +125,16 @@ namespace OpenRA.Server
 		readonly int randomSeed;
 		readonly List<TcpListener> listeners = new();
 		readonly TypeDictionary serverTraits = new();
-		readonly PlayerDatabase playerDatabase;
 
 		OrderBuffer orderBuffer;
 
 		volatile ServerState internalState = ServerState.WaitingPlayers;
 
 		readonly BlockingCollection<IServerEvent> events = new();
+		readonly ManualResetEventSlim shutdownCompleted = new(false);
+		int validatedConnectionCount;
+
+		public int ValidatedConnectionCount => Volatile.Read(ref validatedConnectionCount);
 
 		ReplayRecorder recorder;
 		GameInformation gameInfo;
@@ -180,234 +167,12 @@ namespace OpenRA.Server
 			c.Color = pr.LockColor ? pr.Color : c.PreferredColor;
 		}
 
-		internal static bool TryReadCompatibleGameSave(
-			string directory,
-			string filename,
-			RuntimeContractIdentity activeRuntimeContract,
-			out GameSave loadedGameSave,
-			out RuntimeContractCompatibilityReason compatibility)
-		{
-			loadedGameSave = null;
-
-			try
-			{
-				var canonicalFilename = ValidateGameSaveFilename(filename);
-				var candidate = new GameSave(Path.Combine(directory, canonicalFilename));
-				compatibility = candidate.RuntimeContractCompatibilityWith(activeRuntimeContract);
-				if (compatibility != RuntimeContractCompatibilityReason.Compatible)
-					return false;
-
-				loadedGameSave = candidate;
-				return true;
-			}
-			catch (Exception ex) when (IsExpectedGameSaveReadFailure(ex))
-			{
-				loadedGameSave = null;
-				compatibility = RuntimeContractCompatibilityReason.MalformedIdentity;
-				return false;
-			}
-		}
-
-		internal static bool TryStageGameSaveClients(
-			GameSave gameSave,
-			IReadOnlyList<Session.Client> currentClients,
-			int nextPlayerIndex,
-			out List<Session.Client> stagedClients,
-			out int stagedNextPlayerIndex)
-		{
-			stagedClients = null;
-			stagedNextPlayerIndex = nextPlayerIndex;
-
-			if (gameSave?.Slots == null || gameSave.Slots.Count == 0 ||
-				gameSave.Slots.Any(kv => kv.Value == null) ||
-				gameSave.SlotClients == null || currentClients == null ||
-				currentClients.Any(client => client == null))
-				return false;
-
-			var currentHumans = currentClients.Where(client => client.Bot == null).ToList();
-			var admins = currentHumans.Where(client => client.IsAdmin).ToList();
-			if (admins.Count != 1)
-				return false;
-
-			var savedClients = gameSave.SlotClients.ToList();
-			if (savedClients.Any(kv => kv.Value == null || string.IsNullOrEmpty(kv.Value.Slot) ||
-				!string.Equals(kv.Key, kv.Value.Slot, StringComparison.Ordinal) ||
-				!gameSave.Slots.ContainsKey(kv.Key) ||
-				(kv.Value.Bot != null && string.IsNullOrWhiteSpace(kv.Value.Bot))))
-				return false;
-
-			if (savedClients.Count(kv => kv.Value.Bot == null) > currentHumans.Count)
-				return false;
-
-			var candidateClients = new List<Session.Client>(currentHumans.Count);
-			var usedIndexes = new HashSet<int>();
-			foreach (var currentHuman in currentHumans)
-			{
-				var client = CloneGameSaveHumanClient(currentHuman);
-				if (!usedIndexes.Add(client.Index))
-					return false;
-
-				client.Slot = null;
-				candidateClients.Add(client);
-			}
-
-			var adminClientIndex = admins[0].Index;
-			var humanIndex = 0;
-			var candidateNextPlayerIndex = nextPlayerIndex;
-			foreach (var kv in savedClients)
-			{
-				if (kv.Value.Bot == null)
-				{
-					var client = candidateClients[humanIndex++];
-					var isAdmin = client.IsAdmin;
-					kv.Value.ApplyTo(client);
-					client.IsAdmin = isAdmin;
-					continue;
-				}
-
-				if (candidateNextPlayerIndex < 0 || candidateNextPlayerIndex == int.MaxValue ||
-					!usedIndexes.Add(candidateNextPlayerIndex))
-					return false;
-
-				var bot = new Session.Client
-				{
-					Index = candidateNextPlayerIndex,
-					State = Session.ClientState.NotReady,
-					BotControllerClientIndex = adminClientIndex
-				};
-				candidateNextPlayerIndex++;
-				kv.Value.ApplyTo(bot);
-				bot.IsAdmin = false;
-				candidateClients.Add(bot);
-			}
-
-			stagedClients = candidateClients;
-			stagedNextPlayerIndex = candidateNextPlayerIndex;
-			return true;
-		}
-
-		static string ValidateGameSaveFilename(string value)
-		{
-			if (value == null)
-				throw new ArgumentNullException(nameof(value));
-
-			var canonical = value.Length > 0 && value is not "." and not ".." &&
-				value.IndexOfAny(new[] { '/', '\\', '\0', ':' }) < 0 &&
-				!Path.IsPathFullyQualified(value);
-			if (canonical)
-			{
-				try
-				{
-					canonical = value.IsNormalized(NormalizationForm.FormC) &&
-						StrictUtf8.GetByteCount(value) <= 255;
-				}
-				catch (ArgumentException)
-				{
-					canonical = false;
-				}
-			}
-
-			if (canonical)
-				foreach (var character in value)
-					if (char.IsControl(character) || character is '\u2028' or '\u2029')
-					{
-						canonical = false;
-						break;
-					}
-
-			if (!canonical)
-				throw new ArgumentException("The game save filename must be one canonical path segment.", nameof(value));
-
-			return value;
-		}
-
-		static Session.Client CloneGameSaveHumanClient(Session.Client client)
-		{
-			return new Session.Client
-			{
-				Index = client.Index,
-				PreferredColor = client.PreferredColor,
-				Color = client.Color,
-				Faction = client.Faction,
-				SpawnPoint = client.SpawnPoint,
-				Name = client.Name,
-				IPAddress = client.IPAddress,
-				AnonymizedIPAddress = client.AnonymizedIPAddress,
-				Location = client.Location,
-				ConnectionQuality = client.ConnectionQuality,
-				State = client.State,
-				MapUid = client.MapUid,
-				MapPhase = client.MapPhase,
-				MapProgress = client.MapProgress,
-				Team = client.Team,
-				Handicap = client.Handicap,
-				Slot = client.Slot,
-				Bot = client.Bot,
-				BotControllerClientIndex = client.BotControllerClientIndex,
-				IsAdmin = client.IsAdmin,
-				Fingerprint = client.Fingerprint
-			};
-		}
-
-		static bool TryWriteGameSave(GameSave gameSave, string directory, string filename)
-		{
-			string temporaryPath = null;
-			try
-			{
-				var canonicalFilename = ValidateGameSaveFilename(filename);
-				if (!CanSerializeGameSave(gameSave))
-					return false;
-
-				Directory.CreateDirectory(directory);
-				var destinationPath = Path.Combine(directory, canonicalFilename);
-				temporaryPath = Path.Combine(
-					directory, $".openra-gamesave-{Guid.NewGuid():N}.tmp");
-				gameSave.Save(temporaryPath);
-				File.Move(temporaryPath, destinationPath, true);
-				temporaryPath = null;
-				return true;
-			}
-			catch (Exception ex) when (IsExpectedGameSaveFileFailure(ex))
-			{
-				return false;
-			}
-			finally
-			{
-				if (temporaryPath != null)
-					try
-					{
-						File.Delete(temporaryPath);
-					}
-					catch (Exception ex) when (IsExpectedGameSaveFileFailure(ex))
-					{
-					}
-			}
-		}
-
-		static bool CanSerializeGameSave(GameSave gameSave) =>
-			gameSave?.GlobalSettings != null && gameSave.Slots != null &&
-			gameSave.SlotClients != null && gameSave.TraitData != null &&
-			gameSave.Slots.All(kv => kv.Value != null) &&
-			gameSave.SlotClients.All(kv => kv.Value != null) &&
-			gameSave.TraitData.All(kv => kv.Value != null);
-
-		static bool IsExpectedGameSaveReadFailure(Exception exception) =>
-			exception is InvalidOperationException ||
-			IsExpectedGameSaveFileFailure(exception);
-
-		static bool IsExpectedGameSaveFileFailure(Exception exception) =>
-			exception is ArgumentException ||
-			exception is IOException ||
-			exception is UnauthorizedAccessException ||
-			exception is InvalidDataException ||
-			exception is FormatException ||
-			exception is OverflowException ||
-			exception is YamlException;
-
 		public void Shutdown()
 		{
 			State = ServerState.ShuttingDown;
 		}
+
+		public bool WaitForShutdown(TimeSpan timeout) => shutdownCompleted.Wait(timeout);
 
 		public void EndGame()
 		{
@@ -424,13 +189,14 @@ namespace OpenRA.Server
 		{
 			var request = new HandshakeRequest
 			{
+				HandshakeSchema = ProtocolVersion.HandshakeSchema,
+				OrdersProtocol = ProtocolVersion.Orders,
+				EngineCompatibility = Game.EngineVersion,
 				Mod = ModData.Manifest.Id,
-				Version = ModData.Manifest.Metadata.Version,
+				Version = ModData.Manifest.Metadata.CompatibilityOrVersion,
+				RuntimeProfile = ModData.RuntimeProfile.Serialize(),
+				RuntimeContract = ModData.RuntimeContract.Serialize(),
 			};
-			RuntimeContractHandshake.GetFields(
-				ModData.RuntimeContract,
-				out request.RuntimeProfile,
-				out request.RuntimeContract);
 
 			recorder.ReceiveFrame(0, 0, new Order("HandshakeRequest", null, false)
 			{
@@ -441,15 +207,15 @@ namespace OpenRA.Server
 
 			var response = new HandshakeResponse()
 			{
+				HandshakeSchema = ProtocolVersion.HandshakeSchema,
+				EngineCompatibility = Game.EngineVersion,
 				Mod = ModData.Manifest.Id,
-				Version = ModData.Manifest.Metadata.Version,
+				Version = ModData.Manifest.Metadata.CompatibilityOrVersion,
+				RuntimeProfile = ModData.RuntimeProfile.Serialize(),
+				RuntimeContract = ModData.RuntimeContract.Serialize(),
 				OrdersProtocol = ProtocolVersion.Orders,
 				Client = new Session.Client(),
 			};
-			RuntimeContractHandshake.GetFields(
-				ModData.RuntimeContract,
-				out response.RuntimeProfile,
-				out response.RuntimeContract);
 
 			recorder.ReceiveFrame(0, 0, new Order("HandshakeResponse", null, false)
 			{
@@ -536,8 +302,6 @@ namespace OpenRA.Server
 
 			ModData = modData;
 
-			playerDatabase = modData.Manifest.Get<PlayerDatabase>();
-
 			randomSeed = (int)DateTime.Now.ToBinary();
 
 			if (IsMultiplayer && settings.EnableGeoIP)
@@ -568,10 +332,6 @@ namespace OpenRA.Server
 					Dedicated = Type == ServerType.Dedicated
 				}
 			};
-			RuntimeContractHandshake.GetFields(
-				ModData.RuntimeContract,
-				out LobbyInfo.GlobalSettings.RuntimeProfile,
-				out LobbyInfo.GlobalSettings.RuntimeContract);
 
 			if (Settings.RecordReplays && Type == ServerType.Dedicated)
 			{
@@ -635,6 +395,8 @@ namespace OpenRA.Server
 					c.Dispose();
 
 				Conns.Clear();
+				Volatile.Write(ref validatedConnectionCount, 0);
+				shutdownCompleted.Set();
 			})
 			{ IsBackground = true }.Start();
 		}
@@ -681,14 +443,15 @@ namespace OpenRA.Server
 				// Dispatch a handshake order
 				var request = new HandshakeRequest
 				{
+					HandshakeSchema = ProtocolVersion.HandshakeSchema,
+					OrdersProtocol = ProtocolVersion.Orders,
+					EngineCompatibility = Game.EngineVersion,
 					Mod = ModData.Manifest.Id,
-					Version = ModData.Manifest.Metadata.Version,
+					Version = ModData.Manifest.Metadata.CompatibilityOrVersion,
+					RuntimeProfile = ModData.RuntimeProfile.Serialize(),
+					RuntimeContract = ModData.RuntimeContract.Serialize(),
 					AuthToken = token
 				};
-				RuntimeContractHandshake.GetFields(
-					ModData.RuntimeContract,
-					out request.RuntimeProfile,
-					out request.RuntimeContract);
 
 				DispatchOrdersToClient(newConn, 0, 0, new Order("HandshakeRequest", null, false)
 				{
@@ -718,49 +481,41 @@ namespace OpenRA.Server
 					return;
 				}
 
-				var handshake = HandshakeResponse.Deserialize(data, name);
+				var admitted = NetworkCompatibility.TryValidateResponsePayload(
+					data, name, ModData.NetworkCompatibility, out var handshake, out var compatibility);
+				if (handshake == null)
+					Log.Write("server", "[NET] Reject client: PROTOCOL_MISMATCH (malformed handshake)");
+				else
+				{
+					Log.Write("server", $"[NET] Handshake schema: {handshake.HandshakeSchema}; " +
+						$"orders: {handshake.OrdersProtocol}; compatibility: {compatibility.Code()}");
+					if (NetworkCompatibility.TryGetDebugSummary(
+						handshake.RuntimeProfile, handshake.RuntimeContract, out var handshakeSummary))
+						Log.Write("server", $"[NET] Runtime {handshakeSummary}");
+				}
+
+				if (!admitted)
+				{
+					Log.Write("server", $"[NET] Reject client: {compatibility.Code()}");
+					SendOrderTo(newConn, "ServerError", compatibility.MessageKey());
+					DropClient(newConn);
+					return;
+				}
+
+				var validatedClients = Conns.Count(connection => connection.Validated);
+				if (Type == ServerType.Dedicated &&
+					!DedicatedServerRuntimePolicy.HasPlayerCapacity(validatedClients, Settings.MaxPlayers))
+				{
+					Log.Write("server", $"Rejected connection; server has reached its {Settings.MaxPlayers} player limit.");
+					SendOrderTo(newConn, "ServerError", Full);
+					DropClient(newConn);
+					return;
+				}
 
 				if (!string.IsNullOrEmpty(Settings.Password) && handshake.Password != Settings.Password)
 				{
 					var message = string.IsNullOrEmpty(handshake.Password) ? RequiresPassword : IncorrectPassword;
 					SendOrderTo(newConn, "AuthenticationError", message);
-					DropClient(newConn);
-					return;
-				}
-
-				if (ModData.Manifest.Id != handshake.Mod)
-				{
-					Log.Write("server", $"Rejected connection from {newConn.EndPoint}; mods do not match.");
-
-					SendOrderTo(newConn, "ServerError", IncompatibleMod);
-					DropClient(newConn);
-					return;
-				}
-
-				if (ModData.Manifest.Metadata.Version != handshake.Version)
-				{
-					Log.Write("server", $"Rejected connection from {newConn.EndPoint}; Not running the same version.");
-
-					SendOrderTo(newConn, "ServerError", IncompatibleVersion);
-					DropClient(newConn);
-					return;
-				}
-
-				if (handshake.RuntimeContractCompatibilityWith(ModData.RuntimeContract) !=
-					RuntimeContractCompatibilityReason.Compatible)
-				{
-					Log.Write("server", $"Rejected connection from {newConn.EndPoint}; runtime contracts do not match.");
-
-					SendOrderTo(newConn, "ServerError", IncompatibleVersion);
-					DropClient(newConn);
-					return;
-				}
-
-				if (handshake.OrdersProtocol != ProtocolVersion.Orders)
-				{
-					Log.Write("server", $"Rejected connection from {newConn.EndPoint}; incompatible Orders protocol version {handshake.OrdersProtocol}.");
-
-					SendOrderTo(newConn, "ServerError", IncompatibleProtocol);
 					DropClient(newConn);
 					return;
 				}
@@ -815,6 +570,7 @@ namespace OpenRA.Server
 						// Promote connection to a valid client
 						LobbyInfo.Clients.Add(client);
 						newConn.Validated = true;
+						Interlocked.Increment(ref validatedConnectionCount);
 
 						// Disable chat UI to stop the client sending messages that we know we will reject
 						if (!client.IsAdmin && Settings.FloodLimitJoinCooldown > 0)
@@ -861,95 +617,23 @@ namespace OpenRA.Server
 					client.Fingerprint = handshake.Fingerprint;
 					CompleteConnection();
 				}
-				else if (!string.IsNullOrEmpty(handshake.Fingerprint) && !string.IsNullOrEmpty(handshake.AuthSignature))
+				else if (Type == ServerType.Dedicated &&
+					(Settings.RequireAuthentication || Settings.ProfileIDWhitelist.Length > 0))
 				{
-					Task.Run(async () =>
-					{
-						PlayerProfile profile = null;
-
-						try
-						{
-							var httpClient = HttpClientFactory.Create();
-							var url = playerDatabase.Profile + handshake.Fingerprint;
-							var httpResponseMessage = await httpClient.GetAsync(url);
-							var result = await httpResponseMessage.Content.ReadAsStreamAsync();
-
-							var yaml = MiniYaml.FromStream(result, url).First();
-							if (yaml.Key == "Player")
-							{
-								profile = FieldLoader.Load<PlayerProfile>(yaml.Value);
-
-								var publicKey = Encoding.ASCII.GetString(Convert.FromBase64String(profile.PublicKey));
-								var parameters = CryptoUtil.DecodePEMPublicKey(publicKey);
-								if (!profile.KeyRevoked && CryptoUtil.VerifySignature(parameters, newConn.AuthToken, handshake.AuthSignature))
-								{
-									client.Fingerprint = handshake.Fingerprint;
-									Log.Write("server", $"{newConn.EndPoint} authenticated as {profile.ProfileName} (UID {profile.ProfileID})");
-								}
-								else if (profile.KeyRevoked)
-								{
-									profile = null;
-									Log.Write("server", $"{newConn.EndPoint} failed to authenticate as {handshake.Fingerprint} (key revoked)");
-								}
-								else
-								{
-									profile = null;
-									Log.Write("server", $"{newConn.EndPoint} failed to authenticate as {handshake.Fingerprint} (signature verification failed)");
-								}
-							}
-							else
-								Log.Write("server", $"{newConn.EndPoint} failed to authenticate as {handshake.Fingerprint} (invalid server response: `{yaml.Key}` is not `Player`)");
-						}
-						catch (Exception ex)
-						{
-							Log.Write("server", $"{newConn.EndPoint} failed to authenticate as {handshake.Fingerprint} (exception occurred)");
-							Log.Write("server", ex.ToString());
-						}
-
-						events.Add(new CallbackEvent(() =>
-						{
-							var notAuthenticated = Type == ServerType.Dedicated && profile == null && (Settings.RequireAuthentication || Settings.ProfileIDWhitelist.Length > 0);
-							var blacklisted = Type == ServerType.Dedicated && profile != null && Settings.ProfileIDBlacklist.Contains(profile.ProfileID);
-							var notWhitelisted = Type == ServerType.Dedicated && Settings.ProfileIDWhitelist.Length > 0 &&
-								(profile == null || !Settings.ProfileIDWhitelist.Contains(profile.ProfileID));
-
-							if (notAuthenticated)
-							{
-								Log.Write("server", $"Rejected connection from {newConn.EndPoint}; Not authenticated.");
-								SendOrderTo(newConn, "ServerError", RequiresAuthentication);
-								DropClient(newConn);
-							}
-							else if (blacklisted || notWhitelisted)
-							{
-								if (blacklisted)
-									Log.Write("server", $"Rejected connection from {newConn.EndPoint}; In server blacklist.");
-								else
-									Log.Write("server", $"Rejected connection from {newConn.EndPoint}; Not in server whitelist.");
-
-								SendOrderTo(newConn, "ServerError", NoPermission);
-								DropClient(newConn);
-							}
-							else
-								CompleteConnection();
-						}));
-					});
+					Log.Write("server", $"Rejected connection from {newConn.EndPoint}; " +
+						"OpenRA public profile authentication is unavailable.");
+					SendOrderTo(newConn, "ServerError", RequiresAuthentication);
+					DropClient(newConn);
 				}
 				else
-				{
-					if (Type == ServerType.Dedicated && (Settings.RequireAuthentication || Settings.ProfileIDWhitelist.Length > 0))
-					{
-						Log.Write("server", $"Rejected connection from {newConn.EndPoint}; Not authenticated.");
-						SendOrderTo(newConn, "ServerError", RequiresAuthentication);
-						DropClient(newConn);
-					}
-					else
-						CompleteConnection();
-				}
+					CompleteConnection();
 			}
 			catch (Exception ex)
 			{
 				Log.Write("server", $"Dropping connection {newConn.EndPoint} because an error occurred:");
 				Log.Write("server", ex.ToString());
+				SendOrderTo(newConn, "ServerError",
+					NetworkCompatibilityReason.ProtocolMismatch.MessageKey());
 				DropClient(newConn);
 			}
 		}
@@ -1279,17 +963,24 @@ namespace OpenRA.Server
 					{
 						if (GameSave != null)
 						{
-							var requester = GetClient(conn);
-							if (requester == null || !requester.IsAdmin)
-								break;
+							// Sanitize potentially malicious input
+							var filename = o.TargetString;
+							var invalidIndex = -1;
+							var invalidChars = Path.GetInvalidFileNameChars();
+							while ((invalidIndex = filename.IndexOfAny(invalidChars)) != -1)
+								filename = filename.Remove(invalidIndex, 1);
 
-							var baseSavePath = RuntimeContractStorage.SavesPath(
-								Platform.SupportDir, ModData.Manifest.Id,
-								ModData.Manifest.Metadata.Version, ModData.RuntimeContract);
-							if (!TryWriteGameSave(GameSave, baseSavePath, o.TargetString))
-								break;
+							var baseSavePath = Path.Combine(
+								Platform.SupportDir,
+								"Saves",
+								ModData.Manifest.Id,
+								ModData.Manifest.Metadata.Version);
 
-							DispatchServerOrdersToClients(Order.FromTargetString("GameSaved", o.TargetString, true));
+							if (!Directory.Exists(baseSavePath))
+								Directory.CreateDirectory(baseSavePath);
+
+							GameSave.Save(Path.Combine(baseSavePath, filename));
+							DispatchServerOrdersToClients(Order.FromTargetString("GameSaved", filename, true));
 						}
 
 						break;
@@ -1300,28 +991,63 @@ namespace OpenRA.Server
 						if (Type == ServerType.Dedicated || State >= ServerState.GameStarted)
 							break;
 
-						var requester = GetClient(conn);
-						if (requester == null || !requester.IsAdmin)
-							break;
+						// Sanitize potentially malicious input
+						var filename = o.TargetString;
+						var invalidIndex = -1;
+						var invalidChars = Path.GetInvalidFileNameChars();
+						while ((invalidIndex = filename.IndexOfAny(invalidChars)) != -1)
+							filename = filename.Remove(invalidIndex, 1);
 
-						var baseSavePath = RuntimeContractStorage.SavesPath(
-							Platform.SupportDir, ModData.Manifest.Id,
-							ModData.Manifest.Metadata.Version, ModData.RuntimeContract);
-						if (!TryReadCompatibleGameSave(
-							baseSavePath, o.TargetString, ModData.RuntimeContract,
-							out var loadedGameSave, out _))
-							break;
+						var savePath = Path.Combine(
+							Platform.SupportDir,
+							"Saves",
+							ModData.Manifest.Id,
+							ModData.Manifest.Metadata.Version,
+							filename);
 
-						if (!TryStageGameSaveClients(
-							loadedGameSave, LobbyInfo.Clients, nextPlayerIndex,
-							out var stagedClients, out var stagedNextPlayerIndex))
-							break;
+						GameSave = new GameSave(savePath);
+						LobbyInfo.GlobalSettings = GameSave.GlobalSettings;
+						LobbyInfo.Slots = GameSave.Slots;
 
-						GameSave = loadedGameSave;
-						LobbyInfo.GlobalSettings = loadedGameSave.GlobalSettings;
-						LobbyInfo.Slots = loadedGameSave.Slots;
-						LobbyInfo.Clients = stagedClients;
-						nextPlayerIndex = stagedNextPlayerIndex;
+						// Reassign clients to slots
+						//  - Bot ordering is preserved
+						//  - Humans are assigned on a first-come-first-serve basis
+						//  - Leftover humans become spectators
+
+						// Start by removing all bots and assigning all players as spectators
+						foreach (var c in LobbyInfo.Clients)
+						{
+							if (c.Bot != null)
+								LobbyInfo.Clients.Remove(c);
+							else
+								c.Slot = null;
+						}
+
+						// Rebuild/remap the saved client state
+						// TODO: Multiplayer saves should leave all humans as spectators so they can manually pick slots
+						var adminClientIndex = LobbyInfo.Clients.First(c => c.IsAdmin).Index;
+						foreach (var kv in GameSave.SlotClients)
+						{
+							if (kv.Value.Bot != null)
+							{
+								var bot = new Session.Client()
+								{
+									Index = ChooseFreePlayerIndex(),
+									State = Session.ClientState.NotReady,
+									BotControllerClientIndex = adminClientIndex
+								};
+
+								kv.Value.ApplyTo(bot);
+								LobbyInfo.Clients.Add(bot);
+							}
+							else
+							{
+								// This will throw if the server doesn't have enough human clients to fill all player slots
+								// See TODO above - this isn't a problem in practice because MP saves won't use this
+								var client = LobbyInfo.Clients.First(c => c.Slot == null);
+								kv.Value.ApplyTo(client);
+							}
+						}
 
 						SyncLobbyInfo();
 						SyncLobbyClients();
@@ -1378,7 +1104,10 @@ namespace OpenRA.Server
 			lock (LobbyInfo)
 			{
 				orderBuffer?.RemovePlayer(toDrop.PlayerIndex);
-				Conns.Remove(toDrop);
+				var wasValidated = toDrop.Validated;
+				var removed = Conns.Remove(toDrop);
+				if (removed && wasValidated)
+					Interlocked.Decrement(ref validatedConnectionCount);
 
 				var dropClient = LobbyInfo.Clients.FirstOrDefault(c => c.Index == toDrop.PlayerIndex);
 				if (dropClient == null)
@@ -1550,7 +1279,8 @@ namespace OpenRA.Server
 				gameInfo = new GameInformation()
 				{
 					Mod = Game.ModData.Manifest.Id,
-					Version = Game.ModData.Manifest.Metadata.Version,
+					Version = Game.ModData.Manifest.Metadata.CompatibilityOrVersion,
+					ProductVersion = ModData.RuntimeProfile.BuildVersion,
 					MapUid = Map.Uid,
 					MapTitle = Map.Title,
 					StartTimeUtc = DateTime.UtcNow,

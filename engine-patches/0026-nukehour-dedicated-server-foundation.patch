@@ -1,0 +1,982 @@
+diff -ruN a/OpenRA.Game/Game.cs b/OpenRA.Game/Game.cs
+--- a/OpenRA.Game/Game.cs	2026-09-08 06:58:17
++++ b/OpenRA.Game/Game.cs	2026-09-08 06:58:17
+@@ -345,6 +345,24 @@
+ 			Settings = new Settings(Path.Combine(Platform.SupportDir, "settings.yaml"), args);
+ 		}
+ 
++		public static string ReadEngineVersion(string engineDirectory)
++		{
++			try
++			{
++				var version = File.ReadAllText(Path.Combine(engineDirectory, "VERSION")).Trim();
++				return string.IsNullOrEmpty(version) ? "Unknown" : version;
++			}
++			catch
++			{
++				return "Unknown";
++			}
++		}
++
++		public static void InitializeEngineVersion()
++		{
++			EngineVersion = ReadEngineVersion(Platform.EngineDir);
++		}
++
+ 		public static RunStatus InitializeAndRun(string[] args)
+ 		{
+ 			Initialize(new Arguments(args));
+@@ -369,14 +387,7 @@
+ 			Console.WriteLine($"Platform is {Platform.CurrentPlatform} ({Platform.CurrentArchitecture})");
+ 
+ 			// Load the engine version as early as possible so it can be written to exception logs
+-			try
+-			{
+-				EngineVersion = File.ReadAllText(Path.Combine(Platform.EngineDir, "VERSION")).Trim();
+-			}
+-			catch { }
+-
+-			if (string.IsNullOrEmpty(EngineVersion))
+-				EngineVersion = "Unknown";
++			InitializeEngineVersion();
+ 
+ 			Console.WriteLine($"Engine version is {EngineVersion}");
+ 			Console.WriteLine($"Runtime: {Platform.RuntimeVersion}");
+diff -ruN a/OpenRA.Game/ModData.cs b/OpenRA.Game/ModData.cs
+--- a/OpenRA.Game/ModData.cs	2026-09-08 06:58:17
++++ b/OpenRA.Game/ModData.cs	2026-09-08 06:58:17
+@@ -56,7 +56,11 @@
+ 		readonly Lazy<IReadOnlyDictionary<string, ITerrainInfo>> defaultTerrainInfo;
+ 		public IReadOnlyDictionary<string, ITerrainInfo> DefaultTerrainInfo => defaultTerrainInfo.Value;
+ 
+-		public ModData(Manifest mod, InstalledMods mods, bool useLoadScreen = false)
++		public ModData(
++			Manifest mod,
++			InstalledMods mods,
++			bool useLoadScreen = false,
++			bool dedicatedServer = false)
+ 		{
+ 			Languages = Array.Empty<string>();
+ 
+@@ -72,14 +76,16 @@
+ 			ModFiles.TrimExcess();
+ 			Manifest.LoadCustomData(ObjectCreator);
+ 
+-			RuntimeProfile = RuntimeProfileIdentity.CreateCurrent(Manifest);
++			var runtimeProfile = RuntimeProfileIdentity.CreateCurrent(Manifest);
++			RuntimeProfile = dedicatedServer ? runtimeProfile.AsDedicatedServer() : runtimeProfile;
+ 			var runtimeContractConfiguration = Manifest.Contains<RuntimeContractConfiguration>()
+ 				? Manifest.Get<RuntimeContractConfiguration>() : new RuntimeContractConfiguration();
+ 			var resourceCapability = string.IsNullOrEmpty(runtimeContractConfiguration.ResourceCapability)
+ 				? $"{Manifest.Id}-required-v1" : runtimeContractConfiguration.ResourceCapability;
+-			var resourceFingerprint = RuntimeResourceFingerprint.Create(
++			var resourceFingerprint = RuntimeResourceFingerprint.CreateForRuntime(
+ 				runtimeContractConfiguration,
+-				resource => ModFiles.TryOpen(resource, out var stream) ? stream : null);
++				resource => ModFiles.TryOpen(resource, out var stream) ? stream : null,
++				dedicatedServer);
+ 			RuntimeContract = RuntimeContractIdentity.Create(new RuntimeContractInputs(
+ 				Game.EngineVersion ?? "Unknown",
+ 				Server.ProtocolVersion.Orders,
+@@ -97,7 +103,8 @@
+ 				LoadScreen.Display();
+ 			}
+ 
+-			WidgetLoader = new WidgetLoader(this);
++			if (Server.DedicatedServerRuntimePolicy.ShouldInitializeClientPresentation(dedicatedServer))
++				WidgetLoader = new WidgetLoader(this);
+ 			MapCache = new MapCache(this);
+ 
+ 			SoundLoaders = ObjectCreator.GetLoaders<ISoundLoader>(Manifest.SoundFormats, "sound");
+diff -ruN a/OpenRA.Game/Network/NukeHourNetworkCompatibility.cs b/OpenRA.Game/Network/NukeHourNetworkCompatibility.cs
+--- a/OpenRA.Game/Network/NukeHourNetworkCompatibility.cs	2026-09-08 06:58:17
++++ b/OpenRA.Game/Network/NukeHourNetworkCompatibility.cs	2026-09-08 06:58:17
+@@ -138,6 +138,27 @@
+ 			$"resources={Encode(ImportedResourceMode)}",
+ 		});
+ 
++		public RuntimeProfileIdentity AsDedicatedServer()
++		{
++			var platform = Platform.EndsWith("-server", StringComparison.Ordinal)
++				? Platform : $"{Platform}-server";
++			var buildVersion = BuildVersion;
++			const string brandPrefix = "NUKE HOUR ";
++			if (buildVersion.StartsWith(brandPrefix, StringComparison.Ordinal))
++				buildVersion = buildVersion[brandPrefix.Length..];
++			foreach (var clientPlatform in new[] { "macOS ", "iOS ", "Android " })
++				if (buildVersion.StartsWith(clientPlatform, StringComparison.Ordinal))
++				{
++					buildVersion = buildVersion[clientPlatform.Length..];
++					break;
++				}
++
++			buildVersion = $"{brandPrefix}Dedicated Server {buildVersion}";
++			return new RuntimeProfileIdentity(
++				platform, Architecture, EngineVersion, buildVersion, Mod,
++				RuntimeType, "headless-server");
++		}
++
+ 		public static bool TryParse(string value, out RuntimeProfileIdentity profile)
+ 		{
+ 			profile = null;
+@@ -285,6 +306,17 @@
+ 	public static class RuntimeResourceFingerprint
+ 	{
+ 		const int MaxResources = 32;
++		const string HeadlessPresentationCapability = "ra2-presentation-capability-v2";
++		static readonly string[] HeadlessRequiredPresentationResources =
++		{
++			"content|language.mix",
++			"content|ra2.mix",
++		};
++		static readonly string[] HeadlessOptionalPresentationResources =
++		{
++			"content|langmd.mix",
++			"content|ra2md.mix",
++		};
+ 
+ 		public static string Create(
+ 			RuntimeContractConfiguration configuration,
+@@ -321,6 +353,30 @@
+ 
+ 			return Convert.ToHexString(SHA256.HashData(framed.ToArray())).ToLowerInvariant();
+ 		}
++
++		public static string CreateHeadlessServer(RuntimeContractConfiguration configuration)
++		{
++			if (configuration == null)
++				throw new ArgumentNullException(nameof(configuration));
++			var required = configuration.RequiredResources
++				.Select(ValidateLogicalName).OrderBy(name => name, StringComparer.Ordinal).ToArray();
++			var optional = configuration.OptionalResources
++				.Select(ValidateLogicalName).OrderBy(name => name, StringComparer.Ordinal).ToArray();
++			if (!string.Equals(configuration.ResourceCapability, HeadlessPresentationCapability, StringComparison.Ordinal) ||
++				!required.SequenceEqual(HeadlessRequiredPresentationResources, StringComparer.Ordinal) ||
++				!optional.SequenceEqual(HeadlessOptionalPresentationResources, StringComparer.Ordinal))
++				throw new InvalidOperationException(
++					"DEDICATED_SERVER_RESOURCE_BLOCKER: the audited presentation resource set changed.");
++
++			return Create(configuration, _ => new MemoryStream(Array.Empty<byte>(), false));
++		}
++
++		public static string CreateForRuntime(
++			RuntimeContractConfiguration configuration,
++			Func<string, Stream> openResource,
++			bool dedicatedServer) => dedicatedServer
++			? CreateHeadlessServer(configuration)
++			: Create(configuration, openResource);
+ 
+ 		static string ValidateLogicalName(string value)
+ 		{
+diff -ruN a/OpenRA.Game/Server/DedicatedServerRuntimePolicy.cs b/OpenRA.Game/Server/DedicatedServerRuntimePolicy.cs
+--- a/OpenRA.Game/Server/DedicatedServerRuntimePolicy.cs	1969-12-31 16:00:00
++++ b/OpenRA.Game/Server/DedicatedServerRuntimePolicy.cs	2026-09-08 06:58:17
+@@ -0,0 +1,161 @@
++#region Copyright & License Information
++/*
++ * Copyright (c) The OpenRA Developers and Contributors
++ * This file is part of OpenRA, which is free software. It is made
++ * available to you under the terms of the GNU General Public License
++ * as published by the Free Software Foundation, either version 3 of
++ * the License, or (at your option) any later version. For more
++ * information, see COPYING.
++ */
++#endregion
++
++using System;
++using System.Collections.Generic;
++using System.Net;
++using System.Text.Json;
++using OpenRA.Network;
++
++namespace OpenRA.Server
++{
++	public enum DedicatedServerOperationalState
++	{
++		Starting,
++		WaitingForPlayers,
++		InLobby,
++		InGame,
++		GameFinished,
++		Stopping,
++		Stopped,
++	}
++
++	public static class DedicatedServerRuntimePolicy
++	{
++		public static bool ShouldInitializeClientPresentation(bool dedicatedServer) => !dedicatedServer;
++
++		public static TimeSpan ElapsedSince(long startTimestamp, long currentTimestamp, long timestampFrequency)
++		{
++			if (startTimestamp < 0)
++				throw new ArgumentOutOfRangeException(nameof(startTimestamp));
++			if (currentTimestamp < startTimestamp)
++				throw new ArgumentOutOfRangeException(nameof(currentTimestamp));
++			if (timestampFrequency <= 0)
++				throw new ArgumentOutOfRangeException(nameof(timestampFrequency));
++
++			return TimeSpan.FromSeconds((currentTimestamp - startTimestamp) / (double)timestampFrequency);
++		}
++
++		public static DedicatedServerOperationalState ResolveState(
++			ServerState state,
++			bool gameStarted,
++			int validatedClients)
++		{
++			if (validatedClients < 0)
++				throw new ArgumentOutOfRangeException(nameof(validatedClients));
++
++			return state switch
++			{
++				ServerState.ShuttingDown => DedicatedServerOperationalState.Stopping,
++				ServerState.GameStarted when gameStarted && validatedClients == 0 =>
++					DedicatedServerOperationalState.GameFinished,
++				ServerState.GameStarted => DedicatedServerOperationalState.InGame,
++				ServerState.WaitingPlayers when validatedClients > 0 => DedicatedServerOperationalState.InLobby,
++				_ => DedicatedServerOperationalState.WaitingForPlayers,
++			};
++		}
++
++		public static IReadOnlyList<IPEndPoint> ResolveEndpoints(string listenAddress, int listenPort)
++		{
++			if (listenPort < 1 || listenPort > IPEndPoint.MaxPort)
++				throw new ArgumentOutOfRangeException(nameof(listenPort));
++			if (!IPAddress.TryParse(listenAddress, out var address))
++				throw new ArgumentException("Listen address must be a numeric IPv4 or IPv6 address.", nameof(listenAddress));
++
++			return new[] { new IPEndPoint(address, listenPort) };
++		}
++
++		public static bool HasPlayerCapacity(int validatedClients, int maxPlayers)
++		{
++			if (validatedClients < 0)
++				throw new ArgumentOutOfRangeException(nameof(validatedClients));
++			if (maxPlayers < 1 || maxPlayers > 64)
++				throw new ArgumentOutOfRangeException(nameof(maxPlayers));
++
++			return validatedClients < maxPlayers;
++		}
++
++		public static bool ShouldExit(
++			ServerState state,
++			bool gameStarted,
++			int validatedClients,
++			TimeSpan emptyDuration,
++			int idleTimeoutSeconds)
++		{
++			if (emptyDuration < TimeSpan.Zero)
++				throw new ArgumentOutOfRangeException(nameof(emptyDuration));
++			if (idleTimeoutSeconds < 0)
++				throw new ArgumentOutOfRangeException(nameof(idleTimeoutSeconds));
++
++			if (state == ServerState.GameStarted && gameStarted && validatedClients == 0)
++				return true;
++
++			return state == ServerState.WaitingPlayers && validatedClients == 0 &&
++				idleTimeoutSeconds > 0 && emptyDuration >= TimeSpan.FromSeconds(idleTimeoutSeconds);
++		}
++	}
++
++	public static class DedicatedServerStatusDocument
++	{
++		public static string Serialize(
++			DedicatedServerOperationalState state,
++			string productVersion,
++			string engineVersion,
++			string mod,
++			string platform,
++			string listenAddress,
++			int listenPort,
++			string map,
++			int validatedClients)
++		{
++			if (validatedClients < 0)
++				throw new ArgumentOutOfRangeException(nameof(validatedClients));
++			DedicatedServerRuntimePolicy.ResolveEndpoints(listenAddress, listenPort);
++
++			var processAlive = state != DedicatedServerOperationalState.Stopped;
++			var ready = state == DedicatedServerOperationalState.WaitingForPlayers ||
++				state == DedicatedServerOperationalState.InLobby;
++			var document = new Dictionary<string, object>
++			{
++				["product"] = "NUKE HOUR Dedicated Server",
++				["productVersion"] = productVersion,
++				["engineVersion"] = engineVersion,
++				["mod"] = mod,
++				["platform"] = platform,
++				["transportHandshake"] = ProtocolVersion.Handshake,
++				["handshakeSchema"] = ProtocolVersion.HandshakeSchema,
++				["ordersProtocol"] = ProtocolVersion.Orders,
++				["runtimeContractSchema"] = RuntimeContractIdentity.SchemaVersion,
++				["listenAddress"] = listenAddress,
++				["listenPort"] = listenPort,
++				["map"] = map ?? string.Empty,
++				["validatedClients"] = validatedClients,
++				["processAlive"] = processAlive,
++				["ready"] = ready,
++				["state"] = ToWireState(state),
++				["updatedUtc"] = DateTime.UtcNow.ToString("O"),
++			};
++
++			return JsonSerializer.Serialize(document);
++		}
++
++		static string ToWireState(DedicatedServerOperationalState state) => state switch
++		{
++			DedicatedServerOperationalState.WaitingForPlayers => "WAITING_FOR_PLAYERS",
++			DedicatedServerOperationalState.InLobby => "IN_LOBBY",
++			DedicatedServerOperationalState.InGame => "IN_GAME",
++			DedicatedServerOperationalState.GameFinished => "GAME_FINISHED",
++			DedicatedServerOperationalState.Stopping => "STOPPING",
++			DedicatedServerOperationalState.Stopped => "STOPPED",
++			_ => "STARTING",
++		};
++	}
++}
+diff -ruN a/OpenRA.Game/Server/Server.cs b/OpenRA.Game/Server/Server.cs
+--- a/OpenRA.Game/Server/Server.cs	2026-09-08 06:58:17
++++ b/OpenRA.Game/Server/Server.cs	2026-09-08 06:58:17
+@@ -137,7 +137,11 @@
+ 		volatile ServerState internalState = ServerState.WaitingPlayers;
+ 
+ 		readonly BlockingCollection<IServerEvent> events = new();
++		readonly ManualResetEventSlim shutdownCompleted = new(false);
++		int validatedConnectionCount;
+ 
++		public int ValidatedConnectionCount => Volatile.Read(ref validatedConnectionCount);
++
+ 		ReplayRecorder recorder;
+ 		GameInformation gameInfo;
+ 		readonly List<GameInformation.Player> worldPlayers = new();
+@@ -174,6 +178,8 @@
+ 			State = ServerState.ShuttingDown;
+ 		}
+ 
++		public bool WaitForShutdown(TimeSpan timeout) => shutdownCompleted.Wait(timeout);
++
+ 		public void EndGame()
+ 		{
+ 			foreach (var t in serverTraits.WithInterface<IEndGame>())
+@@ -397,6 +403,8 @@
+ 					c.Dispose();
+ 
+ 				Conns.Clear();
++				Volatile.Write(ref validatedConnectionCount, 0);
++				shutdownCompleted.Set();
+ 			})
+ 			{ IsBackground = true }.Start();
+ 		}
+@@ -502,6 +510,16 @@
+ 					return;
+ 				}
+ 
++				var validatedClients = Conns.Count(connection => connection.Validated);
++				if (Type == ServerType.Dedicated &&
++					!DedicatedServerRuntimePolicy.HasPlayerCapacity(validatedClients, Settings.MaxPlayers))
++				{
++					Log.Write("server", $"Rejected connection; server has reached its {Settings.MaxPlayers} player limit.");
++					SendOrderTo(newConn, "ServerError", Full);
++					DropClient(newConn);
++					return;
++				}
++
+ 				if (!string.IsNullOrEmpty(Settings.Password) && handshake.Password != Settings.Password)
+ 				{
+ 					var message = string.IsNullOrEmpty(handshake.Password) ? RequiresPassword : IncorrectPassword;
+@@ -560,6 +578,7 @@
+ 						// Promote connection to a valid client
+ 						LobbyInfo.Clients.Add(client);
+ 						newConn.Validated = true;
++						Interlocked.Increment(ref validatedConnectionCount);
+ 
+ 						// Disable chat UI to stop the client sending messages that we know we will reject
+ 						if (!client.IsAdmin && Settings.FloodLimitJoinCooldown > 0)
+@@ -1167,7 +1186,10 @@
+ 			lock (LobbyInfo)
+ 			{
+ 				orderBuffer?.RemovePlayer(toDrop.PlayerIndex);
+-				Conns.Remove(toDrop);
++				var wasValidated = toDrop.Validated;
++				var removed = Conns.Remove(toDrop);
++				if (removed && wasValidated)
++					Interlocked.Decrement(ref validatedConnectionCount);
+ 
+ 				var dropClient = LobbyInfo.Clients.FirstOrDefault(c => c.Index == toDrop.PlayerIndex);
+ 				if (dropClient == null)
+@@ -1340,7 +1362,7 @@
+ 				{
+ 					Mod = Game.ModData.Manifest.Id,
+ 					Version = Game.ModData.Manifest.Metadata.CompatibilityOrVersion,
+-					ProductVersion = Game.ModData.Manifest.Metadata.DisplayVersionOrVersion,
++					ProductVersion = ModData.RuntimeProfile.BuildVersion,
+ 					MapUid = Map.Uid,
+ 					MapTitle = Map.Title,
+ 					StartTimeUtc = DateTime.UtcNow,
+diff -ruN a/OpenRA.Game/Settings.cs b/OpenRA.Game/Settings.cs
+--- a/OpenRA.Game/Settings.cs	2026-09-08 06:58:17
++++ b/OpenRA.Game/Settings.cs	2026-09-08 06:58:17
+@@ -51,6 +51,18 @@
+ 		[Desc("Sets the internal port.")]
+ 		public int ListenPort = 1234;
+ 
++		[Desc("Sets the numeric IPv4 or IPv6 listen address for dedicated servers.")]
++		public string ListenAddress = "0.0.0.0";
++
++		[Desc("Maximum number of validated human clients admitted to a dedicated server.")]
++		public int MaxPlayers = 8;
++
++		[Desc("Exit an empty dedicated lobby after this many seconds. Zero disables the timeout.")]
++		public int IdleTimeoutSeconds = 900;
++
++		[Desc("Machine-readable dedicated-server status file, relative to the support directory.")]
++		public string StatusFile = "status/server-status.json";
++
+ 		[Desc("Reports the game to the master server list.")]
+ 		public bool AdvertiseOnline = true;
+ 
+diff -ruN a/OpenRA.Game/Support/IosMultiplayerSmoke.cs b/OpenRA.Game/Support/IosMultiplayerSmoke.cs
+--- a/OpenRA.Game/Support/IosMultiplayerSmoke.cs	2026-09-08 06:58:17
++++ b/OpenRA.Game/Support/IosMultiplayerSmoke.cs	2026-09-08 06:58:17
+@@ -38,6 +38,8 @@
+ 		public string ParticipantNonce { get; private init; }
+ 		public string ExpectedRemoteNonce { get; private init; }
+ 		public string ValidationError { get; private init; }
++		public bool CreatesPlayerHostedServer =>
++			Role == IosMultiplayerSmokeRole.Host && string.IsNullOrEmpty(Endpoint);
+ 
+ 		public static IosMultiplayerSmokeConfiguration Parse(Func<string, string> read)
+ 		{
+@@ -618,6 +620,7 @@
+ 			bool productionOrderIssued;
+ 			bool productionObserved;
+ 			bool completedProductionObserved;
++			bool visibilityOrderIssued;
+ 			bool attackOrderIssued;
+ 			bool attackObserved;
+ 			uint combatActorId;
+@@ -626,6 +629,7 @@
+ 			int movementIssuedAtTick = -1;
+ 			int resourceIssuedAtTick = -1;
+ 			int productionIssuedAtTick = -1;
++			int visibilityIssuedAtTick = -1;
+ 			int attackIssuedAtTick = -1;
+ 			int placementAttempt;
+ 			int syncHashBeforeResource;
+@@ -668,7 +672,7 @@
+ 						localIdentity.RuntimeHash, localIdentity.SessionGuid);
+ 					localPublishedFrames = localIdentityFrames;
+ 					Write("STARTING", string.Empty);
+-					if (config.Role == IosMultiplayerSmokeRole.Host)
++					if (config.CreatesPlayerHostedServer)
+ 						StartHost();
+ 					else
+ 						StartClient();
+@@ -1091,8 +1095,18 @@
+ 				if (completedProductionObserved)
+ 					gameplayStage = "production-completed";
+ 
+-				var enemy = world.Actors.FirstOrDefault(actor => actor.IsInWorld && !actor.IsDead &&
+-					actor.Owner != player && actor.Owner.Playable && combatNames.Contains(actor.Info.Name));
++				if (completedProductionObserved && !visibilityOrderIssued)
++				{
++					world.IssueOrder(new Order("DevVisibility", player.PlayerActor, false));
++					visibilityOrderIssued = true;
++					visibilityIssuedAtTick = world.WorldTick;
++					gameplayStage = "visibility-issued";
++				}
++
++				var enemy = combatActor != null && visibilityOrderIssued && world.WorldTick > visibilityIssuedAtTick ?
++					world.Actors.FirstOrDefault(actor => actor.IsInWorld && !actor.IsDead &&
++						actor.Owner != player && actor.Owner.Playable && combatNames.Contains(actor.Info.Name) &&
++						actor.CanBeViewedByPlayer(player) && actor.IsTargetableBy(combatActor)) : null;
+ 				if (completedProductionObserved && combatActor != null && enemy != null && !attackOrderIssued)
+ 				{
+ 					enemyActorId = enemy.ActorID;
+@@ -1102,7 +1116,7 @@
+ 					gameplayStage = "attack-issued";
+ 				}
+ 
+-				if (attackOrderIssued && world.WorldTick > attackIssuedAtTick + 5)
++				if (attackOrderIssued && !attackObserved && world.WorldTick > attackIssuedAtTick)
+ 				{
+ 					var currentEnemy = world.Actors.FirstOrDefault(actor => actor.ActorID == enemyActorId);
+ 					attackObserved = combatActor == null || combatActor.IsDead || currentEnemy == null ||
+diff -ruN a/OpenRA.Server/Program.cs b/OpenRA.Server/Program.cs
+--- a/OpenRA.Server/Program.cs	2026-09-08 06:58:17
++++ b/OpenRA.Server/Program.cs	2026-09-08 06:58:17
+@@ -10,10 +10,12 @@
+ #endregion
+ 
+ using System;
+-using System.Collections.Generic;
++using System.Diagnostics;
+ using System.Globalization;
+ using System.IO;
+-using System.Net;
++using System.Linq;
++using System.Runtime.InteropServices;
++using System.Text;
+ using System.Threading;
+ using OpenRA.Network;
+ 
+@@ -52,6 +54,8 @@
+ 			if (!string.IsNullOrEmpty(supportDirArg))
+ 				Platform.OverrideSupportDir(supportDirArg);
+ 
++			Game.InitializeEngineVersion();
++
+ 			Log.AddChannel("debug", "dedicated-debug.log", true);
+ 			Log.AddChannel("perf", "dedicated-perf.log", true);
+ 			Log.AddChannel("server", "dedicated-server.log", true);
+@@ -85,32 +89,108 @@
+ 
+ 			var mods = new InstalledMods(modSearchPaths, explicitModPaths);
+ 
+-			WriteLineWithTimeStamp($"Starting dedicated server for mod: {modID}");
+-			while (true)
++			if (settings.MaxPlayers < 1 || settings.MaxPlayers > 64)
++				throw new ArgumentOutOfRangeException(nameof(settings.MaxPlayers), "Server.MaxPlayers must be between 1 and 64.");
++			if (settings.IdleTimeoutSeconds < 0)
++				throw new ArgumentOutOfRangeException(nameof(settings.IdleTimeoutSeconds), "Server.IdleTimeoutSeconds cannot be negative.");
++
++			var endpoints = DedicatedServerRuntimePolicy.ResolveEndpoints(settings.ListenAddress, settings.ListenPort).ToList();
++			var stopRequested = 0;
++			Console.CancelKeyPress += (_, eventArgs) =>
+ 			{
+-				// HACK: The engine code *still* assumes that Game.ModData is set
+-				var modData = Game.ModData = new ModData(mods[modID], mods);
+-				modData.MapCache.LoadPreviewImages = false; // PERF: Server doesn't need previews, save memory by not loading them.
+-				modData.MapCache.LoadMaps();
++				eventArgs.Cancel = true;
++				Interlocked.Exchange(ref stopRequested, 1);
++			};
++			using var terminateRegistration = PosixSignalRegistration.Create(
++				PosixSignal.SIGTERM,
++				context =>
++				{
++					context.Cancel = true;
++					Interlocked.Exchange(ref stopRequested, 1);
++				});
+ 
+-				var endpoints = new List<IPEndPoint> { new(IPAddress.IPv6Any, settings.ListenPort), new(IPAddress.Any, settings.ListenPort) };
+-				var server = new Server(endpoints, settings, modData, ServerType.Dedicated);
++			WriteLineWithTimeStamp($"Starting NUKE HOUR dedicated server for mod: {modID}");
++			// HACK: The engine code still assumes that Game.ModData is set.
++			using var modData = Game.ModData = new ModData(mods[modID], mods, dedicatedServer: true);
++			modData.MapCache.LoadPreviewImages = false;
++			modData.MapCache.LoadMaps();
++			WriteLineWithTimeStamp($"Runtime profile: {modData.RuntimeProfile.Serialize()}");
++			WriteLineWithTimeStamp($"Runtime contract: {modData.RuntimeContract.Serialize()}");
++			WriteLineWithTimeStamp($"Protocols: transport={ProtocolVersion.Handshake}; schema={ProtocolVersion.HandshakeSchema}; orders={ProtocolVersion.Orders}");
+ 
+-				GC.Collect();
+-				while (true)
++			WriteStatus(settings, modData, DedicatedServerOperationalState.Starting, 0, settings.Map);
++			var server = new Server(endpoints, settings, modData, ServerType.Dedicated);
++			WriteLineWithTimeStamp($"Listening on {settings.ListenAddress}:{settings.ListenPort}; map={server.LobbyInfo.GlobalSettings.Map}");
++
++			GC.Collect();
++			var gameStarted = false;
++			var emptySince = Stopwatch.GetTimestamp();
++			var lastState = DedicatedServerOperationalState.Starting;
++			while (server.State != ServerState.ShuttingDown)
++			{
++				Thread.Sleep(250);
++				var validatedClients = server.ValidatedConnectionCount;
++				if (validatedClients > 0)
++					emptySince = Stopwatch.GetTimestamp();
++				if (server.State == ServerState.GameStarted)
++					gameStarted = true;
++
++				var state = DedicatedServerRuntimePolicy.ResolveState(server.State, gameStarted, validatedClients);
++				if (state != lastState)
+ 				{
+-					Thread.Sleep(1000);
+-					if (server.State == ServerState.GameStarted && server.Conns.Count < 1)
+-					{
+-						WriteLineWithTimeStamp("No one is playing, shutting down...");
+-						server.Shutdown();
+-						break;
+-					}
++					WriteLineWithTimeStamp($"Lifecycle: {state}");
++					lastState = state;
+ 				}
+ 
+-				modData.Dispose();
+-				WriteLineWithTimeStamp("Starting a new server instance...");
++				WriteStatus(settings, modData, state, validatedClients, server.LobbyInfo.GlobalSettings.Map);
++				var terminationRequested = Volatile.Read(ref stopRequested) != 0;
++				if (terminationRequested || DedicatedServerRuntimePolicy.ShouldExit(
++					server.State, gameStarted, validatedClients,
++					DedicatedServerRuntimePolicy.ElapsedSince(
++						emptySince, Stopwatch.GetTimestamp(), Stopwatch.Frequency),
++					settings.IdleTimeoutSeconds))
++				{
++					var reason = terminationRequested ? "termination requested" : gameStarted
++						? "completed room is empty" : "empty lobby idle timeout";
++					WriteLineWithTimeStamp($"Stopping dedicated server: {reason}.");
++					WriteStatus(settings, modData,
++						gameStarted ? DedicatedServerOperationalState.GameFinished : DedicatedServerOperationalState.Stopping,
++						validatedClients, server.LobbyInfo.GlobalSettings.Map);
++					server.Shutdown();
++				}
+ 			}
++
++			if (!server.WaitForShutdown(TimeSpan.FromSeconds(30)))
++				throw new TimeoutException("Dedicated server cleanup did not complete within 30 seconds.");
++
++			WriteStatus(settings, modData, DedicatedServerOperationalState.Stopped, 0, server.LobbyInfo.GlobalSettings.Map);
++			WriteLineWithTimeStamp("Dedicated server stopped cleanly.");
++		}
++
++		static void WriteStatus(
++			ServerSettings settings,
++			ModData modData,
++			DedicatedServerOperationalState state,
++			int validatedClients,
++			string map)
++		{
++			if (string.IsNullOrWhiteSpace(settings.StatusFile))
++				return;
++
++			var statusPath = Path.IsPathRooted(settings.StatusFile)
++				? settings.StatusFile : Path.Combine(Platform.SupportDir, settings.StatusFile);
++			var directory = Path.GetDirectoryName(statusPath);
++			if (!string.IsNullOrEmpty(directory))
++				Directory.CreateDirectory(directory);
++
++			var document = DedicatedServerStatusDocument.Serialize(
++				state, modData.RuntimeProfile.BuildVersion,
++				Game.EngineVersion ?? "Unknown", modData.Manifest.Id,
++				modData.RuntimeProfile.Platform, settings.ListenAddress,
++				settings.ListenPort, map, validatedClients);
++			var temporaryPath = statusPath + ".tmp";
++			File.WriteAllText(temporaryPath, document + Environment.NewLine, new UTF8Encoding(false));
++			File.Move(temporaryPath, statusPath, true);
+ 		}
+ 
+ 		static void WriteLineWithTimeStamp(string line)
+diff -ruN a/OpenRA.Test/IosMultiplayerPolicyTest.cs b/OpenRA.Test/IosMultiplayerPolicyTest.cs
+--- a/OpenRA.Test/IosMultiplayerPolicyTest.cs	2026-09-08 06:58:17
++++ b/OpenRA.Test/IosMultiplayerPolicyTest.cs	2026-09-08 06:58:17
+@@ -197,6 +197,29 @@
+ 		}
+ 
+ 		[Test]
++		public void HostRoleCanLeadASeparateDedicatedServerWithoutCreatingALocalHost()
++		{
++			var values = new Dictionary<string, string>
++			{
++				["OPENRA_IOS_MULTIPLAYER_SMOKE_ROLE"] = "host",
++				["OPENRA_IOS_MULTIPLAYER_SMOKE_ENDPOINT"] = "127.0.0.1:12340",
++				["OPENRA_IOS_MULTIPLAYER_SMOKE_DISCOVERY_MODE"] = "direct",
++				["OPENRA_IOS_MULTIPLAYER_SMOKE_LAUNCH_NONCE"] = new string('1', 32),
++				["OPENRA_IOS_MULTIPLAYER_SMOKE_PARTICIPANT_NONCE"] = new string('2', 32),
++				["OPENRA_IOS_MULTIPLAYER_SMOKE_EXPECTED_REMOTE_NONCE"] = new string('3', 32)
++			};
++			var config = IosMultiplayerSmokeConfiguration.Parse(
++				name => values.TryGetValue(name, out var value) ? value : null);
++
++			Assert.Multiple(() =>
++			{
++				Assert.That(config.Enabled, Is.True);
++				Assert.That(config.CreatesPlayerHostedServer, Is.False);
++				Assert.That(config.TryGetTarget(out _), Is.True);
++			});
++		}
++
++		[Test]
+ 		public void MultiplayerSmokeUsesRuntimeContractAndRecordsCanonicalHandshakeEvidence()
+ 		{
+ 			var source = File.ReadAllText(Path.Combine(RepositoryRoot(), "engine",
+@@ -222,7 +245,12 @@
+ 			StringAssert.Contains("new Order(\"DevGiveCash\"", source);
+ 			StringAssert.Contains("Order.StartProduction", source);
+ 			StringAssert.Contains("new Order(\"PlaceBuilding\"", source);
++			StringAssert.Contains("new Order(\"DevVisibility\"", source);
++			StringAssert.Contains("actor.CanBeViewedByPlayer(player)", source);
++			StringAssert.Contains("actor.IsTargetableBy(combatActor)", source);
+ 			StringAssert.Contains("new Order(\"Attack\"", source);
++			StringAssert.DoesNotContain("world.WorldTick > attackIssuedAtTick + 5", source,
++				"Short attack activities must be observed from the first synchronized tick.");
+ 			foreach (var field in new[]
+ 			{
+ 				"selectObserved", "movementObserved", "resourceUpdateObserved",
+@@ -243,7 +271,13 @@
+ 			StringAssert.Contains("macos-host-ios-client", source);
+ 			StringAssert.Contains("OPENRA_IOS_MULTIPLAYER_SMOKE_DISCOVERY_MODE=direct", source);
+ 			StringAssert.Contains("OPENRA_IOS_MULTIPLAYER_SMOKE_REQUIRE_GAMEPLAY=true", source);
+-			StringAssert.Contains(":1234", source);
++			StringAssert.Contains("port=\"${OPENRA_IOS_MULTIPLAYER_SMOKE_PORT:-1234}\"", source);
++			StringAssert.Contains("OPENRA_DEDICATED_SMOKE_ENDPOINT", source);
++			StringAssert.Contains("[ \"$port\" != 1234 ]", source,
++				"Player-hosted Local Multiplayer must keep TCP 1234 while dedicated endpoints may be dynamic.");
++			StringAssert.Contains("connection_port=\"${dedicated_endpoint##*:}\"", source,
++				"Dedicated smoke validation must use the endpoint's dynamic port.");
++			StringAssert.Contains("python3 - \"$1\" \"$2\" \"$connection_port\"", source);
+ 			StringAssert.Contains("assert_journal", source);
+ 		}
+ 
+diff -ruN a/OpenRA.Test/NukeHourDedicatedServerTest.cs b/OpenRA.Test/NukeHourDedicatedServerTest.cs
+--- a/OpenRA.Test/NukeHourDedicatedServerTest.cs	1969-12-31 16:00:00
++++ b/OpenRA.Test/NukeHourDedicatedServerTest.cs	2026-09-08 06:58:17
+@@ -0,0 +1,259 @@
++#region Copyright & License Information
++/*
++ * Copyright (c) The OpenRA Developers and Contributors
++ * This file is part of OpenRA, which is free software. It is made
++ * available to you under the terms of the GNU General Public License
++ * as published by the Free Software Foundation, either version 3 of
++ * the License, or (at your option) any later version. For more
++ * information, see COPYING.
++ */
++#endregion
++
++using System;
++using System.IO;
++using System.Linq;
++using System.Net;
++using NUnit.Framework;
++using OpenRA.Network;
++using OpenRA.Server;
++
++namespace OpenRA.Test
++{
++	[TestFixture]
++	public sealed class NukeHourDedicatedServerTest
++	{
++		static RuntimeContractConfiguration PresentationResources() =>
++			new(new MiniYaml(null, new[]
++			{
++				new MiniYamlNode("ResourceCapability", "ra2-presentation-capability-v2"),
++				new MiniYamlNode("RequiredResources", "content|ra2.mix, content|language.mix"),
++				new MiniYamlNode("OptionalResources", "content|ra2md.mix, content|langmd.mix"),
++			}));
++
++		[Test]
++		public void DedicatedServerProfileIsExplicitlyDistinctFromClientProfiles()
++		{
++			var client = new RuntimeProfileIdentity(
++				"linux", "x86-64", "release-20250330", "NUKE HOUR macOS 1.0.3 (Build 3)",
++				"ra2", "dotnet", "external-import");
++
++			var server = client.AsDedicatedServer();
++
++			Assert.That(server.Platform, Is.EqualTo("linux-server"));
++			Assert.That(server.Architecture, Is.EqualTo(client.Architecture));
++			Assert.That(server.EngineVersion, Is.EqualTo(client.EngineVersion));
++			Assert.That(server.Mod, Is.EqualTo(client.Mod));
++			Assert.That(server.BuildVersion, Is.EqualTo("NUKE HOUR Dedicated Server 1.0.3 (Build 3)"));
++			Assert.That(server.ImportedResourceMode, Is.EqualTo("headless-server"));
++			Assert.That(server.Serialize(), Does.Not.Contain("platform=ios"));
++		}
++
++		[Test]
++		public void HeadlessPresentationCapabilityMatchesAValidClientContract()
++		{
++			var configuration = PresentationResources();
++			var clientFingerprint = RuntimeResourceFingerprint.Create(
++				configuration, _ => new MemoryStream(Array.Empty<byte>()));
++			var serverFingerprint = RuntimeResourceFingerprint.CreateHeadlessServer(
++				configuration);
++
++			Assert.That(serverFingerprint, Is.EqualTo(clientFingerprint));
++		}
++
++		[Test]
++		public void HeadlessCapabilityCannotBypassNonPresentationResources()
++		{
++			var configuration = new RuntimeContractConfiguration(new MiniYaml(null, new[]
++			{
++				new MiniYamlNode("ResourceCapability", "ra2-gameplay-core-v1"),
++				new MiniYamlNode("RequiredResources", "content|rules.bin"),
++			}));
++
++			Assert.That(
++				() => RuntimeResourceFingerprint.CreateHeadlessServer(configuration),
++				Throws.TypeOf<InvalidOperationException>());
++		}
++
++		[Test]
++		public void HeadlessCapabilityRejectsGameplayResourceDriftUnderThePresentationId()
++		{
++			var configuration = new RuntimeContractConfiguration(new MiniYaml(null, new[]
++			{
++				new MiniYamlNode("ResourceCapability", "ra2-presentation-capability-v2"),
++				new MiniYamlNode("RequiredResources", "content|ra2.mix, content|language.mix, content|rules.bin"),
++				new MiniYamlNode("OptionalResources", "content|ra2md.mix, content|langmd.mix"),
++			}));
++
++			Assert.That(
++				() => RuntimeResourceFingerprint.CreateHeadlessServer(configuration),
++				Throws.TypeOf<InvalidOperationException>()
++					.With.Message.Contains("DEDICATED_SERVER_RESOURCE_BLOCKER"));
++		}
++
++		[Test]
++		public void ClientStillRejectsMissingRequiredPresentationResources()
++		{
++			Assert.That(
++				() => RuntimeResourceFingerprint.Create(PresentationResources(), _ => null),
++				Throws.TypeOf<InvalidDataException>());
++		}
++
++		[Test]
++		public void RuntimeModeSelectsHeadlessExemptionOnlyForDedicatedServer()
++		{
++			Assert.Multiple(() =>
++			{
++				Assert.That(
++					() => RuntimeResourceFingerprint.CreateForRuntime(
++						PresentationResources(), _ => null, true),
++					Throws.Nothing);
++				Assert.That(
++					() => RuntimeResourceFingerprint.CreateForRuntime(
++						PresentationResources(), _ => null, false),
++					Throws.TypeOf<InvalidDataException>());
++			});
++		}
++
++		[TestCase(ServerState.WaitingPlayers, false, 0, DedicatedServerOperationalState.WaitingForPlayers)]
++		[TestCase(ServerState.WaitingPlayers, false, 1, DedicatedServerOperationalState.InLobby)]
++		[TestCase(ServerState.GameStarted, true, 2, DedicatedServerOperationalState.InGame)]
++		[TestCase(ServerState.GameStarted, true, 0, DedicatedServerOperationalState.GameFinished)]
++		[TestCase(ServerState.ShuttingDown, true, 0, DedicatedServerOperationalState.Stopping)]
++		public void LifecycleMapsExistingServerState(
++			ServerState state,
++			bool gameStarted,
++			int validatedClients,
++			DedicatedServerOperationalState expected)
++		{
++			Assert.That(
++				DedicatedServerRuntimePolicy.ResolveState(state, gameStarted, validatedClients),
++				Is.EqualTo(expected));
++		}
++
++		[Test]
++		public void ListenAddressAndDynamicPortAreValidated()
++		{
++			var any = DedicatedServerRuntimePolicy.ResolveEndpoints("0.0.0.0", 12340);
++			var loopback = DedicatedServerRuntimePolicy.ResolveEndpoints("127.0.0.1", 12341);
++
++			Assert.Multiple(() =>
++			{
++				Assert.That(any.Single(), Is.EqualTo(new IPEndPoint(IPAddress.Any, 12340)));
++				Assert.That(loopback.Single(), Is.EqualTo(new IPEndPoint(IPAddress.Loopback, 12341)));
++				Assert.That(
++					() => DedicatedServerRuntimePolicy.ResolveEndpoints("not-an-address", 1234),
++					Throws.TypeOf<ArgumentException>());
++				Assert.That(
++					() => DedicatedServerRuntimePolicy.ResolveEndpoints("0.0.0.0", 0),
++					Throws.TypeOf<ArgumentOutOfRangeException>());
++			});
++		}
++
++		[Test]
++		public void RoomExitAndCapacityPoliciesPreserveHostIndependence()
++		{
++			Assert.Multiple(() =>
++			{
++				Assert.That(DedicatedServerRuntimePolicy.HasPlayerCapacity(7, 8), Is.True);
++				Assert.That(DedicatedServerRuntimePolicy.HasPlayerCapacity(8, 8), Is.False);
++				Assert.That(DedicatedServerRuntimePolicy.ShouldExit(
++					ServerState.GameStarted, true, 1, TimeSpan.Zero, 900), Is.False,
++					"one remaining client keeps the independent server alive");
++				Assert.That(DedicatedServerRuntimePolicy.ShouldExit(
++					ServerState.GameStarted, true, 0, TimeSpan.Zero, 900), Is.True,
++					"the completed empty room exits instead of restarting");
++				Assert.That(DedicatedServerRuntimePolicy.ShouldExit(
++					ServerState.WaitingPlayers, false, 0, TimeSpan.FromSeconds(899), 900), Is.False);
++				Assert.That(DedicatedServerRuntimePolicy.ShouldExit(
++					ServerState.WaitingPlayers, false, 0, TimeSpan.FromSeconds(900), 900), Is.True);
++			});
++		}
++
++		[Test]
++		public void IdleDurationUsesMonotonicTimestamps()
++		{
++			Assert.Multiple(() =>
++			{
++				Assert.That(
++					DedicatedServerRuntimePolicy.ElapsedSince(100, 115, 10),
++					Is.EqualTo(TimeSpan.FromSeconds(1.5)));
++				Assert.That(
++					() => DedicatedServerRuntimePolicy.ElapsedSince(115, 100, 10),
++					Throws.TypeOf<ArgumentOutOfRangeException>());
++			});
++		}
++
++		[Test]
++		public void DedicatedOperationalSettingsHaveSafeDefaults()
++		{
++			var settings = new ServerSettings();
++
++			Assert.Multiple(() =>
++			{
++				Assert.That(settings.ListenAddress, Is.EqualTo("0.0.0.0"));
++				Assert.That(settings.ListenPort, Is.EqualTo(1234));
++				Assert.That(settings.MaxPlayers, Is.EqualTo(8));
++				Assert.That(settings.IdleTimeoutSeconds, Is.EqualTo(900));
++				Assert.That(settings.StatusFile, Is.EqualTo("status/server-status.json"));
++			});
++		}
++
++		[Test]
++		public void StatusDocumentSeparatesAliveFromReadyAndOmitsSecrets()
++		{
++			var document = DedicatedServerStatusDocument.Serialize(
++				DedicatedServerOperationalState.WaitingForPlayers,
++				"NUKE HOUR 1.0.3", "release-20250330", "ra2",
++				"linux-server", "0.0.0.0", 12340, "map-uid", 0);
++
++			Assert.Multiple(() =>
++			{
++				Assert.That(document, Does.Contain("\"processAlive\":true"));
++				Assert.That(document, Does.Contain("\"ready\":true"));
++				Assert.That(document, Does.Contain("\"state\":\"WAITING_FOR_PLAYERS\""));
++				Assert.That(document, Does.Contain("\"listenPort\":12340"));
++				Assert.That(document, Does.Not.Contain("Password"));
++				Assert.That(document, Does.Not.Contain("IPAddress"));
++			});
++		}
++
++		[Test]
++		public void DedicatedServerCanLoadThePinnedEngineVersion()
++		{
++			var directory = Path.Combine(Path.GetTempPath(), $"nukehour-engine-version-{Guid.NewGuid():N}");
++			Directory.CreateDirectory(directory);
++			try
++			{
++				File.WriteAllText(Path.Combine(directory, "VERSION"), "release-20250330\n");
++				Assert.That(Game.ReadEngineVersion(directory), Is.EqualTo("release-20250330"));
++				Assert.That(Game.ReadEngineVersion(Path.Combine(directory, "missing")), Is.EqualTo("Unknown"));
++			}
++			finally
++			{
++				Directory.Delete(directory, true);
++			}
++		}
++
++		[Test]
++		public void DedicatedRuntimeDoesNotInitializeClientPresentationLoaders()
++		{
++			Assert.Multiple(() =>
++			{
++				Assert.That(DedicatedServerRuntimePolicy.ShouldInitializeClientPresentation(false), Is.True);
++				Assert.That(DedicatedServerRuntimePolicy.ShouldInitializeClientPresentation(true), Is.False);
++			});
++		}
++
++		[Test]
++		public void DedicatedLifecycleExposesThreadSafeObservationAndCompletion()
++		{
++			Assert.Multiple(() =>
++			{
++				Assert.That(typeof(OpenRA.Server.Server).GetProperty(
++					nameof(OpenRA.Server.Server.ValidatedConnectionCount)), Is.Not.Null);
++				Assert.That(typeof(OpenRA.Server.Server).GetMethod(
++					nameof(OpenRA.Server.Server.WaitForShutdown)), Is.Not.Null);
++			});
++		}
++	}
++}

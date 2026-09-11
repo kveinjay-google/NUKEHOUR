@@ -107,6 +107,32 @@ namespace OpenRA.Test
 			return directory!.FullName;
 		}
 
+		[TestCase("Building")]
+		[TestCase("Support")]
+		public void StructureQueuesLimitEachItemToOne(string queue)
+		{
+			var path = Path.Combine(RepositoryRoot(), "mods", "ra2", "rules", "player.yaml");
+			var player = MiniYaml.FromString(File.ReadAllText(path), path)
+				.Single(node => node.Key == "Player");
+			var productionQueue = player.Value.NodeWithKey($"ClassicProductionQueue@{queue}");
+
+			Assert.That(productionQueue.Value.NodeWithKey("ItemLimit").Value.Value, Is.EqualTo("1"));
+		}
+
+		[TestCase("Infantry")]
+		[TestCase("Vehicle")]
+		[TestCase("Aircraft")]
+		[TestCase("Ship")]
+		public void UnitQueuesKeepTheirDefaultBatchLimit(string queue)
+		{
+			var path = Path.Combine(RepositoryRoot(), "mods", "ra2", "rules", "player.yaml");
+			var player = MiniYaml.FromString(File.ReadAllText(path), path)
+				.Single(node => node.Key == "Player");
+			var productionQueue = player.Value.NodeWithKey($"ClassicProductionQueue@{queue}");
+
+			Assert.That(productionQueue.Value.NodeWithKeyOrDefault("ItemLimit"), Is.Null);
+		}
+
 		[TestCase(Modifiers.None, 1, 1)]
 		[TestCase(Modifiers.None, 5, 5)]
 		[TestCase(Modifiers.Shift, 1, 5)]
@@ -282,7 +308,7 @@ namespace OpenRA.Test
 
 		[TestCase(false)]
 		[TestCase(true)]
-		public void RequiredTouchSlotsKeepPhysicalHitSizeAndReadableLabels(bool expanded)
+		public void RequiredTouchSlotsKeepStableChromeSizeWithoutRedundantLabels(bool expanded)
 		{
 			foreach (var device in Devices)
 			{
@@ -293,18 +319,113 @@ namespace OpenRA.Test
 					var buttonBounds = new Rectangle(0, 0, layout.ButtonSize.Width, layout.ButtonSize.Height);
 					Assert.Multiple(() =>
 					{
-						Assert.That(layout.ButtonSize.Width, Is.GreaterThanOrEqualTo(snapshot.LogicalPoints(44)), id);
-						Assert.That(layout.ButtonSize.Height, Is.GreaterThanOrEqualTo(snapshot.LogicalPoints(44)), id);
-						Assert.That(layout.ShowLabel, Is.True, id);
-						Assert.That(layout.Font, Is.EqualTo("IosTouchLabel"), id);
-						Assert.That(layout.LabelBounds.IsEmpty, Is.False, id);
-						Assert.That(buttonBounds.Contains(layout.LabelBounds), Is.True, id);
+						Assert.That(layout.ButtonSize.Width, Is.GreaterThanOrEqualTo(44), id);
+						Assert.That(layout.ButtonSize.Height, Is.GreaterThanOrEqualTo(44), id);
+						Assert.That(layout.ShowLabel, Is.False, id);
+						Assert.That(layout.Font, Is.EqualTo("TinyBold"), id);
+						Assert.That(layout.LabelBounds.IsEmpty, Is.True, id);
 						Assert.That(buttonBounds.Contains(layout.IconBounds), Is.True, id);
 						Assert.That(layout.IconBounds.Size,
-							Is.EqualTo(new Size(snapshot.LogicalPoints(26), snapshot.LogicalPoints(26))), id);
+							Is.EqualTo(new Size(expanded ? 34 : 32, expanded ? 34 : 32)), id);
 					});
 				}
 			}
+		}
+
+		[Test]
+		public void TouchCommandBarKeepsNineSliceChromeAtAuthoredLogicalSize()
+		{
+			var snapshot = new IosScreenSnapshot(
+				new Size(1564, 720), new Size(956, 440), new IosSafeAreaInsets(62, 0, 62, 21));
+
+			foreach (var expanded in new[] { false, true })
+			{
+				var layout = TouchCommandBarSlotPolicy.Create(snapshot, "SCATTER", expanded);
+				Assert.Multiple(() =>
+				{
+					Assert.That(layout.ButtonSize.Width,
+						Is.EqualTo(expanded ? 48 : 44), $"width expanded={expanded}");
+					Assert.That(layout.ButtonSize.Height,
+						Is.EqualTo(expanded ? 52 : 44), $"height expanded={expanded}");
+					Assert.That(layout.IconBounds.Size,
+						Is.EqualTo(new Size(expanded ? 34 : 32, expanded ? 34 : 32)),
+						$"icon expanded={expanded}");
+				});
+			}
+		}
+
+		[Test]
+		public void IosProductionSidebarUsesFullViewportAndSeparatesPaletteFromBackgroundFillRows()
+		{
+			var snapshot = new IosScreenSnapshot(
+				new Size(1564, 720), new Size(956, 440), new IosSafeAreaInsets(62, 0, 62, 21));
+			var layout = IosIngameSidebarLayoutPolicy.Create(snapshot);
+
+			Assert.Multiple(() =>
+			{
+				Assert.That(layout.TopBounds, Is.EqualTo(new Rectangle(1564 - 234, 0, 234, 275)));
+				Assert.That(layout.ProductionBounds.Top, Is.EqualTo(layout.TopBounds.Bottom));
+				Assert.That(layout.ProductionBounds.Bottom, Is.EqualTo(snapshot.EffectiveSize.Height));
+				Assert.That(layout.MaximumRows, Is.EqualTo(7), "Only complete icon rows may appear above the bottom cap.");
+				Assert.That(layout.BackgroundRows, Is.EqualTo(7), "Only complete background rows may be emitted.");
+				Assert.That(layout.BackgroundRemainderHeight, Is.EqualTo(29),
+					"A separately sized final fill must close the fractional gap without overlapping the bottom cap.");
+				Assert.That(layout.BottomCapY, Is.EqualTo(layout.ProductionBounds.Height - 66));
+				Assert.That(layout.ScrollButtonsY, Is.EqualTo(layout.BottomCapY),
+					"The scroll buttons must overlay the authored button slot at the top of the bottom cap.");
+				Assert.That(layout.ScrollButtonLocalY(-30) - 30, Is.EqualTo(layout.BottomCapY),
+					"The PRODUCTION_TYPES parent offset must be applied exactly once.");
+				Assert.That(layout.ScrollButtonLocalBounds(-30, true),
+					Is.EqualTo(new WidgetBounds(89, layout.BottomCapY + 30, 77, 27)));
+				Assert.That(layout.ScrollButtonLocalBounds(-30, false),
+					Is.EqualTo(new WidgetBounds(12, layout.BottomCapY + 30, 77, 27)));
+				Assert.That(layout.BackgroundRows * 50 + layout.BackgroundRemainderHeight,
+					Is.EqualTo(layout.BottomCapY));
+				Assert.That(IosIngameSidebarLayoutPolicy.BackgroundRowHeights(layout),
+					Is.EqualTo(new[] { 50, 50, 50, 50, 50, 50, 50, 29 }));
+			});
+		}
+
+		[Test]
+		public void TouchCommandBarUsesOneSlotAndGlyphCanvasForEveryCompactCommand()
+		{
+			var snapshot = new IosScreenSnapshot(
+				new Size(1564, 720), new Size(956, 440), new IosSafeAreaInsets(62, 0, 62, 21));
+			var ids = new[]
+			{
+				"GROUP_01", "GROUP_02", "GROUP_03", "GROUP_04", "GROUP_05", "PRODUCTION_X5",
+				"ATTACK_MOVE", "SCATTER", "QUEUE_ORDERS", "STOP", "CYCLE_BASE"
+			};
+
+			foreach (var expanded in new[] { false, true })
+			{
+				var layouts = ids.Select(id => TouchCommandBarSlotPolicy.Create(snapshot, id, expanded)).ToArray();
+				Assert.Multiple(() =>
+				{
+					Assert.That(layouts.Select(layout => layout.ButtonSize).Distinct().ToArray(), Has.Length.EqualTo(1),
+						$"Every touch command must occupy the same outer slot when expanded={expanded}.");
+					Assert.That(layouts.Select(layout => layout.IconBounds).Distinct().ToArray(), Has.Length.EqualTo(1),
+						$"Every touch glyph must use the same centered canvas when expanded={expanded}.");
+					Assert.That(layouts.Select(layout => layout.Font).Distinct().ToArray(), Has.Length.EqualTo(1),
+						$"Command labels must use one visual style when expanded={expanded}.");
+					Assert.That(layouts.All(layout => !layout.ShowLabel && layout.LabelBounds.IsEmpty), Is.True,
+						$"Touch command glyphs must communicate their action without duplicated labels when expanded={expanded}.");
+				});
+			}
+		}
+
+		[Test]
+		public void ClassicProductionRelayoutReanchorsBothScrollButtons()
+		{
+			var source = File.ReadAllText(Path.Combine(RepositoryRoot(), "engine", "OpenRA.Mods.Common", "Widgets",
+				"Logic", "Ingame", "ClassicProductionLogic.cs"));
+
+			StringAssert.Contains("RefreshIosSidebarLayout(widget, palette, typesContainer, scrollUp, scrollDown);", source,
+				"The live layout ticker must re-anchor both arrows after a renderer or widget relayout.");
+			StringAssert.Contains("PositionIosScrollButton(typesContainer, scrollUp, layout);", source);
+			StringAssert.Contains("PositionIosScrollButton(typesContainer, scrollDown, layout);", source);
+			StringAssert.Contains("button.Bounds = layout.ScrollButtonLocalBounds", source,
+				"Relayout must restore the complete authored slot, not only its vertical coordinate.");
 		}
 
 		[TestCase(false)]
@@ -408,7 +529,10 @@ namespace OpenRA.Test
 			SetPrivateField(commandBar, "editButton", edit);
 			SetPrivateField(commandBar, "collapseButton", collapse);
 			SetPrivateField(commandBar, "collapseIcon", collapseIcon);
-			SetPrivateField(commandBar, "visibleOrder", new List<string> { "STOP", "CYCLE_BASE" });
+			var visibleOrder = new List<string> { "STOP", "CYCLE_BASE" };
+			if (!expanded && !editing)
+				visibleOrder.Add("SCATTER");
+			SetPrivateField(commandBar, "visibleOrder", visibleOrder);
 			SetPrivateField(commandBar, "expanded", expanded);
 
 			var apply = typeof(CustomCommandBarWidget).GetMethod(
@@ -416,7 +540,7 @@ namespace OpenRA.Test
 			Assert.That(apply, Is.Not.Null, "The production widget needs an executable touch-layout seam.");
 			apply!.Invoke(commandBar, new object[] { snapshot, editing, null });
 
-			var rowHeight = snapshot.LogicalPoints(expanded ? 52 : 44);
+			var rowHeight = expanded ? 52 : 44;
 			Assert.Multiple(() =>
 			{
 				Assert.That(snapshot.SafeBounds.Contains(commandBar.RenderBounds), Is.True);
@@ -436,9 +560,8 @@ namespace OpenRA.Test
 					Assert.That(button.IsVisible(), Is.True, id);
 					Assert.That(button.Bounds.Height, Is.EqualTo(rowHeight), id);
 					Assert.That(snapshot.SafeBounds.Contains(button.RenderBounds), Is.True, id);
-					Assert.That(labels[id].IsVisible(), Is.True, id);
-					Assert.That(labels[id].Font, Is.EqualTo("IosTouchLabel"), id);
-					Assert.That(button.RenderBounds.Contains(labels[id].RenderBounds), Is.True, id);
+					Assert.That(labels[id].IsVisible(), Is.False, id);
+					Assert.That(labels[id].Font, Is.EqualTo("TinyBold"), id);
 					Assert.That(button.RenderBounds.Contains(icons[id].RenderBounds), Is.True, id);
 					Assert.That(icons[id].StretchToFit, Is.True, id);
 				});
@@ -454,6 +577,12 @@ namespace OpenRA.Test
 					Assert.That(snapshot.SafeBounds.Contains(buttons["SCATTER"].RenderBounds), Is.True);
 				});
 			}
+
+			if (!expanded && !editing)
+			{
+				Assert.That(buttons["SCATTER"].IsVisible(), Is.True);
+				Assert.That(icons["SCATTER"].StretchToFit, Is.True);
+			}
 		}
 
 		[Test]
@@ -463,8 +592,8 @@ namespace OpenRA.Test
 				RepositoryRoot(), "mods", "ra2", "chrome", "ingame-player.yaml"));
 			foreach (var (id, collection, icon, label) in new[]
 			{
-				("STOP", "commandbar-icons", "stop", "button-command-bar-stop.label"),
-				("CYCLE_BASE", "commandbar-icons", "cycle-base", "button-selection-bar-cycle-base.label"),
+				("STOP", "ios-commandbar-glyphs", "stop", "button-command-bar-stop.label"),
+				("CYCLE_BASE", "ios-commandbar-glyphs", "cycle-base", "button-selection-bar-cycle-base.label"),
 			})
 			{
 				var start = layout.IndexOf($"Button@{id}:", StringComparison.Ordinal);
@@ -612,12 +741,12 @@ namespace OpenRA.Test
 			StringAssert.Contains("Button@PRODUCTION_X5:", layout);
 			StringAssert.Contains("Logic: ProductionBatchToggleLogic", layout);
 			StringAssert.Contains("Text: button-command-bar-production-x5.short", layout);
-			StringAssert.Contains("ImageCollection: production-x5-icon", layout);
+			StringAssert.Contains("ImageCollection: ios-commandbar-glyphs", layout);
 			StringAssert.Contains("ImageName: production-x5", layout);
-			StringAssert.Contains("production-x5: 3, 3, 26, 26", chrome);
+			StringAssert.Contains("production-x5: 163, 3, 26, 26", chrome);
 			StringAssert.Contains("new(\"PRODUCTION_X5\", 48, true)", catalog);
 			StringAssert.Contains("BuildCountMultiplier = enabled ? 5 : 1", logic);
-			Assert.That(File.Exists(Path.Combine(root, "mods", "ra2", "uibits", "production-x5-icon.png")), Is.True);
+			Assert.That(File.Exists(Path.Combine(root, "mods", "ra2", "uibits", "ios-commandbar-glyphs-unified.png")), Is.True);
 		}
 
 		[Test]

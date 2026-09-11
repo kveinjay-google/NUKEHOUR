@@ -163,59 +163,6 @@ namespace OpenRA.Test
 		}
 
 		[Test]
-		public void ColorChooserKeepsPaletteAreasAsDirectChildrenOfThePalettePanel()
-		{
-			var yaml = MiniYaml.FromString(File.ReadAllText(Path.Combine(
-				RepositoryRoot(), "engine", "mods", "common", "chrome", "color-picker.yaml")), "color-picker");
-			var chooser = yaml.Single(node => node.Key == "Background@COLOR_CHOOSER");
-			var chooserChildren = chooser.Value.NodeWithKey("Children").Value;
-			var paletteTab = chooserChildren.NodeWithKey("Background@PALETTE_TAB").Value;
-			var palettePanel = paletteTab.NodeWithKey("Children").Value
-				.NodeWithKey("Container@PALETTE_TAB_PANEL").Value;
-			var paletteChildren = palettePanel.NodeWithKey("Children").Value;
-
-			Assert.That(paletteChildren.NodeWithKeyOrDefault("Container@PRESET_AREA"), Is.Not.Null);
-			Assert.That(paletteChildren.NodeWithKeyOrDefault("Background@CUSTOM_HEADER"), Is.Not.Null);
-			Assert.That(paletteChildren.NodeWithKeyOrDefault("Container@CUSTOM_AREA"), Is.Not.Null);
-		}
-
-		[Test]
-		public void SkirmishColorGridKeepsEachSelectionIndicatorInsideItsSwatch()
-		{
-			var yaml = MiniYaml.FromString(File.ReadAllText(Path.Combine(
-				RepositoryRoot(), "engine", "mods", "common", "chrome", "color-picker.yaml")), "color-picker");
-			var grid = yaml.Single(node => node.Key == "Background@IOS_SKIRMISH_COLOR_GRID");
-			var swatches = grid.Value.NodeWithKey("Children").Value;
-
-			for (var index = 0; index < 9; index++)
-			{
-				var swatch = swatches.NodeWithKey($"ColorBlock@SWATCH_{index}");
-				var selected = swatch.Value.NodeWithKey("Children").Value.NodeWithKey("Image@SELECTED").Value;
-				foreach (var property in new[] { "X", "Y", "Width", "Height", "ImageCollection", "ImageName" })
-					Assert.That(selected.NodeWithKeyOrDefault(property), Is.Not.Null, property + " must be defined exactly once.");
-			}
-		}
-
-		[Test]
-		public void SettingsPreferredColorUsesOnlyTheClassicPresetGrid()
-		{
-			var root = RepositoryRoot();
-			var yaml = MiniYaml.FromString(File.ReadAllText(Path.Combine(
-				root, "engine", "mods", "common", "chrome", "color-picker.yaml")), "color-picker");
-			var settings = File.ReadAllText(Path.Combine(root, "engine", "OpenRA.Mods.Common", "Widgets", "Logic", "Settings", "DisplaySettingsLogic.cs"));
-			var colorManager = File.ReadAllText(Path.Combine(root, "engine", "OpenRA.Mods.Common", "Traits", "World", "ColorPickerManager.cs"));
-
-			Assert.That(settings, Does.Contain("ShowClassicColorDropDown(colorDropdown"));
-			Assert.That(settings, Does.Not.Contain("ShowColorDropDown(colorDropdown, ps.Color"));
-			Assert.That(colorManager, Does.Contain("ShowClassicColorDropDown"));
-			Assert.That(colorManager, Does.Contain("PresetColors.Take(9).ToArray()"));
-			var grid = yaml.Single(node => node.Key == "Background@IOS_SKIRMISH_COLOR_GRID");
-			var gridChildren = grid.Value.NodeWithKey("Children").Value.Nodes;
-			Assert.That(gridChildren.Length, Is.EqualTo(9));
-			Assert.That(gridChildren.All(node => node.Key.StartsWith("ColorBlock@SWATCH_", StringComparison.Ordinal)), Is.True);
-		}
-
-		[Test]
 		public void DynamicConfirmationContentRequestsASecondIosRelayout()
 		{
 			var source = File.ReadAllText(Path.Combine(
@@ -233,6 +180,27 @@ namespace OpenRA.Test
 			Assert.That(source, Does.Contain("LayoutSwatches(presetArea"));
 			Assert.That(source, Does.Contain("LayoutSwatches(customArea"));
 			Assert.That(source, Does.Contain("hueSlider.UseTouchStepControls = false"));
+		}
+
+		[Test]
+		public void ClassicColorGridContainsExactlyNineTouchSwatchesWithoutCustomMixer()
+		{
+			var yaml = MiniYaml.FromString(File.ReadAllText(Path.Combine(
+				RepositoryRoot(), "engine", "mods", "common", "chrome", "color-picker.yaml")), "color-picker");
+			var grid = yaml.Single(node => node.Key == "Background@IOS_SKIRMISH_COLOR_GRID");
+			var children = grid.Value.NodeWithKey("Children").Value.Nodes;
+			var swatches = children.Where(node =>
+				node.Key.StartsWith("ColorBlock@SWATCH_", StringComparison.Ordinal)).ToArray();
+
+			Assert.That(swatches, Has.Length.EqualTo(9));
+			Assert.That(grid.Value.ToString(), Does.Not.Contain("ColorMixer@MIXER"));
+			for (var index = 0; index < swatches.Length; index++)
+			{
+				Assert.That(swatches[index].Key, Is.EqualTo($"ColorBlock@SWATCH_{index}"));
+				var selected = swatches[index].Value.NodeWithKey("Children").Value.Nodes.Single(node =>
+					node.Key == "Image@SELECTED");
+				Assert.That(selected, Is.Not.Null);
+			}
 		}
 
 		static IosScreenSnapshot Snapshot(

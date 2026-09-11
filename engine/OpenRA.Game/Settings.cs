@@ -51,8 +51,35 @@ namespace OpenRA
 		[Desc("Sets the internal port.")]
 		public int ListenPort = 1234;
 
-		[Desc("Reports the game to the master server list.")]
-		public bool AdvertiseOnline = true;
+		[Desc("Sets the numeric IPv4 or IPv6 listen address for dedicated servers.")]
+		public string ListenAddress = "0.0.0.0";
+
+		[Desc("Maximum number of validated human clients admitted to a dedicated server.")]
+		public int MaxPlayers = 8;
+
+		[Desc("Exit an empty dedicated lobby after this many seconds. Zero disables the timeout.")]
+		public int IdleTimeoutSeconds = 900;
+
+		[Desc("Machine-readable dedicated-server status file, relative to the support directory.")]
+		public string StatusFile = "status/server-status.json";
+
+		[Desc("HTTPS NUKE HOUR Lobby base URL. Empty disables Online registration.")]
+		public string OnlineLobbyUrl = "";
+
+		[Desc("Stable deployment identity used to update one Online room.")]
+		public string OnlineLobbyServerId = "";
+
+		[Desc("Public numeric IPv4 or IPv6 endpoint advertised through the Lobby.")]
+		public string OnlineLobbyPublicEndpoint = "";
+
+		[Desc("Public game port advertised through the Lobby. Zero uses ListenPort.")]
+		public int OnlineLobbyPublicPort = 0;
+
+		[Desc("Coarse deployment region such as asia-east or us-west.")]
+		public string OnlineLobbyRegion = "";
+
+		[Desc("Seconds between NUKE HOUR Lobby heartbeats.")]
+		public int OnlineLobbyHeartbeatSeconds = 15;
 
 		[Desc("Locks the game with a password.")]
 		public string Password = "";
@@ -80,9 +107,6 @@ namespace OpenRA
 
 		[Desc("For dedicated servers only, controls whether a game can be started with just one human player in the lobby.")]
 		public bool EnableSingleplayer = false;
-
-		[Desc("Query map information from the Resource Center if they are not available locally.")]
-		public bool QueryMapRepository = true;
 
 		[Desc("Enable client-side report generation to help debug desync errors.")]
 		public bool EnableSyncReports = false;
@@ -142,18 +166,6 @@ namespace OpenRA
 
 		[Desc("Number of samples to average over when calculating tick and render times.")]
 		public int Samples = 25;
-
-		[Desc("Check whether a newer version is available online.")]
-		public bool CheckVersion = false;
-
-		[Desc("Allow the collection of anonymous data such as Operating System, .NET runtime, OpenGL version and language settings.")]
-		public bool SendSystemInformation = false;
-
-		[Desc("Version of sysinfo that the player last opted in or out of.")]
-		public int SystemInformationVersionPrompt = 0;
-
-		[Desc("Sysinfo anonymous user identifier.")]
-		public string UUID = Guid.NewGuid().ToString();
 
 		[Desc("Enable hidden developer settings in the Advanced settings tab.")]
 		public bool DisplayDeveloperSettings = false;
@@ -248,8 +260,10 @@ namespace OpenRA
 
 	public class PlayerSettings
 	{
+		internal const string DefaultName = "NUKE HOUR";
+
 		[Desc("Sets the player nickname.")]
-		public string Name = "Commander";
+		public string Name = DefaultName;
 		public Color Color = Color.FromArgb(200, 32, 32);
 		public string LastServer = "localhost:1234";
 		public Color[] CustomColors = Array.Empty<Color>();
@@ -262,9 +276,7 @@ namespace OpenRA
 		[Desc("Language preference for in-game text: System, zh-CN, or en.")]
 		public string Language = LanguageSelectionPolicy.SystemPreference;
 
-		[Desc("Open a specific panel instead of the main menu on startup " +
-			"(skirmish, multiplayer, load, settings, replays, missions, editor, assetbrowser, " +
-			"credits, music, content). Cleared after use.")]
+		[Desc("Open a specific panel instead of the main menu on startup (skirmish, multiplayer, load, settings, replays, missions, editor, assetbrowser, credits, music, content). Cleared after use.")]
 		public string LaunchInto = "";
 
 		public bool ViewportEdgeScroll = false;
@@ -296,8 +308,6 @@ namespace OpenRA
 
 		public Modifiers ZoomModifier = Modifiers.None;
 
-		public bool FetchNews = false;
-
 		[Desc("Version of introduction prompt that the player last viewed.")]
 		public int IntroductionPromptVersion = 0;
 
@@ -314,7 +324,6 @@ namespace OpenRA
 	public class Settings
 	{
 		readonly string settingsFile;
-		readonly string serverSettingsFile;
 
 		public readonly PlayerSettings Player = new();
 		public readonly GameSettings Game = new();
@@ -332,21 +341,10 @@ namespace OpenRA
 		// Any changed settings will be merged over this on save,
 		// allowing us to persist any unknown configuration keys
 		readonly List<MiniYamlNode> yamlCache = new();
-		readonly List<MiniYamlNode> serverYamlCache = new();
 
 		public Settings(string file, Arguments args)
-			: this(file, null, args, false) { }
-
-		public Settings(string globalFile, string serverFile, Arguments args)
-			: this(globalFile, serverFile, args, true) { }
-
-		Settings(string globalFile, string serverFile, Arguments args, bool profiled)
 		{
-			if (profiled)
-				ValidateProfiledFiles(globalFile, serverFile);
-
-			settingsFile = globalFile;
-			serverSettingsFile = profiled ? serverFile : null;
+			settingsFile = file;
 			SystemLanguageTag = ReadSystemLanguageTag(args);
 			Sections = new Dictionary<string, object>()
 			{
@@ -365,9 +363,21 @@ namespace OpenRA
 			{
 				FieldLoader.UnknownFieldAction = (s, f) => Console.WriteLine($"Ignoring unknown field `{s}` on `{f.Name}`");
 
-				LoadGlobalSettings(profiled);
-				if (profiled)
-					LoadServerSettings();
+				if (File.Exists(settingsFile))
+				{
+					yamlCache = MiniYaml.FromFile(settingsFile, false);
+					foreach (var yamlSection in yamlCache)
+					{
+						if (yamlSection.Key != null && Sections.TryGetValue(yamlSection.Key, out var settingsSection))
+							LoadSectionYaml(yamlSection.Value, settingsSection);
+					}
+
+					var keysNode = yamlCache.FirstOrDefault(n => n.Key == "Keys");
+					if (keysNode != null)
+						foreach (var node in keysNode.Value.Nodes)
+							if (node.Key != null)
+								Keys[node.Key] = FieldLoader.GetValue<Hotkey>(node.Key, node.Value.Value);
+				}
 
 				// Override with commandline args
 				foreach (var kv in Sections)
@@ -381,51 +391,13 @@ namespace OpenRA
 				FieldLoader.InvalidValueAction = err2;
 			}
 
+			Player.Name = MigrateLegacyPlayerName(Player.Name);
 			Game.Language = LanguageSelectionPolicy.NormalizePreference(Game.Language);
 		}
 
-		static void ValidateProfiledFiles(string globalFile, string serverFile)
+		public static string MigrateLegacyPlayerName(string name)
 		{
-			if (string.IsNullOrWhiteSpace(globalFile))
-				throw new ArgumentException("The global settings file is required.", nameof(globalFile));
-			if (string.IsNullOrWhiteSpace(serverFile))
-				throw new ArgumentException("The server settings file is required.", nameof(serverFile));
-
-			var globalPath = Path.GetFullPath(globalFile);
-			var serverPath = Path.GetFullPath(serverFile);
-			if (string.Equals(globalPath, serverPath, StringComparison.Ordinal))
-				throw new ArgumentException(
-					"The server settings file must differ from the global settings file.", nameof(serverFile));
-		}
-
-		void LoadGlobalSettings(bool profiled)
-		{
-			if (!File.Exists(settingsFile))
-				return;
-
-			yamlCache.AddRange(MiniYaml.FromFile(settingsFile, false));
-			foreach (var yamlSection in yamlCache)
-				if (yamlSection.Key != null &&
-					(!profiled || yamlSection.Key != "Server") &&
-					Sections.TryGetValue(yamlSection.Key, out var settingsSection))
-					LoadSectionYaml(yamlSection.Value, settingsSection);
-
-			var keysNode = yamlCache.FirstOrDefault(n => n.Key == "Keys");
-			if (keysNode != null)
-				foreach (var node in keysNode.Value.Nodes)
-					if (node.Key != null)
-						Keys[node.Key] = FieldLoader.GetValue<Hotkey>(node.Key, node.Value.Value);
-		}
-
-		void LoadServerSettings()
-		{
-			if (!File.Exists(serverSettingsFile))
-				return;
-
-			serverYamlCache.AddRange(MiniYaml.FromFile(serverSettingsFile, false));
-			foreach (var yamlSection in serverYamlCache)
-				if (yamlSection.Key == "Server")
-					LoadSectionYaml(yamlSection.Value, Server);
+			return name == "Commander" || name == "指挥官" ? PlayerSettings.DefaultName : name;
 		}
 
 		static string ReadSystemLanguageTag(Arguments args)
@@ -446,33 +418,8 @@ namespace OpenRA
 
 		public void Save()
 		{
-			IEnumerable<KeyValuePair<string, object>> globalSections = serverSettingsFile == null
-				? Sections
-				: Sections.Where(kv => kv.Key != "Server");
-			SaveSettingsFile(settingsFile, yamlCache, globalSections, includeKeys: true);
-
-			if (serverSettingsFile == null)
-				return;
-
-			var serverDirectory = Path.GetDirectoryName(serverSettingsFile);
-			if (!string.IsNullOrEmpty(serverDirectory))
-				Directory.CreateDirectory(serverDirectory);
-
-			SaveSettingsFile(
-				serverSettingsFile,
-				serverYamlCache,
-				new[] { new KeyValuePair<string, object>("Server", Server) },
-				includeKeys: false);
-		}
-
-		void SaveSettingsFile(
-			string file,
-			List<MiniYamlNode> cache,
-			IEnumerable<KeyValuePair<string, object>> sections,
-			bool includeKeys)
-		{
-			var yamlCacheBuilder = cache.ConvertAll(n => new MiniYamlNodeBuilder(n));
-			foreach (var kv in sections)
+			var yamlCacheBuilder = yamlCache.ConvertAll(n => new MiniYamlNodeBuilder(n));
+			foreach (var kv in Sections)
 			{
 				var sectionYaml = yamlCacheBuilder.FirstOrDefault(x => x.Key == kv.Key);
 				if (sectionYaml == null)
@@ -504,23 +451,20 @@ namespace OpenRA
 				}
 			}
 
-			if (includeKeys)
+			var keysYaml = yamlCacheBuilder.FirstOrDefault(x => x.Key == "Keys");
+			if (keysYaml == null)
 			{
-				var keysYaml = yamlCacheBuilder.FirstOrDefault(x => x.Key == "Keys");
-				if (keysYaml == null)
-				{
-					keysYaml = new MiniYamlNodeBuilder("Keys", new MiniYamlBuilder(""));
-					yamlCacheBuilder.Add(keysYaml);
-				}
-
-				keysYaml.Value.Nodes.Clear();
-				foreach (var kv in Keys)
-					keysYaml.Value.Nodes.Add(new MiniYamlNodeBuilder(kv.Key, FieldSaver.FormatValue(kv.Value)));
+				keysYaml = new MiniYamlNodeBuilder("Keys", new MiniYamlBuilder(""));
+				yamlCacheBuilder.Add(keysYaml);
 			}
 
-			yamlCacheBuilder.WriteToFile(file);
-			cache.Clear();
-			cache.AddRange(yamlCacheBuilder.Select(n => n.Build()));
+			keysYaml.Value.Nodes.Clear();
+			foreach (var kv in Keys)
+				keysYaml.Value.Nodes.Add(new MiniYamlNodeBuilder(kv.Key, FieldSaver.FormatValue(kv.Value)));
+
+			yamlCacheBuilder.WriteToFile(settingsFile);
+			yamlCache.Clear();
+			yamlCache.AddRange(yamlCacheBuilder.Select(n => n.Build()));
 		}
 
 		static string SanitizedName(string dirty)

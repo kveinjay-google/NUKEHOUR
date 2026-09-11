@@ -21,24 +21,8 @@ using FS = OpenRA.FileSystem.FileSystem;
 
 namespace OpenRA.Mods.Cnc.FileSystem
 {
-	public class MixLoader : IBoundedPackageLoader
+	public class MixLoader : IPackageLoader
 	{
-		const long MaximumOrdinarySegmentBytes = 512L << 20;
-		readonly bool boundedConfigured;
-		readonly PackageHashType boundedHashType;
-		readonly IMixFilenameResolver boundedResolver;
-
-		public MixLoader() { }
-
-		public MixLoader(PackageHashType hashType, IMixFilenameResolver resolver)
-		{
-			if (!Enum.IsDefined(typeof(PackageHashType), hashType))
-				throw new ArgumentOutOfRangeException(nameof(hashType));
-			boundedResolver = resolver ?? throw new ArgumentNullException(nameof(resolver));
-			boundedHashType = hashType;
-			boundedConfigured = true;
-		}
-
 		public sealed class MixFile : IReadOnlyPackage
 		{
 			public string Name { get; }
@@ -198,9 +182,7 @@ namespace OpenRA.Mods.Cnc.FileSystem
 
 			public Stream GetContent(PackageEntry entry)
 			{
-				if (entry.Length > MaximumOrdinarySegmentBytes || entry.Length > int.MaxValue)
-					throw new InvalidDataException("MIX segment exceeds the ordinary reader limit.");
-				return SegmentStream.CreateWithoutOwningStream(s, checked(dataStart + entry.Offset), (int)entry.Length);
+				return SegmentStream.CreateWithoutOwningStream(s, dataStart + entry.Offset, (int)entry.Length);
 			}
 
 			public Stream GetStream(string filename)
@@ -261,115 +243,6 @@ namespace OpenRA.Mods.Cnc.FileSystem
 
 			package = new MixFile(s, filename, globalFilenames ?? Array.Empty<string>());
 			return true;
-		}
-
-		bool IBoundedPackageLoader.TryParsePackage(Stream stream, string filename, FS context,
-			PackageReadContext readContext, out IReadOnlyPackage package)
-		{
-			if (readContext == null)
-				throw new ArgumentNullException(nameof(readContext));
-			var policy = readContext.EnvelopePolicy ?? throw new InvalidOperationException(
-				"A bounded MIX loader requires an explicit package envelope policy.");
-			if (!boundedConfigured)
-				throw new InvalidOperationException("The parameterless MIX loader is for trusted legacy parsing only.");
-			if (boundedResolver == null || !Enum.IsDefined(typeof(PackageHashType), boundedHashType))
-				throw new InvalidOperationException("The bounded MIX loader configuration is invalid.");
-			if (!filename.EndsWith(".mix", StringComparison.OrdinalIgnoreCase))
-			{
-				package = null;
-				return false;
-			}
-
-			var initialPosition = stream.Position;
-			if (initialPosition != 0)
-				throw new InvalidDataException("A bounded MIX stream must start at zero.");
-			var gate = DeferredOwnershipStream.Borrow(stream);
-			ValidatedMixIndex index = null;
-			try
-			{
-				index = MixEnvelopeValidator.Validate(
-					gate, policy.Mix, boundedHashType, boundedResolver, readContext);
-				package = new ValidatedMixPackage(filename, index, index.ReadContext, context);
-				index = null;
-				gate.CommitOwnership();
-				return true;
-			}
-			catch
-			{
-				index?.Dispose();
-				gate.Dispose();
-				stream.Position = initialPosition;
-				package = null;
-				throw;
-			}
-		}
-
-		sealed class ValidatedMixPackage : IValidatedMixPackage
-		{
-			ValidatedMixIndex index;
-			readonly Dictionary<string, uint> names;
-			readonly PackageReadContext readContext;
-			readonly FS creatingFileSystem;
-			public string Name { get; }
-			public IEnumerable<string> Contents => names.Keys;
-			public System.Collections.Immutable.ImmutableArray<ValidatedMixEntry> Entries =>
-				(System.Threading.Volatile.Read(ref index) ??
-					throw new ObjectDisposedException(nameof(ValidatedMixPackage))).Entries;
-
-			public ValidatedMixPackage(string name, ValidatedMixIndex ownedIndex,
-				PackageReadContext readContext, FS creatingFileSystem)
-			{
-				Name = name;
-				index = ownedIndex;
-				this.readContext = readContext;
-				this.creatingFileSystem = creatingFileSystem;
-				names = ownedIndex.Entries.Where(entry => entry.CanonicalName != null)
-					.ToDictionary(entry => entry.CanonicalName, entry => entry.Hash, StringComparer.Ordinal);
-			}
-
-			public Stream GetStream(string filename)
-			{
-				var current = System.Threading.Volatile.Read(ref index);
-				if (current == null)
-					throw new ObjectDisposedException(nameof(ValidatedMixPackage));
-				return filename != null && names.TryGetValue(filename, out var hash) ?
-					current.OpenEntry(hash, readContext) : null;
-			}
-
-			public ValidatedMixEntrySource OpenEntrySource(uint hash)
-			{
-				var current = System.Threading.Volatile.Read(ref index) ??
-					throw new ObjectDisposedException(nameof(ValidatedMixPackage));
-				return current.OpenEntrySource(hash, readContext);
-			}
-
-			public bool Contains(string filename) => filename != null && names.ContainsKey(filename);
-
-			public IReadOnlyPackage OpenPackage(string filename, FS context)
-			{
-				if (!ReferenceEquals(creatingFileSystem, context))
-					throw new InvalidOperationException("A bounded MIX package rejects a replacement file system.");
-				var stream = GetStream(filename);
-				if (stream == null)
-					return null;
-				try
-				{
-					if (creatingFileSystem.TryParsePackage(stream, filename, readContext, out var package))
-						return package;
-					stream.Dispose();
-					return null;
-				}
-				catch
-				{
-					stream.Dispose();
-					throw;
-				}
-			}
-
-			public void Dispose()
-			{
-				System.Threading.Interlocked.Exchange(ref index, null)?.Dispose();
-			}
 		}
 	}
 }

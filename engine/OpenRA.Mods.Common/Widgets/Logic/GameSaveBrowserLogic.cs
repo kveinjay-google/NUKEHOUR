@@ -14,7 +14,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Text;
 using OpenRA.Network;
 using OpenRA.Widgets;
 
@@ -52,15 +51,6 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 		[FluentReference("savePath")]
 		const string SaveDeletionFailed = "notification-save-deletion-failed";
 
-		[FluentReference("kind")]
-		const string RuntimePersistenceMismatch = "notification-runtime-persistence-mismatch";
-
-		[FluentReference("kind")]
-		const string RuntimePersistenceLegacyHidden = "notification-runtime-persistence-legacy-hidden";
-
-		[FluentReference]
-		const string RuntimePersistenceSavedGameKind = "notification-runtime-persistence-kind-saved-game";
-
 		[FluentReference]
 		const string OverwriteSaveTitle = "dialog-overwrite-save.title";
 
@@ -69,8 +59,6 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 
 		[FluentReference]
 		const string OverwriteSaveAccept = "dialog-overwrite-save.confirm";
-
-		static readonly UTF8Encoding StrictUtf8 = new(false, true);
 
 		readonly Widget panel;
 		readonly ScrollPanelWidget gameList;
@@ -108,9 +96,7 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 			var newTemplate = panel.Get<ScrollItemWidget>("NEW_TEMPLATE");
 
 			var mod = modData.Manifest;
-			baseSavePath = RuntimeContractStorage.SavesPath(
-				Platform.SupportDir, mod.Id, mod.Metadata.Version,
-				modData.RuntimeContract);
+			baseSavePath = Path.Combine(Platform.SupportDir, "Saves", mod.Id, mod.Metadata.Version);
 
 			// Avoid filename conflicts when creating new saves
 			if (isSavePanel)
@@ -239,69 +225,35 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 				gameList.AddChild(item);
 			}
 
-			try
+			var savePaths = Directory.GetFiles(baseSavePath, "*.orasav", SearchOption.AllDirectories)
+				.OrderByDescending(p => File.GetLastWriteTime(p))
+				.ToList();
+
+			foreach (var savePath in savePaths)
 			{
-				var hiddenReasonNotified = false;
-				var savePaths = Directory.GetFiles(
-					baseSavePath, "*.orasav", SearchOption.TopDirectoryOnly)
-					.OrderByDescending(p => File.GetLastWriteTime(p))
-					.ToList();
+				games.Add(savePath);
 
-				foreach (var savePath in savePaths)
-				{
-					GameSave save;
-					try
-					{
-						save = new GameSave(savePath);
-					}
-					catch (Exception ex)
-					{
-						Log.Write("debug", ex.ToString());
-						continue;
-					}
+				// Create the item manually so the click handlers can refer to itself
+				// This simplifies the rename handling (only needs to update ItemKey)
+				var item = gameTemplate.Clone() as ScrollItemWidget;
+				item.ItemKey = savePath;
+				item.IsVisible = () => true;
+				item.IsSelected = () => selectedSave == item.ItemKey;
+				item.OnClick = () => Select(item.ItemKey);
 
-					var compatibility = save.RuntimeContractCompatibilityWith(modData.RuntimeContract);
-					if (compatibility != RuntimeContractCompatibilityReason.Compatible)
-					{
-						if (!hiddenReasonNotified)
-						{
-							hiddenReasonNotified = true;
-							NotifyRuntimePersistenceFailure(compatibility,
-								RuntimePersistenceSavedGameKind);
-						}
+				if (isSavePanel)
+					item.OnDoubleClick = () => Save(world);
+				else
+					item.OnDoubleClick = Load;
 
-						continue;
-					}
+				var title = Path.GetFileNameWithoutExtension(savePath);
+				var label = item.Get<LabelWithTooltipWidget>("TITLE");
+				WidgetUtils.TruncateLabelToTooltip(label, title);
 
-					games.Add(savePath);
+				var date = File.GetLastWriteTime(savePath).ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.CurrentCulture);
+				item.Get<LabelWidget>("DATE").GetText = () => date;
 
-					// Create the item manually so the click handlers can refer to itself
-					// This simplifies the rename handling (only needs to update ItemKey)
-					var item = gameTemplate.Clone() as ScrollItemWidget;
-					item.ItemKey = savePath;
-					item.IsVisible = () => true;
-					item.IsSelected = () => selectedSave == item.ItemKey;
-					item.OnClick = () => Select(item.ItemKey);
-
-					if (isSavePanel)
-						item.OnDoubleClick = () => Save(world);
-					else
-						item.OnDoubleClick = Load;
-
-					var title = Path.GetFileNameWithoutExtension(savePath);
-					var label = item.Get<LabelWithTooltipWidget>("TITLE");
-					WidgetUtils.TruncateLabelToTooltip(label, title);
-
-					var date = File.GetLastWriteTime(savePath)
-						.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.CurrentCulture);
-					item.Get<LabelWidget>("DATE").GetText = () => date;
-
-					gameList.AddChild(item);
-				}
-			}
-			catch (Exception ex)
-			{
-				Log.Write("debug", ex.ToString());
+				gameList.AddChild(item);
 			}
 		}
 
@@ -383,40 +335,8 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 				return;
 
 			// Parse the save to find the map UID
-			GameSave save;
-			try
-			{
-				save = new GameSave(selectedSave);
-			}
-			catch (Exception ex)
-			{
-				Log.Write("debug", ex.ToString());
-				return;
-			}
-
-			var compatibility = save.RuntimeContractCompatibilityWith(modData.RuntimeContract);
-			if (compatibility != RuntimeContractCompatibilityReason.Compatible)
-			{
-				NotifyRuntimePersistenceFailure(
-					compatibility, RuntimePersistenceSavedGameKind);
-				return;
-			}
-
-			var mapUid = save.GlobalSettings?.Map;
-			if (string.IsNullOrEmpty(mapUid))
-				return;
-
-			MapPreview map;
-			try
-			{
-				map = modData.MapCache[mapUid];
-			}
-			catch (Exception ex)
-			{
-				Log.Write("debug", ex.ToString());
-				return;
-			}
-
+			var save = new GameSave(selectedSave);
+			var map = modData.MapCache[save.GlobalSettings.Map];
 			if (map.Status != MapStatus.Available)
 				return;
 
@@ -434,10 +354,12 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 		void Save(World world)
 		{
 			var filename = saveTextField.Text + ".orasav";
-			if (!IsCanonicalFilename(filename))
-				return;
-
-			var testPath = Path.Combine(baseSavePath, filename);
+			var testPath = Path.Combine(
+				Platform.SupportDir,
+				"Saves",
+				modData.Manifest.Id,
+				modData.Manifest.Metadata.Version,
+				filename);
 
 			void Inner()
 			{
@@ -480,73 +402,11 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 
 		public static bool IsLoadPanelEnabled(Manifest mod)
 		{
-			try
-			{
-				if (Game.ModData == null)
-					return false;
-
-				var runtimeContract = Game.ModData.RuntimeContract;
-				var baseSavePath = RuntimeContractStorage.SavesPath(
-					Platform.SupportDir, mod.Id, mod.Metadata.Version,
-					runtimeContract);
-				if (!Directory.Exists(baseSavePath))
-					return false;
-
-				foreach (var savePath in Directory.GetFiles(
-					baseSavePath, "*.orasav", SearchOption.TopDirectoryOnly))
-				{
-					GameSave save;
-					try
-					{
-						save = new GameSave(savePath);
-					}
-					catch (Exception)
-					{
-						continue;
-					}
-
-					if (save.RuntimeContractCompatibilityWith(runtimeContract) ==
-						RuntimeContractCompatibilityReason.Compatible)
-						return true;
-				}
-			}
-			catch (Exception)
-			{
-				return false;
-			}
-
-			return false;
-		}
-
-		static bool IsCanonicalFilename(string filename)
-		{
-			if (string.IsNullOrEmpty(filename) || filename is "." or ".." ||
-				filename.IndexOfAny(new[] { '/', '\\', '\0', ':' }) >= 0 ||
-				Path.IsPathFullyQualified(filename))
+			var baseSavePath = Path.Combine(Platform.SupportDir, "Saves", mod.Id, mod.Metadata.Version);
+			if (!Directory.Exists(baseSavePath))
 				return false;
 
-			try
-			{
-				if (!filename.IsNormalized(NormalizationForm.FormC) ||
-					StrictUtf8.GetByteCount(filename) > 255)
-					return false;
-			}
-			catch (ArgumentException)
-			{
-				return false;
-			}
-
-			return filename.All(character =>
-				!char.IsControl(character) && character is not '\u2028' and not '\u2029');
-		}
-
-		static void NotifyRuntimePersistenceFailure(
-			RuntimeContractCompatibilityReason reason, string kind)
-		{
-			var message = reason == RuntimeContractCompatibilityReason.MissingIdentity ?
-				RuntimePersistenceLegacyHidden : RuntimePersistenceMismatch;
-			TextNotificationsManager.AddFeedbackLine(
-				message, "kind", FluentProvider.GetMessage(kind));
+			return Directory.GetFiles(baseSavePath, "*.orasav", SearchOption.AllDirectories).Length > 0;
 		}
 	}
 }

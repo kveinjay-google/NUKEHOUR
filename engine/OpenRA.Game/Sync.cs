@@ -61,12 +61,14 @@ namespace OpenRA
 				il.EmitCall(OpCodes.Call, hashFunction, null);
 			else if (type == typeof(bool))
 			{
-				var l = il.DefineLabel();
+				var falseValue = il.DefineLabel();
+				var complete = il.DefineLabel();
+				il.Emit(OpCodes.Brfalse, falseValue);
 				il.Emit(OpCodes.Ldc_I4, 0xaaa);
-				il.Emit(OpCodes.Brtrue, l);
-				il.Emit(OpCodes.Pop);
+				il.Emit(OpCodes.Br, complete);
+				il.MarkLabel(falseValue);
 				il.Emit(OpCodes.Ldc_I4, 0x555);
-				il.MarkLabel(l);
+				il.MarkLabel(complete);
 			}
 			else if (type != typeof(int))
 				throw new NotImplementedException($"SyncAttribute on member of unhashable type: {type.FullName}");

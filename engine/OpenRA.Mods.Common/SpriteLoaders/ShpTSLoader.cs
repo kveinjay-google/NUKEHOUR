@@ -107,14 +107,11 @@ namespace OpenRA.Mods.Common.SpriteLoaders
 
 			// Check the image size and compression type format flag
 			// Some files define bogus frames, so loop until we find a valid one
+			s.Position += 4;
 			ushort w, h, f = 0;
 			byte type;
 			do
 			{
-				// Each frame header starts with its x/y offsets.  Null frames are
-				// valid, so advance past these fields for every probe, not only
-				// for the first frame.
-				s.Position += 4;
 				w = s.ReadUInt16();
 				h = s.ReadUInt16();
 				type = s.ReadUInt8();
@@ -123,7 +120,7 @@ namespace OpenRA.Mods.Common.SpriteLoaders
 				if ((w == 0 || h == 0) && type == 0)
 					return false;
 
-				s.Position += 15;
+				s.Position += 19;
 			}
 			while (w == 0 && h == 0 && ++f < imageCount);
 

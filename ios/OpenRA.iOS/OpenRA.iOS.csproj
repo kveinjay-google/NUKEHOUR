@@ -6,11 +6,14 @@
     <ApplicationTitle>NUKE HOUR</ApplicationTitle>
     <IpaPackageName>NUKE HOUR.ipa</IpaPackageName>
     <ApplicationId>com.openra.ipad.personal</ApplicationId>
+    <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
+    <ApplicationVersion>16</ApplicationVersion>
     <TargetedDeviceFamily>1,2</TargetedDeviceFamily>
     <DevelopmentTeam>267KQ4A3N4</DevelopmentTeam>
     <TargetPlatform>ios</TargetPlatform>
     <PublicClean Condition="'$(PublicClean)' == ''">false</PublicClean>
     <PublicAuditReportDir>$(MSBuildProjectDirectory)/../../artifacts/public-ios</PublicAuditReportDir>
+	<LegacyIosTouchAssetExcludes>../../mods/ra2/uibits/ios-touch-*-allies.png;../../mods/ra2/uibits/ios-touch-*-allies-2x.png;../../mods/ra2/uibits/ios-touch-*-soviets.png;../../mods/ra2/uibits/ios-touch-*-soviets-2x.png;../../mods/ra2/uibits/ios-touch-*-yuri.png;../../mods/ra2/uibits/ios-touch-*-yuri-2x.png</LegacyIosTouchAssetExcludes>
     <!-- Mod code is fully AOT compiled. The generated direct-construction registry
          preserves all manifest/YAML object constructors without an interpreter. -->
     <ApplicationSupportsIndirectInputEvents>true</ApplicationSupportsIndirectInputEvents>
@@ -21,9 +24,6 @@
     <UseMonoRuntime>true</UseMonoRuntime>
     <MtouchInterpreter></MtouchInterpreter>
     <GeneratedAotRegistryFile>$(MSBuildProjectDirectory)/GeneratedAotObjectRegistry.g.cs</GeneratedAotRegistryFile>
-    <GeneratedAotRegistryFileSha256>61F59A25DFC88373457FB0C16F596735D2938CB7C9A8992D3D78BAD9D538AF5D</GeneratedAotRegistryFileSha256>
-    <RuntimeContractDescriptorShapeFile>$(MSBuildProjectDirectory)/../../packaging/ios-runtime-contract-descriptor-shape-v1.json</RuntimeContractDescriptorShapeFile>
-    <RuntimeContractDescriptorShapeFileSha256>6c0d12b5a985bcf87fc255a03a958dbc09be00de9238b239354c8d34be1bd8f6</RuntimeContractDescriptorShapeFileSha256>
     <RootNamespace>OpenRA.iOS</RootNamespace>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -33,306 +33,6 @@
     <ApplicationTitle>NUKE HOUR</ApplicationTitle>
     <IpaPackageName>NUKE HOUR-PublicClean.ipa</IpaPackageName>
   </PropertyGroup>
-  <!-- This literal table is the evaluated build projection of the authenticated
-       runtime-descriptor golden.  The generator rejects any row drift. -->
-  <ItemGroup>
-    <RuntimeContractDescriptor Include="../../engine/AUTHORS" LogicalName="AUTHORS" BundleRelativePath="AUTHORS" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../engine/VERSION" LogicalName="VERSION" BundleRelativePath="VERSION" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../engine/global mix database.dat" LogicalName="global mix database.dat" BundleRelativePath="global mix database.dat" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../engine/glsl/combined.frag" LogicalName="glsl/combined.frag" BundleRelativePath="glsl/combined.frag" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../engine/glsl/combined.vert" LogicalName="glsl/combined.vert" BundleRelativePath="glsl/combined.vert" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../engine/glsl/model.frag" LogicalName="glsl/model.frag" BundleRelativePath="glsl/model.frag" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../engine/glsl/model.vert" LogicalName="glsl/model.vert" BundleRelativePath="glsl/model.vert" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../engine/glsl/postprocess.vert" LogicalName="glsl/postprocess.vert" BundleRelativePath="glsl/postprocess.vert" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../engine/glsl/postprocess_chronoshift.frag" LogicalName="glsl/postprocess_chronoshift.frag" BundleRelativePath="glsl/postprocess_chronoshift.frag" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../engine/glsl/postprocess_flash.frag" LogicalName="glsl/postprocess_flash.frag" BundleRelativePath="glsl/postprocess_flash.frag" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../engine/glsl/postprocess_menufade.frag" LogicalName="glsl/postprocess_menufade.frag" BundleRelativePath="glsl/postprocess_menufade.frag" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../engine/glsl/postprocess_textured.vert" LogicalName="glsl/postprocess_textured.vert" BundleRelativePath="glsl/postprocess_textured.vert" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../engine/glsl/postprocess_textured_vortex.frag" LogicalName="glsl/postprocess_textured_vortex.frag" BundleRelativePath="glsl/postprocess_textured_vortex.frag" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../engine/glsl/postprocess_tint.frag" LogicalName="glsl/postprocess_tint.frag" BundleRelativePath="glsl/postprocess_tint.frag" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/chrome/color-picker.yaml" LogicalName="mods/common/chrome/color-picker.yaml" BundleRelativePath="mods/common/chrome/color-picker.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/chrome/confirmation-dialogs.yaml" LogicalName="mods/common/chrome/confirmation-dialogs.yaml" BundleRelativePath="mods/common/chrome/confirmation-dialogs.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/chrome/connection.yaml" LogicalName="mods/common/chrome/connection.yaml" BundleRelativePath="mods/common/chrome/connection.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/chrome/credits.yaml" LogicalName="mods/common/chrome/credits.yaml" BundleRelativePath="mods/common/chrome/credits.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/chrome/dropdowns.yaml" LogicalName="mods/common/chrome/dropdowns.yaml" BundleRelativePath="mods/common/chrome/dropdowns.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/chrome/editor.yaml" LogicalName="mods/common/chrome/editor.yaml" BundleRelativePath="mods/common/chrome/editor.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/chrome/gamesave-browser.yaml" LogicalName="mods/common/chrome/gamesave-browser.yaml" BundleRelativePath="mods/common/chrome/gamesave-browser.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/chrome/ingame-chat.yaml" LogicalName="mods/common/chrome/ingame-chat.yaml" BundleRelativePath="mods/common/chrome/ingame-chat.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/chrome/ingame-debuginfo.yaml" LogicalName="mods/common/chrome/ingame-debuginfo.yaml" BundleRelativePath="mods/common/chrome/ingame-debuginfo.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/chrome/ingame-fmvplayer.yaml" LogicalName="mods/common/chrome/ingame-fmvplayer.yaml" BundleRelativePath="mods/common/chrome/ingame-fmvplayer.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/chrome/ingame-info-lobby-options.yaml" LogicalName="mods/common/chrome/ingame-info-lobby-options.yaml" BundleRelativePath="mods/common/chrome/ingame-info-lobby-options.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/chrome/ingame-infobriefing.yaml" LogicalName="mods/common/chrome/ingame-infobriefing.yaml" BundleRelativePath="mods/common/chrome/ingame-infobriefing.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/chrome/ingame-infochat.yaml" LogicalName="mods/common/chrome/ingame-infochat.yaml" BundleRelativePath="mods/common/chrome/ingame-infochat.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/chrome/ingame-infoobjectives.yaml" LogicalName="mods/common/chrome/ingame-infoobjectives.yaml" BundleRelativePath="mods/common/chrome/ingame-infoobjectives.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/chrome/ingame-infoscripterror.yaml" LogicalName="mods/common/chrome/ingame-infoscripterror.yaml" BundleRelativePath="mods/common/chrome/ingame-infoscripterror.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/chrome/ingame-infostats.yaml" LogicalName="mods/common/chrome/ingame-infostats.yaml" BundleRelativePath="mods/common/chrome/ingame-infostats.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/chrome/ingame-perf.yaml" LogicalName="mods/common/chrome/ingame-perf.yaml" BundleRelativePath="mods/common/chrome/ingame-perf.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/chrome/ingame-transients.yaml" LogicalName="mods/common/chrome/ingame-transients.yaml" BundleRelativePath="mods/common/chrome/ingame-transients.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/chrome/lobby-kickdialogs.yaml" LogicalName="mods/common/chrome/lobby-kickdialogs.yaml" BundleRelativePath="mods/common/chrome/lobby-kickdialogs.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/chrome/lobby-mappreview.yaml" LogicalName="mods/common/chrome/lobby-mappreview.yaml" BundleRelativePath="mods/common/chrome/lobby-mappreview.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/chrome/lobby-music.yaml" LogicalName="mods/common/chrome/lobby-music.yaml" BundleRelativePath="mods/common/chrome/lobby-music.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/chrome/lobby-options.yaml" LogicalName="mods/common/chrome/lobby-options.yaml" BundleRelativePath="mods/common/chrome/lobby-options.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/chrome/lobby-players.yaml" LogicalName="mods/common/chrome/lobby-players.yaml" BundleRelativePath="mods/common/chrome/lobby-players.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/chrome/lobby-servers.yaml" LogicalName="mods/common/chrome/lobby-servers.yaml" BundleRelativePath="mods/common/chrome/lobby-servers.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/chrome/lobby.yaml" LogicalName="mods/common/chrome/lobby.yaml" BundleRelativePath="mods/common/chrome/lobby.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/chrome/mainmenu-prompts.yaml" LogicalName="mods/common/chrome/mainmenu-prompts.yaml" BundleRelativePath="mods/common/chrome/mainmenu-prompts.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/chrome/map-chooser.yaml" LogicalName="mods/common/chrome/map-chooser.yaml" BundleRelativePath="mods/common/chrome/map-chooser.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/chrome/missionbrowser.yaml" LogicalName="mods/common/chrome/missionbrowser.yaml" BundleRelativePath="mods/common/chrome/missionbrowser.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/chrome/multiplayer-browser.yaml" LogicalName="mods/common/chrome/multiplayer-browser.yaml" BundleRelativePath="mods/common/chrome/multiplayer-browser.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/chrome/multiplayer-browserpanels.yaml" LogicalName="mods/common/chrome/multiplayer-browserpanels.yaml" BundleRelativePath="mods/common/chrome/multiplayer-browserpanels.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/chrome/multiplayer-createserver.yaml" LogicalName="mods/common/chrome/multiplayer-createserver.yaml" BundleRelativePath="mods/common/chrome/multiplayer-createserver.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/chrome/multiplayer-directconnect.yaml" LogicalName="mods/common/chrome/multiplayer-directconnect.yaml" BundleRelativePath="mods/common/chrome/multiplayer-directconnect.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/chrome/musicplayer.yaml" LogicalName="mods/common/chrome/musicplayer.yaml" BundleRelativePath="mods/common/chrome/musicplayer.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/chrome/playerprofile.yaml" LogicalName="mods/common/chrome/playerprofile.yaml" BundleRelativePath="mods/common/chrome/playerprofile.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/chrome/replaybrowser.yaml" LogicalName="mods/common/chrome/replaybrowser.yaml" BundleRelativePath="mods/common/chrome/replaybrowser.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/chrome/settings-advanced.yaml" LogicalName="mods/common/chrome/settings-advanced.yaml" BundleRelativePath="mods/common/chrome/settings-advanced.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/chrome/settings-audio.yaml" LogicalName="mods/common/chrome/settings-audio.yaml" BundleRelativePath="mods/common/chrome/settings-audio.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/chrome/settings-display.yaml" LogicalName="mods/common/chrome/settings-display.yaml" BundleRelativePath="mods/common/chrome/settings-display.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/chrome/settings-hotkeys.yaml" LogicalName="mods/common/chrome/settings-hotkeys.yaml" BundleRelativePath="mods/common/chrome/settings-hotkeys.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/chrome/settings-input.yaml" LogicalName="mods/common/chrome/settings-input.yaml" BundleRelativePath="mods/common/chrome/settings-input.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/chrome/text-notifications.yaml" LogicalName="mods/common/chrome/text-notifications.yaml" BundleRelativePath="mods/common/chrome/text-notifications.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/chrome/tooltips.yaml" LogicalName="mods/common/chrome/tooltips.yaml" BundleRelativePath="mods/common/chrome/tooltips.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/fluent/chrome.ftl" LogicalName="mods/common/fluent/chrome.ftl" BundleRelativePath="mods/common/fluent/chrome.ftl" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/fluent/common.ftl" LogicalName="mods/common/fluent/common.ftl" BundleRelativePath="mods/common/fluent/common.ftl" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/fluent/hotkeys.ftl" LogicalName="mods/common/fluent/hotkeys.ftl" BundleRelativePath="mods/common/fluent/hotkeys.ftl" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/fluent/rules.ftl" LogicalName="mods/common/fluent/rules.ftl" BundleRelativePath="mods/common/fluent/rules.ftl" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/fluent/zh-CN/chrome.ftl" LogicalName="mods/common/fluent/zh-CN/chrome.ftl" BundleRelativePath="mods/common/fluent/zh-CN/chrome.ftl" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/fluent/zh-CN/common.ftl" LogicalName="mods/common/fluent/zh-CN/common.ftl" BundleRelativePath="mods/common/fluent/zh-CN/common.ftl" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/fluent/zh-CN/hotkeys.ftl" LogicalName="mods/common/fluent/zh-CN/hotkeys.ftl" BundleRelativePath="mods/common/fluent/zh-CN/hotkeys.ftl" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/fluent/zh-CN/rules.ftl" LogicalName="mods/common/fluent/zh-CN/rules.ftl" BundleRelativePath="mods/common/fluent/zh-CN/rules.ftl" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/hotkeys/chat.yaml" LogicalName="mods/common/hotkeys/chat.yaml" BundleRelativePath="mods/common/hotkeys/chat.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/hotkeys/control-groups.yaml" LogicalName="mods/common/hotkeys/control-groups.yaml" BundleRelativePath="mods/common/hotkeys/control-groups.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/hotkeys/editor.yaml" LogicalName="mods/common/hotkeys/editor.yaml" BundleRelativePath="mods/common/hotkeys/editor.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/hotkeys/game.yaml" LogicalName="mods/common/hotkeys/game.yaml" BundleRelativePath="mods/common/hotkeys/game.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/hotkeys/observer.yaml" LogicalName="mods/common/hotkeys/observer.yaml" BundleRelativePath="mods/common/hotkeys/observer.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/hotkeys/production-common.yaml" LogicalName="mods/common/hotkeys/production-common.yaml" BundleRelativePath="mods/common/hotkeys/production-common.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/hotkeys/supportpowers.yaml" LogicalName="mods/common/hotkeys/supportpowers.yaml" BundleRelativePath="mods/common/hotkeys/supportpowers.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/hotkeys/viewport.yaml" LogicalName="mods/common/hotkeys/viewport.yaml" BundleRelativePath="mods/common/hotkeys/viewport.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/common/metrics.yaml" LogicalName="mods/common/metrics.yaml" BundleRelativePath="mods/common/metrics.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/AUTHORS" LogicalName="mods/ra2/AUTHORS" BundleRelativePath="mods/ra2/AUTHORS" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/audio/music.yaml" LogicalName="mods/ra2/audio/music.yaml" BundleRelativePath="mods/ra2/audio/music.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/audio/notifications.yaml" LogicalName="mods/ra2/audio/notifications.yaml" BundleRelativePath="mods/ra2/audio/notifications.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/audio/voices-base.yaml" LogicalName="mods/ra2/audio/voices-base.yaml" BundleRelativePath="mods/ra2/audio/voices-base.yaml" Profiles="Base" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/audio/voices.yaml" LogicalName="mods/ra2/audio/voices.yaml" BundleRelativePath="mods/ra2/audio/voices.yaml" Profiles="Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/ammopips.shp" LogicalName="mods/ra2/bits/ammopips.shp" BundleRelativePath="mods/ra2/bits/ammopips.shp" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/animations/clock.shp" LogicalName="mods/ra2/bits/animations/clock.shp" BundleRelativePath="mods/ra2/bits/animations/clock.shp" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/animations/nc-impact-core.png" LogicalName="mods/ra2/bits/animations/nc-impact-core.png" BundleRelativePath="mods/ra2/bits/animations/nc-impact-core.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/animations/nc-impact-debris.png" LogicalName="mods/ra2/bits/animations/nc-impact-debris.png" BundleRelativePath="mods/ra2/bits/animations/nc-impact-debris.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/animations/nc-impact-ring.png" LogicalName="mods/ra2/bits/animations/nc-impact-ring.png" BundleRelativePath="mods/ra2/bits/animations/nc-impact-ring.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/assaultmove.shp" LogicalName="mods/ra2/bits/assaultmove.shp" BundleRelativePath="mods/ra2/bits/assaultmove.shp" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/cameos/acnsicon.shp" LogicalName="mods/ra2/bits/cameos/acnsicon.shp" BundleRelativePath="mods/ra2/bits/cameos/acnsicon.shp" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/cameos/cameo-chevron.png" LogicalName="mods/ra2/bits/cameos/cameo-chevron.png" BundleRelativePath="mods/ra2/bits/cameos/cameo-chevron.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/cameos/diskicon.shp" LogicalName="mods/ra2/bits/cameos/diskicon.shp" BundleRelativePath="mods/ra2/bits/cameos/diskicon.shp" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/cameos/ggunicon.shp" LogicalName="mods/ra2/bits/cameos/ggunicon.shp" BundleRelativePath="mods/ra2/bits/cameos/ggunicon.shp" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/cameos/gtncicon.shp" LogicalName="mods/ra2/bits/cameos/gtncicon.shp" BundleRelativePath="mods/ra2/bits/cameos/gtncicon.shp" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/cameos/scnsicon.shp" LogicalName="mods/ra2/bits/cameos/scnsicon.shp" BundleRelativePath="mods/ra2/bits/cameos/scnsicon.shp" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/cameos/slavicon.shp" LogicalName="mods/ra2/bits/cameos/slavicon.shp" BundleRelativePath="mods/ra2/bits/cameos/slavicon.shp" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/cameos/ydomicon-cn.png" LogicalName="mods/ra2/bits/cameos/ydomicon-cn.png" BundleRelativePath="mods/ra2/bits/cameos/ydomicon-cn.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/cameos/ydomicon.shp" LogicalName="mods/ra2/bits/cameos/ydomicon.shp" BundleRelativePath="mods/ra2/bits/cameos/ydomicon.shp" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/cameos/yfixicon-cn.png" LogicalName="mods/ra2/bits/cameos/yfixicon-cn.png" BundleRelativePath="mods/ra2/bits/cameos/yfixicon-cn.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/cameos/yfixicon.shp" LogicalName="mods/ra2/bits/cameos/yfixicon.shp" BundleRelativePath="mods/ra2/bits/cameos/yfixicon.shp" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/cameos/yhvricon.shp" LogicalName="mods/ra2/bits/cameos/yhvricon.shp" BundleRelativePath="mods/ra2/bits/cameos/yhvricon.shp" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/cameos/yrcyicon.png" LogicalName="mods/ra2/bits/cameos/yrcyicon.png" BundleRelativePath="mods/ra2/bits/cameos/yrcyicon.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/cameos/ytnkicon.shp" LogicalName="mods/ra2/bits/cameos/ytnkicon.shp" BundleRelativePath="mods/ra2/bits/cameos/ytnkicon.shp" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/camera.shp" LogicalName="mods/ra2/bits/camera.shp" BundleRelativePath="mods/ra2/bits/camera.shp" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/isodepth.shp" LogicalName="mods/ra2/bits/isodepth.shp" BundleRelativePath="mods/ra2/bits/isodepth.shp" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/mpspawn.shp" LogicalName="mods/ra2/bits/mpspawn.shp" BundleRelativePath="mods/ra2/bits/mpspawn.shp" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/pip-disguise.shp" LogicalName="mods/ra2/bits/pip-disguise.shp" BundleRelativePath="mods/ra2/bits/pip-disguise.shp" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/pipsra.shp" LogicalName="mods/ra2/bits/pipsra.shp" BundleRelativePath="mods/ra2/bits/pipsra.shp" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/projectiles/zbomb.shp" LogicalName="mods/ra2/bits/projectiles/zbomb.shp" BundleRelativePath="mods/ra2/bits/projectiles/zbomb.shp" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/structures/cgwash06_a.shp" LogicalName="mods/ra2/bits/structures/cgwash06_a.shp" BundleRelativePath="mods/ra2/bits/structures/cgwash06_a.shp" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/structures/cgwt01.shp" LogicalName="mods/ra2/bits/structures/cgwt01.shp" BundleRelativePath="mods/ra2/bits/structures/cgwt01.shp" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/structures/gaweth.shp" LogicalName="mods/ra2/bits/structures/gaweth.shp" BundleRelativePath="mods/ra2/bits/structures/gaweth.shp" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/structures/ngweapbb.shp" LogicalName="mods/ra2/bits/structures/ngweapbb.shp" BundleRelativePath="mods/ra2/bits/structures/ngweapbb.shp" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/structures/yadept.shp" LogicalName="mods/ra2/bits/structures/yadept.shp" BundleRelativePath="mods/ra2/bits/structures/yadept.shp" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/structures/yadept_b.shp" LogicalName="mods/ra2/bits/structures/yadept_b.shp" BundleRelativePath="mods/ra2/bits/structures/yadept_b.shp" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/structures/yadept_c.shp" LogicalName="mods/ra2/bits/structures/yadept_c.shp" BundleRelativePath="mods/ra2/bits/structures/yadept_c.shp" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/structures/yadeptbb.shp" LogicalName="mods/ra2/bits/structures/yadeptbb.shp" BundleRelativePath="mods/ra2/bits/structures/yadeptbb.shp" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/structures/yadeptmk.shp" LogicalName="mods/ra2/bits/structures/yadeptmk.shp" BundleRelativePath="mods/ra2/bits/structures/yadeptmk.shp" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/structures/yadome.shp" LogicalName="mods/ra2/bits/structures/yadome.shp" BundleRelativePath="mods/ra2/bits/structures/yadome.shp" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/structures/yadome_a.shp" LogicalName="mods/ra2/bits/structures/yadome_a.shp" BundleRelativePath="mods/ra2/bits/structures/yadome_a.shp" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/structures/yadome_b.shp" LogicalName="mods/ra2/bits/structures/yadome_b.shp" BundleRelativePath="mods/ra2/bits/structures/yadome_b.shp" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/structures/yadomemk.shp" LogicalName="mods/ra2/bits/structures/yadomemk.shp" BundleRelativePath="mods/ra2/bits/structures/yadomemk.shp" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/structures/ygdept.shp" LogicalName="mods/ra2/bits/structures/ygdept.shp" BundleRelativePath="mods/ra2/bits/structures/ygdept.shp" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/structures/ygdept_b.shp" LogicalName="mods/ra2/bits/structures/ygdept_b.shp" BundleRelativePath="mods/ra2/bits/structures/ygdept_b.shp" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/structures/ygdept_c.shp" LogicalName="mods/ra2/bits/structures/ygdept_c.shp" BundleRelativePath="mods/ra2/bits/structures/ygdept_c.shp" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/structures/ygdeptbb.shp" LogicalName="mods/ra2/bits/structures/ygdeptbb.shp" BundleRelativePath="mods/ra2/bits/structures/ygdeptbb.shp" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/structures/ygdeptmk.shp" LogicalName="mods/ra2/bits/structures/ygdeptmk.shp" BundleRelativePath="mods/ra2/bits/structures/ygdeptmk.shp" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/structures/ygdome.shp" LogicalName="mods/ra2/bits/structures/ygdome.shp" BundleRelativePath="mods/ra2/bits/structures/ygdome.shp" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/structures/ygdome_a.shp" LogicalName="mods/ra2/bits/structures/ygdome_a.shp" BundleRelativePath="mods/ra2/bits/structures/ygdome_a.shp" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/structures/ygdome_b.shp" LogicalName="mods/ra2/bits/structures/ygdome_b.shp" BundleRelativePath="mods/ra2/bits/structures/ygdome_b.shp" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/structures/ygdomemk.shp" LogicalName="mods/ra2/bits/structures/ygdomemk.shp" BundleRelativePath="mods/ra2/bits/structures/ygdomemk.shp" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/ts-mousepal.pal" LogicalName="mods/ra2/bits/ts-mousepal.pal" BundleRelativePath="mods/ra2/bits/ts-mousepal.pal" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/tscameo.pal" LogicalName="mods/ra2/bits/tscameo.pal" BundleRelativePath="mods/ra2/bits/tscameo.pal" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/undeploy.shp" LogicalName="mods/ra2/bits/undeploy.shp" BundleRelativePath="mods/ra2/bits/undeploy.shp" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/bits/waypoint.shp" LogicalName="mods/ra2/bits/waypoint.shp" BundleRelativePath="mods/ra2/bits/waypoint.shp" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/chrome.yaml" LogicalName="mods/ra2/chrome.yaml" BundleRelativePath="mods/ra2/chrome.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/chrome/gamesave-loading.yaml" LogicalName="mods/ra2/chrome/gamesave-loading.yaml" BundleRelativePath="mods/ra2/chrome/gamesave-loading.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/chrome/ingame-debug.yaml" LogicalName="mods/ra2/chrome/ingame-debug.yaml" BundleRelativePath="mods/ra2/chrome/ingame-debug.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/chrome/ingame-info.yaml" LogicalName="mods/ra2/chrome/ingame-info.yaml" BundleRelativePath="mods/ra2/chrome/ingame-info.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/chrome/ingame-menu.yaml" LogicalName="mods/ra2/chrome/ingame-menu.yaml" BundleRelativePath="mods/ra2/chrome/ingame-menu.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/chrome/ingame-observer.yaml" LogicalName="mods/ra2/chrome/ingame-observer.yaml" BundleRelativePath="mods/ra2/chrome/ingame-observer.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/chrome/ingame-player.yaml" LogicalName="mods/ra2/chrome/ingame-player.yaml" BundleRelativePath="mods/ra2/chrome/ingame-player.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/chrome/ingame.yaml" LogicalName="mods/ra2/chrome/ingame.yaml" BundleRelativePath="mods/ra2/chrome/ingame.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/chrome/mainmenu-prerelease-notification.yaml" LogicalName="mods/ra2/chrome/mainmenu-prerelease-notification.yaml" BundleRelativePath="mods/ra2/chrome/mainmenu-prerelease-notification.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/chrome/mainmenu.yaml" LogicalName="mods/ra2/chrome/mainmenu.yaml" BundleRelativePath="mods/ra2/chrome/mainmenu.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/chrome/settings.yaml" LogicalName="mods/ra2/chrome/settings.yaml" BundleRelativePath="mods/ra2/chrome/settings.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/cursors.yaml" LogicalName="mods/ra2/cursors.yaml" BundleRelativePath="mods/ra2/cursors.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/fluent/assetbrowser.ftl" LogicalName="mods/ra2/fluent/assetbrowser.ftl" BundleRelativePath="mods/ra2/fluent/assetbrowser.ftl" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/fluent/chrome.ftl" LogicalName="mods/ra2/fluent/chrome.ftl" BundleRelativePath="mods/ra2/fluent/chrome.ftl" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/fluent/hotkeys.ftl" LogicalName="mods/ra2/fluent/hotkeys.ftl" BundleRelativePath="mods/ra2/fluent/hotkeys.ftl" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/fluent/mod.ftl" LogicalName="mods/ra2/fluent/mod.ftl" BundleRelativePath="mods/ra2/fluent/mod.ftl" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/fluent/rules.ftl" LogicalName="mods/ra2/fluent/rules.ftl" BundleRelativePath="mods/ra2/fluent/rules.ftl" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/fluent/zh-CN/assetbrowser.ftl" LogicalName="mods/ra2/fluent/zh-CN/assetbrowser.ftl" BundleRelativePath="mods/ra2/fluent/zh-CN/assetbrowser.ftl" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/fluent/zh-CN/chrome.ftl" LogicalName="mods/ra2/fluent/zh-CN/chrome.ftl" BundleRelativePath="mods/ra2/fluent/zh-CN/chrome.ftl" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/fluent/zh-CN/hotkeys.ftl" LogicalName="mods/ra2/fluent/zh-CN/hotkeys.ftl" BundleRelativePath="mods/ra2/fluent/zh-CN/hotkeys.ftl" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/fluent/zh-CN/mod.ftl" LogicalName="mods/ra2/fluent/zh-CN/mod.ftl" BundleRelativePath="mods/ra2/fluent/zh-CN/mod.ftl" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/fluent/zh-CN/rules.ftl" LogicalName="mods/ra2/fluent/zh-CN/rules.ftl" BundleRelativePath="mods/ra2/fluent/zh-CN/rules.ftl" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/fonts/NotoSansCJKsc-Bold.otf" LogicalName="mods/ra2/fonts/NotoSansCJKsc-Bold.otf" BundleRelativePath="mods/ra2/fonts/NotoSansCJKsc-Bold.otf" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/fonts/NotoSansCJKsc-Regular.otf" LogicalName="mods/ra2/fonts/NotoSansCJKsc-Regular.otf" BundleRelativePath="mods/ra2/fonts/NotoSansCJKsc-Regular.otf" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/fonts/OFL.txt" LogicalName="mods/ra2/fonts/OFL.txt" BundleRelativePath="mods/ra2/fonts/OFL.txt" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/hotkeys.yaml" LogicalName="mods/ra2/hotkeys.yaml" BundleRelativePath="mods/ra2/hotkeys.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/icon.png" LogicalName="mods/ra2/icon.png" BundleRelativePath="mods/ra2/icon.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/manifest/common.yaml" LogicalName="mods/ra2/manifest/common.yaml" BundleRelativePath="mods/ra2/manifest/common.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/manifest/filesystem-desktop.yaml" LogicalName="mods/ra2/manifest/filesystem-desktop.yaml" BundleRelativePath="mods/ra2/manifest/filesystem-desktop.yaml" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/manifest/filesystem-ios-base.yaml" LogicalName="mods/ra2/manifest/filesystem-ios-base.yaml" BundleRelativePath="mods/ra2/manifest/filesystem-ios-base.yaml" Profiles="Base" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/manifest/filesystem-ios-yuri.yaml" LogicalName="mods/ra2/manifest/filesystem-ios-yuri.yaml" BundleRelativePath="mods/ra2/manifest/filesystem-ios-yuri.yaml" Profiles="Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/manifest/gameplay-base.yaml" LogicalName="mods/ra2/manifest/gameplay-base.yaml" BundleRelativePath="mods/ra2/manifest/gameplay-base.yaml" Profiles="Base" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/manifest/gameplay-yuri.yaml" LogicalName="mods/ra2/manifest/gameplay-yuri.yaml" BundleRelativePath="mods/ra2/manifest/gameplay-yuri.yaml" Profiles="Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/maps/blank-shellmap/map.bin" LogicalName="mods/ra2/maps/blank-shellmap/map.bin" BundleRelativePath="mods/ra2/maps/blank-shellmap/map.bin" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/maps/blank-shellmap/map.png" LogicalName="mods/ra2/maps/blank-shellmap/map.png" BundleRelativePath="mods/ra2/maps/blank-shellmap/map.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/maps/blank-shellmap/map.yaml" LogicalName="mods/ra2/maps/blank-shellmap/map.yaml" BundleRelativePath="mods/ra2/maps/blank-shellmap/map.yaml" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/metrics.yaml" LogicalName="mods/ra2/metrics.yaml" BundleRelativePath="mods/ra2/metrics.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/mod.ios-base.yaml" LogicalName="mods/ra2/mod.ios-base.yaml" BundleRelativePath="mods/ra2/mod.ios-base.yaml" Profiles="Base" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/mod.ios-yuri.yaml" LogicalName="mods/ra2/mod.ios-yuri.yaml" BundleRelativePath="mods/ra2/mod.ios-yuri.yaml" Profiles="Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/mod.yaml" LogicalName="mods/ra2/mod.yaml" BundleRelativePath="mods/ra2/mod.yaml" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/rules/ai-profiles.yaml" LogicalName="mods/ra2/rules/ai-profiles.yaml" BundleRelativePath="mods/ra2/rules/ai-profiles.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/rules/ai.yaml" LogicalName="mods/ra2/rules/ai.yaml" BundleRelativePath="mods/ra2/rules/ai.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/rules/aircraft.yaml" LogicalName="mods/ra2/rules/aircraft.yaml" BundleRelativePath="mods/ra2/rules/aircraft.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/rules/allied-infantry-base.yaml" LogicalName="mods/ra2/rules/allied-infantry-base.yaml" BundleRelativePath="mods/ra2/rules/allied-infantry-base.yaml" Profiles="Base" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/rules/allied-infantry.yaml" LogicalName="mods/ra2/rules/allied-infantry.yaml" BundleRelativePath="mods/ra2/rules/allied-infantry.yaml" Profiles="Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/rules/allied-naval.yaml" LogicalName="mods/ra2/rules/allied-naval.yaml" BundleRelativePath="mods/ra2/rules/allied-naval.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/rules/allied-structures.yaml" LogicalName="mods/ra2/rules/allied-structures.yaml" BundleRelativePath="mods/ra2/rules/allied-structures.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/rules/allied-vehicles.yaml" LogicalName="mods/ra2/rules/allied-vehicles.yaml" BundleRelativePath="mods/ra2/rules/allied-vehicles.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/rules/animals.yaml" LogicalName="mods/ra2/rules/animals.yaml" BundleRelativePath="mods/ra2/rules/animals.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/rules/bridges.yaml" LogicalName="mods/ra2/rules/bridges.yaml" BundleRelativePath="mods/ra2/rules/bridges.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/rules/civilian-naval.yaml" LogicalName="mods/ra2/rules/civilian-naval.yaml" BundleRelativePath="mods/ra2/rules/civilian-naval.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/rules/civilian-props.yaml" LogicalName="mods/ra2/rules/civilian-props.yaml" BundleRelativePath="mods/ra2/rules/civilian-props.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/rules/civilian-structures.yaml" LogicalName="mods/ra2/rules/civilian-structures.yaml" BundleRelativePath="mods/ra2/rules/civilian-structures.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/rules/civilian-vehicles.yaml" LogicalName="mods/ra2/rules/civilian-vehicles.yaml" BundleRelativePath="mods/ra2/rules/civilian-vehicles.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/rules/civilians.yaml" LogicalName="mods/ra2/rules/civilians.yaml" BundleRelativePath="mods/ra2/rules/civilians.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/rules/defaults-base.yaml" LogicalName="mods/ra2/rules/defaults-base.yaml" BundleRelativePath="mods/ra2/rules/defaults-base.yaml" Profiles="Base" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/rules/defaults.yaml" LogicalName="mods/ra2/rules/defaults.yaml" BundleRelativePath="mods/ra2/rules/defaults.yaml" Profiles="Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/rules/misc.yaml" LogicalName="mods/ra2/rules/misc.yaml" BundleRelativePath="mods/ra2/rules/misc.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/rules/palettes.yaml" LogicalName="mods/ra2/rules/palettes.yaml" BundleRelativePath="mods/ra2/rules/palettes.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/rules/player.yaml" LogicalName="mods/ra2/rules/player.yaml" BundleRelativePath="mods/ra2/rules/player.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/rules/proxy-actors-base.yaml" LogicalName="mods/ra2/rules/proxy-actors-base.yaml" BundleRelativePath="mods/ra2/rules/proxy-actors-base.yaml" Profiles="Base" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/rules/proxy-actors.yaml" LogicalName="mods/ra2/rules/proxy-actors.yaml" BundleRelativePath="mods/ra2/rules/proxy-actors.yaml" Profiles="Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/rules/soviet-infantry-base.yaml" LogicalName="mods/ra2/rules/soviet-infantry-base.yaml" BundleRelativePath="mods/ra2/rules/soviet-infantry-base.yaml" Profiles="Base" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/rules/soviet-infantry.yaml" LogicalName="mods/ra2/rules/soviet-infantry.yaml" BundleRelativePath="mods/ra2/rules/soviet-infantry.yaml" Profiles="Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/rules/soviet-naval.yaml" LogicalName="mods/ra2/rules/soviet-naval.yaml" BundleRelativePath="mods/ra2/rules/soviet-naval.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/rules/soviet-structures.yaml" LogicalName="mods/ra2/rules/soviet-structures.yaml" BundleRelativePath="mods/ra2/rules/soviet-structures.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/rules/soviet-vehicles-base.yaml" LogicalName="mods/ra2/rules/soviet-vehicles-base.yaml" BundleRelativePath="mods/ra2/rules/soviet-vehicles-base.yaml" Profiles="Base" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/rules/soviet-vehicles.yaml" LogicalName="mods/ra2/rules/soviet-vehicles.yaml" BundleRelativePath="mods/ra2/rules/soviet-vehicles.yaml" Profiles="Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/rules/tech-structures.yaml" LogicalName="mods/ra2/rules/tech-structures.yaml" BundleRelativePath="mods/ra2/rules/tech-structures.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/rules/trees.yaml" LogicalName="mods/ra2/rules/trees.yaml" BundleRelativePath="mods/ra2/rules/trees.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/rules/world-base.yaml" LogicalName="mods/ra2/rules/world-base.yaml" BundleRelativePath="mods/ra2/rules/world-base.yaml" Profiles="Base" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/rules/world.yaml" LogicalName="mods/ra2/rules/world.yaml" BundleRelativePath="mods/ra2/rules/world.yaml" Profiles="Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/rules/yuri-infantry.yaml" LogicalName="mods/ra2/rules/yuri-infantry.yaml" BundleRelativePath="mods/ra2/rules/yuri-infantry.yaml" Profiles="Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/rules/yuri-naval.yaml" LogicalName="mods/ra2/rules/yuri-naval.yaml" BundleRelativePath="mods/ra2/rules/yuri-naval.yaml" Profiles="Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/rules/yuri-structures.yaml" LogicalName="mods/ra2/rules/yuri-structures.yaml" BundleRelativePath="mods/ra2/rules/yuri-structures.yaml" Profiles="Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/rules/yuri-vehicles.yaml" LogicalName="mods/ra2/rules/yuri-vehicles.yaml" BundleRelativePath="mods/ra2/rules/yuri-vehicles.yaml" Profiles="Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/sequences/aircraft.yaml" LogicalName="mods/ra2/sequences/aircraft.yaml" BundleRelativePath="mods/ra2/sequences/aircraft.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/sequences/allied-infantry.yaml" LogicalName="mods/ra2/sequences/allied-infantry.yaml" BundleRelativePath="mods/ra2/sequences/allied-infantry.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/sequences/allied-structures.yaml" LogicalName="mods/ra2/sequences/allied-structures.yaml" BundleRelativePath="mods/ra2/sequences/allied-structures.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/sequences/animals.yaml" LogicalName="mods/ra2/sequences/animals.yaml" BundleRelativePath="mods/ra2/sequences/animals.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/sequences/bridges.yaml" LogicalName="mods/ra2/sequences/bridges.yaml" BundleRelativePath="mods/ra2/sequences/bridges.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/sequences/civilian-props.yaml" LogicalName="mods/ra2/sequences/civilian-props.yaml" BundleRelativePath="mods/ra2/sequences/civilian-props.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/sequences/civilian-structures.yaml" LogicalName="mods/ra2/sequences/civilian-structures.yaml" BundleRelativePath="mods/ra2/sequences/civilian-structures.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/sequences/civilians.yaml" LogicalName="mods/ra2/sequences/civilians.yaml" BundleRelativePath="mods/ra2/sequences/civilians.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/sequences/defaults.yaml" LogicalName="mods/ra2/sequences/defaults.yaml" BundleRelativePath="mods/ra2/sequences/defaults.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/sequences/misc.yaml" LogicalName="mods/ra2/sequences/misc.yaml" BundleRelativePath="mods/ra2/sequences/misc.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/sequences/soviet-infantry.yaml" LogicalName="mods/ra2/sequences/soviet-infantry.yaml" BundleRelativePath="mods/ra2/sequences/soviet-infantry.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/sequences/soviet-structures.yaml" LogicalName="mods/ra2/sequences/soviet-structures.yaml" BundleRelativePath="mods/ra2/sequences/soviet-structures.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/sequences/tech-structures.yaml" LogicalName="mods/ra2/sequences/tech-structures.yaml" BundleRelativePath="mods/ra2/sequences/tech-structures.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/sequences/trees.yaml" LogicalName="mods/ra2/sequences/trees.yaml" BundleRelativePath="mods/ra2/sequences/trees.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/sequences/vehicles-base.yaml" LogicalName="mods/ra2/sequences/vehicles-base.yaml" BundleRelativePath="mods/ra2/sequences/vehicles-base.yaml" Profiles="Base" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/sequences/vehicles.yaml" LogicalName="mods/ra2/sequences/vehicles.yaml" BundleRelativePath="mods/ra2/sequences/vehicles.yaml" Profiles="Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/sequences/voxels-base.yaml" LogicalName="mods/ra2/sequences/voxels-base.yaml" BundleRelativePath="mods/ra2/sequences/voxels-base.yaml" Profiles="Base" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/sequences/voxels.yaml" LogicalName="mods/ra2/sequences/voxels.yaml" BundleRelativePath="mods/ra2/sequences/voxels.yaml" Profiles="Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/sequences/yuri-infantry.yaml" LogicalName="mods/ra2/sequences/yuri-infantry.yaml" BundleRelativePath="mods/ra2/sequences/yuri-infantry.yaml" Profiles="Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/sequences/yuri-structures.yaml" LogicalName="mods/ra2/sequences/yuri-structures.yaml" BundleRelativePath="mods/ra2/sequences/yuri-structures.yaml" Profiles="Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/tilesets/snow.yaml" LogicalName="mods/ra2/tilesets/snow.yaml" BundleRelativePath="mods/ra2/tilesets/snow.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/tilesets/temperat.yaml" LogicalName="mods/ra2/tilesets/temperat.yaml" BundleRelativePath="mods/ra2/tilesets/temperat.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/tilesets/urban.yaml" LogicalName="mods/ra2/tilesets/urban.yaml" BundleRelativePath="mods/ra2/tilesets/urban.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/NUCLEAR-CRISIS-BG-01.png" LogicalName="mods/ra2/uibits/NUCLEAR-CRISIS-BG-01.png" BundleRelativePath="mods/ra2/uibits/NUCLEAR-CRISIS-BG-01.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/NUCLEAR-CRISIS-BG-02.png" LogicalName="mods/ra2/uibits/NUCLEAR-CRISIS-BG-02.png" BundleRelativePath="mods/ra2/uibits/NUCLEAR-CRISIS-BG-02.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/NUCLEAR-CRISIS-BG-03.png" LogicalName="mods/ra2/uibits/NUCLEAR-CRISIS-BG-03.png" BundleRelativePath="mods/ra2/uibits/NUCLEAR-CRISIS-BG-03.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/NUCLEAR-CRISIS-BG-04.png" LogicalName="mods/ra2/uibits/NUCLEAR-CRISIS-BG-04.png" BundleRelativePath="mods/ra2/uibits/NUCLEAR-CRISIS-BG-04.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/NUCLEAR-CRISIS-BG-05.png" LogicalName="mods/ra2/uibits/NUCLEAR-CRISIS-BG-05.png" BundleRelativePath="mods/ra2/uibits/NUCLEAR-CRISIS-BG-05.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/NUCLEAR-CRISIS-BG-06.png" LogicalName="mods/ra2/uibits/NUCLEAR-CRISIS-BG-06.png" BundleRelativePath="mods/ra2/uibits/NUCLEAR-CRISIS-BG-06.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/NUCLEAR-CRISIS-BG-07.png" LogicalName="mods/ra2/uibits/NUCLEAR-CRISIS-BG-07.png" BundleRelativePath="mods/ra2/uibits/NUCLEAR-CRISIS-BG-07.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/NUCLEAR-CRISIS-BG-08.png" LogicalName="mods/ra2/uibits/NUCLEAR-CRISIS-BG-08.png" BundleRelativePath="mods/ra2/uibits/NUCLEAR-CRISIS-BG-08.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/NUCLEAR-CRISIS-BG-09.png" LogicalName="mods/ra2/uibits/NUCLEAR-CRISIS-BG-09.png" BundleRelativePath="mods/ra2/uibits/NUCLEAR-CRISIS-BG-09.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/buttons.png" LogicalName="mods/ra2/uibits/buttons.png" BundleRelativePath="mods/ra2/uibits/buttons.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/chrome.fps-pre.png" LogicalName="mods/ra2/uibits/chrome.fps-pre.png" BundleRelativePath="mods/ra2/uibits/chrome.fps-pre.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/chrome.png" LogicalName="mods/ra2/uibits/chrome.png" BundleRelativePath="mods/ra2/uibits/chrome.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/commandbar-bar-v2.png" LogicalName="mods/ra2/uibits/commandbar-bar-v2.png" BundleRelativePath="mods/ra2/uibits/commandbar-bar-v2.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/commandbar-chrome.png" LogicalName="mods/ra2/uibits/commandbar-chrome.png" BundleRelativePath="mods/ra2/uibits/commandbar-chrome.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/commandbar-icons-remastered.png" LogicalName="mods/ra2/uibits/commandbar-icons-remastered.png" BundleRelativePath="mods/ra2/uibits/commandbar-icons-remastered.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/commandbar-icons.png" LogicalName="mods/ra2/uibits/commandbar-icons.png" BundleRelativePath="mods/ra2/uibits/commandbar-icons.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/commandbar-panel-compact.png" LogicalName="mods/ra2/uibits/commandbar-panel-compact.png" BundleRelativePath="mods/ra2/uibits/commandbar-panel-compact.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/commandbar-panel.png" LogicalName="mods/ra2/uibits/commandbar-panel.png" BundleRelativePath="mods/ra2/uibits/commandbar-panel.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/commandbar-toggle-icons.png" LogicalName="mods/ra2/uibits/commandbar-toggle-icons.png" BundleRelativePath="mods/ra2/uibits/commandbar-toggle-icons.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/dialog.png" LogicalName="mods/ra2/uibits/dialog.png" BundleRelativePath="mods/ra2/uibits/dialog.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/ios-commandbar-icons-v2.png" LogicalName="mods/ra2/uibits/ios-commandbar-icons-v2.png" BundleRelativePath="mods/ra2/uibits/ios-commandbar-icons-v2.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/ios-joystick-command-icons.png" LogicalName="mods/ra2/uibits/ios-joystick-command-icons.png" BundleRelativePath="mods/ra2/uibits/ios-joystick-command-icons.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/ios-touch-actions-allies-2x.png" LogicalName="mods/ra2/uibits/ios-touch-actions-allies-2x.png" BundleRelativePath="mods/ra2/uibits/ios-touch-actions-allies-2x.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/ios-touch-actions-allies.png" LogicalName="mods/ra2/uibits/ios-touch-actions-allies.png" BundleRelativePath="mods/ra2/uibits/ios-touch-actions-allies.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/ios-touch-actions-soviets-2x.png" LogicalName="mods/ra2/uibits/ios-touch-actions-soviets-2x.png" BundleRelativePath="mods/ra2/uibits/ios-touch-actions-soviets-2x.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/ios-touch-actions-soviets.png" LogicalName="mods/ra2/uibits/ios-touch-actions-soviets.png" BundleRelativePath="mods/ra2/uibits/ios-touch-actions-soviets.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/ios-touch-actions-yuri-2x.png" LogicalName="mods/ra2/uibits/ios-touch-actions-yuri-2x.png" BundleRelativePath="mods/ra2/uibits/ios-touch-actions-yuri-2x.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/ios-touch-actions-yuri.png" LogicalName="mods/ra2/uibits/ios-touch-actions-yuri.png" BundleRelativePath="mods/ra2/uibits/ios-touch-actions-yuri.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/ios-touch-joystick-allies-2x.png" LogicalName="mods/ra2/uibits/ios-touch-joystick-allies-2x.png" BundleRelativePath="mods/ra2/uibits/ios-touch-joystick-allies-2x.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/ios-touch-joystick-allies.png" LogicalName="mods/ra2/uibits/ios-touch-joystick-allies.png" BundleRelativePath="mods/ra2/uibits/ios-touch-joystick-allies.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/ios-touch-joystick-soviets-2x.png" LogicalName="mods/ra2/uibits/ios-touch-joystick-soviets-2x.png" BundleRelativePath="mods/ra2/uibits/ios-touch-joystick-soviets-2x.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/ios-touch-joystick-soviets.png" LogicalName="mods/ra2/uibits/ios-touch-joystick-soviets.png" BundleRelativePath="mods/ra2/uibits/ios-touch-joystick-soviets.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/ios-touch-joystick-yuri-2x.png" LogicalName="mods/ra2/uibits/ios-touch-joystick-yuri-2x.png" BundleRelativePath="mods/ra2/uibits/ios-touch-joystick-yuri-2x.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/ios-touch-joystick-yuri.png" LogicalName="mods/ra2/uibits/ios-touch-joystick-yuri.png" BundleRelativePath="mods/ra2/uibits/ios-touch-joystick-yuri.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/ios-touch-quickbar-allies-2x.png" LogicalName="mods/ra2/uibits/ios-touch-quickbar-allies-2x.png" BundleRelativePath="mods/ra2/uibits/ios-touch-quickbar-allies-2x.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/ios-touch-quickbar-allies.png" LogicalName="mods/ra2/uibits/ios-touch-quickbar-allies.png" BundleRelativePath="mods/ra2/uibits/ios-touch-quickbar-allies.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/ios-touch-quickbar-soviets-2x.png" LogicalName="mods/ra2/uibits/ios-touch-quickbar-soviets-2x.png" BundleRelativePath="mods/ra2/uibits/ios-touch-quickbar-soviets-2x.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/ios-touch-quickbar-soviets.png" LogicalName="mods/ra2/uibits/ios-touch-quickbar-soviets.png" BundleRelativePath="mods/ra2/uibits/ios-touch-quickbar-soviets.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/ios-touch-quickbar-yuri-2x.png" LogicalName="mods/ra2/uibits/ios-touch-quickbar-yuri-2x.png" BundleRelativePath="mods/ra2/uibits/ios-touch-quickbar-yuri-2x.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/ios-touch-quickbar-yuri.png" LogicalName="mods/ra2/uibits/ios-touch-quickbar-yuri.png" BundleRelativePath="mods/ra2/uibits/ios-touch-quickbar-yuri.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/ios-viewport-joystick.png" LogicalName="mods/ra2/uibits/ios-viewport-joystick.png" BundleRelativePath="mods/ra2/uibits/ios-viewport-joystick.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/menubg1.png" LogicalName="mods/ra2/uibits/menubg1.png" BundleRelativePath="mods/ra2/uibits/menubg1.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/menubg2.png" LogicalName="mods/ra2/uibits/menubg2.png" BundleRelativePath="mods/ra2/uibits/menubg2.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/menubg3.png" LogicalName="mods/ra2/uibits/menubg3.png" BundleRelativePath="mods/ra2/uibits/menubg3.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/menubg4.png" LogicalName="mods/ra2/uibits/menubg4.png" BundleRelativePath="mods/ra2/uibits/menubg4.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/menubuttons.gold-bak.png" LogicalName="mods/ra2/uibits/menubuttons.gold-bak.png" BundleRelativePath="mods/ra2/uibits/menubuttons.gold-bak.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/menubuttons.png" LogicalName="mods/ra2/uibits/menubuttons.png" BundleRelativePath="mods/ra2/uibits/menubuttons.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/menupanel.gold-bak.png" LogicalName="mods/ra2/uibits/menupanel.gold-bak.png" BundleRelativePath="mods/ra2/uibits/menupanel.gold-bak.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/menupanel.png" LogicalName="mods/ra2/uibits/menupanel.png" BundleRelativePath="mods/ra2/uibits/menupanel.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/musicplayer.png" LogicalName="mods/ra2/uibits/musicplayer.png" BundleRelativePath="mods/ra2/uibits/musicplayer.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/production-x5-icon.png" LogicalName="mods/ra2/uibits/production-x5-icon.png" BundleRelativePath="mods/ra2/uibits/production-x5-icon.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/settingspanel.png" LogicalName="mods/ra2/uibits/settingspanel.png" BundleRelativePath="mods/ra2/uibits/settingspanel.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/spawnpoints.png" LogicalName="mods/ra2/uibits/spawnpoints.png" BundleRelativePath="mods/ra2/uibits/spawnpoints.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/uibits/strategic.png" LogicalName="mods/ra2/uibits/strategic.png" BundleRelativePath="mods/ra2/uibits/strategic.png" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/weapons/bullets.yaml" LogicalName="mods/ra2/weapons/bullets.yaml" BundleRelativePath="mods/ra2/weapons/bullets.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/weapons/defaults.yaml" LogicalName="mods/ra2/weapons/defaults.yaml" BundleRelativePath="mods/ra2/weapons/defaults.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/weapons/explosions.yaml" LogicalName="mods/ra2/weapons/explosions.yaml" BundleRelativePath="mods/ra2/weapons/explosions.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/weapons/flaks.yaml" LogicalName="mods/ra2/weapons/flaks.yaml" BundleRelativePath="mods/ra2/weapons/flaks.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/weapons/gatling.yaml" LogicalName="mods/ra2/weapons/gatling.yaml" BundleRelativePath="mods/ra2/weapons/gatling.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/weapons/melee.yaml" LogicalName="mods/ra2/weapons/melee.yaml" BundleRelativePath="mods/ra2/weapons/melee.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/weapons/mgs.yaml" LogicalName="mods/ra2/weapons/mgs.yaml" BundleRelativePath="mods/ra2/weapons/mgs.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/weapons/misc.yaml" LogicalName="mods/ra2/weapons/misc.yaml" BundleRelativePath="mods/ra2/weapons/misc.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/weapons/missiles.yaml" LogicalName="mods/ra2/weapons/missiles.yaml" BundleRelativePath="mods/ra2/weapons/missiles.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/weapons/yuri.yaml" LogicalName="mods/ra2/weapons/yuri.yaml" BundleRelativePath="mods/ra2/weapons/yuri.yaml" Profiles="Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../mods/ra2/weapons/zaps.yaml" LogicalName="mods/ra2/weapons/zaps.yaml" BundleRelativePath="mods/ra2/weapons/zaps.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/ts/chrome/assetbrowser.yaml" LogicalName="mods/ts/chrome/assetbrowser.yaml" BundleRelativePath="mods/ts/chrome/assetbrowser.yaml" Profiles="Base,Yuri" Purpose="Contract" />
-    <RuntimeContractDescriptor Include="../../engine/mods/ts/mod.yaml" LogicalName="mods/ts/mod.yaml" BundleRelativePath="mods/ts/mod.yaml" Profiles="Base,Yuri" Purpose="PreflightOnly" />
-  </ItemGroup>
   <ItemGroup>
 	<!-- Asset catalogs are deny-by-default so PublicClean cannot accidentally
 	     compile a newly added private imageset into its opaque Assets.car. -->
@@ -374,66 +74,42 @@
       <SmartLink>false</SmartLink>
     </NativeReference>
   </ItemGroup>
-  <Target Name="WriteRuntimeContractDescriptorInput">
-    <PropertyGroup>
-      <RuntimeContractDescriptorInputFile Condition="'$(RuntimeContractDescriptorInputFile)' == ''">$(IntermediateOutputPath)runtime-contract-descriptors-v1.tsv</RuntimeContractDescriptorInputFile>
-    </PropertyGroup>
-    <Error Condition="@(RuntimeContractDescriptor->Count()) != 296"
-      Text="RuntimeContractDescriptor must contain exactly the 296 reviewed golden rows." />
-    <MakeDir Directories="$(IntermediateOutputPath)" />
-    <ItemGroup>
-      <_RuntimeContractDescriptorInputRow Include="@(RuntimeContractDescriptor->'%(Identity)&#x9;%(LogicalName)&#x9;%(BundleRelativePath)&#x9;%(Profiles)&#x9;%(Purpose)')" />
-    </ItemGroup>
-    <WriteLinesToFile File="$(RuntimeContractDescriptorInputFile)"
-      Lines="@(_RuntimeContractDescriptorInputRow)" Overwrite="true" />
-  </Target>
-  <!-- A direct GenerateAotObjectRegistry invocation starts at this project and
-       asks ResolveProjectReferences to build three overlapping dependency
-       graphs.  Serialize only that direct dependency walk: multi-node MSBuild
-       can otherwise strand the outer target while the child graphs converge.
-       During a normal Build the references have already resolved before this
-       preparation target runs, so the regular build graph remains unchanged. -->
-  <Target Name="PrepareAotObjectRegistryGeneration">
-    <PropertyGroup>
-      <BuildInParallel>false</BuildInParallel>
-    </PropertyGroup>
-  </Target>
-  <Target Name="GenerateAotObjectRegistry" BeforeTargets="CoreCompile" Condition="'$(PublicClean)' != 'true'"
-    DependsOnTargets="PrepareAotObjectRegistryGeneration;ResolveProjectReferences;WriteRuntimeContractDescriptorInput">
-    <Exec WorkingDirectory="$(MSBuildProjectDirectory)"
-      Command="dotnet run --project &quot;$(MSBuildProjectDirectory)/../../build/OpenRA.AotRegistry.Generator/OpenRA.AotRegistry.Generator.csproj&quot; --configuration Release --no-launch-profile -- &quot;$(GeneratedAotRegistryFile)&quot; &quot;$(RuntimeContractDescriptorInputFile)&quot; &quot;$(RuntimeContractDescriptorShapeFile)&quot; &quot;$(RuntimeContractDescriptorShapeFileSha256)&quot; &quot;$(MSBuildProjectDirectory)/../../engine/bin/OpenRA.Game.dll&quot; &quot;$(MSBuildProjectDirectory)/../../engine/bin/OpenRA.Mods.Common.dll&quot; &quot;$(MSBuildProjectDirectory)/../../engine/bin/OpenRA.Mods.Cnc.dll&quot; &quot;$(MSBuildProjectDirectory)/../../engine/bin/OpenRA.Mods.RA2.dll&quot;" />
-  </Target>
-  <Target Name="ValidatePublicAotObjectRegistry" BeforeTargets="CoreCompile" Condition="'$(PublicClean)' == 'true'">
-    <!-- The private recovery tree regenerates this file from all 296 historical
-         descriptors.  The public projection deliberately omits unlicensed
-         descriptor assets, so it must consume only that authenticated output. -->
-    <GetFileHash Files="$(GeneratedAotRegistryFile)" Algorithm="SHA256">
-      <Output TaskParameter="Items" ItemName="_GeneratedAotRegistryHash" />
-    </GetFileHash>
-    <Error Condition="'@(_GeneratedAotRegistryHash->'%(FileHash)')' != '$(GeneratedAotRegistryFileSha256)'"
-      Text="PublicClean requires the authenticated Build 4 GeneratedAotObjectRegistry.g.cs." />
+  <Target Name="GenerateAotObjectRegistry" BeforeTargets="CoreCompile" DependsOnTargets="ResolveProjectReferences">
+    <Exec Command="dotnet run --project &quot;$(MSBuildProjectDirectory)/../../build/OpenRA.AotRegistry.Generator/OpenRA.AotRegistry.Generator.csproj&quot; --configuration Release --no-launch-profile -- &quot;$(GeneratedAotRegistryFile)&quot; &quot;$(MSBuildProjectDirectory)/../../engine/bin/OpenRA.Game.dll&quot; &quot;$(MSBuildProjectDirectory)/../../engine/bin/OpenRA.Mods.Common.dll&quot; &quot;$(MSBuildProjectDirectory)/../../engine/bin/OpenRA.Mods.Cnc.dll&quot; &quot;$(MSBuildProjectDirectory)/../../engine/bin/OpenRA.Mods.RA2.dll&quot;" />
   </Target>
   <ItemGroup Condition="'$(PublicClean)' != 'true'">
-    <!-- Runtime files are transported only through the authenticated literal
-         descriptor projection.  Optimize=false preserves the exact hashed bytes. -->
-    <BundleResource Include="@(RuntimeContractDescriptor)"
-      LogicalName="%(BundleRelativePath)"
-      Link="%(BundleRelativePath)"
-      Optimize="false" RuntimeContractDerived="true" />
-    <BundleResource Include="../../mods/ra2-content/**/*">
+    <BundleResource Include="../../engine/VERSION" Link="VERSION" />
+    <BundleResource Include="../../engine/global mix database.dat" Link="global mix database.dat" />
+    <BundleResource Include="../../engine/glsl/**/*">
+      <Link>glsl/%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </BundleResource>
+	<BundleResource Include="../../engine/mods/**/*" Exclude="../../engine/mods/ra2/**/*">
+      <Link>mods/%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </BundleResource>
+	<!-- The repository-level RA2 tree below is the canonical source.  Excluding
+	     the stale engine snapshot prevents duplicate bundle paths. -->
+	<BundleResource Include="../../mods/ra2/**/*" Exclude="../../mods/ra2/**/*.svg;$(LegacyIosTouchAssetExcludes)">
+      <Link>mods/ra2/%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </BundleResource>
+    <BundleResource Include="../../mods/ra2-content/**/*" Exclude="../../mods/ra2-content/.DS_Store;../../mods/ra2-content/**/.DS_Store">
       <Link>mods/ra2-content/%(RecursiveDir)%(Filename)%(Extension)</Link>
     </BundleResource>
   </ItemGroup>
   <ItemGroup Condition="'$(PublicClean)' == 'true'">
-    <!-- Public builds are allowlisted.  Binary art, maps, fonts, and retail data
-         remain excluded until their provenance is explicitly approved. -->
+    <!-- Public builds are allowlisted. Retail data and maps remain excluded.
+         Presentation resources below are covered by the approved public manifest. -->
+    <BundleResource Include="../../engine/VERSION" Link="VERSION" />
+    <BundleResource Include="../../engine/global mix database.dat" Link="global mix database.dat" />
+    <BundleResource Include="../../engine/glsl/**/*">
+      <Link>glsl/%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </BundleResource>
     <BundleResource Include="../../engine/mods/common/**/*">
       <Link>mods/common/%(RecursiveDir)%(Filename)%(Extension)</Link>
     </BundleResource>
     <BundleResource Include="../../engine/mods/common-content/**/*">
       <Link>mods/common-content/%(RecursiveDir)%(Filename)%(Extension)</Link>
     </BundleResource>
-    <BundleResource Include="../../mods/ra2-content/**/*">
+    <BundleResource Include="../../mods/ra2-content/**/*" Exclude="../../mods/ra2-content/.DS_Store;../../mods/ra2-content/**/.DS_Store">
       <Link>mods/ra2-content/%(RecursiveDir)%(Filename)%(Extension)</Link>
     </BundleResource>
     <BundleResource Include="../../mods/ra2/*.yaml">
@@ -445,6 +121,8 @@
     <BundleResource Include="../../mods/ra2/audio/**/*.yaml">
       <Link>mods/ra2/audio/%(RecursiveDir)%(Filename)%(Extension)</Link>
     </BundleResource>
+    <!-- Only the clean-room NUKE HOUR impact overlays are approved for public
+         distribution. All other RA2 bits remain user-supplied at runtime. -->
     <BundleResource Include="../../mods/ra2/bits/animations/nc-impact-*.png">
       <Link>mods/ra2/bits/animations/%(Filename)%(Extension)</Link>
     </BundleResource>
@@ -453,6 +131,9 @@
     </BundleResource>
     <BundleResource Include="../../mods/ra2/fluent/**/*.ftl">
       <Link>mods/ra2/fluent/%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </BundleResource>
+    <BundleResource Include="../../mods/ra2/fonts/**/*">
+      <Link>mods/ra2/fonts/%(RecursiveDir)%(Filename)%(Extension)</Link>
     </BundleResource>
     <BundleResource Include="../../mods/ra2/rules/**/*.yaml">
       <Link>mods/ra2/rules/%(RecursiveDir)%(Filename)%(Extension)</Link>
@@ -463,65 +144,35 @@
     <BundleResource Include="../../mods/ra2/tilesets/**/*.yaml">
       <Link>mods/ra2/tilesets/%(RecursiveDir)%(Filename)%(Extension)</Link>
     </BundleResource>
+    <BundleResource Include="../../mods/ra2/uibits/**/*" Exclude="../../mods/ra2/uibits/**/*.svg;$(LegacyIosTouchAssetExcludes)">
+      <Link>mods/ra2/uibits/%(RecursiveDir)%(Filename)%(Extension)</Link>
+    </BundleResource>
     <BundleResource Include="../../mods/ra2/weapons/**/*.yaml">
       <Link>mods/ra2/weapons/%(RecursiveDir)%(Filename)%(Extension)</Link>
     </BundleResource>
-    <BundleResource Remove="../../mods/ra2/audio/voices-base.yaml" />
-    <BundleResource Remove="../../mods/ra2/mod.ios-base.yaml" />
-    <BundleResource Remove="../../mods/ra2/mod.ios-yuri.yaml" />
-    <BundleResource Remove="../../mods/ra2/rules/allied-infantry-base.yaml" />
-    <BundleResource Remove="../../mods/ra2/rules/defaults-base.yaml" />
-    <BundleResource Remove="../../mods/ra2/rules/proxy-actors-base.yaml" />
-    <BundleResource Remove="../../mods/ra2/rules/soviet-infantry-base.yaml" />
-    <BundleResource Remove="../../mods/ra2/rules/soviet-vehicles-base.yaml" />
-    <BundleResource Remove="../../mods/ra2/rules/world-base.yaml" />
-    <BundleResource Remove="../../mods/ra2/sequences/vehicles-base.yaml" />
-    <BundleResource Remove="../../mods/ra2/sequences/voxels-base.yaml" />
   </ItemGroup>
-  <!-- Mono's iOS AOT hard binding records the exact MVID of referenced
-       assemblies.  The SDK's per-assembly incremental check can otherwise
-       retain dependents compiled against an older MVID, which aborts before
-       managed startup in aot-only mode.  Treat every linked assembly as one
-       dependency closure whenever any member changes. -->
-  <Target Name="InvalidateIosAotDependencyClosure"
-    BeforeTargets="_AOTCompile"
-    DependsOnTargets="_LoadLinkerOutput"
-    Condition="'$(RuntimeIdentifier)' == 'ios-arm64' and '$(_RunAotCompiler)' == 'true' and '$(IsMacEnabled)' == 'true'"
-    Inputs="@(_AssembliesToAOT)"
-    Outputs="$(DeviceSpecificIntermediateOutputPath)aot-dependency-closure.stamp">
-    <Message Importance="High" Text="A managed AOT input changed; invalidating the complete iOS AOT dependency closure." />
-    <Delete Files="@(_AssembliesToAOT->'%(AOTData)');@(_AssembliesToAOT->'%(AOTAssembly)');@(_AssembliesToAOT->'%(LLVMFile)');@(_AssembliesToAOT->'%(ObjectFile)')" />
-  </Target>
-  <!-- Commit the incremental stamp only after every invalidated AOT module has
-       compiled successfully.  Interrupted builds therefore retry the closure. -->
-  <Target Name="StampIosAotDependencyClosure"
-    AfterTargets="_AOTCompile"
-    Condition="'$(RuntimeIdentifier)' == 'ios-arm64' and '$(_RunAotCompiler)' == 'true' and '$(IsMacEnabled)' == 'true' and '@(_AssembliesToAOT)' != ''">
-    <Touch Files="$(DeviceSpecificIntermediateOutputPath)aot-dependency-closure.stamp" AlwaysCreate="true" />
-    <ItemGroup>
-      <FileWrites Include="$(DeviceSpecificIntermediateOutputPath)aot-dependency-closure.stamp" />
-    </ItemGroup>
-  </Target>
+  <ItemGroup>
+	<!-- V3 is the sole shipping touch skin. Keep the source-controlled V2 atlases
+	     only as reproducibility history and exclude them from every app bundle. -->
+	<BundleResource Remove="../../mods/ra2/uibits/ios-touch-*-allies.png;../../mods/ra2/uibits/ios-touch-*-allies-2x.png;../../mods/ra2/uibits/ios-touch-*-soviets.png;../../mods/ra2/uibits/ios-touch-*-soviets-2x.png;../../mods/ra2/uibits/ios-touch-*-yuri.png;../../mods/ra2/uibits/ios-touch-*-yuri-2x.png" />
+  </ItemGroup>
   <!-- Deleted BundleResource files can survive incremental iOS builds.  Remove
        the retired RA2 loading image before bundle assembly, then fail the build
        if the finished personal bundle is not byte-for-byte current. -->
   <Target Name="PreparePersonalIosLoadingBrandBundle" BeforeTargets="_CreateAppBundle" DependsOnTargets="_GenerateBundleName" Condition="'$(PublicClean)' != 'true'">
+	<ItemGroup>
+	  <_LegacyIosTouchBundleAsset Include="$(AppBundleDir)/mods/ra2/uibits/ios-touch-*-allies.png;$(AppBundleDir)/mods/ra2/uibits/ios-touch-*-allies-2x.png;$(AppBundleDir)/mods/ra2/uibits/ios-touch-*-soviets.png;$(AppBundleDir)/mods/ra2/uibits/ios-touch-*-soviets-2x.png;$(AppBundleDir)/mods/ra2/uibits/ios-touch-*-yuri.png;$(AppBundleDir)/mods/ra2/uibits/ios-touch-*-yuri-2x.png" />
+	</ItemGroup>
+	<Delete Files="@(_LegacyIosTouchBundleAsset)" />
     <Exec Command="python3 &quot;$(MSBuildProjectDirectory)/../../packaging/ios_loading_brand_audit.py&quot; prepare --app-bundle &quot;$(AppBundleDir)&quot;" />
   </Target>
-  <!-- ACTool can make LogicalName a traversal path rooted at its intermediate
-       output for both in-tree and external artifact layouts. Route both build
-       layouts through one fail-closed normalization core. -->
+  <!-- ACTool makes LogicalName project-relative. With an external ArtifactsPath
+       that becomes a traversal path, so the SDK copies these files outside the
+       .app. The three known root icon outputs must keep root logical names. -->
   <Target Name="NormalizeIosAssetCatalogLogicalNames"
     AfterTargets="_CompileImageAssets"
     BeforeTargets="_ComputeBundleResourceOutputPaths"
-    Condition="'$(UseArtifactsOutput)' == 'true'"
-    DependsOnTargets="NormalizeIosAssetCatalogLogicalNamesCore" />
-  <Target Name="NormalizeInTreeIosAssetCatalogLogicalNames"
-    AfterTargets="_CompileImageAssets"
-    BeforeTargets="_ComputeBundleResourceOutputPaths"
-    Condition="'$(UseArtifactsOutput)' != 'true'"
-    DependsOnTargets="NormalizeIosAssetCatalogLogicalNamesCore" />
-  <Target Name="NormalizeIosAssetCatalogLogicalNamesCore">
+    Condition="'$(UseArtifactsOutput)' == 'true'">
     <PropertyGroup>
       <_IosActoolBundleRoot>$([System.IO.Path]::GetFullPath('$(DeviceSpecificIntermediateOutputPath)actool/bundle'))/</_IosActoolBundleRoot>
     </PropertyGroup>
@@ -560,7 +211,7 @@
   </Target>
   <Target Name="AuditPublicBundle" AfterTargets="_CreateAppBundle" DependsOnTargets="AuditIosApplicationBrand" Condition="'$(PublicClean)' == 'true'">
     <MakeDir Directories="$(PublicAuditReportDir)" />
-    <Exec Command="python3 &quot;$(MSBuildProjectDirectory)/../../packaging/public_bundle_audit.py&quot; --root &quot;$(AppBundleDir)&quot; --manifest &quot;$(MSBuildProjectDirectory)/../../packaging/public-content-manifest.json&quot; --json-report &quot;$(PublicAuditReportDir)/public-bundle-audit.json&quot; --markdown-report &quot;$(PublicAuditReportDir)/public-bundle-audit.md&quot;" />
+    <Exec Command="python3 &quot;$(MSBuildProjectDirectory)/../../packaging/public_bundle_audit.py&quot; --root &quot;$(AppBundleDir)&quot; --manifest &quot;$(MSBuildProjectDirectory)/../../packaging/ios/public_clean_manifest.json&quot; --json-report &quot;$(PublicAuditReportDir)/public-bundle-audit.json&quot; --markdown-report &quot;$(PublicAuditReportDir)/public-bundle-audit.md&quot;" />
   </Target>
   <!-- OpenRA's desktop NuGet dependencies carry macOS dylibs.  They are not
        valid iOS binaries and must not reach the iOS install-name/link steps. -->

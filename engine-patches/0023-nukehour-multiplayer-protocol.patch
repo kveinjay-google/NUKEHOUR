@@ -1,0 +1,1550 @@
+diff -ruN a/OpenRA.Game/ModData.cs b/OpenRA.Game/ModData.cs
+--- a/OpenRA.Game/ModData.cs	2026-09-08 00:31:27
++++ b/OpenRA.Game/ModData.cs	2026-09-08 00:31:27
+@@ -16,6 +16,7 @@
+ using System.Linq;
+ using OpenRA.FileSystem;
+ using OpenRA.Graphics;
++using OpenRA.Network;
+ using OpenRA.Video;
+ using OpenRA.Widgets;
+ using FS = OpenRA.FileSystem.FileSystem;
+@@ -36,6 +37,13 @@
+ 		public readonly IVideoLoader[] VideoLoaders;
+ 		public readonly HotkeyManager Hotkeys;
+ 		public readonly IFileSystemLoader FileSystemLoader;
++		public readonly RuntimeProfileIdentity RuntimeProfile;
++		public readonly RuntimeContractIdentity RuntimeContract;
++		public NetworkCompatibilityContext NetworkCompatibility => new(
++			Game.EngineVersion ?? "Unknown",
++			Manifest.Id,
++			Manifest.Metadata.CompatibilityOrVersion,
++			RuntimeContract);
+ 
+ 		public ILoadScreen LoadScreen { get; }
+ 		public CursorProvider CursorProvider { get; private set; }
+@@ -62,8 +70,23 @@
+ 			FieldLoader.Load(FileSystemLoader, Manifest.FileSystem);
+ 			FileSystemLoader.Mount(ModFiles, ObjectCreator);
+ 			ModFiles.TrimExcess();
+-
+ 			Manifest.LoadCustomData(ObjectCreator);
++
++			RuntimeProfile = RuntimeProfileIdentity.CreateCurrent(Manifest);
++			var runtimeContractConfiguration = Manifest.Contains<RuntimeContractConfiguration>()
++				? Manifest.Get<RuntimeContractConfiguration>() : new RuntimeContractConfiguration();
++			var resourceCapability = string.IsNullOrEmpty(runtimeContractConfiguration.ResourceCapability)
++				? $"{Manifest.Id}-required-v1" : runtimeContractConfiguration.ResourceCapability;
++			var resourceFingerprint = RuntimeResourceFingerprint.Create(
++				runtimeContractConfiguration,
++				resource => ModFiles.TryOpen(resource, out var stream) ? stream : null);
++			RuntimeContract = RuntimeContractIdentity.Create(new RuntimeContractInputs(
++				Game.EngineVersion ?? "Unknown",
++				Server.ProtocolVersion.Orders,
++				Manifest.Id,
++				Manifest.Metadata.CompatibilityOrVersion,
++				resourceCapability,
++				resourceFingerprint));
+ 
+ 			FluentProvider.Initialize(this, DefaultFileSystem);
+ 
+diff -ruN a/OpenRA.Game/Network/Handshake.cs b/OpenRA.Game/Network/Handshake.cs
+--- a/OpenRA.Game/Network/Handshake.cs	2026-09-08 00:31:27
++++ b/OpenRA.Game/Network/Handshake.cs	2026-09-08 00:31:27
+@@ -9,6 +9,7 @@
+  */
+ #endregion
+ 
++using System;
+ using System.Collections.Generic;
+ using System.Linq;
+ 
+@@ -16,8 +17,13 @@
+ {
+ 	public class HandshakeRequest
+ 	{
++		public int HandshakeSchema;
++		public int OrdersProtocol;
++		public string EngineCompatibility;
+ 		public string Mod;
+ 		public string Version;
++		public string RuntimeProfile;
++		public string RuntimeContract;
+ 		public string AuthToken;
+ 
+ 		public static HandshakeRequest Deserialize(string data, string name)
+@@ -27,6 +33,20 @@
+ 			return handshake;
+ 		}
+ 
++		public static bool TryDeserialize(string data, string name, out HandshakeRequest handshake)
++		{
++			try
++			{
++				handshake = Deserialize(data, name);
++				return true;
++			}
++			catch (Exception)
++			{
++				handshake = null;
++				return false;
++			}
++		}
++
+ 		public string Serialize()
+ 		{
+ 			var data = new List<MiniYamlNode> { new("Handshake", FieldSaver.Save(this)) };
+@@ -36,8 +56,12 @@
+ 
+ 	public class HandshakeResponse
+ 	{
++		public int HandshakeSchema;
++		public string EngineCompatibility;
+ 		public string Mod;
+ 		public string Version;
++		public string RuntimeProfile;
++		public string RuntimeContract;
+ 		public string Password;
+ 
+ 		// Default value is hardcoded to 7 so that newer servers
+@@ -75,12 +99,30 @@
+ 			return handshake;
+ 		}
+ 
++		public static bool TryDeserialize(string data, string name, out HandshakeResponse handshake)
++		{
++			try
++			{
++				handshake = Deserialize(data, name);
++				return true;
++			}
++			catch (Exception)
++			{
++				handshake = null;
++				return false;
++			}
++		}
++
+ 		public string Serialize()
+ 		{
+ 			var data = new List<MiniYamlNode>
+ 			{
+ 				new("Handshake", null,
+-					new[] { "Mod", "Version", "Password", "Fingerprint", "AuthSignature", "OrdersProtocol" }.Select(p => FieldSaver.SaveField(this, p)).ToList()),
++					new[]
++					{
++						"HandshakeSchema", "OrdersProtocol", "EngineCompatibility", "Mod", "Version",
++						"RuntimeProfile", "RuntimeContract", "Password", "Fingerprint", "AuthSignature"
++					}.Select(p => FieldSaver.SaveField(this, p)).ToList()),
+ 				new("Client", FieldSaver.Save(Client))
+ 			};
+ 
+diff -ruN a/OpenRA.Game/Network/NukeHourNetworkCompatibility.cs b/OpenRA.Game/Network/NukeHourNetworkCompatibility.cs
+--- a/OpenRA.Game/Network/NukeHourNetworkCompatibility.cs	1969-12-31 16:00:00
++++ b/OpenRA.Game/Network/NukeHourNetworkCompatibility.cs	2026-09-08 00:31:27
+@@ -0,0 +1,600 @@
++#region Copyright & License Information
++/*
++ * Copyright (c) The OpenRA Developers and Contributors
++ * This file is part of OpenRA, which is free software. It is made
++ * available to you under the terms of the GNU General Public License
++ * as published by the Free Software Foundation, either version 3 of
++ * the License, or (at your option) any later version. For more
++ * information, see COPYING.
++ */
++#endregion
++
++using System;
++using System.Globalization;
++using System.IO;
++using System.Linq;
++using System.Security.Cryptography;
++using System.Text;
++using OpenRA.Server;
++
++namespace OpenRA.Network
++{
++	public sealed class RuntimeContractConfiguration : IGlobalModData
++	{
++		public readonly string ResourceCapability;
++		public readonly string[] RequiredResources = Array.Empty<string>();
++		public readonly string[] OptionalResources = Array.Empty<string>();
++
++		public RuntimeContractConfiguration() { }
++
++		public RuntimeContractConfiguration(MiniYaml yaml)
++		{
++			FieldLoader.Load(this, yaml);
++		}
++	}
++
++	public enum NetworkCompatibilityReason
++	{
++		Compatible = 0,
++		ProtocolMismatch = 1,
++		RuntimeContractMissing = 2,
++		RuntimeContractMismatch = 3,
++		ModMismatch = 4,
++		MapMismatch = 5,
++		EngineMismatch = 6,
++	}
++
++	public static class NetworkCompatibilityReasonExts
++	{
++		public static string Code(this NetworkCompatibilityReason reason) => reason switch
++		{
++			NetworkCompatibilityReason.Compatible => "PASS",
++			NetworkCompatibilityReason.ProtocolMismatch => "PROTOCOL_MISMATCH",
++			NetworkCompatibilityReason.RuntimeContractMissing => "RUNTIME_CONTRACT_MISSING",
++			NetworkCompatibilityReason.RuntimeContractMismatch => "RUNTIME_CONTRACT_MISMATCH",
++			NetworkCompatibilityReason.ModMismatch => "MOD_MISMATCH",
++			NetworkCompatibilityReason.MapMismatch => "MAP_MISMATCH",
++			NetworkCompatibilityReason.EngineMismatch => "ENGINE_MISMATCH",
++			_ => "PROTOCOL_MISMATCH",
++		};
++
++		public static string MessageKey(this NetworkCompatibilityReason reason) => reason switch
++		{
++			NetworkCompatibilityReason.RuntimeContractMissing =>
++				"notification-runtime-contract-missing",
++			NetworkCompatibilityReason.RuntimeContractMismatch =>
++				"notification-runtime-contract-mismatch",
++			NetworkCompatibilityReason.ModMismatch => "notification-incompatible-mod",
++			NetworkCompatibilityReason.MapMismatch => "notification-map-mismatch",
++			NetworkCompatibilityReason.EngineMismatch => "notification-engine-mismatch",
++			_ => "notification-incompatible-protocol",
++		};
++	}
++
++	public sealed class RuntimeProfileIdentity : IEquatable<RuntimeProfileIdentity>
++	{
++		const int SchemaVersion = 1;
++		const int MaxValueLength = 192;
++		static readonly Encoding StrictUtf8 = new UTF8Encoding(false, true);
++
++		public string Platform { get; }
++		public string Architecture { get; }
++		public string EngineVersion { get; }
++		public string BuildVersion { get; }
++		public string Mod { get; }
++		public string RuntimeType { get; }
++		public string ImportedResourceMode { get; }
++
++		public RuntimeProfileIdentity(
++			string platform,
++			string architecture,
++			string engineVersion,
++			string buildVersion,
++			string mod,
++			string runtimeType,
++			string importedResourceMode)
++		{
++			Platform = ValidateToken(platform, nameof(platform));
++			Architecture = ValidateToken(architecture, nameof(architecture));
++			EngineVersion = ValidateValue(engineVersion, nameof(engineVersion));
++			BuildVersion = ValidateValue(buildVersion, nameof(buildVersion));
++			Mod = ValidateToken(mod, nameof(mod));
++			RuntimeType = ValidateToken(runtimeType, nameof(runtimeType));
++			ImportedResourceMode = ValidateToken(importedResourceMode, nameof(importedResourceMode));
++		}
++
++		public static RuntimeProfileIdentity CreateCurrent(Manifest manifest)
++		{
++			if (manifest == null)
++				throw new ArgumentNullException(nameof(manifest));
++
++			var platform = OpenRA.Platform.CurrentPlatform switch
++			{
++				PlatformType.OSX => "macos",
++				PlatformType.iOS => "ios",
++				_ => OpenRA.Platform.CurrentPlatform.ToString().ToLowerInvariant(),
++			};
++			var runtimeType = OpenRA.Platform.RuntimeVersion.StartsWith("Mono", StringComparison.Ordinal)
++				? "mono" : "dotnet";
++
++			return new RuntimeProfileIdentity(
++				platform,
++				OpenRA.Platform.CurrentArchitecture.ToString().ToLowerInvariant(),
++				Game.EngineVersion ?? "Unknown",
++				manifest.Metadata.DisplayVersionOrVersion,
++				manifest.Id,
++				runtimeType,
++				"external-import");
++		}
++
++		public string Serialize() => string.Join(";", new[]
++		{
++			$"v{SchemaVersion}",
++			$"platform={Encode(Platform)}",
++			$"architecture={Encode(Architecture)}",
++			$"engine={Encode(EngineVersion)}",
++			$"build={Encode(BuildVersion)}",
++			$"mod={Encode(Mod)}",
++			$"runtime={Encode(RuntimeType)}",
++			$"resources={Encode(ImportedResourceMode)}",
++		});
++
++		public static bool TryParse(string value, out RuntimeProfileIdentity profile)
++		{
++			profile = null;
++			if (string.IsNullOrEmpty(value) || value.Length > 1536)
++				return false;
++
++			var fields = value.Split(';');
++			if (fields.Length != 8 || fields[0] != $"v{SchemaVersion}")
++				return false;
++
++			var names = new[] { "platform", "architecture", "engine", "build", "mod", "runtime", "resources" };
++			var decoded = new string[names.Length];
++			try
++			{
++				for (var i = 0; i < names.Length; i++)
++				{
++					var prefix = names[i] + "=";
++					if (!fields[i + 1].StartsWith(prefix, StringComparison.Ordinal))
++						return false;
++
++					decoded[i] = Uri.UnescapeDataString(fields[i + 1][prefix.Length..]);
++				}
++
++				profile = new RuntimeProfileIdentity(
++					decoded[0], decoded[1], decoded[2], decoded[3],
++					decoded[4], decoded[5], decoded[6]);
++				if (profile.Serialize() != value)
++				{
++					profile = null;
++					return false;
++				}
++
++				return true;
++			}
++			catch (ArgumentException)
++			{
++				profile = null;
++				return false;
++			}
++		}
++
++		static string Encode(string value) => Uri.EscapeDataString(value);
++
++		static string ValidateToken(string value, string parameterName)
++		{
++			ValidateValue(value, parameterName);
++			if (value.Length > 64 || value.Any(character =>
++				!(character is >= 'a' and <= 'z') &&
++				!(character is >= '0' and <= '9') && character != '-'))
++				throw new ArgumentException("Runtime profile token is not canonical.", parameterName);
++
++			return value;
++		}
++
++		static string ValidateValue(string value, string parameterName)
++		{
++			if (string.IsNullOrEmpty(value) || value.Length > MaxValueLength ||
++				!value.IsNormalized(NormalizationForm.FormC) ||
++				value.Any(character => char.IsControl(character)))
++				throw new ArgumentException("Runtime profile value is invalid.", parameterName);
++
++			try
++			{
++				if (StrictUtf8.GetByteCount(value) > MaxValueLength * 4)
++					throw new ArgumentException("Runtime profile value is too large.", parameterName);
++			}
++			catch (EncoderFallbackException exception)
++			{
++				throw new ArgumentException("Runtime profile value is not valid UTF-8.", parameterName, exception);
++			}
++
++			return value;
++		}
++
++		public bool Equals(RuntimeProfileIdentity other) => other != null && Serialize() == other.Serialize();
++		public override bool Equals(object obj) => Equals(obj as RuntimeProfileIdentity);
++		public override int GetHashCode() => StringComparer.Ordinal.GetHashCode(Serialize());
++	}
++
++	public sealed class RuntimeContractInputs
++	{
++		static readonly Encoding StrictUtf8 = new UTF8Encoding(false, true);
++
++		public string EngineCompatibility { get; }
++		public int OrdersProtocol { get; }
++		public string Mod { get; }
++		public string CoreCompatibility { get; }
++		public string ResourceCapability { get; }
++		public string ResourceFingerprint { get; }
++
++		// Diagnostic-only input. It is intentionally never serialized or hashed.
++		public string LocalContentRoot { get; }
++
++		public RuntimeContractInputs(
++			string engineCompatibility,
++			int ordersProtocol,
++			string mod,
++			string coreCompatibility,
++			string resourceCapability,
++			string resourceFingerprint,
++			string localContentRoot = null)
++		{
++			EngineCompatibility = Require(engineCompatibility, nameof(engineCompatibility));
++			if (ordersProtocol <= 0)
++				throw new ArgumentOutOfRangeException(nameof(ordersProtocol));
++
++			OrdersProtocol = ordersProtocol;
++			Mod = Require(mod, nameof(mod));
++			CoreCompatibility = Require(coreCompatibility, nameof(coreCompatibility));
++			ResourceCapability = Require(resourceCapability, nameof(resourceCapability));
++			ResourceFingerprint = RequireLowerSha256(resourceFingerprint, nameof(resourceFingerprint));
++			LocalContentRoot = localContentRoot;
++		}
++
++		static string RequireLowerSha256(string value, string parameterName)
++		{
++			if (value == null || value.Length != 64 || value.Any(character =>
++				!(character is >= '0' and <= '9') && !(character is >= 'a' and <= 'f')))
++				throw new ArgumentException("Runtime resource fingerprint is not lowercase SHA-256.", parameterName);
++
++			return value;
++		}
++
++		static string Require(string value, string parameterName)
++		{
++			if (string.IsNullOrEmpty(value) || value.Length > 512 ||
++				!value.IsNormalized(NormalizationForm.FormC) ||
++				value.Any(character => char.IsControl(character)))
++				throw new ArgumentException("Runtime contract input is invalid.", parameterName);
++
++			try
++			{
++				if (StrictUtf8.GetByteCount(value) > 2048)
++					throw new ArgumentException("Runtime contract input is too large.", parameterName);
++			}
++			catch (EncoderFallbackException exception)
++			{
++				throw new ArgumentException("Runtime contract input is not valid UTF-8.", parameterName, exception);
++			}
++
++			return value;
++		}
++	}
++
++	public static class RuntimeResourceFingerprint
++	{
++		const int MaxResources = 32;
++
++		public static string Create(
++			RuntimeContractConfiguration configuration,
++			Func<string, Stream> openResource)
++		{
++			if (configuration == null)
++				throw new ArgumentNullException(nameof(configuration));
++			if (openResource == null)
++				throw new ArgumentNullException(nameof(openResource));
++
++			var resources = configuration.RequiredResources
++				.Select(name => (Name: ValidateLogicalName(name), Required: true))
++				.Concat(configuration.OptionalResources
++					.Select(name => (Name: ValidateLogicalName(name), Required: false)))
++				.OrderBy(resource => resource.Name, StringComparer.Ordinal)
++				.ToArray();
++			if (resources.Length > MaxResources ||
++				resources.Select(resource => resource.Name).Distinct(StringComparer.Ordinal).Count() != resources.Length)
++				throw new ArgumentException("Runtime resources must be bounded and unique.", nameof(configuration));
++
++			using var framed = new MemoryStream();
++			Write(framed, "NUKEHOUR-RUNTIME-RESOURCES");
++			Write(framed, resources.Length.ToStringInvariant());
++			foreach (var resource in resources)
++			{
++				Write(framed, resource.Name);
++				Write(framed, resource.Required ? "required" : "optional");
++				using var stream = openResource(resource.Name);
++				if (stream == null)
++				{
++					if (resource.Required)
++						throw new InvalidDataException($"Required runtime resource is missing: {resource.Name}");
++
++					Write(framed, "absent");
++					continue;
++				}
++
++				Write(framed, "present");
++				var (length, digest) = Hash(stream);
++				Write(framed, length.ToString(CultureInfo.InvariantCulture));
++				Write(framed, digest);
++			}
++
++			return Convert.ToHexString(SHA256.HashData(framed.ToArray())).ToLowerInvariant();
++		}
++
++		static (long Length, string Digest) Hash(Stream stream)
++		{
++			using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
++			var buffer = new byte[128 * 1024];
++			long length = 0;
++			int read;
++			while ((read = stream.Read(buffer, 0, buffer.Length)) > 0)
++			{
++				length = checked(length + read);
++				hash.AppendData(buffer, 0, read);
++			}
++
++			return (length, Convert.ToHexString(hash.GetHashAndReset()).ToLowerInvariant());
++		}
++
++		static string ValidateLogicalName(string value)
++		{
++			if (string.IsNullOrEmpty(value) || value.Length > 192 ||
++				!value.IsNormalized(NormalizationForm.FormC) || value.StartsWith('/') ||
++				value.Contains('\\') || value.Split('/').Contains("..") ||
++				value.Any(character => char.IsControl(character)))
++				throw new ArgumentException("Runtime resource name is not canonical.", nameof(value));
++
++			return value;
++		}
++
++		static void Write(Stream stream, string value)
++		{
++			var bytes = Encoding.UTF8.GetBytes(value);
++			stream.WriteByte((byte)bytes.Length);
++			stream.WriteByte((byte)(bytes.Length >> 8));
++			stream.WriteByte((byte)(bytes.Length >> 16));
++			stream.WriteByte((byte)(bytes.Length >> 24));
++			stream.Write(bytes, 0, bytes.Length);
++		}
++	}
++
++	public readonly struct RuntimeContractIdentity : IEquatable<RuntimeContractIdentity>
++	{
++		public const int SchemaVersion = 1;
++
++		public string ResourceCapability { get; }
++		public string Digest { get; }
++
++		RuntimeContractIdentity(string resourceCapability, string digest)
++		{
++			ResourceCapability = ValidateCapability(resourceCapability);
++			Digest = ValidateDigest(digest);
++		}
++
++		public static RuntimeContractIdentity Create(RuntimeContractInputs inputs)
++		{
++			if (inputs == null)
++				throw new ArgumentNullException(nameof(inputs));
++
++			using var framed = new MemoryStream();
++			Write(framed, "NUKEHOUR-RUNTIME-CONTRACT");
++			Write(framed, SchemaVersion.ToStringInvariant());
++			Write(framed, inputs.EngineCompatibility);
++			Write(framed, inputs.OrdersProtocol.ToStringInvariant());
++			Write(framed, inputs.Mod);
++			Write(framed, inputs.CoreCompatibility);
++			Write(framed, inputs.ResourceCapability);
++			Write(framed, inputs.ResourceFingerprint);
++			var digest = Convert.ToHexString(SHA256.HashData(framed.ToArray())).ToLowerInvariant();
++			return new RuntimeContractIdentity(inputs.ResourceCapability, digest);
++		}
++
++		public string Serialize() => $"v{SchemaVersion}:{ResourceCapability}:{Digest}";
++
++		public static bool TryParse(string value, out RuntimeContractIdentity contract)
++		{
++			contract = default;
++			if (string.IsNullOrEmpty(value))
++				return false;
++
++			var fields = value.Split(':');
++			if (fields.Length != 3 || fields[0] != $"v{SchemaVersion}")
++				return false;
++
++			try
++			{
++				contract = new RuntimeContractIdentity(fields[1], fields[2]);
++				return contract.Serialize() == value;
++			}
++			catch (ArgumentException)
++			{
++				contract = default;
++				return false;
++			}
++		}
++
++		static void Write(Stream stream, string value)
++		{
++			var bytes = Encoding.UTF8.GetBytes(value);
++			stream.WriteByte((byte)bytes.Length);
++			stream.WriteByte((byte)(bytes.Length >> 8));
++			stream.WriteByte((byte)(bytes.Length >> 16));
++			stream.WriteByte((byte)(bytes.Length >> 24));
++			stream.Write(bytes, 0, bytes.Length);
++		}
++
++		static string ValidateCapability(string value)
++		{
++			if (string.IsNullOrEmpty(value) || value.Length > 64 || value.Any(character =>
++				!(character is >= 'a' and <= 'z') &&
++				!(character is >= '0' and <= '9') && character != '-'))
++				throw new ArgumentException("Runtime resource capability is not canonical.", nameof(value));
++
++			return value;
++		}
++
++		static string ValidateDigest(string value)
++		{
++			if (value == null || value.Length != 64 || value.Any(character =>
++				!(character is >= '0' and <= '9') && !(character is >= 'a' and <= 'f')))
++				throw new ArgumentException("Runtime contract digest is not lowercase SHA-256.", nameof(value));
++
++			return value;
++		}
++
++		public bool Equals(RuntimeContractIdentity other) =>
++			StringComparer.Ordinal.Equals(ResourceCapability, other.ResourceCapability) &&
++			StringComparer.Ordinal.Equals(Digest, other.Digest);
++
++		public override bool Equals(object obj) => obj is RuntimeContractIdentity other && Equals(other);
++		public override int GetHashCode() => HashCode.Combine(ResourceCapability, Digest);
++		public static bool operator ==(RuntimeContractIdentity left, RuntimeContractIdentity right) => left.Equals(right);
++		public static bool operator !=(RuntimeContractIdentity left, RuntimeContractIdentity right) => !left.Equals(right);
++	}
++
++	public readonly struct NetworkCompatibilityContext
++	{
++		public string EngineCompatibility { get; }
++		public string Mod { get; }
++		public string ModCompatibility { get; }
++		public RuntimeContractIdentity RuntimeContract { get; }
++
++		public NetworkCompatibilityContext(
++			string engineCompatibility,
++			string mod,
++			string modCompatibility,
++			RuntimeContractIdentity runtimeContract)
++		{
++			EngineCompatibility = engineCompatibility;
++			Mod = mod;
++			ModCompatibility = modCompatibility;
++			RuntimeContract = runtimeContract;
++		}
++	}
++
++	public static class NetworkCompatibility
++	{
++		public static NetworkCompatibilityReason ValidateEnvelope(
++			HandshakeRequest remote,
++			NetworkCompatibilityContext local) => remote == null
++			? NetworkCompatibilityReason.ProtocolMismatch
++			: ValidateEnvelope(remote.HandshakeSchema, remote.OrdersProtocol,
++				remote.EngineCompatibility, remote.Mod, remote.RuntimeProfile, local);
++
++		public static bool TryValidateResponsePayload(
++			string data,
++			string name,
++			NetworkCompatibilityContext local,
++			out HandshakeResponse response,
++			out NetworkCompatibilityReason reason)
++		{
++			if (!HandshakeResponse.TryDeserialize(data, name, out response))
++			{
++				reason = NetworkCompatibilityReason.ProtocolMismatch;
++				return false;
++			}
++
++			reason = Validate(response, local);
++			return reason == NetworkCompatibilityReason.Compatible;
++		}
++
++		public static bool TryGetDebugSummary(
++			string runtimeProfile,
++			string runtimeContract,
++			out string summary)
++		{
++			summary = null;
++			if (!RuntimeProfileIdentity.TryParse(runtimeProfile, out var profile) ||
++				!RuntimeContractIdentity.TryParse(runtimeContract, out var contract))
++				return false;
++
++			summary = $"platform={profile.Platform}; architecture={profile.Architecture}; " +
++				$"resources={contract.ResourceCapability}; contract={contract.Digest[..12]}";
++			return true;
++		}
++
++		public static NetworkCompatibilityReason Validate(
++			HandshakeRequest remote,
++			NetworkCompatibilityContext local) => remote == null
++			? NetworkCompatibilityReason.ProtocolMismatch
++			: Validate(remote.HandshakeSchema, remote.OrdersProtocol,
++				remote.EngineCompatibility, remote.Mod, remote.Version,
++				remote.RuntimeProfile, remote.RuntimeContract, local);
++
++		public static NetworkCompatibilityReason Validate(
++			HandshakeResponse remote,
++			NetworkCompatibilityContext local) => remote == null
++			? NetworkCompatibilityReason.ProtocolMismatch
++			: Validate(remote.HandshakeSchema, remote.OrdersProtocol,
++				remote.EngineCompatibility, remote.Mod, remote.Version,
++				remote.RuntimeProfile, remote.RuntimeContract, local);
++
++		static NetworkCompatibilityReason Validate(
++			int handshakeSchema,
++			int ordersProtocol,
++			string engineCompatibility,
++			string mod,
++			string modCompatibility,
++			string runtimeProfile,
++			string runtimeContract,
++			NetworkCompatibilityContext local)
++		{
++			var envelope = ValidateEnvelope(
++				handshakeSchema, ordersProtocol, engineCompatibility, mod, runtimeProfile, local);
++			if (envelope != NetworkCompatibilityReason.Compatible)
++				return envelope;
++
++			if (!StringComparer.Ordinal.Equals(mod, local.Mod) ||
++				!StringComparer.Ordinal.Equals(modCompatibility, local.ModCompatibility))
++				return NetworkCompatibilityReason.ModMismatch;
++
++			if (string.IsNullOrEmpty(runtimeContract))
++				return NetworkCompatibilityReason.RuntimeContractMissing;
++			if (!RuntimeContractIdentity.TryParse(runtimeContract, out var contract) ||
++				contract != local.RuntimeContract)
++				return NetworkCompatibilityReason.RuntimeContractMismatch;
++
++			return NetworkCompatibilityReason.Compatible;
++		}
++
++		static NetworkCompatibilityReason ValidateEnvelope(
++			int handshakeSchema,
++			int ordersProtocol,
++			string engineCompatibility,
++			string mod,
++			string runtimeProfile,
++			NetworkCompatibilityContext local)
++		{
++			if (handshakeSchema != ProtocolVersion.HandshakeSchema ||
++				ordersProtocol != ProtocolVersion.Orders)
++				return NetworkCompatibilityReason.ProtocolMismatch;
++
++			if (!StringComparer.Ordinal.Equals(engineCompatibility, local.EngineCompatibility))
++				return NetworkCompatibilityReason.EngineMismatch;
++
++			if (!RuntimeProfileIdentity.TryParse(runtimeProfile, out var profile) ||
++				!StringComparer.Ordinal.Equals(profile.EngineVersion, engineCompatibility) ||
++				!StringComparer.Ordinal.Equals(profile.Mod, mod))
++				return NetworkCompatibilityReason.ProtocolMismatch;
++
++			return NetworkCompatibilityReason.Compatible;
++		}
++
++		public static NetworkCompatibilityReason ValidateMap(string expectedUid, string actualUid) =>
++			!string.IsNullOrEmpty(expectedUid) &&
++			StringComparer.Ordinal.Equals(expectedUid, actualUid)
++				? NetworkCompatibilityReason.Compatible
++				: NetworkCompatibilityReason.MapMismatch;
++	}
++}
+diff -ruN a/OpenRA.Game/Network/UnitOrders.cs b/OpenRA.Game/Network/UnitOrders.cs
+--- a/OpenRA.Game/Network/UnitOrders.cs	2026-09-08 00:31:27
++++ b/OpenRA.Game/Network/UnitOrders.cs	2026-09-08 00:31:27
+@@ -242,10 +242,27 @@
+ 
+ 				case "HandshakeRequest":
+ 				{
+-					// Switch to the server's mod if we need and are able to
+ 					var mod = Game.ModData.Manifest;
+-					var request = HandshakeRequest.Deserialize(order.TargetString, order.OrderString);
++					if (!HandshakeRequest.TryDeserialize(
++						order.TargetString, order.OrderString, out var request))
++					{
++						orderManager.ServerError = NetworkCompatibilityReason.ProtocolMismatch.MessageKey();
++						orderManager.Connection.Dispose();
++						break;
++					}
+ 
++					// Reject unsupported or malformed protocol envelopes before considering a mod switch.
++					var envelopeCompatibility = NetworkCompatibility.ValidateEnvelope(
++						request, Game.ModData.NetworkCompatibility);
++					if (envelopeCompatibility != NetworkCompatibilityReason.Compatible)
++					{
++						Log.Write("client", $"[NET] Reject server: {envelopeCompatibility.Code()}");
++						orderManager.ServerError = envelopeCompatibility.MessageKey();
++						orderManager.Connection.Dispose();
++						break;
++					}
++
++					// Switch to the server's mod if we need and are able to.
+ 					var externalKey = ExternalMod.MakeKey(request.Mod, request.Version);
+ 					if ((request.Mod != mod.Id || request.Version != mod.Metadata.CompatibilityOrVersion) &&
+ 						Game.ExternalMods.TryGetValue(externalKey, out var external))
+@@ -256,6 +273,20 @@
+ 						break;
+ 					}
+ 
++					var compatibility = NetworkCompatibility.Validate(
++						request, Game.ModData.NetworkCompatibility);
++					Log.Write("client", $"[NET] Handshake schema: {request.HandshakeSchema}; " +
++						$"orders: {request.OrdersProtocol}; compatibility: {compatibility.Code()}");
++					if (NetworkCompatibility.TryGetDebugSummary(
++						request.RuntimeProfile, request.RuntimeContract, out var handshakeSummary))
++						Log.Write("client", $"[NET] Runtime {handshakeSummary}");
++					if (compatibility != NetworkCompatibilityReason.Compatible)
++					{
++						orderManager.ServerError = compatibility.MessageKey();
++						orderManager.Connection.Dispose();
++						break;
++					}
++
+ 					Game.Settings.Player.Name = Settings.SanitizedPlayerName(Game.Settings.Player.Name);
+ 					Game.Settings.Save();
+ 
+@@ -275,8 +306,12 @@
+ 					var response = new HandshakeResponse()
+ 					{
+ 						Client = info,
++						HandshakeSchema = ProtocolVersion.HandshakeSchema,
++						EngineCompatibility = Game.EngineVersion,
+ 						Mod = mod.Id,
+ 						Version = mod.Metadata.CompatibilityOrVersion,
++						RuntimeProfile = Game.ModData.RuntimeProfile.Serialize(),
++						RuntimeContract = Game.ModData.RuntimeContract.Serialize(),
+ 						Password = CurrentServerSettings.Password,
+ 						Fingerprint = localProfile.Fingerprint,
+ 						OrdersProtocol = ProtocolVersion.Orders
+diff -ruN a/OpenRA.Game/Server/ProtocolVersion.cs b/OpenRA.Game/Server/ProtocolVersion.cs
+--- a/OpenRA.Game/Server/ProtocolVersion.cs	2026-09-08 00:31:27
++++ b/OpenRA.Game/Server/ProtocolVersion.cs	2026-09-08 00:31:27
+@@ -50,13 +50,19 @@
+ 		//   - Int32 specifying the handshake protocol version
+ 		//   - Int32 specifying the new connection's client ID
+ 		// - Server sends a packet that contains a single Handshake (0xFE) order that
+-		//   encodes a HandshakeRequest yaml blob containing at least:
++		//   encodes a HandshakeRequest yaml blob containing:
++		//   - HandshakeSchema: Required NUKE HOUR YAML handshake schema
++		//   - OrdersProtocol: ProtocolVersion.Orders used by the server
++		//   - EngineCompatibility: Platform-neutral OpenRA engine baseline
+ 		//   - Mod: Internal ID for the active mod
+ 		//   - Version: Internal version string for the active mod
++		//   - RuntimeProfile: Canonical path-free diagnostic runtime identity
++		//   - RuntimeContract: Canonical gameplay/resource compatibility identity
+ 		//   - [optional] AuthToken: Blob of random data that the client can sign to verify their AuthID
+ 		// - Client disconnects and optionally shows a switch-mod dialog if the Mod or Version do not match
+ 		// - Client responds with a packet that contains a single Handshake (0xFE) order that
+-		//   encodes a HandshakeResponse yaml blob containing at least:
++		//   encodes a HandshakeResponse yaml blob containing the same required
++		//   compatibility fields as HandshakeRequest plus:
+ 		//   - Mod: Internal ID for the active mod
+ 		//   - Version: Internal version string for the active mod
+ 		//   - Client: Yaml blob encoding client metadata:
+@@ -73,6 +79,10 @@
+ 		// The protocol for the initial handshake request and response
+ 		// Backwards incompatible changes will break runtime mod switching, so only change as a last resort!
+ 		public const int Handshake = 7;
++
++		// Required YAML handshake schema shared by NUKE HOUR on every platform.
++		// Adding a required field or changing field semantics must bump this version.
++		public const int HandshakeSchema = 1;
+ 
+ 		// The protocol for server and world orders
+ 		// This applies after the handshake has completed, and is provided to support
+diff -ruN a/OpenRA.Game/Server/Server.cs b/OpenRA.Game/Server/Server.cs
+--- a/OpenRA.Game/Server/Server.cs	2026-09-08 00:31:27
++++ b/OpenRA.Game/Server/Server.cs	2026-09-08 00:31:27
+@@ -66,15 +66,6 @@
+ 		const string IncorrectPassword = "notification-incorrect-password";
+ 
+ 		[FluentReference]
+-		const string IncompatibleMod = "notification-incompatible-mod";
+-
+-		[FluentReference]
+-		const string IncompatibleVersion = "notification-incompatible-version";
+-
+-		[FluentReference]
+-		const string IncompatibleProtocol = "notification-incompatible-protocol";
+-
+-		[FluentReference]
+ 		const string Banned = "notification-you-were-banned";
+ 
+ 		[FluentReference]
+@@ -198,8 +189,13 @@
+ 		{
+ 			var request = new HandshakeRequest
+ 			{
++				HandshakeSchema = ProtocolVersion.HandshakeSchema,
++				OrdersProtocol = ProtocolVersion.Orders,
++				EngineCompatibility = Game.EngineVersion,
+ 				Mod = ModData.Manifest.Id,
+ 				Version = ModData.Manifest.Metadata.CompatibilityOrVersion,
++				RuntimeProfile = ModData.RuntimeProfile.Serialize(),
++				RuntimeContract = ModData.RuntimeContract.Serialize(),
+ 			};
+ 
+ 			recorder.ReceiveFrame(0, 0, new Order("HandshakeRequest", null, false)
+@@ -211,8 +207,12 @@
+ 
+ 			var response = new HandshakeResponse()
+ 			{
++				HandshakeSchema = ProtocolVersion.HandshakeSchema,
++				EngineCompatibility = Game.EngineVersion,
+ 				Mod = ModData.Manifest.Id,
+ 				Version = ModData.Manifest.Metadata.CompatibilityOrVersion,
++				RuntimeProfile = ModData.RuntimeProfile.Serialize(),
++				RuntimeContract = ModData.RuntimeContract.Serialize(),
+ 				OrdersProtocol = ProtocolVersion.Orders,
+ 				Client = new Session.Client(),
+ 			};
+@@ -443,8 +443,13 @@
+ 				// Dispatch a handshake order
+ 				var request = new HandshakeRequest
+ 				{
++					HandshakeSchema = ProtocolVersion.HandshakeSchema,
++					OrdersProtocol = ProtocolVersion.Orders,
++					EngineCompatibility = Game.EngineVersion,
+ 					Mod = ModData.Manifest.Id,
+ 					Version = ModData.Manifest.Metadata.CompatibilityOrVersion,
++					RuntimeProfile = ModData.RuntimeProfile.Serialize(),
++					RuntimeContract = ModData.RuntimeContract.Serialize(),
+ 					AuthToken = token
+ 				};
+ 
+@@ -476,8 +481,27 @@
+ 					return;
+ 				}
+ 
+-				var handshake = HandshakeResponse.Deserialize(data, name);
++				var admitted = NetworkCompatibility.TryValidateResponsePayload(
++					data, name, ModData.NetworkCompatibility, out var handshake, out var compatibility);
++				if (handshake == null)
++					Log.Write("server", "[NET] Reject client: PROTOCOL_MISMATCH (malformed handshake)");
++				else
++				{
++					Log.Write("server", $"[NET] Handshake schema: {handshake.HandshakeSchema}; " +
++						$"orders: {handshake.OrdersProtocol}; compatibility: {compatibility.Code()}");
++					if (NetworkCompatibility.TryGetDebugSummary(
++						handshake.RuntimeProfile, handshake.RuntimeContract, out var handshakeSummary))
++						Log.Write("server", $"[NET] Runtime {handshakeSummary}");
++				}
+ 
++				if (!admitted)
++				{
++					Log.Write("server", $"[NET] Reject client: {compatibility.Code()}");
++					SendOrderTo(newConn, "ServerError", compatibility.MessageKey());
++					DropClient(newConn);
++					return;
++				}
++
+ 				if (!string.IsNullOrEmpty(Settings.Password) && handshake.Password != Settings.Password)
+ 				{
+ 					var message = string.IsNullOrEmpty(handshake.Password) ? RequiresPassword : IncorrectPassword;
+@@ -503,33 +527,6 @@
+ 					State = Session.ClientState.Invalid,
+ 				};
+ 
+-				if (ModData.Manifest.Id != handshake.Mod)
+-				{
+-					Log.Write("server", $"Rejected connection from {newConn.EndPoint}; mods do not match.");
+-
+-					SendOrderTo(newConn, "ServerError", IncompatibleMod);
+-					DropClient(newConn);
+-					return;
+-				}
+-
+-				if (ModData.Manifest.Metadata.CompatibilityOrVersion != handshake.Version)
+-				{
+-					Log.Write("server", $"Rejected connection from {newConn.EndPoint}; Not running the same version.");
+-
+-					SendOrderTo(newConn, "ServerError", IncompatibleVersion);
+-					DropClient(newConn);
+-					return;
+-				}
+-
+-				if (handshake.OrdersProtocol != ProtocolVersion.Orders)
+-				{
+-					Log.Write("server", $"Rejected connection from {newConn.EndPoint}; incompatible Orders protocol version {handshake.OrdersProtocol}.");
+-
+-					SendOrderTo(newConn, "ServerError", IncompatibleProtocol);
+-					DropClient(newConn);
+-					return;
+-				}
+-
+ 				// Check if IP is banned
+ 				var bans = Settings.Ban.Union(TempBans);
+ 				if (bans.Contains(client.IPAddress))
+@@ -698,6 +695,8 @@
+ 			{
+ 				Log.Write("server", $"Dropping connection {newConn.EndPoint} because an error occurred:");
+ 				Log.Write("server", ex.ToString());
++				SendOrderTo(newConn, "ServerError",
++					NetworkCompatibilityReason.ProtocolMismatch.MessageKey());
+ 				DropClient(newConn);
+ 			}
+ 		}
+diff -ruN a/OpenRA.Mods.Common/ServerTraits/LobbyCommands.cs b/OpenRA.Mods.Common/ServerTraits/LobbyCommands.cs
+--- a/OpenRA.Mods.Common/ServerTraits/LobbyCommands.cs	2026-09-08 00:31:27
++++ b/OpenRA.Mods.Common/ServerTraits/LobbyCommands.cs	2026-09-08 00:31:27
+@@ -518,6 +518,7 @@
+ 
+ 				if (!string.Equals(request.ExpectedMapUid, currentMapUid, StringComparison.Ordinal))
+ 				{
++					Log.Write("server", $"[NET] Reject start: {NetworkCompatibilityReason.MapMismatch.Code()}");
+ 					server.SendOrderTo(conn, "SafeStartRejected", new LobbyStartRejection(
+ 						Session.LobbyStartBlockReason.StaleMap,
+ 						-1,
+diff -ruN a/OpenRA.Test/NukeHourDirectTcpHandshakeTest.cs b/OpenRA.Test/NukeHourDirectTcpHandshakeTest.cs
+--- a/OpenRA.Test/NukeHourDirectTcpHandshakeTest.cs	1969-12-31 16:00:00
++++ b/OpenRA.Test/NukeHourDirectTcpHandshakeTest.cs	2026-09-08 00:31:27
+@@ -0,0 +1,203 @@
++#region Copyright & License Information
++/*
++ * Copyright (c) The OpenRA Developers and Contributors
++ * This file is part of OpenRA, which is free software. It is made
++ * available to you under the terms of the GNU General Public License
++ * as published by the Free Software Foundation, either version 3 of
++ * the License, or (at your option) any later version. For more
++ * information, see COPYING.
++ */
++#endregion
++
++using System;
++using System.Collections.Concurrent;
++using System.IO;
++using System.Net;
++using System.Net.Sockets;
++using System.Reflection;
++using System.Threading;
++using System.Threading.Tasks;
++using NUnit.Framework;
++using OpenRA.Network;
++using OpenRA.Server;
++
++namespace OpenRA.Test
++{
++	[TestFixture]
++	public sealed class NukeHourDirectTcpHandshakeTest
++	{
++		const string Engine = "release-20250330";
++		const string Mod = "ra2";
++		const string Core = "nukehour-core-sha256-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
++		const string Resources = "1111111111111111111111111111111111111111111111111111111111111111";
++
++		static RuntimeContractIdentity Contract(string resources = Resources) => RuntimeContractIdentity.Create(
++			new RuntimeContractInputs(
++				Engine, ProtocolVersion.Orders, Mod, Core, "ra2-required-v1", resources));
++
++		static RuntimeProfileIdentity Profile(string platform) =>
++			new(platform, "arm64", Engine, $"NUKE HOUR {platform}", Mod, "dotnet", "external-import");
++
++		static NetworkCompatibilityContext Context(RuntimeContractIdentity contract) =>
++			new(Engine, Mod, Core, contract);
++
++		static HandshakeRequest Request(string platform, RuntimeContractIdentity contract) => new()
++		{
++			HandshakeSchema = ProtocolVersion.HandshakeSchema,
++			OrdersProtocol = ProtocolVersion.Orders,
++			EngineCompatibility = Engine,
++			Mod = Mod,
++			Version = Core,
++			RuntimeProfile = Profile(platform).Serialize(),
++			RuntimeContract = contract.Serialize(),
++		};
++
++		static HandshakeResponse Response(string platform, RuntimeContractIdentity contract) => new()
++		{
++			HandshakeSchema = ProtocolVersion.HandshakeSchema,
++			OrdersProtocol = ProtocolVersion.Orders,
++			EngineCompatibility = Engine,
++			Mod = Mod,
++			Version = Core,
++			RuntimeProfile = Profile(platform).Serialize(),
++			RuntimeContract = contract.Serialize(),
++			Client = new Session.Client { Name = "Cross-platform client" },
++		};
++
++		[TestCase("ios", "android")]
++		[TestCase("android", "macos")]
++		[TestCase("macos", "ios")]
++		public async Task ProductionTcpFramingRoundTripsCrossPlatformHandshake(
++			string serverPlatform, string clientPlatform)
++		{
++			var contract = Contract();
++			var reason = await ExchangeHandshake(
++				serverPlatform, Response(clientPlatform, contract), Context(contract));
++
++			Assert.That(reason, Is.EqualTo(NetworkCompatibilityReason.Compatible));
++		}
++
++		[TestCase("missing-contract", NetworkCompatibilityReason.RuntimeContractMissing)]
++		[TestCase("changed-resources", NetworkCompatibilityReason.RuntimeContractMismatch)]
++		[TestCase("legacy-schema", NetworkCompatibilityReason.ProtocolMismatch)]
++		public async Task ProductionServerAdmissionRejectsInvalidTcpHandshake(
++			string scenario,
++			NetworkCompatibilityReason expected)
++		{
++			var contract = Contract();
++			var response = Response("android", contract);
++			switch (scenario)
++			{
++				case "missing-contract":
++					response.RuntimeContract = null;
++					break;
++				case "changed-resources":
++					response.RuntimeContract = Contract(new string('2', 64)).Serialize();
++					break;
++				case "legacy-schema":
++					response.HandshakeSchema = 0;
++					break;
++				default:
++					Assert.Fail($"Unknown test scenario: {scenario}");
++					break;
++			}
++
++			var reason = await ExchangeHandshake("macos", response, Context(contract));
++			Assert.That(reason, Is.EqualTo(expected));
++		}
++
++		static async Task<NetworkCompatibilityReason> ExchangeHandshake(
++			string serverPlatform,
++			HandshakeResponse clientResponse,
++			NetworkCompatibilityContext context)
++		{
++			Log.AddChannel("client", null);
++			var contract = context.RuntimeContract;
++			var listener = new TcpListener(IPAddress.Loopback, 0);
++			listener.Start();
++			var endpoint = (IPEndPoint)listener.LocalEndpoint;
++			var serverReason = NetworkCompatibilityReason.ProtocolMismatch;
++
++			var serverTask = Task.Run(async () =>
++			{
++				using var client = await listener.AcceptTcpClientAsync();
++				using var stream = client.GetStream();
++				using var writer = new BinaryWriter(stream, System.Text.Encoding.UTF8, leaveOpen: true);
++				using var reader = new BinaryReader(stream, System.Text.Encoding.UTF8, leaveOpen: true);
++
++				writer.Write(ProtocolVersion.Handshake);
++				writer.Write(1);
++				WriteServerFrame(writer, HandshakeOrder(
++					"HandshakeRequest", Request(serverPlatform, contract).Serialize()));
++				writer.Flush();
++
++				var packetLength = reader.ReadInt32();
++				Assert.That(packetLength, Is.GreaterThan(4));
++				Assert.That(reader.ReadInt32(), Is.EqualTo(0), "Immediate client response must use frame zero.");
++				var orderBytes = reader.ReadBytes(packetLength - 4);
++				Assert.That(orderBytes, Has.Length.EqualTo(packetLength - 4));
++				var responseOrder = DeserializeOrder(orderBytes);
++				Assert.That(responseOrder.OrderString, Is.EqualTo("HandshakeResponse"));
++				NetworkCompatibility.TryValidateResponsePayload(
++					responseOrder.TargetString, "TCP response", context, out _, out serverReason);
++			});
++
++			using var connection = new NetworkConnection(new ConnectionTarget("127.0.0.1", endpoint.Port));
++			var packets = ReceivedPackets(connection);
++			Assert.That(SpinWait.SpinUntil(() => !packets.IsEmpty, TimeSpan.FromSeconds(5)), Is.True,
++				"The production NetworkConnection did not receive the handshake frame.");
++			Assert.That(packets.TryDequeue(out var packet), Is.True);
++			Assert.That(packet.FromClient, Is.EqualTo(0));
++			Assert.That(BitConverter.ToInt32(packet.Data, 0), Is.EqualTo(0));
++			var requestOrder = DeserializeOrder(packet.Data[4..]);
++			Assert.That(requestOrder.OrderString, Is.EqualTo("HandshakeRequest"));
++			var request = HandshakeRequest.Deserialize(requestOrder.TargetString, "TCP request");
++			Assert.That(NetworkCompatibility.ValidateEnvelope(request, context),
++				Is.EqualTo(NetworkCompatibilityReason.Compatible));
++			Assert.That(NetworkCompatibility.Validate(request, Context(contract)),
++				Is.EqualTo(NetworkCompatibilityReason.Compatible));
++
++			((IConnection)connection).SendImmediate(new[]
++			{
++				HandshakeOrder("HandshakeResponse", clientResponse.Serialize())
++			});
++
++			var completed = await Task.WhenAny(serverTask, Task.Delay(TimeSpan.FromSeconds(5)));
++			Assert.That(completed, Is.SameAs(serverTask), "TCP handshake response timed out.");
++			await serverTask;
++			listener.Stop();
++			return serverReason;
++		}
++
++		static Order HandshakeOrder(string name, string payload) => new(name, null, false)
++		{
++			Type = OrderType.Handshake,
++			IsImmediate = true,
++			TargetString = payload,
++		};
++
++		static void WriteServerFrame(BinaryWriter writer, Order order)
++		{
++			var orderBytes = order.Serialize();
++			writer.Write(orderBytes.Length + 4);
++			writer.Write(0);
++			writer.Write(0);
++			writer.Write(orderBytes);
++		}
++
++		static Order DeserializeOrder(byte[] data)
++		{
++			using var stream = new MemoryStream(data, writable: false);
++			using var reader = new BinaryReader(stream);
++			return Order.Deserialize(null, reader);
++		}
++
++		static ConcurrentQueue<(int FromClient, byte[] Data)> ReceivedPackets(NetworkConnection connection)
++		{
++			var field = typeof(NetworkConnection).GetField(
++				"receivedPackets", BindingFlags.Instance | BindingFlags.NonPublic);
++			Assert.That(field, Is.Not.Null);
++			return (ConcurrentQueue<(int FromClient, byte[] Data)>)field.GetValue(connection);
++		}
++	}
++}
+diff -ruN a/OpenRA.Test/NukeHourNetworkProtocolTest.cs b/OpenRA.Test/NukeHourNetworkProtocolTest.cs
+--- a/OpenRA.Test/NukeHourNetworkProtocolTest.cs	1969-12-31 16:00:00
++++ b/OpenRA.Test/NukeHourNetworkProtocolTest.cs	2026-09-08 00:31:27
+@@ -0,0 +1,320 @@
++#region Copyright & License Information
++/*
++ * Copyright (c) The OpenRA Developers and Contributors
++ * This file is part of OpenRA, which is free software. It is made
++ * available to you under the terms of the GNU General Public License
++ * as published by the Free Software Foundation, either version 3 of
++ * the License, or (at your option) any later version. For more
++ * information, see COPYING.
++ */
++#endregion
++
++using System;
++using System.Collections.Generic;
++using System.IO;
++using NUnit.Framework;
++using OpenRA.Network;
++using OpenRA.Server;
++
++namespace OpenRA.Test
++{
++	[TestFixture]
++	public sealed class NukeHourNetworkProtocolTest
++	{
++		const string Engine = "release-20250330";
++		const string Mod = "ra2";
++		const string CoreA = "nukehour-core-sha256-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
++		const string CoreB = "nukehour-core-sha256-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
++		const string ResourceA = "1111111111111111111111111111111111111111111111111111111111111111";
++		const string ResourceB = "2222222222222222222222222222222222222222222222222222222222222222";
++
++		static RuntimeProfileIdentity Profile(string platform, string architecture, string build) =>
++			new(platform, architecture, Engine, build, Mod, "dotnet", "external-import");
++
++		static RuntimeContractIdentity Contract(
++			string core = CoreA,
++			string resource = ResourceA,
++			string localPath = "/ignored") =>
++			RuntimeContractIdentity.Create(new RuntimeContractInputs(
++				Engine, ProtocolVersion.Orders, Mod, core, "ra2-required-v1", resource, localPath));
++
++		static HandshakeRequest Request(RuntimeProfileIdentity profile, RuntimeContractIdentity contract) => new()
++		{
++			HandshakeSchema = ProtocolVersion.HandshakeSchema,
++			OrdersProtocol = ProtocolVersion.Orders,
++			EngineCompatibility = Engine,
++			Mod = Mod,
++			Version = CoreA,
++			RuntimeProfile = profile.Serialize(),
++			RuntimeContract = contract.Serialize(),
++		};
++
++		static HandshakeResponse Response(RuntimeProfileIdentity profile, RuntimeContractIdentity contract) => new()
++		{
++			HandshakeSchema = ProtocolVersion.HandshakeSchema,
++			OrdersProtocol = ProtocolVersion.Orders,
++			EngineCompatibility = Engine,
++			Mod = Mod,
++			Version = CoreA,
++			RuntimeProfile = profile.Serialize(),
++			RuntimeContract = contract.Serialize(),
++			Client = new Session.Client(),
++		};
++
++		static NetworkCompatibilityContext Local(RuntimeContractIdentity contract) =>
++			new(Engine, Mod, CoreA, contract);
++
++		[TestCase("ios", "arm64", "NUKE HOUR iOS 1.0.7 (Build 7)")]
++		[TestCase("android", "arm64", "NUKE HOUR Android 0.0.3 (Build 3)")]
++		[TestCase("macos", "arm64", "NUKE HOUR macOS 1.0.3 (Build 3)")]
++		public void PlatformProfilesUseOneHandshakeAndAreCompatible(
++			string platform, string architecture, string build)
++		{
++			var contract = Contract();
++			var request = HandshakeRequest.Deserialize(
++				Request(Profile(platform, architecture, build), contract).Serialize(), "request");
++			var response = HandshakeResponse.Deserialize(
++				Response(Profile(platform, architecture, build), contract).Serialize(), "response");
++
++			Assert.Multiple(() =>
++			{
++				Assert.That(NetworkCompatibility.Validate(request, Local(contract)),
++					Is.EqualTo(NetworkCompatibilityReason.Compatible));
++				Assert.That(NetworkCompatibility.Validate(response, Local(contract)),
++					Is.EqualTo(NetworkCompatibilityReason.Compatible));
++			});
++		}
++
++		[Test]
++		public void MissingRuntimeContractIsRejected()
++		{
++			var contract = Contract();
++			var request = Request(Profile("ios", "arm64", "build"), contract);
++			request.RuntimeContract = null;
++
++			Assert.That(NetworkCompatibility.Validate(request, Local(contract)),
++				Is.EqualTo(NetworkCompatibilityReason.RuntimeContractMissing));
++		}
++
++		[Test]
++		public void InvalidRuntimeContractIsRejected()
++		{
++			var contract = Contract();
++			var request = Request(Profile("android", "arm64", "build"), contract);
++			request.RuntimeContract = "v1:ra2-required-v1:not-a-digest";
++
++			Assert.That(NetworkCompatibility.Validate(request, Local(contract)),
++				Is.EqualTo(NetworkCompatibilityReason.RuntimeContractMismatch));
++		}
++
++		[Test]
++		public void HandshakeSchemaMismatchIsRejectedBeforeOtherFields()
++		{
++			var contract = Contract();
++			var request = Request(Profile("macos", "arm64", "build"), contract);
++			request.HandshakeSchema++;
++			request.EngineCompatibility = "different";
++
++			Assert.That(NetworkCompatibility.Validate(request, Local(contract)),
++				Is.EqualTo(NetworkCompatibilityReason.ProtocolMismatch));
++		}
++
++		[Test]
++		public void UnsupportedEnvelopeIsRejectedBeforeModSelection()
++		{
++			var contract = Contract();
++			var request = Request(Profile("ios", "arm64", "build"), contract);
++			request.Mod = "external-mod";
++			request.HandshakeSchema = 0;
++
++			Assert.That(NetworkCompatibility.ValidateEnvelope(request, Local(contract)),
++				Is.EqualTo(NetworkCompatibilityReason.ProtocolMismatch));
++		}
++
++		[Test]
++		public void OrdersProtocolMismatchIsRejected()
++		{
++			var contract = Contract();
++			var response = Response(Profile("ios", "arm64", "build"), contract);
++			response.OrdersProtocol--;
++
++			Assert.That(NetworkCompatibility.Validate(response, Local(contract)),
++				Is.EqualTo(NetworkCompatibilityReason.ProtocolMismatch));
++		}
++
++		[Test]
++		public void SameResourcesAtDifferentLocalPathsHaveSameContract()
++		{
++			Assert.That(Contract(localPath: "/var/mobile/content"),
++				Is.EqualTo(Contract(localPath: "/Users/player/Library/content")));
++		}
++
++		[Test]
++		public void ReimportingSameResourcesHasSameContract()
++		{
++			var firstImport = Contract(localPath: "/data/user/0/import-a");
++			var secondImport = Contract(localPath: "/data/user/0/import-b");
++
++			Assert.That(secondImport, Is.EqualTo(firstImport));
++		}
++
++		[Test]
++		public void ResourceFingerprintUsesLogicalContentAndIgnoresSourcePaths()
++		{
++			var configuration = new RuntimeContractConfiguration(new MiniYaml(null, new[]
++			{
++				new MiniYamlNode("ResourceCapability", "ra2-required-v1"),
++				new MiniYamlNode("RequiredResources", "content|ra2.mix, content|language.mix"),
++				new MiniYamlNode("OptionalResources", "content|ra2md.mix"),
++			}));
++			var resources = new Dictionary<string, byte[]>(StringComparer.Ordinal)
++			{
++				["content|ra2.mix"] = new byte[] { 1, 2, 3 },
++				["content|language.mix"] = new byte[] { 4, 5, 6 },
++			};
++			const string FirstPath = "/var/mobile/import";
++			const string SecondPath = "/data/user/0/import";
++			Stream Open(string path, string logicalName) =>
++				resources.TryGetValue(logicalName, out var bytes) && path.Length > 0
++					? new MemoryStream(bytes, writable: false) : null;
++
++			var first = RuntimeResourceFingerprint.Create(
++				configuration, logicalName => Open(FirstPath, logicalName));
++			var second = RuntimeResourceFingerprint.Create(
++				configuration, logicalName => Open(SecondPath, logicalName));
++			Assert.That(second, Is.EqualTo(first));
++		}
++
++		[Test]
++		public void ResourceFingerprintRejectsMissingOrChangedRequiredContent()
++		{
++			var configuration = new RuntimeContractConfiguration(new MiniYaml(null, new[]
++			{
++				new MiniYamlNode("ResourceCapability", "ra2-required-v1"),
++				new MiniYamlNode("RequiredResources", "content|ra2.mix"),
++			}));
++			var first = RuntimeResourceFingerprint.Create(
++				configuration, _ => new MemoryStream(new byte[] { 1, 2, 3 }, writable: false));
++			var changed = RuntimeResourceFingerprint.Create(
++				configuration, _ => new MemoryStream(new byte[] { 1, 2, 4 }, writable: false));
++
++			Assert.Multiple(() =>
++			{
++				Assert.That(changed, Is.Not.EqualTo(first));
++				Assert.Throws<InvalidDataException>(() =>
++					RuntimeResourceFingerprint.Create(configuration, _ => null));
++			});
++		}
++
++		[Test]
++		public void GameplayCriticalCoreChangeIsRejectedBeforeAdmission()
++		{
++			var localContract = Contract(CoreA);
++			var changedContract = Contract(CoreB);
++			var response = Response(Profile("android", "arm64", "build"), changedContract);
++
++			Assert.That(NetworkCompatibility.Validate(response, Local(localContract)),
++				Is.EqualTo(NetworkCompatibilityReason.RuntimeContractMismatch));
++		}
++
++		[Test]
++		public void ImportedResourceChangeIsRejectedBeforeAdmission()
++		{
++			var localContract = Contract(resource: ResourceA);
++			var changedContract = Contract(resource: ResourceB);
++			var response = Response(Profile("android", "arm64", "build"), changedContract);
++
++			Assert.That(NetworkCompatibility.Validate(response, Local(localContract)),
++				Is.EqualTo(NetworkCompatibilityReason.RuntimeContractMismatch));
++		}
++
++		[Test]
++		public void FullHandshakeRoundTripPreservesRequiredSchema()
++		{
++			var contract = Contract();
++			var original = Response(Profile("macos", "x64", "NUKE HOUR macOS 1.0.3 (Build 3)"), contract);
++			var roundTrip = HandshakeResponse.Deserialize(original.Serialize(), "round trip");
++
++			Assert.Multiple(() =>
++			{
++				Assert.That(roundTrip.HandshakeSchema, Is.EqualTo(original.HandshakeSchema));
++				Assert.That(roundTrip.OrdersProtocol, Is.EqualTo(original.OrdersProtocol));
++				Assert.That(roundTrip.EngineCompatibility, Is.EqualTo(original.EngineCompatibility));
++				Assert.That(roundTrip.RuntimeProfile, Is.EqualTo(original.RuntimeProfile));
++				Assert.That(roundTrip.RuntimeContract, Is.EqualTo(original.RuntimeContract));
++			});
++		}
++
++		[Test]
++		public void FutureOptionalFieldIsIgnoredWithinSupportedSchema()
++		{
++			var contract = Contract();
++			var data = Request(Profile("ios", "arm64", "build"), contract).Serialize()
++				.Replace("Handshake:\n", "Handshake:\n\tFutureOptionalField: value\n", StringComparison.Ordinal);
++			var request = HandshakeRequest.Deserialize(data, "future field");
++
++			Assert.That(NetworkCompatibility.Validate(request, Local(contract)),
++				Is.EqualTo(NetworkCompatibilityReason.Compatible));
++		}
++
++		[Test]
++		public void MalformedHandshakeHasNonThrowingProtocolRejectionPath()
++		{
++			Assert.Multiple(() =>
++			{
++				Assert.That(HandshakeRequest.TryDeserialize(
++					"Handshake:\n\tHandshakeSchema: nope\n", "bad request", out _), Is.False);
++				Assert.That(HandshakeResponse.TryDeserialize(
++					"Handshake:\n\tOrdersProtocol: nope\n", "bad response", out _), Is.False);
++			});
++		}
++
++		[Test]
++		public void EngineAndModFailuresRemainDistinct()
++		{
++			var contract = Contract();
++			var engineMismatch = Request(Profile("ios", "arm64", "build"), contract);
++			engineMismatch.EngineCompatibility = "different";
++			var modMismatch = Request(Profile("ios", "arm64", "build"), contract);
++			modMismatch.Mod = "different";
++			modMismatch.RuntimeProfile = new RuntimeProfileIdentity(
++				"ios", "arm64", Engine, "build", "different", "dotnet", "external-import").Serialize();
++
++			Assert.Multiple(() =>
++			{
++				Assert.That(NetworkCompatibility.Validate(engineMismatch, Local(contract)),
++					Is.EqualTo(NetworkCompatibilityReason.EngineMismatch));
++				Assert.That(NetworkCompatibility.Validate(modMismatch, Local(contract)),
++					Is.EqualTo(NetworkCompatibilityReason.ModMismatch));
++			});
++		}
++
++		[Test]
++		public void DebugSummaryOmitsPathsAndFullContractDigest()
++		{
++			var contract = Contract(localPath: "/private/player/content");
++			Assert.That(NetworkCompatibility.TryGetDebugSummary(
++				Profile("ios", "arm64", "build").Serialize(), contract.Serialize(), out var summary), Is.True);
++			Assert.Multiple(() =>
++			{
++				Assert.That(summary, Does.Contain("platform=ios"));
++				Assert.That(summary, Does.Contain(contract.Digest[..12]));
++				Assert.That(summary, Does.Not.Contain(contract.Digest));
++				Assert.That(summary, Does.Not.Contain("/private/player/content"));
++			});
++		}
++
++		[Test]
++		public void MapUidMismatchHasExplicitReasonAndDirectPortIsUnchanged()
++		{
++			Assert.Multiple(() =>
++			{
++				Assert.That(NetworkCompatibility.ValidateMap("map-a", "map-b"),
++					Is.EqualTo(NetworkCompatibilityReason.MapMismatch));
++				Assert.That(new ServerSettings().ListenPort, Is.EqualTo(1234));
++				Assert.That(ProtocolVersion.Handshake, Is.EqualTo(7));
++				Assert.That(ProtocolVersion.Orders, Is.EqualTo(23));
++			});
++		}
++	}
++}
+diff -ruN a/mods/common/fluent/common.ftl b/mods/common/fluent/common.ftl
+--- a/mods/common/fluent/common.ftl	2026-09-08 00:31:27
++++ b/mods/common/fluent/common.ftl	2026-09-08 00:31:27
+@@ -51,6 +51,10 @@
+ notification-incompatible-mod = Server is running an incompatible mod.
+ notification-incompatible-version = Server is running an incompatible version.
+ notification-incompatible-protocol = Server is running an incompatible protocol.
++notification-engine-mismatch = Your version of NUKE HOUR is not compatible with this server.
++notification-runtime-contract-missing = This server requires a newer NUKE HOUR multiplayer protocol.
++notification-runtime-contract-mismatch = Your imported game resources are not compatible with this session.
++notification-map-mismatch = The selected map does not match this session.
+ notification-you-were-banned = You have been banned from the server.
+ notification-you-were-temp-banned = You have been temporarily banned from the server.
+ notification-game-full = The game is full.
+diff -ruN a/mods/common/fluent/zh-CN/common.ftl b/mods/common/fluent/zh-CN/common.ftl
+--- a/mods/common/fluent/zh-CN/common.ftl	2026-09-08 00:31:27
++++ b/mods/common/fluent/zh-CN/common.ftl	2026-09-08 00:31:27
+@@ -50,6 +50,10 @@
+ notification-incompatible-mod = 服务器正在运行不兼容的模组。
+ notification-incompatible-version = 服务器正在运行不兼容的版本。
+ notification-incompatible-protocol = 服务器正在运行不兼容的协议。
++notification-engine-mismatch = 你的 NUKE HOUR 版本与此服务器不兼容。
++notification-runtime-contract-missing = 此服务器需要更新的 NUKE HOUR 多人联机协议。
++notification-runtime-contract-mismatch = 你导入的游戏资源与本局不兼容。
++notification-map-mismatch = 所选地图与本局不匹配。
+ notification-you-were-banned = 你已被服务器封禁。
+ notification-you-were-temp-banned = 你已被服务器临时封禁。
+ notification-game-full = 游戏已满员。

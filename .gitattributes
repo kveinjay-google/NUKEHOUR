@@ -9,36 +9,5 @@
 # Patch payloads intentionally contain lines that describe source whitespace.
 engine-patches/*.patch -whitespace
 
-# Preserve authenticated archival bytes that contain intentional or historical
-# whitespace. These paths are exempt from root-commit whitespace diagnostics;
-# all other source remains checked normally.
-docs/archive/evidence/build4-managed-semantic-comparison.txt -whitespace
-docs/superpowers/plans/2026-08-12-ipad-touch-controls.md -whitespace
-docs/superpowers/specs/2026-08-12-ipad-touch-controls-design.md -whitespace
-docs/superpowers/specs/2026-08-13-ios-responsive-menu-system-design.md -whitespace
-docs/superpowers/specs/2026-08-20-ios-clean-engine-distribution-design.md -whitespace
-docs/unit_editor_architecture_analysis.md -whitespace
-# This upstream Markdown uses a seven-equals Setext heading that Git otherwise
-# mistakes for a merge-conflict marker in an all-new root commit.
-engine/INSTALL.md -diff -whitespace
-engine/OpenRA.Mods.Common/TraitsInterfaces.cs -whitespace
-engine/OpenRA.Test/OpenRA.Game/MiniYamlTest.cs -whitespace
-engine/glsl/combined.frag -whitespace
-engine/glsl/combined.vert -whitespace
-engine/mods/cnc/fluent/chrome.ftl -whitespace
-engine/mods/ra/fluent/chrome.ftl -whitespace
-engine/mods/ra/maps/allies-10b/allies10b.lua -whitespace
-engine/mods/ra/maps/fort-lonestar/map.ftl -whitespace
-engine/mods/ra/maps/negotiations/rules.yaml -whitespace
-engine/mods/ra/maps/soviet-06a/soviet06a.lua -whitespace
-engine/mods/ra/maps/soviet-06b/soviet06b.lua -whitespace
-engine/packaging/artwork/ra_scalable.svg -whitespace
-fetch-engine.sh -whitespace
-ios/SDL2-CS/src/SDL2.cs -whitespace
-mods/ra2/fluent/chrome.ftl -whitespace
-third_party/licenses/Mono.Nat-3.0.4-LICENSE.md -whitespace
-third_party/licenses/NVorbis-0.10.5-LICENSE.txt -whitespace
-third_party/licenses/SDL2-2.30.10-LICENSE.txt -whitespace
-
 # Custom for Visual Studio
 *.cs     diff=csharp

@@ -1,0 +1,64 @@
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/Ingame/IosViewportActionsLogic.cs b/OpenRA.Mods.Common/Widgets/Logic/Ingame/IosViewportActionsLogic.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/Ingame/IosViewportActionsLogic.cs	2026-09-11 03:21:55
++++ b/OpenRA.Mods.Common/Widgets/Logic/Ingame/IosViewportActionsLogic.cs	2026-09-11 03:21:33
+@@ -213,6 +213,7 @@
+ 					bounds.Height);
+ 				actionIcons[i].Bounds = new WidgetBounds(0, 0, bounds.Width, bounds.Height);
+ 				labelLayout.ApplyTo(actionLabels[i]);
++				actionLabels[i].IsVisible = () => false;
+ 			}
+ 
+ 			lastResolution = resolution;
+diff -ruN a/OpenRA.Mods.Common/Widgets/TouchFactionSkin.cs b/OpenRA.Mods.Common/Widgets/TouchFactionSkin.cs
+--- a/OpenRA.Mods.Common/Widgets/TouchFactionSkin.cs	2026-09-11 03:21:55
++++ b/OpenRA.Mods.Common/Widgets/TouchFactionSkin.cs	2026-09-11 03:21:33
+@@ -72,6 +72,9 @@
+ 		public static string QuickbarToggleCollection(string skin) =>
+ 			"ios-touch-quickbar-toggle-" + Normalize(skin);
+ 
++		public static string CommandGlyphCollection(string skin) =>
++			"ios-commandbar-glyphs-" + Normalize(skin);
++
+ 		static string Normalize(string suffix)
+ 		{
+ 			return suffix == "allies" || suffix == "soviets" || suffix == "yuri" ? suffix : Default;
+diff -ruN a/OpenRA.Test/IosViewportActionLayoutTest.cs b/OpenRA.Test/IosViewportActionLayoutTest.cs
+--- a/OpenRA.Test/IosViewportActionLayoutTest.cs	2026-09-11 03:21:55
++++ b/OpenRA.Test/IosViewportActionLayoutTest.cs	2026-09-11 03:21:33
+@@ -362,6 +362,36 @@
+ 		}
+ 
+ 		[Test]
++		public void IosTouchV3ProvidesFactionSpecificChromeAndEveryCommandGlyph()
++		{
++			var root = RepositoryRoot();
++			var chrome = File.ReadAllText(Path.Combine(root, "mods", "ra2", "chrome.yaml"));
++			var widget = File.ReadAllText(Path.Combine(root, "OpenRA.Mods.RA2", "Widgets", "CustomCommandBarWidget.cs"));
++			var actionLogic = File.ReadAllText(Path.Combine(root, "engine", "OpenRA.Mods.Common", "Widgets",
++				"Logic", "Ingame", "IosViewportActionsLogic.cs"));
++			var glyphs = new[]
++			{
++				"group-1", "group-2", "group-3", "group-4", "group-5", "production-x5",
++				"group-6", "group-7", "group-8", "group-9", "group-0", "select-all", "select-by-type",
++				"cycle-base", "to-selection", "to-last-event", "cycle-harvesters", "remove-from-group",
++				"attack-move", "force-move", "force-attack", "guard", "deploy", "scatter", "stop",
++				"queue-orders", "attack-anything", "defend", "return-fire", "hold-fire", "sell", "repair", "beacon"
++			};
++
++			foreach (var faction in new[] { "allies", "soviets", "yuri" })
++			{
++				StringAssert.Contains($"ios-commandbar-glyphs-{faction}:", chrome);
++				StringAssert.Contains($"Image: ios-commandbar-glyphs-{faction}-v3.png", chrome);
++				foreach (var glyph in glyphs)
++					StringAssert.Contains($"{glyph}:", chrome);
++			}
++
++			StringAssert.Contains("TouchFactionSkin.CommandGlyphCollection(skin)", widget);
++			StringAssert.Contains("actionLabels[i].IsVisible = () => false;", actionLogic,
++				"The regenerated floating action icons must communicate their actions without captions below them.");
++		}
++
++		[Test]
+ 		public void PowerMeterBarsAreParentedToTheSidebarMeter()
+ 		{
+ 			var source = File.ReadAllText(Path.Combine(RepositoryRoot(), "OpenRA.Mods.RA2", "Widgets", "PowerMeterWidget.cs"));

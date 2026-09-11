@@ -70,15 +70,15 @@ namespace OpenRA.Test
 		}
 
 		[Test]
-		public void Ra2MainMenuUsesOneAlignedSixControlDesktopGrid()
+		public void Ra2MainMenuUsesOneAlignedSevenControlDesktopGrid()
 		{
 			var yaml = File.ReadAllText(Path.Combine(RepositoryRoot(), "mods", "ra2", "chrome", "mainmenu.yaml"));
 			var ids = new[]
 			{
 				"SINGLEPLAYER_BUTTON", "MULTIPLAYER_BUTTON", "SETTINGS_BUTTON",
-				"LANGUAGE_DROPDOWN", "CONTENT_BUTTON", "QUIT_BUTTON"
+				"LANGUAGE_BUTTON", "CONTENT_BUTTON", "ABOUT_BUTTON", "QUIT_BUTTON"
 			};
-			var expectedY = new[] { 36, 92, 148, 204, 260, 316 };
+			var expectedY = new[] { 36, 92, 148, 204, 260, 316, 372 };
 			var bounds = ids.Select(id => MainMenuControlBounds(yaml, id)).ToArray();
 
 			for (var i = 0; i < bounds.Length; i++)
@@ -86,15 +86,15 @@ namespace OpenRA.Test
 				Assert.That(bounds[i], Is.EqualTo(new WidgetBounds(28, expectedY[i], 264, 46)), ids[i]);
 				var body = MainMenuControlBody(yaml, ids[i]);
 				Assert.That(body, Does.Contain("VisualHeight: 0"), ids[i]);
-				Assert.That(body, Does.Contain("Background: menu-button"), ids[i]);
+				Assert.That(body, Does.Contain("Background: main-menu-button"), ids[i]);
 				Assert.That(body, Does.Contain("Font: Bold"), ids[i]);
 				if (i > 0)
 					Assert.That(bounds[i].Y - bounds[i - 1].Bottom, Is.EqualTo(10), ids[i]);
 			}
 
 			Assert.That(bounds[^1].Bottom, Is.LessThanOrEqualTo(420));
-			Assert.That(yaml, Does.Contain("DropDownButton@LANGUAGE_DROPDOWN:"));
-			Assert.That(yaml, Does.Contain("Background: menu-button"));
+			Assert.That(yaml, Does.Contain("Button@LANGUAGE_BUTTON:"));
+			Assert.That(yaml, Does.Contain("Background: main-menu-button"));
 			Assert.That(yaml, Does.Contain("Font: Bold"));
 		}
 
@@ -126,6 +126,61 @@ namespace OpenRA.Test
 				if (i > 0)
 					Assert.That(layout.Controls[i - 1].Bottom, Is.LessThanOrEqualTo(control.Y));
 			}
+		}
+
+		[TestCase(1558, 720, 844, 390, 47, 0, 47, 21)]
+		[TestCase(1180, 820, 1180, 820, 0, 0, 0, 20)]
+		public void IosMainMenuRedistributesFourControlsInsideAnAirierOriginalFrame(
+			int effectiveWidth, int effectiveHeight, int nativeWidth, int nativeHeight,
+			double safeLeft, double safeTop, double safeRight, double safeBottom)
+		{
+			var policy = IosMenuLayoutPolicy.Create(true,
+				Snapshot(effectiveWidth, effectiveHeight, nativeWidth, nativeHeight,
+					safeLeft, safeTop, safeRight, safeBottom));
+			var six = IosMainMenuLayout.Create(policy, 6);
+			var four = IosMainMenuLayout.Create(policy, 4);
+
+			Assert.Multiple(() =>
+			{
+				Assert.That(four.Panel, Is.EqualTo(six.Panel),
+					"Removing Quit and Content must not collapse the established main-menu frame.");
+				Assert.That(four.Controls, Has.Length.EqualTo(4));
+				Assert.That(four.Controls.Select(control => control.Height), Has.All.GreaterThan(six.Controls[0].Height),
+					"The remaining buttons should grow instead of leaving an empty sixth row.");
+				Assert.That(four.Controls.Max(control => control.Height) -
+					four.Controls.Min(control => control.Height), Is.LessThanOrEqualTo(1));
+				Assert.That(four.Controls[0].Y, Is.GreaterThanOrEqualTo(six.Controls[0].Y));
+				Assert.That(four.Controls[0].Y,
+					Is.GreaterThanOrEqualTo((int)Math.Ceiling(20 * policy.LogicalPerPoint)),
+					"The main-menu frame needs breathing room above and below its controls.");
+				Assert.That(four.Panel.Height - four.Controls[^1].Bottom,
+					Is.EqualTo(four.Controls[0].Y).Within(1),
+					"The expanded frame inset should remain vertically balanced.");
+			});
+
+			for (var i = 1; i < four.Controls.Length; i++)
+				Assert.That(four.Controls[i].Y - four.Controls[i - 1].Bottom, Is.EqualTo(policy.Gap));
+		}
+
+		[TestCase("System", "zh-CN", "自动")]
+		[TestCase("system", "en", "Auto")]
+		[TestCase("zh-CN", "en", "简体中文")]
+		[TestCase("en", "zh-CN", "English")]
+		public void IosMainMenuUsesCompactLanguageNames(
+			string preference, string uiLanguage, string expected)
+		{
+			Assert.That(MainMenuLogic.GetIosLanguageDisplayName(preference, uiLanguage), Is.EqualTo(expected));
+		}
+
+		[TestCase("System", "zh-CN")]
+		[TestCase("system", "zh-CN")]
+		[TestCase("zh-CN", "en")]
+		[TestCase("en", "System")]
+		[TestCase("unsupported", "zh-CN")]
+		public void MainMenuLanguageButtonCyclesThroughSupportedPreferences(
+			string preference, string expected)
+		{
+			Assert.That(MainMenuLogic.NextLanguagePreference(preference), Is.EqualTo(expected));
 		}
 
 		[Test]
@@ -177,66 +232,38 @@ namespace OpenRA.Test
 			var source = File.ReadAllText(Path.Combine(RepositoryRoot(), "engine", "OpenRA.Mods.Common",
 				"Widgets", "Logic", "MainMenuLogic.cs"));
 
-			Assert.That(source, Does.Contain("GetOrNull<DropDownButtonWidget>(\"LANGUAGE_DROPDOWN\")"));
+			Assert.That(source, Does.Contain("GetOrNull<ButtonWidget>(\"LANGUAGE_BUTTON\")"));
+			Assert.That(source, Does.Contain("NextLanguagePreference(Game.Settings.Game.Language)"));
+			Assert.That(source, Does.Not.Contain("ShowLanguageDropdown"));
 			Assert.That(source, Does.Contain("IosScreenMetrics.SnapshotFor"));
 			Assert.That(source, Does.Contain("IosTouchMenuLogic.ApplyIosFonts(mainMenu)"));
 			Assert.That(source, Does.Contain("IosTouchWidgetPolicy.RelativeToRoot"));
 			Assert.That(source, Does.Contain("mainMenu.Parent.RenderOrigin"));
-			Assert.That(source, Does.Contain("languageDropdown.RemovePanel();"));
+			Assert.That(source, Does.Contain("contentButton.Visible = !Platform.IsIOS;"));
+			Assert.That(source, Does.Contain("if (contentButton != null && contentButton.Visible)"));
 			Assert.That(source, Does.Not.Contain("menus.Bounds ="));
 			Assert.That(source, Does.Contain("public override void Tick()"));
 			var yaml = File.ReadAllText(Path.Combine(RepositoryRoot(), "mods", "ra2", "chrome", "mainmenu.yaml"));
 			Assert.That(yaml, Does.Not.Contain("Logic: MainMenuLogic, IosTouchMenuLogic"));
-		}
+			Assert.That(yaml, Does.Contain("Button@LANGUAGE_BUTTON:"));
+			Assert.That(yaml, Does.Not.Contain("DropDownButton@LANGUAGE_DROPDOWN:"));
+			Assert.That(yaml, Does.Contain("Background: main-menu-button"));
 
-		[Test]
-		public void IosMainMenuDoesNotOfferAProcessQuitThatLeavesTheNativeWallpaper()
-		{
-			var source = File.ReadAllText(Path.Combine(RepositoryRoot(), "engine", "OpenRA.Mods.Common",
-				"Widgets", "Logic", "MainMenuLogic.cs"));
-
-			Assert.That(source, Does.Contain("quitButton.IsVisible = () => !Platform.IsIOS;"));
-			Assert.That(source, Does.Contain("if (!Platform.IsIOS)\n\t\t\t\tcontrols.Add(quitButton);"));
-			Assert.That(source, Does.Contain("IosMainMenuLayout.Create(policy, mainMenuControls.Length)"));
-		}
-
-		[Test]
-		public void IosMainMenuOmitsContentManagementAndLanguageSelection()
-		{
-			var source = File.ReadAllText(Path.Combine(RepositoryRoot(), "engine", "OpenRA.Mods.Common",
-				"Widgets", "Logic", "MainMenuLogic.cs"));
-
-			Assert.That(source, Does.Contain("contentButton.IsVisible = () => !Platform.IsIOS;"));
-			Assert.That(source, Does.Contain("languageDropdown.IsVisible = () => !Platform.IsIOS;"));
-			Assert.That(source, Does.Contain("if (!Platform.IsIOS && languageDropdown != null)"));
-			Assert.That(source, Does.Contain("if (!Platform.IsIOS && contentButton != null)"));
-		}
-
-		[TestCase(1560, 720, 932, 430, 59, 0, 59, 21)]
-		[TestCase(1558, 720, 844, 390, 47, 0, 47, 21)]
-		[TestCase(1133, 744, 1133, 744, 0, 0, 0, 20)]
-		[TestCase(1024, 768, 1024, 768, 0, 0, 0, 20)]
-		[TestCase(1180, 820, 1180, 820, 0, 0, 0, 20)]
-		[TestCase(1366, 1024, 1366, 1024, 0, 0, 0, 20)]
-		public void IosMainMenuPlacesThreeVisibleControlsInsideTheSafeContent(
-			int effectiveWidth, int effectiveHeight, int nativeWidth, int nativeHeight,
-			double safeLeft, double safeTop, double safeRight, double safeBottom)
-		{
-			var policy = IosMenuLayoutPolicy.Create(true,
-				Snapshot(effectiveWidth, effectiveHeight, nativeWidth, nativeHeight,
-					safeLeft, safeTop, safeRight, safeBottom));
-			var layout = IosMainMenuLayout.Create(policy, 3);
-
-			Assert.That(policy.ContentBounds.ToRectangle().Contains(layout.Panel.ToRectangle()), Is.True);
-			Assert.That(layout.Controls, Has.Length.EqualTo(3));
-			for (var i = 0; i < layout.Controls.Length; i++)
+			var chrome = File.ReadAllText(Path.Combine(RepositoryRoot(), "mods", "ra2", "chrome.yaml"));
+			foreach (var style in new[]
 			{
-				AssertPhysicalTarget(layout.Controls[i], policy);
-				Assert.That(new Rectangle(0, 0, layout.Panel.Width, layout.Panel.Height)
-					.Contains(layout.Controls[i].ToRectangle()), Is.True);
-				if (i > 0)
-					Assert.That(layout.Controls[i - 1].Bottom, Is.LessThanOrEqualTo(layout.Controls[i].Y));
-			}
+				"main-menu-button:", "main-menu-button-hover:",
+				"main-menu-button-pressed:", "main-menu-button-disabled:"
+			})
+				Assert.That(chrome, Does.Contain(style), style);
+
+			var mainMenuButton = Regex.Match(chrome,
+				@"(?ms)^main-menu-button:\s*\n(?<body>.*?)(?=^\S|\z)");
+			Assert.That(mainMenuButton.Success, Is.True);
+			Assert.That(mainMenuButton.Groups["body"].Value, Does.Not.Contain("PanelRegion:"));
+			Assert.That(mainMenuButton.Groups["body"].Value, Does.Contain("background: 64, 64, 1, 1"));
+			Assert.That(mainMenuButton.Groups["body"].Value, Does.Contain("border-l: 0, 64, 4, 1"));
+			Assert.That(mainMenuButton.Groups["body"].Value, Does.Contain("border-r: 124, 64, 4, 1"));
 		}
 
 		[Test]
@@ -337,6 +364,25 @@ namespace OpenRA.Test
 			Assert.That(layout.ChangeMap.Y, Is.EqualTo(layout.Map.Bottom + layout.Gap));
 			Assert.That(layout.Chat.Height, Is.LessThan(layout.Players.Height / 2));
 			Assert.That(layout.Tabs.Bottom, Is.LessThanOrEqualTo(layout.Players.Y));
+		}
+
+		[Test]
+		public void SkirmishLobbyRemovesHandicapAndReadyWhileKeepingTextBalancedColumns()
+		{
+			var policy = IosMenuLayoutPolicy.Create(true, 1560, 720);
+			var multiplayer = IosLobbyLayout.Create(1560, 720, policy, false);
+			var skirmish = IosLobbyLayout.Create(1560, 720, policy, true);
+
+			Assert.That(skirmish.PlayerHandicap.Width, Is.Zero);
+			Assert.That(skirmish.PlayerReady.Width, Is.Zero);
+			Assert.That(skirmish.PlayerName.Width, Is.EqualTo(2 * skirmish.PlayerSpawn.Width));
+			Assert.That(skirmish.PlayerColor.Right, Is.EqualTo(skirmish.PlayerFaction.X));
+			Assert.That(skirmish.PlayerFaction.Right, Is.EqualTo(skirmish.PlayerTeam.X));
+			Assert.That(skirmish.PlayerTeam.Right, Is.EqualTo(skirmish.PlayerSpawn.X));
+			Assert.That(skirmish.PlayerSpawn.Right, Is.EqualTo(skirmish.PlayerRow.Right));
+			Assert.That(skirmish.Players.Width, Is.EqualTo(2 * skirmish.Map.Width));
+			Assert.That(multiplayer.PlayerHandicap.Width, Is.GreaterThan(0));
+			Assert.That(multiplayer.PlayerReady.Width, Is.GreaterThan(0));
 		}
 
 		[Test]
@@ -581,91 +627,6 @@ namespace OpenRA.Test
 		}
 
 		[Test]
-		public void SkirmishLobbyAllocatesNoHandicapOrReadyColumn()
-		{
-			var policy = IosMenuLayoutPolicy.Create(true, 1560, 720);
-			var multiplayer = IosLobbyLayout.Create(1560, 720, policy, false);
-			var skirmish = IosLobbyLayout.Create(1560, 720, policy, true);
-
-			Assert.That(skirmish.PlayerHandicap.Width, Is.Zero);
-			Assert.That(skirmish.PlayerReady.Width, Is.Zero);
-			Assert.That(skirmish.PlayerName.Width, Is.GreaterThan(skirmish.PlayerColor.Width));
-			Assert.That(skirmish.PlayerColor.Right, Is.EqualTo(skirmish.PlayerFaction.X));
-			Assert.That(skirmish.PlayerFaction.Right, Is.EqualTo(skirmish.PlayerTeam.X));
-			Assert.That(skirmish.PlayerTeam.Right, Is.EqualTo(skirmish.PlayerSpawn.X));
-			Assert.That(multiplayer.PlayerHandicap.Width, Is.GreaterThan(0));
-			Assert.That(multiplayer.PlayerReady.Width, Is.GreaterThan(0));
-		}
-
-		[Test]
-		public void AdvancedSettingsExcludeNonPlayerFacingControls()
-		{
-			var root = RepositoryRoot();
-			var yaml = File.ReadAllText(Path.Combine(root, "engine", "mods", "common", "chrome",
-				"settings-advanced.yaml"));
-			var source = File.ReadAllText(Path.Combine(root, "engine", "OpenRA.Mods.Common",
-				"Widgets", "Logic", "Settings", "AdvancedSettingsLogic.cs"));
-
-			foreach (var id in new[]
-			{
-				"PERFGRAPH_CHECKBOX", "FETCH_NEWS_CHECKBOX", "CHECK_VERSION_CHECKBOX",
-				"DEBUG_SECTION_HEADER", "DEBUG_HIDDEN_CONTAINER", "BOTDEBUG_CHECKBOX_CONTAINER"
-			})
-				Assert.That(yaml, Does.Not.Contain(id), id + " must not be visible in Advanced settings.");
-
-			Assert.That(source, Does.Not.Contain("BindCheckboxPref(panel, \"PERFGRAPH_CHECKBOX\""));
-			Assert.That(source, Does.Not.Contain("BindCheckboxPref(panel, \"FETCH_NEWS_CHECKBOX\""));
-			Assert.That(source, Does.Not.Contain("BindCheckboxPref(panel, \"CHECK_VERSION_CHECKBOX\""));
-			Assert.That(source, Does.Not.Contain("DEBUG_HIDDEN_CONTAINER"));
-		}
-
-		[Test]
-		public void SkirmishColorPickerUsesNineSwatchesWithoutCodes()
-		{
-			var root = RepositoryRoot();
-			var yaml = File.ReadAllText(Path.Combine(root, "engine", "mods", "common", "chrome",
-				"color-picker.yaml"));
-			var source = File.ReadAllText(Path.Combine(root, "engine", "OpenRA.Mods.Common",
-				"Widgets", "Logic", "Lobby", "LobbyUtils.cs"));
-
-			Assert.That(yaml, Does.Contain("Background@IOS_SKIRMISH_COLOR_GRID:"));
-			Assert.That(yaml, Does.Contain("ColorBlock@SWATCH_8:"));
-			Assert.That(yaml, Does.Contain("Image@SELECTED:"));
-			Assert.That(source, Does.Contain("colorManager.PresetColors.Take(9).ToArray()"));
-			Assert.That(source, Does.Contain("Ui.LoadWidget(\"IOS_SKIRMISH_COLOR_GRID\""));
-			Assert.That(source, Does.Not.Contain("color.ToString()"));
-		}
-
-		[Test]
-		public void SkirmishLayoutPrioritizesGameOptionsOverMapPreview()
-		{
-			var policy = IosMenuLayoutPolicy.Create(true, 1560, 720);
-			var skirmish = IosLobbyLayout.Create(1560, 720, policy, true);
-
-			Assert.That(skirmish.Players.Width, Is.EqualTo(2 * skirmish.Map.Width));
-			Assert.That(skirmish.PlayerName.Width, Is.EqualTo(2 * skirmish.PlayerSpawn.Width));
-			Assert.That(skirmish.PlayerColor.Width, Is.EqualTo(skirmish.PlayerFaction.Width));
-			Assert.That(skirmish.PlayerFaction.Width, Is.EqualTo(skirmish.PlayerTeam.Width));
-			Assert.That(skirmish.PlayerTeam.Width, Is.EqualTo(skirmish.PlayerSpawn.Width));
-			Assert.That(skirmish.PlayerName.Width, Is.GreaterThan(skirmish.PlayerColor.Width));
-			Assert.That(skirmish.PlayerName.Right, Is.EqualTo(skirmish.PlayerColor.X));
-			Assert.That(skirmish.PlayerColor.Right, Is.EqualTo(skirmish.PlayerFaction.X));
-			Assert.That(skirmish.PlayerFaction.Right, Is.EqualTo(skirmish.PlayerTeam.X));
-			Assert.That(skirmish.PlayerTeam.Right, Is.EqualTo(skirmish.PlayerSpawn.X));
-		}
-
-		[Test]
-		public void IosMainMenuKeepsTheSingleplayerPanelHeightWithThreeControls()
-		{
-			var policy = IosMenuLayoutPolicy.Create(true, 1560, 720);
-			var layout = IosMainMenuLayout.Create(policy, 3);
-
-			Assert.That(layout.Panel.Height, Is.EqualTo(Math.Min(420, policy.ContentBounds.Height)));
-			Assert.That(layout.Controls[0].Y, Is.EqualTo(
-				(layout.Panel.Height - (3 * policy.MinimumTarget + 2 * policy.Gap)) / 2));
-		}
-
-		[Test]
 		public void CommonLobbyAndServerRootsOptInAndPreserveAllControls()
 		{
 			var root = RepositoryRoot();
@@ -695,10 +656,12 @@ namespace OpenRA.Test
 
 			foreach (var id in new[]
 			{
-				"SERVER_NAME", "PASSWORD", "LISTEN_PORT", "ADVERTISE_CHECKBOX", "MAP_PREVIEW_ROOT",
+				"SERVER_NAME", "PASSWORD", "LISTEN_PORT", "MAP_PREVIEW_ROOT",
 				"MAP_BUTTON", "CREATE_BUTTON", "BACK_BUTTON"
 			})
 				Assert.That(createServer, Does.Contain("@" + id + ":"), $"Create Server surface lost {id}.");
+
+			Assert.That(createServer, Does.Not.Contain("ADVERTISE_CHECKBOX"));
 		}
 
 		[Test]
@@ -726,8 +689,18 @@ namespace OpenRA.Test
 			Assert.That(mainMenu, Does.Not.Contain("EXTRAS_MENU"));
 			Assert.That(mainMenuLogic, Does.Not.Contain("SystemInfoPromptLogic"));
 			Assert.That(advanced, Does.Not.Contain("SENDSYSINFO"));
+			foreach (var removed in new[]
+			{
+				"PERFGRAPH_CHECKBOX", "FETCH_NEWS_CHECKBOX", "CHECK_VERSION_CHECKBOX",
+				"DEBUG_SECTION_HEADER", "DEBUG_HIDDEN_CONTAINER", "BOTDEBUG_CHECKBOX_CONTAINER"
+			})
+				Assert.That(advanced, Does.Not.Contain(removed), removed + " must remain removed.");
 			Assert.That(prompts, Does.Not.Contain("MAINMENU_SYSTEM_INFO_PROMPT"));
 			Assert.That(advancedLogic, Does.Not.Contain("SendSystemInformation"));
+			Assert.That(advancedLogic, Does.Not.Contain("BindCheckboxPref(panel, \"PERFGRAPH_CHECKBOX\""));
+			Assert.That(advancedLogic, Does.Not.Contain("BindCheckboxPref(panel, \"FETCH_NEWS_CHECKBOX\""));
+			Assert.That(advancedLogic, Does.Not.Contain("BindCheckboxPref(panel, \"CHECK_VERSION_CHECKBOX\""));
+			Assert.That(advancedLogic, Does.Not.Contain("DEBUG_HIDDEN_CONTAINER"));
 			Assert.That(players, Does.Not.Contain("TEMPLATE_NEW_SPECTATOR"));
 			Assert.That(players, Does.Not.Contain("@SPECTATE"));
 			Assert.That(players, Does.Not.Contain("TOGGLE_SPECTATORS"));
@@ -753,12 +726,17 @@ namespace OpenRA.Test
 
 			foreach (var region in new[]
 			{
-				layout.Header, layout.Table, layout.TableHeader, layout.ServerList, layout.Details,
-				layout.Footer, layout.Filters, layout.Reload, layout.DirectConnect, layout.CreateButton, layout.Back
+				layout.Header, layout.LocalMode, layout.OnlineMode, layout.Table, layout.TableHeader,
+				layout.ServerList, layout.Details, layout.Footer, layout.Filters, layout.Reload,
+				layout.RoomCodeInput, layout.RoomCodeButton, layout.DirectConnect, layout.CreateButton, layout.Back
 			})
 				AssertContained(layout.Window, region);
 
 			Assert.That(layout.ServerList.Bottom, Is.LessThanOrEqualTo(layout.Footer.Y));
+			Assert.That(layout.LocalMode.Right, Is.LessThanOrEqualTo(layout.OnlineMode.X));
+			Assert.That(layout.OnlineMode.Right, Is.LessThanOrEqualTo(layout.Header.X));
+			Assert.That(layout.RoomCodeInput.Right, Is.LessThanOrEqualTo(layout.Reload.X));
+			Assert.That(layout.Reload.Right, Is.LessThanOrEqualTo(layout.RoomCodeButton.X));
 			Assert.That(layout.Details.X, Is.GreaterThanOrEqualTo(layout.Table.Right));
 			Assert.That(layout.ServerColumns.First().X, Is.Zero);
 			Assert.That(layout.ServerColumns.Last().Right, Is.EqualTo(layout.ServerList.Width));
@@ -766,7 +744,11 @@ namespace OpenRA.Test
 				Assert.That(layout.ServerColumns[i - 1].Right, Is.EqualTo(layout.ServerColumns[i].X));
 			foreach (var column in layout.ServerColumns)
 				Assert.That(column.Width / policy.LogicalPerPoint, Is.GreaterThanOrEqualTo(48));
-			foreach (var action in new[] { layout.Filters, layout.Reload, layout.DirectConnect, layout.CreateButton, layout.Back })
+			foreach (var action in new[]
+			{
+				layout.LocalMode, layout.OnlineMode, layout.Filters, layout.Reload, layout.RoomCodeInput,
+				layout.RoomCodeButton, layout.DirectConnect, layout.CreateButton, layout.Back
+			})
 				AssertPhysicalTarget(action, policy);
 		}
 
@@ -830,6 +812,26 @@ namespace OpenRA.Test
 				"SetupEditableReadyWidget"
 			})
 				Assert.That(lobby, Does.Contain(setup), $"LobbyLogic lost {setup}.");
+		}
+
+		[Test]
+		public void SkirmishLobbyUsesClassicColorsAndSkipsRemovedControls()
+		{
+			var root = RepositoryRoot();
+			var lobby = File.ReadAllText(Path.Combine(root, "engine", "OpenRA.Mods.Common",
+				"Widgets", "Logic", "Lobby", "LobbyLogic.cs"));
+			var utils = File.ReadAllText(Path.Combine(root, "engine", "OpenRA.Mods.Common",
+				"Widgets", "Logic", "Lobby", "LobbyUtils.cs"));
+			var settings = File.ReadAllText(Path.Combine(root, "engine", "OpenRA.Mods.Common",
+				"Widgets", "Logic", "Settings", "DisplaySettingsLogic.cs"));
+
+			Assert.That(lobby, Does.Contain("SetupEditableClassicColorWidget"));
+			Assert.That(lobby, Does.Contain("if (!skirmishMode)\n\t\t\t\t\t\tLobbyUtils.SetupEditableHandicapWidget"));
+			Assert.That(lobby, Does.Contain("if (!skirmishMode)\n\t\t\t\t\t\tLobbyUtils.SetupEditableReadyWidget"));
+			Assert.That(lobby, Does.Contain("label.IsVisible = () => !isSkirmish"));
+			Assert.That(utils, Does.Contain("ShowClassicColorDropDown"));
+			Assert.That(settings, Does.Contain("ShowClassicColorDropDown(colorDropdown"));
+			Assert.That(settings, Does.Not.Contain("ShowColorDropDown(colorDropdown, ps.Color"));
 		}
 
 		[TestCase("Tiny", false, false, "IosRegular")]

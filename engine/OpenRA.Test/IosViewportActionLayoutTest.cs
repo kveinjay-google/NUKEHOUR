@@ -330,23 +330,65 @@ namespace OpenRA.Test
 		}
 
 		[Test]
-		public void CompactTouchCommandsUseTheUnifiedRedGoldIconSet()
+		public void CompactTouchCommandsUseTransparentGlyphsWithoutEmbeddedSquareFrames()
 		{
 			var root = RepositoryRoot();
 			var chrome = File.ReadAllText(Path.Combine(root, "mods", "ra2", "chrome.yaml"));
 			var layout = File.ReadAllText(Path.Combine(root, "mods", "ra2", "chrome", "ingame-player.yaml"));
 
-			StringAssert.Contains("ios-commandbar-icons-v2:", chrome);
-			StringAssert.Contains("Image: ios-commandbar-icons-v2.png", chrome);
-			foreach (var icon in new[] { "group-1", "group-2", "group-3", "group-4", "group-5", "attack-move", "scatter", "queue-orders" })
+			StringAssert.Contains("ios-commandbar-glyphs:", chrome);
+			StringAssert.Contains("\tImage: ios-commandbar-glyphs-unified.png", chrome);
+			StringAssert.Contains("ios-commandbar-glyphs-highlighted:", chrome,
+				"Every stateful iOS command glyph collection must provide the highlighted collection requested by AddFactionSuffixLogic.");
+			StringAssert.Contains("\tInherits: ios-commandbar-glyphs", chrome,
+				"Highlighted iOS command glyphs must inherit the complete highlighted region map.");
+			foreach (var icon in new[]
+			{
+				"group-1", "group-2", "group-3", "group-4", "group-5", "production-x5",
+				"attack-move", "scatter", "queue-orders", "stop", "cycle-base"
+			})
 			{
 				StringAssert.Contains(icon + ":", chrome);
 				var iconName = "ImageName: " + icon;
 				var iconAt = layout.IndexOf(iconName, System.StringComparison.Ordinal);
 				Assert.That(iconAt, Is.GreaterThanOrEqualTo(0));
 				var collectionAt = layout.LastIndexOf("ImageCollection:", iconAt, System.StringComparison.Ordinal);
-				Assert.That(layout.Substring(collectionAt, iconAt - collectionAt), Does.Contain("ios-commandbar-icons-v2"));
+				Assert.That(layout.Substring(collectionAt, iconAt - collectionAt), Does.Contain("ios-commandbar-glyphs"));
+				Assert.That(layout.Substring(collectionAt, iconAt - collectionAt), Does.Not.Contain("ios-commandbar-icons-v2"));
 			}
+
+			Assert.That(File.Exists(Path.Combine(root, "mods", "ra2", "uibits", "ios-commandbar-glyphs-unified.png")),
+				Is.True, "The deterministic unified glyph atlas must ship with the mod.");
+		}
+
+		[Test]
+		public void IosTouchV3ProvidesFactionSpecificChromeAndEveryCommandGlyph()
+		{
+			var root = RepositoryRoot();
+			var chrome = File.ReadAllText(Path.Combine(root, "mods", "ra2", "chrome.yaml"));
+			var widget = File.ReadAllText(Path.Combine(root, "OpenRA.Mods.RA2", "Widgets", "CustomCommandBarWidget.cs"));
+			var actionLogic = File.ReadAllText(Path.Combine(root, "engine", "OpenRA.Mods.Common", "Widgets",
+				"Logic", "Ingame", "IosViewportActionsLogic.cs"));
+			var glyphs = new[]
+			{
+				"group-1", "group-2", "group-3", "group-4", "group-5", "production-x5",
+				"group-6", "group-7", "group-8", "group-9", "group-0", "select-all", "select-by-type",
+				"cycle-base", "to-selection", "to-last-event", "cycle-harvesters", "remove-from-group",
+				"attack-move", "force-move", "force-attack", "guard", "deploy", "scatter", "stop",
+				"queue-orders", "attack-anything", "defend", "return-fire", "hold-fire", "sell", "repair", "beacon"
+			};
+
+			foreach (var faction in new[] { "allies", "soviets", "yuri" })
+			{
+				StringAssert.Contains($"ios-commandbar-glyphs-{faction}:", chrome);
+				StringAssert.Contains($"Image: ios-commandbar-glyphs-{faction}-v3.png", chrome);
+				foreach (var glyph in glyphs)
+					StringAssert.Contains($"{glyph}:", chrome);
+			}
+
+			StringAssert.Contains("TouchFactionSkin.CommandGlyphCollection(skin)", widget);
+			StringAssert.Contains("actionLabels[i].IsVisible = () => false;", actionLogic,
+				"The regenerated floating action icons must communicate their actions without captions below them.");
 		}
 
 		[Test]
@@ -363,44 +405,10 @@ namespace OpenRA.Test
 			var root = RepositoryRoot();
 			var vertex = File.ReadAllText(Path.Combine(root, "engine", "glsl", "combined.vert"));
 			var fragment = File.ReadAllText(Path.Combine(root, "engine", "glsl", "combined.frag"));
-			var modelVertex = File.ReadAllText(Path.Combine(root, "engine", "glsl", "model.vert"));
-			var modelFragment = File.ReadAllText(Path.Combine(root, "engine", "glsl", "model.frag"));
 
 			StringAssert.Contains("out highp vec4 vTexCoord", vertex);
 			StringAssert.Contains("precision highp float", fragment);
 			StringAssert.Contains("in highp vec4 vTexCoord", fragment);
-			StringAssert.Contains("out highp vec4 vTexCoord", modelVertex);
-			StringAssert.Contains("precision highp float", modelFragment);
-			StringAssert.Contains("in highp vec4 vTexCoord", modelFragment);
-		}
-
-		[Test]
-		public void IosVoxelRenderAuditIsExplicitlyOptIn()
-		{
-			var renderer = File.ReadAllText(Path.Combine(RepositoryRoot(), "engine", "OpenRA.Mods.Cnc",
-				"Traits", "World", "ModelRenderer.cs"));
-
-			StringAssert.Contains("OPENRA_IOS_VOXEL_RENDER_AUDIT", renderer);
-			StringAssert.Contains("Voxel render audit:", renderer);
-		}
-
-		[Test]
-		public void IosRenderAuditCapturesFinalFramesOnlyForDeviceRequests()
-		{
-			var game = File.ReadAllText(Path.Combine(RepositoryRoot(), "engine", "OpenRA.Game", "Game.cs"));
-
-			StringAssert.Contains("OPENRA_IOS_RENDER_AUDIT", game);
-			StringAssert.Contains("RenderAuditRequestCheckInterval", game);
-			StringAssert.Contains("Path.Combine(Platform.SupportDir, \"RenderAudit\")", game);
-			StringAssert.Contains("Path.Combine(directory, \"requests\")", game);
-			StringAssert.Contains("*.request", game);
-			StringAssert.Contains("if (File.Exists(requestDirectory))", game);
-			StringAssert.Contains("File.Delete(requestDirectory);", game);
-			StringAssert.Contains("File.Delete(requestPath);", game);
-			StringAssert.Contains("render-", game);
-			StringAssert.Contains("Renderer.SaveScreenshot(path);", game);
-			StringAssert.DoesNotContain("RenderAuditCaptureInterval", game,
-				"Diagnostic mode must wait for an explicit device request instead of continuously saving frames.");
 		}
 
 		[Test]

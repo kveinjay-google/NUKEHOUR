@@ -99,6 +99,15 @@ Background@CONTENT_PANEL:
 			Height: 32
 			Text: button-content-panel-check-source
 			Font: Bold
+		Button@CHOOSE_SOURCE_BUTTON:
+			X: 30
+			Y: PARENT_HEIGHT - 52
+			Background: button-highlighted
+			Width: 140
+			Height: 32
+			Text: button-content-panel-choose-source
+			Font: Bold
+			Visible: false
 		Button@BACK_BUTTON:
 			X: PARENT_WIDTH - 140
 			Y: PARENT_HEIGHT - 52

@@ -16,6 +16,7 @@ from typing import Any, Iterable
 RETAIL_EXTENSIONS = {
     ".aud", ".bag", ".bik", ".hva", ".idx", ".mix", ".shp", ".vqa", ".vxl", ".wsa",
 }
+REVIEWABLE_PUBLIC_RENDER_EXTENSIONS = {".shp"}
 PUBLIC_CATEGORIES = {
     "engine-source", "project-original", "redistributable-third-party",
 }
@@ -23,16 +24,15 @@ GENERATED_BUNDLE_PATHS = {
     "AppIcon60x60@2x.png",
     "AppIcon76x76@2x~ipad.png",
     "Assets.car",
-    "archived-expanded-entitlements.xcent",
-    "icudt.dat",
     "Info.plist",
     "PkgInfo",
     "embedded.mobileprovision",
     "OpenRA.iOS",
-    "PkgInfo",
+    "aot-instances.aotdata.arm64",
+    "icudt.dat",
     "runtimeconfig.bin",
+    "archived-expanded-entitlements.xcent",
 }
-GENERATED_ROOT_SUFFIXES = (".aotdata.arm64", ".dll", ".dll.config")
 
 
 @dataclass(frozen=True)
@@ -84,12 +84,59 @@ def _manifest_entries(manifest: dict[str, Any]) -> dict[str, dict[str, Any]]:
     return entries
 
 
+def _manifest_trees(manifest: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    trees: dict[str, dict[str, Any]] = {}
+    for entry in manifest.get("trees", []):
+        path = PurePosixPath(entry["path"]).as_posix().strip("/")
+        if not path or path == "." or path.startswith("../"):
+            raise ValueError(f"manifest tree path escapes or covers the audit root: {path}")
+        if path in trees:
+            raise ValueError(f"duplicate manifest tree path: {path}")
+        trees[path] = entry
+    return trees
+
+
+def tree_inventory(root: Path | str) -> dict[str, Any]:
+    """Return a stable digest for every regular file below a reviewed resource tree."""
+    tree_root = Path(root)
+    digest = hashlib.sha256()
+    file_count = 0
+    total_size = 0
+    if tree_root.is_dir():
+        for path in sorted(tree_root.rglob("*"), key=lambda candidate: candidate.as_posix()):
+            if not path.is_file() or path.is_symlink():
+                continue
+            relative = path.relative_to(tree_root).as_posix()
+            size = path.stat().st_size
+            file_hash = sha256_file(path)
+            digest.update(relative.encode("utf-8"))
+            digest.update(b"\0")
+            digest.update(str(size).encode("ascii"))
+            digest.update(b"\0")
+            digest.update(file_hash.encode("ascii"))
+            digest.update(b"\n")
+            file_count += 1
+            total_size += size
+
+    return {
+        "sha256": digest.hexdigest(),
+        "size": total_size,
+        "fileCount": file_count,
+    }
+
+
 def _is_generated_bundle_path(relative: str) -> bool:
-    return (
-        relative in GENERATED_BUNDLE_PATHS
-        or relative.startswith("_CodeSignature/")
-        or ("/" not in relative and relative.endswith(GENERATED_ROOT_SUFFIXES))
-    )
+    if relative in GENERATED_BUNDLE_PATHS or relative.startswith("_CodeSignature/"):
+        return True
+
+    # .NET for iOS emits its managed assemblies, AOT metadata, native runtime
+    # libraries, and assembly configuration files at the application root.
+    # Restrict this exemption to top-level files so lookalikes under mod/resource
+    # trees remain deny-by-default.
+    if "/" in relative:
+        return False
+
+    return relative.endswith((".dll", ".dll.config", ".aotdata.arm64", ".dylib"))
 
 
 def inventory_tree(root: Path | str, prefix: str = "") -> list[dict[str, Any]]:
@@ -116,8 +163,35 @@ def inventory_tree(root: Path | str, prefix: str = "") -> list[dict[str, Any]]:
 def audit_tree(root: Path | str, manifest: dict[str, Any]) -> AuditResult:
     audit_root = Path(root).resolve()
     entries = _manifest_entries(manifest)
+    trees = _manifest_trees(manifest)
     errors: list[AuditError] = []
     files: list[AuditedFile] = []
+
+    valid_trees: dict[str, dict[str, Any]] = {}
+    for relative, entry in trees.items():
+        category = entry.get("category", "")
+        if not entry.get("public", False) or category not in PUBLIC_CATEGORIES:
+            errors.append(AuditError("not-public", relative, category))
+            continue
+
+        tree_root = audit_root / relative
+        if not tree_root.is_dir():
+            errors.append(AuditError("manifest-tree-missing", relative))
+            continue
+
+        actual = tree_inventory(tree_root)
+        expected = {
+            "sha256": entry.get("sha256", "").lower(),
+            "size": entry.get("size"),
+            "fileCount": entry.get("fileCount"),
+        }
+        if actual != expected:
+            errors.append(AuditError(
+                "tree-inventory-mismatch", relative,
+                f"expected {expected!r}, got {actual!r}"))
+            continue
+
+        valid_trees[relative] = entry
 
     for path in sorted(Path(root).rglob("*"), key=lambda candidate: candidate.as_posix()):
         if path.is_dir() and not path.is_symlink():
@@ -134,15 +208,29 @@ def audit_tree(root: Path | str, manifest: dict[str, Any]) -> AuditResult:
         if not path.is_file():
             continue
 
+        tree_entry = next((entry for tree, entry in valid_trees.items()
+            if relative.startswith(f"{tree}/")), None)
+        direct_entry = entries.get(relative)
+        entry = direct_entry or tree_entry
         suffix = path.suffix.lower()
-        if suffix in RETAIL_EXTENSIONS:
+        reviewed_render_asset = tree_entry is not None and suffix in REVIEWABLE_PUBLIC_RENDER_EXTENSIONS
+        if suffix in RETAIL_EXTENSIONS and not reviewed_render_asset:
             errors.append(AuditError("retail-extension", relative, suffix))
             continue
 
-        entry = entries.get(relative)
         if entry is None:
             if not _is_generated_bundle_path(relative):
                 errors.append(AuditError("unclassified-resource", relative))
+            continue
+
+        if direct_entry is None and tree_entry is not None:
+            files.append(AuditedFile(
+                path=relative,
+                size=path.stat().st_size,
+                sha256=sha256_file(path),
+                category=tree_entry.get("category", ""),
+                license=tree_entry.get("license", ""),
+            ))
             continue
 
         category = entry.get("category", "")

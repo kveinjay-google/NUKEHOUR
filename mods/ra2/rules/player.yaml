@@ -14,6 +14,7 @@ Player:
 	TechTree:
 	ClassicProductionQueue@Building:
 		Type: Building
+		ItemLimit: 1
 		DisplayOrder: 0
 		LowPowerModifier: 300
 		QueuedAudio: Building
@@ -24,6 +25,7 @@ Player:
 		SpeedUp: true
 	ClassicProductionQueue@Support:
 		Type: Support
+		ItemLimit: 1
 		DisplayOrder: 1
 		LowPowerModifier: 300
 		QueuedAudio: Building

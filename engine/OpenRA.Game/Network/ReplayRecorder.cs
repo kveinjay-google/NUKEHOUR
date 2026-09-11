@@ -45,10 +45,10 @@ namespace OpenRA.Network
 		{
 			var filename = chooseFilename();
 			var mod = Game.ModData.Manifest;
-			var dir = RuntimeContractStorage.ReplaysPath(
-				Platform.SupportDir, mod.Id, mod.Metadata.Version, Game.ModData.RuntimeContract);
+			var dir = Path.Combine(Platform.SupportDir, "Replays", mod.Id, mod.Metadata.Version);
 
-			Directory.CreateDirectory(dir);
+			if (!Directory.Exists(dir))
+				Directory.CreateDirectory(dir);
 
 			FileStream file = null;
 			var id = -1;

@@ -213,6 +213,7 @@ namespace OpenRA.Mods.Common.Widgets.Logic.Ingame
 					bounds.Height);
 				actionIcons[i].Bounds = new WidgetBounds(0, 0, bounds.Width, bounds.Height);
 				labelLayout.ApplyTo(actionLabels[i]);
+				actionLabels[i].IsVisible = () => false;
 			}
 
 			lastResolution = resolution;

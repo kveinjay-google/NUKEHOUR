@@ -1,0 +1,837 @@
+diff -ruN a/OpenRA.Mods.Common/Traits/World/ColorPickerManager.cs b/OpenRA.Mods.Common/Traits/World/ColorPickerManager.cs
+--- a/OpenRA.Mods.Common/Traits/World/ColorPickerManager.cs	2026-09-11 03:53:49
++++ b/OpenRA.Mods.Common/Traits/World/ColorPickerManager.cs	2026-09-11 03:53:49
+@@ -11,6 +11,7 @@
+ 
+ using System;
+ using System.Collections.Generic;
++using System.Linq;
+ using OpenRA.Graphics;
+ using OpenRA.Mods.Common.Widgets;
+ using OpenRA.Primitives;
+@@ -172,6 +173,37 @@
+ 			var s = float2.Lerp(HsvSaturationRange[0], HsvSaturationRange[1], random.NextFloat());
+ 			var v = float2.Lerp(HsvValueRange[0], HsvValueRange[1], random.NextFloat());
+ 			return MakeValid(h, s, v, random, terrainColors, playerColors, null);
++		}
++
++		void IColorPickerManagerInfo.ShowClassicColorDropDown(
++			DropDownButtonWidget dropdownButton,
++			Color initialColor,
++			Action<Color> onExit)
++		{
++			dropdownButton.RemovePanel();
++
++			var colors = PresetColors.Take(9).ToArray();
++			var grid = Ui.LoadWidget("IOS_SKIRMISH_COLOR_GRID", null, new WidgetArgs());
++			for (var i = 0; i < 9; i++)
++			{
++				var swatch = grid.Get<ColorBlockWidget>($"SWATCH_{i}");
++				var visible = i < colors.Length;
++				swatch.IsVisible = () => visible;
++				if (!visible)
++					continue;
++
++				var color = colors[i];
++				swatch.GetColor = () => color;
++				swatch.Get<ImageWidget>("SELECTED").IsVisible = () => initialColor == color;
++				swatch.OnMouseDown = _ =>
++				{
++					OnColorPickerColorUpdate(color);
++					onExit(color);
++					dropdownButton.RemovePanel();
++				};
++			}
++
++			dropdownButton.AttachPanel(grid);
+ 		}
+ 
+ 		void IColorPickerManagerInfo.ShowColorDropDown(
+diff -ruN a/OpenRA.Mods.Common/TraitsInterfaces.cs b/OpenRA.Mods.Common/TraitsInterfaces.cs
+--- a/OpenRA.Mods.Common/TraitsInterfaces.cs	2026-09-11 03:53:49
++++ b/OpenRA.Mods.Common/TraitsInterfaces.cs	2026-09-11 03:53:49
+@@ -377,6 +377,7 @@
+ 		Color RandomValidColor(MersenneTwister random, IReadOnlyCollection<Color> terrainColors, IReadOnlyCollection<Color> playerColors);
+ 		Color MakeValid(
+ 			Color color, MersenneTwister random, IReadOnlyCollection<Color> terrainColors, IReadOnlyCollection<Color> playerColors, Action<string> onError = null);
++		void ShowClassicColorDropDown(DropDownButtonWidget dropdownButton, Color initialColor, Action<Color> onExit);
+ 		void ShowColorDropDown(DropDownButtonWidget dropdownButton, Color initialColor, string initialFaction, WorldRenderer worldRenderer, Action<Color> onExit);
+ 	}
+ 
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/Lobby/IosLobbyLayout.cs b/OpenRA.Mods.Common/Widgets/Logic/Lobby/IosLobbyLayout.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/Lobby/IosLobbyLayout.cs	2026-09-11 03:53:49
++++ b/OpenRA.Mods.Common/Widgets/Logic/Lobby/IosLobbyLayout.cs	2026-09-11 03:53:49
+@@ -9,6 +9,7 @@
+ #endregion
+ 
+ using System;
++using System.Linq;
+ using OpenRA.Widgets;
+ 
+ namespace OpenRA.Mods.Common.Widgets.Logic
+@@ -41,7 +42,7 @@
+ 		public WidgetBounds PlayerSpawn { get; }
+ 		public WidgetBounds PlayerReady { get; }
+ 
+-		IosLobbyLayout(int width, int height, IosMenuLayoutPolicy policy)
++		IosLobbyLayout(int width, int height, IosMenuLayoutPolicy policy, bool skirmishMode)
+ 		{
+ 			width = Math.Max(1, width);
+ 			height = Math.Max(1, height);
+@@ -71,10 +72,12 @@
+ 			var upperHeight = Math.Max(0, mainHeight - utilityHeight - (utilityHeight > 0 ? Gap : 0));
+ 
+ 			var minimumPlayerWidth = 10 * policy.MinimumTarget;
+-			var maximumMapWidth = Math.Max(policy.MinimumTarget,
+-				width - Gap - minimumPlayerWidth - Gap);
+-			var mapWidth = Math.Min(maximumMapWidth, Math.Max(2 * policy.MinimumTarget, width / 4));
+-			var playersWidth = Math.Max(0, width - Gap - mapWidth);
++			var playersWidth = skirmishMode ?
++				2 * Math.Max(0, width - Gap) / 3 :
++				Math.Max(0, width - Gap - Math.Min(
++					Math.Max(policy.MinimumTarget, width - Gap - minimumPlayerWidth - Gap),
++					Math.Max(2 * policy.MinimumTarget, width / 4)));
++			var mapWidth = Math.Max(0, width - Gap - playersWidth);
+ 			Players = new WidgetBounds(0, mainY, playersWidth, upperHeight);
+ 			var playerHeaderHeight = Math.Min(
+ 				policy.IsPhone ? policy.MinimumReadableTextHeight : policy.MinimumTarget, Players.Height);
+@@ -125,34 +128,42 @@
+ 			var reservedScrollbar = policy.IsPhone ? 0 : policy.MinimumTarget;
+ 			var playerRowWidth = Math.Max(0, Players.Width - reservedScrollbar);
+ 			PlayerRow = new WidgetBounds(0, 0, playerRowWidth, Math.Min(policy.MinimumTarget, Players.Height));
+-			var columns = PlayerColumns(playerRowWidth, policy.MinimumTarget);
++			var columns = PlayerColumns(playerRowWidth, policy.MinimumTarget, skirmishMode);
+ 			PlayerName = columns[0];
+ 			PlayerColor = columns[1];
+ 			PlayerFaction = columns[2];
+ 			PlayerTeam = columns[3];
+-			PlayerHandicap = columns[4];
+-			PlayerSpawn = columns[5];
+-			PlayerReady = columns[6];
++			PlayerHandicap = skirmishMode ?
++				new WidgetBounds(PlayerTeam.Right, 0, 0, policy.MinimumTarget) : columns[4];
++			PlayerSpawn = skirmishMode ? columns[4] : columns[5];
++			PlayerReady = skirmishMode ?
++				new WidgetBounds(PlayerSpawn.Right, 0, 0, policy.MinimumTarget) : columns[6];
+ 		}
+ 
+ 		public static IosLobbyLayout Create(int width, int height, bool compact)
+ 		{
+-			return new IosLobbyLayout(width, height, IosMenuLayoutPolicy.Create(true, width, height));
++			return new IosLobbyLayout(width, height, IosMenuLayoutPolicy.Create(true, width, height), false);
+ 		}
+ 
+ 		public static IosLobbyLayout Create(int width, int height, IosMenuLayoutPolicy policy)
+ 		{
+-			return new IosLobbyLayout(width, height, policy);
++			return new IosLobbyLayout(width, height, policy, false);
+ 		}
+ 
+-		static WidgetBounds[] PlayerColumns(int width, int minimumTarget)
++		public static IosLobbyLayout Create(int width, int height, IosMenuLayoutPolicy policy, bool skirmishMode)
+ 		{
+-			var minimumUnits = new[] { 2, 1, 3, 1, 1, 1, 1 };
+-			var weights = new[] { 3, 1, 2, 1, 1, 1, 1 };
+-			const int TotalMinimumUnits = 10;
+-			var required = TotalMinimumUnits * minimumTarget;
++			return new IosLobbyLayout(width, height, policy, skirmishMode);
++		}
++
++		static WidgetBounds[] PlayerColumns(int width, int minimumTarget, bool skirmishMode)
++		{
++			// Names commonly contain four or more characters; spawn only needs its title and one letter.
++			var minimumUnits = skirmishMode ? new[] { 4, 2, 2, 2, 2 } : new[] { 2, 1, 3, 1, 1, 1, 1 };
++			var weights = skirmishMode ? new[] { 4, 2, 2, 2, 2 } : new[] { 3, 1, 2, 1, 1, 1, 1 };
++			var totalMinimumUnits = minimumUnits.Sum();
++			var required = totalMinimumUnits * minimumTarget;
+ 			var extra = Math.Max(0, width - required);
+-			const int TotalWeight = 10;
++			var totalWeight = weights.Sum();
+ 			var columns = new WidgetBounds[weights.Length];
+ 			var x = 0;
+ 			var distributedMinimumUnits = 0;
+@@ -162,9 +173,9 @@
+ 				distributedMinimumUnits += minimumUnits[i];
+ 				distributedWeight += weights[i];
+ 				var right = i == weights.Length - 1 ? width : Math.Min(width,
+-					required > width ? (int)((long)distributedMinimumUnits * width / TotalMinimumUnits) :
++					required > width ? (int)((long)distributedMinimumUnits * width / totalMinimumUnits) :
+ 					distributedMinimumUnits * minimumTarget +
+-					(int)((long)extra * distributedWeight / TotalWeight));
++					(int)((long)extra * distributedWeight / totalWeight));
+ 				columns[i] = new WidgetBounds(x, 0, Math.Max(0, right - x), minimumTarget);
+ 				x = right;
+ 			}
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/Lobby/LobbyLogic.cs b/OpenRA.Mods.Common/Widgets/Logic/Lobby/LobbyLogic.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/Lobby/LobbyLogic.cs	2026-09-11 03:53:49
++++ b/OpenRA.Mods.Common/Widgets/Logic/Lobby/LobbyLogic.cs	2026-09-11 03:53:49
+@@ -679,7 +679,7 @@
+ 			var policy = IosMenuLayoutPolicy.Create(true, snapshot);
+ 			var bounds = policy.ContentBounds;
+ 			lobby.Bounds = bounds;
+-			var layout = IosLobbyLayout.Create(bounds.Width, bounds.Height, policy);
++			var layout = IosLobbyLayout.Create(bounds.Width, bounds.Height, policy, skirmishMode);
+ 			iosLayoutPolicy = policy;
+ 			iosLobbyLayout = layout;
+ 			iosLayoutResolution = resolution;
+@@ -730,7 +730,7 @@
+ 			PlaceFooterButton("RESET_OPTIONS_BUTTON", layout.Position.X, layout.Position.Y,
+ 				layout.Position.Width, layout.Position.Height);
+ 
+-			LayoutIosPlayerRows(layout, policy);
++			LayoutIosPlayerRows(layout, policy, skirmishMode);
+ 			IosMapPreviewLayout.Apply(mapRoot, policy);
+ 		}
+ 
+@@ -756,7 +756,7 @@
+ 				button.Bounds = new WidgetBounds(x, y, width, height);
+ 		}
+ 
+-		void LayoutIosPlayerRows(IosLobbyLayout layout, IosMenuLayoutPolicy policy)
++		void LayoutIosPlayerRows(IosLobbyLayout layout, IosMenuLayoutPolicy policy, bool isSkirmish)
+ 		{
+ 			var playerBin = players.Parent;
+ 			var labelContainer = playerBin.GetOrNull("LABEL_CONTAINER");
+@@ -764,7 +764,7 @@
+ 			if (labelContainer != null)
+ 			{
+ 				labelContainer.Bounds = new WidgetBounds(0, 0, layout.PlayerRow.Width, headerHeight);
+-				LayoutPlayerHeader(labelContainer, layout);
++				LayoutPlayerHeader(labelContainer, layout, isSkirmish);
+ 			}
+ 
+ 			players.Bounds = new WidgetBounds(
+@@ -789,15 +789,15 @@
+ 			{
+ 				editablePlayerTemplate, nonEditablePlayerTemplate, emptySlotTemplate
+ 			})
+-				LayoutIosPlayerRow(row, layout, policy);
++				LayoutIosPlayerRow(row, layout, policy, isSkirmish);
+ 
+ 			foreach (var row in players.Children)
+-				LayoutIosPlayerRow(row, layout, policy);
++				LayoutIosPlayerRow(row, layout, policy, isSkirmish);
+ 
+ 			players.Layout.AdjustChildren();
+ 		}
+ 
+-		static void LayoutPlayerHeader(Widget header, IosLobbyLayout layout)
++		static void LayoutPlayerHeader(Widget header, IosLobbyLayout layout, bool isSkirmish)
+ 		{
+ 			SetDirectBounds(header, "LABEL_LOBBY_NAME", layout.PlayerName);
+ 			SetDirectBounds(header, "LABEL_LOBBY_COLOR", layout.PlayerColor);
+@@ -806,6 +806,13 @@
+ 			SetDirectBounds(header, "LABEL_LOBBY_HANDICAP", layout.PlayerHandicap);
+ 			SetDirectBounds(header, "LABEL_LOBBY_SPAWN", layout.PlayerSpawn);
+ 			SetDirectBounds(header, "LABEL_LOBBY_STATUS", layout.PlayerReady);
++			foreach (var id in new[] { "LABEL_LOBBY_HANDICAP", "LABEL_LOBBY_STATUS" })
++			{
++				var label = DirectChild(header, id);
++				if (label != null)
++					label.IsVisible = () => !isSkirmish;
++			}
++
+ 			foreach (var label in header.Children.OfType<LabelWidget>())
+ 			{
+ 				label.WordWrap = true;
+@@ -814,7 +821,7 @@
+ 		}
+ 
+ 		static void LayoutIosPlayerRow(
+-			Widget row, IosLobbyLayout layout, IosMenuLayoutPolicy policy)
++			Widget row, IosLobbyLayout layout, IosMenuLayoutPolicy policy, bool isSkirmish)
+ 		{
+ 			row.Bounds.X = layout.PlayerRow.X;
+ 			row.Bounds.Width = layout.PlayerRow.Width;
+@@ -835,6 +842,16 @@
+ 				"STATUS_CHECKBOX", "STATUS_IMAGE", "IOS_MAP_STATUS_TEXT", "IOS_MAP_STATUS_ICON"
+ 			})
+ 				SetDirectBounds(row, id, layout.PlayerReady);
++			foreach (var id in new[]
++			{
++				"HANDICAP", "HANDICAP_DROPDOWN", "STATUS_CHECKBOX", "STATUS_IMAGE",
++				"IOS_MAP_STATUS_TEXT", "IOS_MAP_STATUS_ICON"
++			})
++			{
++				var child = DirectChild(row, id);
++				if (child != null)
++					child.IsVisible = () => !isSkirmish;
++			}
+ 
+ 			var actionBounds = new WidgetBounds(layout.PlayerColor.X, 0,
+ 				Math.Max(0, layout.PlayerReady.Right - layout.PlayerColor.X), layout.PlayerRow.Height);
+@@ -1099,13 +1116,18 @@
+ 					else
+ 						LobbyUtils.SetupEditableNameWidget(template, client, orderManager, worldRenderer);
+ 
+-					LobbyUtils.SetupEditableColorWidget(template, slot, client, orderManager, worldRenderer, colorManager);
++					if (skirmishMode)
++						LobbyUtils.SetupEditableClassicColorWidget(template, slot, client, orderManager, colorManager);
++					else
++						LobbyUtils.SetupEditableColorWidget(template, slot, client, orderManager, worldRenderer, colorManager);
+ 					LobbyUtils.SetupEditableFactionWidget(template, slot, client, orderManager, factions);
+ 					LobbyUtils.SetupEditableTeamWidget(template, slot, client, orderManager, map);
+-					LobbyUtils.SetupEditableHandicapWidget(template, slot, client, orderManager);
++					if (!skirmishMode)
++						LobbyUtils.SetupEditableHandicapWidget(template, slot, client, orderManager);
+ 					LobbyUtils.SetupEditableSpawnWidget(template, slot, client, orderManager, map);
+-					LobbyUtils.SetupEditableReadyWidget(template, client, orderManager, map, MapIsPlayable,
+-						orderManager.LobbyInfo.GlobalSettings.Map, Platform.IsIOS);
++					if (!skirmishMode)
++						LobbyUtils.SetupEditableReadyWidget(template, client, orderManager, map, MapIsPlayable,
++							orderManager.LobbyInfo.GlobalSettings.Map, Platform.IsIOS);
+ 				}
+ 				else
+ 				{
+@@ -1120,7 +1142,8 @@
+ 					if (isHost)
+ 					{
+ 						LobbyUtils.SetupEditableTeamWidget(template, slot, client, orderManager, map);
+-						LobbyUtils.SetupEditableHandicapWidget(template, slot, client, orderManager);
++						if (!skirmishMode)
++							LobbyUtils.SetupEditableHandicapWidget(template, slot, client, orderManager);
+ 						LobbyUtils.SetupEditableSpawnWidget(template, slot, client, orderManager, map);
+ 						LobbyUtils.SetupPlayerActionWidget(template, client, orderManager, worldRenderer,
+ 							lobby, () => panel = PanelType.Kick, () => panel = PanelType.Players);
+@@ -1129,12 +1152,14 @@
+ 					{
+ 						LobbyUtils.SetupNameWidget(template, client, orderManager, worldRenderer, map);
+ 						LobbyUtils.SetupTeamWidget(template, client);
+-						LobbyUtils.SetupHandicapWidget(template, client);
++						if (!skirmishMode)
++							LobbyUtils.SetupHandicapWidget(template, client);
+ 						LobbyUtils.SetupSpawnWidget(template, client);
+ 					}
+ 
+-					LobbyUtils.SetupReadyWidget(template, client,
+-						orderManager.LobbyInfo.GlobalSettings.Map, Platform.IsIOS);
++					if (!skirmishMode)
++						LobbyUtils.SetupReadyWidget(template, client,
++							orderManager.LobbyInfo.GlobalSettings.Map, Platform.IsIOS);
+ 				}
+ 
+ 				template.IsVisible = () => true;
+@@ -1151,7 +1176,7 @@
+ 				players.RemoveChild(players.Children[idx]);
+ 
+ 			if (Platform.IsIOS && iosLobbyLayout != null)
+-				LayoutIosPlayerRows(iosLobbyLayout, iosLayoutPolicy);
++				LayoutIosPlayerRows(iosLobbyLayout, iosLayoutPolicy, skirmishMode);
+ 
+ 			tabCompletion.Names = orderManager.LobbyInfo.Clients.Where(c => !c.IsBot).Select(c => c.Name).Distinct().ToList();
+ 		}
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/Lobby/LobbyUtils.cs b/OpenRA.Mods.Common/Widgets/Logic/Lobby/LobbyUtils.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/Lobby/LobbyUtils.cs	2026-09-11 03:53:49
++++ b/OpenRA.Mods.Common/Widgets/Logic/Lobby/LobbyUtils.cs	2026-09-11 03:53:49
+@@ -592,6 +592,25 @@
+ 			SetupColorWidget(colorDropdown, c);
+ 		}
+ 
++		public static void SetupEditableClassicColorWidget(Widget parent, Session.Slot s, Session.Client c,
++			OrderManager orderManager, IColorPickerManagerInfo colorManager)
++		{
++			var colorDropdown = parent.Get<DropDownButtonWidget>("COLOR");
++			colorDropdown.IsDisabled = () => (s != null && s.LockColor) || orderManager.LocalClient.IsReady;
++			colorDropdown.OnMouseDown = _ => colorManager.ShowClassicColorDropDown(colorDropdown, c.Color, color =>
++			{
++				if (c == orderManager.LocalClient)
++				{
++					Game.Settings.Player.Color = color;
++					Game.Settings.Save();
++				}
++
++				orderManager.IssueOrder(Order.Command($"color {c.Index} {color}"));
++			});
++
++			SetupColorWidget(colorDropdown, c);
++		}
++
+ 		public static void SetupColorWidget(Widget parent, Session.Client c)
+ 		{
+ 			var color = parent.Get<ColorBlockWidget>("COLORBLOCK");
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/Settings/AdvancedSettingsLogic.cs b/OpenRA.Mods.Common/Widgets/Logic/Settings/AdvancedSettingsLogic.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/Settings/AdvancedSettingsLogic.cs	2026-09-11 03:53:49
++++ b/OpenRA.Mods.Common/Widgets/Logic/Settings/AdvancedSettingsLogic.cs	2026-09-11 03:53:49
+@@ -34,31 +34,11 @@
+ 		{
+ 			var ds = Game.Settings.Debug;
+ 			var ss = Game.Settings.Server;
+-			var gs = Game.Settings.Game;
+ 			var scrollPanel = panel.Get<ScrollPanelWidget>("SETTINGS_SCROLLPANEL");
+ 
+ 			// Advanced
+ 			SettingsUtils.BindCheckboxPref(panel, "NAT_DISCOVERY", ss, "DiscoverNatDevices");
+ 			SettingsUtils.BindCheckboxPref(panel, "PERFTEXT_CHECKBOX", ds, "PerfText");
+-			SettingsUtils.BindCheckboxPref(panel, "PERFGRAPH_CHECKBOX", ds, "PerfGraph");
+-			SettingsUtils.BindCheckboxPref(panel, "FETCH_NEWS_CHECKBOX", gs, "FetchNews");
+-			SettingsUtils.BindCheckboxPref(panel, "CHECK_VERSION_CHECKBOX", ds, "CheckVersion");
+-
+-			// Developer
+-			SettingsUtils.BindCheckboxPref(panel, "BOTDEBUG_CHECKBOX", ds, "BotDebug");
+-			SettingsUtils.BindCheckboxPref(panel, "LUADEBUG_CHECKBOX", ds, "LuaDebug");
+-			SettingsUtils.BindCheckboxPref(panel, "REPLAY_COMMANDS_CHECKBOX", ds, "EnableDebugCommandsInReplays");
+-			SettingsUtils.BindCheckboxPref(panel, "CHECKUNSYNCED_CHECKBOX", ds, "SyncCheckUnsyncedCode");
+-			SettingsUtils.BindCheckboxPref(panel, "CHECKBOTSYNC_CHECKBOX", ds, "SyncCheckBotModuleCode");
+-			SettingsUtils.BindCheckboxPref(panel, "PERFLOGGING_CHECKBOX", ds, "EnableSimulationPerfLogging");
+-
+-			panel.Get("BOTDEBUG_CHECKBOX_CONTAINER").IsVisible = () => ds.DisplayDeveloperSettings;
+-			panel.Get("CHECKUNSYNCED_CHECKBOX_CONTAINER").IsVisible = () => ds.DisplayDeveloperSettings;
+-			panel.Get("CHECKBOTSYNC_CHECKBOX_CONTAINER").IsVisible = () => ds.DisplayDeveloperSettings;
+-			panel.Get("LUADEBUG_CHECKBOX_CONTAINER").IsVisible = () => ds.DisplayDeveloperSettings;
+-			panel.Get("REPLAY_COMMANDS_CHECKBOX_CONTAINER").IsVisible = () => ds.DisplayDeveloperSettings;
+-			panel.Get("PERFLOGGING_CHECKBOX_CONTAINER").IsVisible = () => ds.DisplayDeveloperSettings;
+-			panel.Get("DEBUG_HIDDEN_CONTAINER").IsVisible = () => !ds.DisplayDeveloperSettings;
+ 
+ 			SettingsUtils.AdjustSettingsScrollPanelLayout(scrollPanel);
+ 
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/Settings/DisplaySettingsLogic.cs b/OpenRA.Mods.Common/Widgets/Logic/Settings/DisplaySettingsLogic.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/Settings/DisplaySettingsLogic.cs	2026-09-11 03:53:49
++++ b/OpenRA.Mods.Common/Widgets/Logic/Settings/DisplaySettingsLogic.cs	2026-09-11 03:53:49
+@@ -302,7 +302,7 @@
+ 
+ 			var colorDropdown = panel.Get<DropDownButtonWidget>("PLAYERCOLOR");
+ 			colorDropdown.IsDisabled = () => world.Type != WorldType.Shellmap;
+-			colorDropdown.OnMouseDown = _ => colorManager.ShowColorDropDown(colorDropdown, ps.Color, null, worldRenderer, color =>
++			colorDropdown.OnMouseDown = _ => colorManager.ShowClassicColorDropDown(colorDropdown, ps.Color, color =>
+ 			{
+ 				ps.Color = color;
+ 				Game.Settings.Save();
+diff -ruN a/OpenRA.Test/IosLobbyResponsiveLayoutTest.cs b/OpenRA.Test/IosLobbyResponsiveLayoutTest.cs
+--- a/OpenRA.Test/IosLobbyResponsiveLayoutTest.cs	2026-09-11 03:58:10
++++ b/OpenRA.Test/IosLobbyResponsiveLayoutTest.cs	2026-09-11 03:58:10
+@@ -1768,13 +1768,13 @@
+ 		}
+ 
+ 		static void ApplyIosPlayerRowLayout(
+-			Widget row, IosLobbyLayout layout, IosMenuLayoutPolicy policy)
++			Widget row, IosLobbyLayout layout, IosMenuLayoutPolicy policy, bool isSkirmish = false)
+ 		{
+ 			var method = typeof(LobbyLogic).GetMethod(
+ 				"LayoutIosPlayerRow", BindingFlags.Static | BindingFlags.NonPublic);
+ 			Assert.That(method, Is.Not.Null,
+ 				"The live lobby row must share the tested iOS status-cell layout.");
+-			method!.Invoke(null, new object[] { row, layout, policy });
++			method!.Invoke(null, new object[] { row, layout, policy, isSkirmish });
+ 		}
+ 
+ 		static TestCaseData Device(
+diff -ruN a/OpenRA.Test/IosMenuLayoutPolicyTest.cs b/OpenRA.Test/IosMenuLayoutPolicyTest.cs
+--- a/OpenRA.Test/IosMenuLayoutPolicyTest.cs	2026-09-11 03:53:49
++++ b/OpenRA.Test/IosMenuLayoutPolicyTest.cs	2026-09-11 03:53:49
+@@ -331,6 +331,25 @@
+ 		}
+ 
+ 		[Test]
++		public void SkirmishLobbyRemovesHandicapAndReadyWhileKeepingTextBalancedColumns()
++		{
++			var policy = IosMenuLayoutPolicy.Create(true, 1560, 720);
++			var multiplayer = IosLobbyLayout.Create(1560, 720, policy, false);
++			var skirmish = IosLobbyLayout.Create(1560, 720, policy, true);
++
++			Assert.That(skirmish.PlayerHandicap.Width, Is.Zero);
++			Assert.That(skirmish.PlayerReady.Width, Is.Zero);
++			Assert.That(skirmish.PlayerName.Width, Is.EqualTo(2 * skirmish.PlayerSpawn.Width));
++			Assert.That(skirmish.PlayerColor.Right, Is.EqualTo(skirmish.PlayerFaction.X));
++			Assert.That(skirmish.PlayerFaction.Right, Is.EqualTo(skirmish.PlayerTeam.X));
++			Assert.That(skirmish.PlayerTeam.Right, Is.EqualTo(skirmish.PlayerSpawn.X));
++			Assert.That(skirmish.PlayerSpawn.Right, Is.EqualTo(skirmish.PlayerRow.Right));
++			Assert.That(skirmish.Players.Width, Is.EqualTo(2 * skirmish.Map.Width));
++			Assert.That(multiplayer.PlayerHandicap.Width, Is.GreaterThan(0));
++			Assert.That(multiplayer.PlayerReady.Width, Is.GreaterThan(0));
++		}
++
++		[Test]
+ 		public void CompactLobbyUsesFullHeightMapAndFooterMapAction()
+ 		{
+ 			var layout = IosLobbyLayout.Create(812, 366, true);
+@@ -632,8 +651,18 @@
+ 			Assert.That(mainMenu, Does.Not.Contain("EXTRAS_MENU"));
+ 			Assert.That(mainMenuLogic, Does.Not.Contain("SystemInfoPromptLogic"));
+ 			Assert.That(advanced, Does.Not.Contain("SENDSYSINFO"));
++			foreach (var removed in new[]
++			{
++				"PERFGRAPH_CHECKBOX", "FETCH_NEWS_CHECKBOX", "CHECK_VERSION_CHECKBOX",
++				"DEBUG_SECTION_HEADER", "DEBUG_HIDDEN_CONTAINER", "BOTDEBUG_CHECKBOX_CONTAINER"
++			})
++				Assert.That(advanced, Does.Not.Contain(removed), removed + " must remain removed.");
+ 			Assert.That(prompts, Does.Not.Contain("MAINMENU_SYSTEM_INFO_PROMPT"));
+ 			Assert.That(advancedLogic, Does.Not.Contain("SendSystemInformation"));
++			Assert.That(advancedLogic, Does.Not.Contain("BindCheckboxPref(panel, \"PERFGRAPH_CHECKBOX\""));
++			Assert.That(advancedLogic, Does.Not.Contain("BindCheckboxPref(panel, \"FETCH_NEWS_CHECKBOX\""));
++			Assert.That(advancedLogic, Does.Not.Contain("BindCheckboxPref(panel, \"CHECK_VERSION_CHECKBOX\""));
++			Assert.That(advancedLogic, Does.Not.Contain("DEBUG_HIDDEN_CONTAINER"));
+ 			Assert.That(players, Does.Not.Contain("TEMPLATE_NEW_SPECTATOR"));
+ 			Assert.That(players, Does.Not.Contain("@SPECTATE"));
+ 			Assert.That(players, Does.Not.Contain("TOGGLE_SPECTATORS"));
+@@ -745,6 +774,26 @@
+ 				"SetupEditableReadyWidget"
+ 			})
+ 				Assert.That(lobby, Does.Contain(setup), $"LobbyLogic lost {setup}.");
++		}
++
++		[Test]
++		public void SkirmishLobbyUsesClassicColorsAndSkipsRemovedControls()
++		{
++			var root = RepositoryRoot();
++			var lobby = File.ReadAllText(Path.Combine(root, "engine", "OpenRA.Mods.Common",
++				"Widgets", "Logic", "Lobby", "LobbyLogic.cs"));
++			var utils = File.ReadAllText(Path.Combine(root, "engine", "OpenRA.Mods.Common",
++				"Widgets", "Logic", "Lobby", "LobbyUtils.cs"));
++			var settings = File.ReadAllText(Path.Combine(root, "engine", "OpenRA.Mods.Common",
++				"Widgets", "Logic", "Settings", "DisplaySettingsLogic.cs"));
++
++			Assert.That(lobby, Does.Contain("SetupEditableClassicColorWidget"));
++			Assert.That(lobby, Does.Contain("if (!skirmishMode)\n\t\t\t\t\t\tLobbyUtils.SetupEditableHandicapWidget"));
++			Assert.That(lobby, Does.Contain("if (!skirmishMode)\n\t\t\t\t\t\tLobbyUtils.SetupEditableReadyWidget"));
++			Assert.That(lobby, Does.Contain("label.IsVisible = () => !isSkirmish"));
++			Assert.That(utils, Does.Contain("ShowClassicColorDropDown"));
++			Assert.That(settings, Does.Contain("ShowClassicColorDropDown(colorDropdown"));
++			Assert.That(settings, Does.Not.Contain("ShowColorDropDown(colorDropdown, ps.Color"));
+ 		}
+ 
+ 		[TestCase("Tiny", false, false, "IosRegular")]
+diff -ruN a/OpenRA.Test/IosTouchDialogLayoutTest.cs b/OpenRA.Test/IosTouchDialogLayoutTest.cs
+--- a/OpenRA.Test/IosTouchDialogLayoutTest.cs	2026-09-11 03:53:49
++++ b/OpenRA.Test/IosTouchDialogLayoutTest.cs	2026-09-11 03:53:49
+@@ -8,7 +8,9 @@
+  */
+ #endregion
+ 
++using System;
+ using System.IO;
++using System.Linq;
+ using NUnit.Framework;
+ using OpenRA.Mods.Common.Widgets.Logic;
+ using OpenRA.Primitives;
+@@ -178,6 +180,27 @@
+ 			Assert.That(source, Does.Contain("LayoutSwatches(presetArea"));
+ 			Assert.That(source, Does.Contain("LayoutSwatches(customArea"));
+ 			Assert.That(source, Does.Contain("hueSlider.UseTouchStepControls = false"));
++		}
++
++		[Test]
++		public void ClassicColorGridContainsExactlyNineTouchSwatchesWithoutCustomMixer()
++		{
++			var yaml = MiniYaml.FromString(File.ReadAllText(Path.Combine(
++				RepositoryRoot(), "engine", "mods", "common", "chrome", "color-picker.yaml")), "color-picker");
++			var grid = yaml.Single(node => node.Key == "Background@IOS_SKIRMISH_COLOR_GRID");
++			var children = grid.Value.NodeWithKey("Children").Value.Nodes;
++			var swatches = children.Where(node =>
++				node.Key.StartsWith("ColorBlock@SWATCH_", StringComparison.Ordinal)).ToArray();
++
++			Assert.That(swatches, Has.Length.EqualTo(9));
++			Assert.That(grid.Value.ToString(), Does.Not.Contain("ColorMixer@MIXER"));
++			for (var index = 0; index < swatches.Length; index++)
++			{
++				Assert.That(swatches[index].Key, Is.EqualTo($"ColorBlock@SWATCH_{index}"));
++				var selected = swatches[index].Value.NodeWithKey("Children").Value.Nodes.Single(node =>
++					node.Key == "Image@SELECTED");
++				Assert.That(selected, Is.Not.Null);
++			}
+ 		}
+ 
+ 		static IosScreenSnapshot Snapshot(
+diff -ruN a/mods/common/chrome/color-picker.yaml b/mods/common/chrome/color-picker.yaml
+--- a/mods/common/chrome/color-picker.yaml	2026-09-11 03:53:49
++++ b/mods/common/chrome/color-picker.yaml	2026-09-11 03:53:49
+@@ -138,3 +138,144 @@
+ 									Height: 29
+ 									Visible: false
+ 									ClickSound: ClickSound
++
++Background@IOS_SKIRMISH_COLOR_GRID:
++	Background: dialog2
++	Width: 164
++	Height: 164
++	Children:
++		ColorBlock@SWATCH_0:
++			X: 5
++			Y: 5
++			Width: 48
++			Height: 48
++			ClickSound: ClickSound
++			Children:
++				Image@SELECTED:
++					X: 14
++					Y: 14
++					Width: 20
++					Height: 20
++					ImageCollection: checkmark-tick
++					ImageName: checked
++					Visible: false
++		ColorBlock@SWATCH_1:
++			X: 58
++			Y: 5
++			Width: 48
++			Height: 48
++			ClickSound: ClickSound
++			Children:
++				Image@SELECTED:
++					X: 14
++					Y: 14
++					Width: 20
++					Height: 20
++					ImageCollection: checkmark-tick
++					ImageName: checked
++					Visible: false
++		ColorBlock@SWATCH_2:
++			X: 111
++			Y: 5
++			Width: 48
++			Height: 48
++			ClickSound: ClickSound
++			Children:
++				Image@SELECTED:
++					X: 14
++					Y: 14
++					Width: 20
++					Height: 20
++					ImageCollection: checkmark-tick
++					ImageName: checked
++					Visible: false
++		ColorBlock@SWATCH_3:
++			X: 5
++			Y: 58
++			Width: 48
++			Height: 48
++			ClickSound: ClickSound
++			Children:
++				Image@SELECTED:
++					X: 14
++					Y: 14
++					Width: 20
++					Height: 20
++					ImageCollection: checkmark-tick
++					ImageName: checked
++					Visible: false
++		ColorBlock@SWATCH_4:
++			X: 58
++			Y: 58
++			Width: 48
++			Height: 48
++			ClickSound: ClickSound
++			Children:
++				Image@SELECTED:
++					X: 14
++					Y: 14
++					Width: 20
++					Height: 20
++					ImageCollection: checkmark-tick
++					ImageName: checked
++					Visible: false
++		ColorBlock@SWATCH_5:
++			X: 111
++			Y: 58
++			Width: 48
++			Height: 48
++			ClickSound: ClickSound
++			Children:
++				Image@SELECTED:
++					X: 14
++					Y: 14
++					Width: 20
++					Height: 20
++					ImageCollection: checkmark-tick
++					ImageName: checked
++					Visible: false
++		ColorBlock@SWATCH_6:
++			X: 5
++			Y: 111
++			Width: 48
++			Height: 48
++			ClickSound: ClickSound
++			Children:
++				Image@SELECTED:
++					X: 14
++					Y: 14
++					Width: 20
++					Height: 20
++					ImageCollection: checkmark-tick
++					ImageName: checked
++					Visible: false
++		ColorBlock@SWATCH_7:
++			X: 58
++			Y: 111
++			Width: 48
++			Height: 48
++			ClickSound: ClickSound
++			Children:
++				Image@SELECTED:
++					X: 14
++					Y: 14
++					Width: 20
++					Height: 20
++					ImageCollection: checkmark-tick
++					ImageName: checked
++					Visible: false
++		ColorBlock@SWATCH_8:
++			X: 111
++			Y: 111
++			Width: 48
++			Height: 48
++			ClickSound: ClickSound
++			Children:
++				Image@SELECTED:
++					X: 14
++					Y: 14
++					Width: 20
++					Height: 20
++					ImageCollection: checkmark-tick
++					ImageName: checked
++					Visible: false
+diff -ruN a/mods/common/chrome/settings-advanced.yaml b/mods/common/chrome/settings-advanced.yaml
+--- a/mods/common/chrome/settings-advanced.yaml	2026-09-11 03:53:49
++++ b/mods/common/chrome/settings-advanced.yaml	2026-09-11 03:53:49
+@@ -29,48 +29,17 @@
+ 					Children:
+ 						Container@NAT_DISCOVERY_CONTAINER:
+ 							X: 10
+-							Width: PARENT_WIDTH / 2 - 20
++							Width: PARENT_WIDTH - 20
+ 							Children:
+ 								Checkbox@NAT_DISCOVERY:
+ 									Width: PARENT_WIDTH
+ 									Height: 20
+ 									Font: Regular
+ 									Text: checkbox-nat-discovery-container
+-						Container@FETCH_NEWS_CHECKBOX_CONTAINER:
+-							X: PARENT_WIDTH / 2 + 10
+-							Width: PARENT_WIDTH / 2 - 20
+-							Children:
+-								Checkbox@FETCH_NEWS_CHECKBOX:
+-									Width: PARENT_WIDTH
+-									Height: 20
+-									Font: Regular
+-									Text: checkbox-fetch-news-container
+ 				Container@ROW:
+ 					Width: PARENT_WIDTH - 24
+ 					Height: 20
+ 					Children:
+-						Container@PERFGRAPH_CHECKBOX_CONTAINER:
+-							X: 10
+-							Width: PARENT_WIDTH / 2 - 20
+-							Children:
+-								Checkbox@PERFGRAPH_CHECKBOX:
+-									Width: PARENT_WIDTH
+-									Height: 20
+-									Font: Regular
+-									Text: checkbox-perfgraph-container
+-						Container@CHECK_VERSION_CHECKBOX_CONTAINER:
+-							X: PARENT_WIDTH / 2 + 10
+-							Width: PARENT_WIDTH / 2 - 20
+-							Children:
+-								Checkbox@CHECK_VERSION_CHECKBOX:
+-									Width: PARENT_WIDTH
+-									Height: 20
+-									Font: Regular
+-									Text: checkbox-check-version-container
+-				Container@ROW:
+-					Width: PARENT_WIDTH - 24
+-					Height: 20
+-					Children:
+ 						Container@PERFTEXT_CHECKBOX_CONTAINER:
+ 							X: 10
+ 							Width: PARENT_WIDTH - 20
+@@ -80,102 +49,3 @@
+ 									Height: 20
+ 									Font: Regular
+ 									Text: checkbox-perftext-container
+-				Container@SPACER:
+-				Background@DEBUG_SECTION_HEADER:
+-					X: 5
+-					Width: PARENT_WIDTH - 24 - 10
+-					Height: 13
+-					Background: separator
+-					ClickThrough: True
+-					Children:
+-						Label@LABEL:
+-							Width: PARENT_WIDTH
+-							Height: PARENT_HEIGHT
+-							Font: TinyBold
+-							Align: Center
+-							Text: label-debug-section-header
+-				Container@ROW:
+-					Width: PARENT_WIDTH - 24
+-					Height: 40
+-					Children:
+-						Container@DEBUG_HIDDEN_CONTAINER:
+-							X: 10
+-							Width: PARENT_WIDTH - 10
+-							Children:
+-								Label@A:
+-									Width: PARENT_WIDTH
+-									Height: 20
+-									Text: label-debug-hidden-container-a
+-									Align: Center
+-								Label@B:
+-									Y: 20
+-									Width: PARENT_WIDTH
+-									Height: 20
+-									Text: label-debug-hidden-container-b
+-									Align: Center
+-				Container@ROW:
+-					Width: PARENT_WIDTH - 24
+-					Height: 20
+-					Children:
+-						Container@BOTDEBUG_CHECKBOX_CONTAINER:
+-							X: 10
+-							Width: PARENT_WIDTH / 2 - 20
+-							Children:
+-								Checkbox@BOTDEBUG_CHECKBOX:
+-									Width: PARENT_WIDTH
+-									Height: 20
+-									Font: Regular
+-									Text: checkbox-botdebug-container
+-						Container@CHECKBOTSYNC_CHECKBOX_CONTAINER:
+-							X: PARENT_WIDTH / 2 + 10
+-							Width: PARENT_WIDTH / 2 - 20
+-							Children:
+-								Checkbox@CHECKBOTSYNC_CHECKBOX:
+-									Width: PARENT_WIDTH
+-									Height: 20
+-									Font: Regular
+-									Text: checkbox-checkbotsync-container
+-				Container@ROW:
+-					Width: PARENT_WIDTH - 24
+-					Height: 20
+-					Children:
+-						Container@LUADEBUG_CHECKBOX_CONTAINER:
+-							X: 10
+-							Width: PARENT_WIDTH / 2 - 20
+-							Children:
+-								Checkbox@LUADEBUG_CHECKBOX:
+-									Width: PARENT_WIDTH
+-									Height: 20
+-									Font: Regular
+-									Text: checkbox-luadebug-container
+-						Container@CHECKUNSYNCED_CHECKBOX_CONTAINER:
+-							X: PARENT_WIDTH / 2 + 10
+-							Width: PARENT_WIDTH / 2 - 20
+-							Children:
+-								Checkbox@CHECKUNSYNCED_CHECKBOX:
+-									Width: PARENT_WIDTH
+-									Height: 20
+-									Font: Regular
+-									Text: checkbox-checkunsynced-container
+-				Container@ROW:
+-					Width: PARENT_WIDTH - 24
+-					Height: 20
+-					Children:
+-						Container@REPLAY_COMMANDS_CHECKBOX_CONTAINER:
+-							X: 10
+-							Width: PARENT_WIDTH / 2 - 20
+-							Children:
+-								Checkbox@REPLAY_COMMANDS_CHECKBOX:
+-									Width: PARENT_WIDTH
+-									Height: 20
+-									Font: Regular
+-									Text: checkbox-replay-commands-container
+-						Container@PERFLOGGING_CHECKBOX_CONTAINER:
+-							X: PARENT_WIDTH / 2 + 10
+-							Width: PARENT_WIDTH / 2 - 20
+-							Children:
+-								Checkbox@PERFLOGGING_CHECKBOX:
+-									Width: PARENT_WIDTH
+-									Height: 20
+-									Font: Regular
+-									Text: checkbox-perflogging-container

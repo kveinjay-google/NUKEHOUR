@@ -1,0 +1,306 @@
+diff -ruN a/OpenRA.Game/Network/NukeHourNetworkCompatibility.cs b/OpenRA.Game/Network/NukeHourNetworkCompatibility.cs
+--- a/OpenRA.Game/Network/NukeHourNetworkCompatibility.cs	2026-09-08 02:09:34
++++ b/OpenRA.Game/Network/NukeHourNetworkCompatibility.cs	2026-09-08 02:09:34
+@@ -10,7 +10,6 @@
+ #endregion
+ 
+ using System;
+-using System.Globalization;
+ using System.IO;
+ using System.Linq;
+ using System.Security.Cryptography;
+@@ -307,44 +306,20 @@
+ 				throw new ArgumentException("Runtime resources must be bounded and unique.", nameof(configuration));
+ 
+ 			using var framed = new MemoryStream();
+-			Write(framed, "NUKEHOUR-RUNTIME-RESOURCES");
+-			Write(framed, resources.Length.ToStringInvariant());
+-			foreach (var resource in resources)
++			var requiredResources = resources.Where(resource => resource.Required).ToArray();
++			Write(framed, "NUKEHOUR-RUNTIME-RESOURCE-CAPABILITIES-V2");
++			Write(framed, requiredResources.Length.ToStringInvariant());
++			foreach (var resource in requiredResources)
+ 			{
+ 				Write(framed, resource.Name);
+-				Write(framed, resource.Required ? "required" : "optional");
+ 				using var stream = openResource(resource.Name);
+ 				if (stream == null)
+-				{
+-					if (resource.Required)
+-						throw new InvalidDataException($"Required runtime resource is missing: {resource.Name}");
++					throw new InvalidDataException($"Required runtime resource is missing: {resource.Name}");
+ 
+-					Write(framed, "absent");
+-					continue;
+-				}
+-
+ 				Write(framed, "present");
+-				var (length, digest) = Hash(stream);
+-				Write(framed, length.ToString(CultureInfo.InvariantCulture));
+-				Write(framed, digest);
+ 			}
+ 
+ 			return Convert.ToHexString(SHA256.HashData(framed.ToArray())).ToLowerInvariant();
+-		}
+-
+-		static (long Length, string Digest) Hash(Stream stream)
+-		{
+-			using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+-			var buffer = new byte[128 * 1024];
+-			long length = 0;
+-			int read;
+-			while ((read = stream.Read(buffer, 0, buffer.Length)) > 0)
+-			{
+-				length = checked(length + read);
+-				hash.AppendData(buffer, 0, read);
+-			}
+-
+-			return (length, Convert.ToHexString(hash.GetHashAndReset()).ToLowerInvariant());
+ 		}
+ 
+ 		static string ValidateLogicalName(string value)
+diff -ruN a/OpenRA.Test/NukeHourDirectTcpHandshakeTest.cs b/OpenRA.Test/NukeHourDirectTcpHandshakeTest.cs
+--- a/OpenRA.Test/NukeHourDirectTcpHandshakeTest.cs	2026-09-08 02:09:34
++++ b/OpenRA.Test/NukeHourDirectTcpHandshakeTest.cs	2026-09-08 02:09:34
+@@ -33,7 +33,7 @@
+ 
+ 		static RuntimeContractIdentity Contract(string resources = Resources) => RuntimeContractIdentity.Create(
+ 			new RuntimeContractInputs(
+-				Engine, ProtocolVersion.Orders, Mod, Core, "ra2-required-v1", resources));
++				Engine, ProtocolVersion.Orders, Mod, Core, "ra2-presentation-capability-v2", resources));
+ 
+ 		static RuntimeProfileIdentity Profile(string platform) =>
+ 			new(platform, "arm64", Engine, $"NUKE HOUR {platform}", Mod, "dotnet", "external-import");
+diff -ruN a/OpenRA.Test/NukeHourNetworkProtocolTest.cs b/OpenRA.Test/NukeHourNetworkProtocolTest.cs
+--- a/OpenRA.Test/NukeHourNetworkProtocolTest.cs	2026-09-08 02:09:34
++++ b/OpenRA.Test/NukeHourNetworkProtocolTest.cs	2026-09-08 02:09:34
+@@ -36,7 +36,7 @@
+ 			string resource = ResourceA,
+ 			string localPath = "/ignored") =>
+ 			RuntimeContractIdentity.Create(new RuntimeContractInputs(
+-				Engine, ProtocolVersion.Orders, Mod, core, "ra2-required-v1", resource, localPath));
++				Engine, ProtocolVersion.Orders, Mod, core, "ra2-presentation-capability-v2", resource, localPath));
+ 
+ 		static HandshakeRequest Request(RuntimeProfileIdentity profile, RuntimeContractIdentity contract) => new()
+ 		{
+@@ -64,6 +64,19 @@
+ 		static NetworkCompatibilityContext Local(RuntimeContractIdentity contract) =>
+ 			new(Engine, Mod, CoreA, contract);
+ 
++		static RuntimeContractConfiguration Phase11Resources() =>
++			new(new MiniYaml(null, new[]
++			{
++				new MiniYamlNode("ResourceCapability", "ra2-presentation-capability-v2"),
++				new MiniYamlNode("RequiredResources", "content|ra2.mix, content|language.mix"),
++				new MiniYamlNode("OptionalResources", "content|ra2md.mix, content|langmd.mix"),
++			}));
++
++		static string Phase11Fingerprint(IReadOnlyDictionary<string, byte[]> resources) =>
++			RuntimeResourceFingerprint.Create(Phase11Resources(), logicalName =>
++				resources.TryGetValue(logicalName, out var bytes)
++					? new MemoryStream(bytes, writable: false) : null);
++
+ 		[TestCase("ios", "arm64", "NUKE HOUR iOS 1.0.7 (Build 7)")]
+ 		[TestCase("android", "arm64", "NUKE HOUR Android 0.0.3 (Build 3)")]
+ 		[TestCase("macos", "arm64", "NUKE HOUR macOS 1.0.3 (Build 3)")]
+@@ -101,7 +114,7 @@
+ 		{
+ 			var contract = Contract();
+ 			var request = Request(Profile("android", "arm64", "build"), contract);
+-			request.RuntimeContract = "v1:ra2-required-v1:not-a-digest";
++			request.RuntimeContract = "v1:ra2-presentation-capability-v2:not-a-digest";
+ 
+ 			Assert.That(NetworkCompatibility.Validate(request, Local(contract)),
+ 				Is.EqualTo(NetworkCompatibilityReason.RuntimeContractMismatch));
+@@ -163,7 +176,7 @@
+ 		{
+ 			var configuration = new RuntimeContractConfiguration(new MiniYaml(null, new[]
+ 			{
+-				new MiniYamlNode("ResourceCapability", "ra2-required-v1"),
++				new MiniYamlNode("ResourceCapability", "ra2-presentation-capability-v2"),
+ 				new MiniYamlNode("RequiredResources", "content|ra2.mix, content|language.mix"),
+ 				new MiniYamlNode("OptionalResources", "content|ra2md.mix"),
+ 			}));
+@@ -186,11 +199,11 @@
+ 		}
+ 
+ 		[Test]
+-		public void ResourceFingerprintRejectsMissingOrChangedRequiredContent()
++		public void ResourceCapabilityFingerprintRejectsMissingButIgnoresPresentationBytes()
+ 		{
+ 			var configuration = new RuntimeContractConfiguration(new MiniYaml(null, new[]
+ 			{
+-				new MiniYamlNode("ResourceCapability", "ra2-required-v1"),
++				new MiniYamlNode("ResourceCapability", "ra2-presentation-capability-v2"),
+ 				new MiniYamlNode("RequiredResources", "content|ra2.mix"),
+ 			}));
+ 			var first = RuntimeResourceFingerprint.Create(
+@@ -200,7 +213,7 @@
+ 
+ 			Assert.Multiple(() =>
+ 			{
+-				Assert.That(changed, Is.Not.EqualTo(first));
++				Assert.That(changed, Is.EqualTo(first));
+ 				Assert.Throws<InvalidDataException>(() =>
+ 					RuntimeResourceFingerprint.Create(configuration, _ => null));
+ 			});
+@@ -218,7 +231,7 @@
+ 		}
+ 
+ 		[Test]
+-		public void ImportedResourceChangeIsRejectedBeforeAdmission()
++		public void ResourceCapabilityMismatchIsRejectedBeforeAdmission()
+ 		{
+ 			var localContract = Contract(resource: ResourceA);
+ 			var changedContract = Contract(resource: ResourceB);
+@@ -315,6 +328,150 @@
+ 				Assert.That(ProtocolVersion.Handshake, Is.EqualTo(7));
+ 				Assert.That(ProtocolVersion.Orders, Is.EqualTo(23));
+ 			});
++		}
++
++		[Test]
++		public void OldWholeArchiveResourceCapabilityIsRejected()
++		{
++			var localContract = Contract();
++			var oldContract = RuntimeContractIdentity.Create(new RuntimeContractInputs(
++				Engine, ProtocolVersion.Orders, Mod, CoreA, "ra2-required-v1", ResourceA));
++			var remote = Response(Profile("macos", "arm64", "old-build"), oldContract);
++
++			Assert.That(NetworkCompatibility.Validate(remote, Local(localContract)),
++				Is.EqualTo(NetworkCompatibilityReason.RuntimeContractMismatch));
++		}
++
++		[Test]
++		public void RC1_IdenticalResourcesAtDifferentPathsProduceIdenticalContract()
++		{
++			var resources = new Dictionary<string, byte[]>
++			{
++				["content|ra2.mix"] = new byte[] { 1, 2, 3 },
++				["content|language.mix"] = new byte[] { 4, 5, 6 },
++			};
++
++			var fingerprint = Phase11Fingerprint(resources);
++			var first = RuntimeContractIdentity.Create(new RuntimeContractInputs(
++				Engine, ProtocolVersion.Orders, Mod, CoreA,
++				"ra2-presentation-capability-v2", fingerprint, "/first/import"));
++			var second = RuntimeContractIdentity.Create(new RuntimeContractInputs(
++				Engine, ProtocolVersion.Orders, Mod, CoreA,
++				"ra2-presentation-capability-v2", fingerprint, "/second/import"));
++
++			Assert.That(second, Is.EqualTo(first));
++		}
++
++		[Test]
++		public void RC2_ReimportedResourcesProduceIdenticalFingerprint()
++		{
++			var first = Phase11Fingerprint(new Dictionary<string, byte[]>
++			{
++				["content|ra2.mix"] = new byte[] { 1, 2, 3 },
++				["content|language.mix"] = new byte[] { 4, 5, 6 },
++			});
++			var reimported = Phase11Fingerprint(new Dictionary<string, byte[]>
++			{
++				["content|language.mix"] = new byte[] { 4, 5, 6 },
++				["content|ra2.mix"] = new byte[] { 1, 2, 3 },
++			});
++
++			Assert.That(reimported, Is.EqualTo(first));
++		}
++
++		[Test]
++		public void RC3_PresentationOnlyDifferencesRemainGameplayCompatible()
++		{
++			var first = Phase11Fingerprint(new Dictionary<string, byte[]>
++			{
++				["content|ra2.mix"] = new byte[] { 1, 2, 3 },
++				["content|language.mix"] = new byte[] { 4, 5, 6 },
++				["content|langmd.mix"] = new byte[] { 10, 11, 12 },
++			});
++			var changedPresentation = Phase11Fingerprint(new Dictionary<string, byte[]>
++			{
++				["content|ra2.mix"] = new byte[] { 1, 2, 3 },
++				["content|language.mix"] = new byte[] { 4, 5, 6 },
++				["content|langmd.mix"] = new byte[] { 20, 21, 22, 23 },
++			});
++
++			Assert.That(changedPresentation, Is.EqualTo(first));
++		}
++
++		[Test]
++		public void RC4_LocalizationOnlyDifferencesRemainGameplayCompatible()
++		{
++			var english = Phase11Fingerprint(new Dictionary<string, byte[]>
++			{
++				["content|ra2.mix"] = new byte[] { 1, 2, 3 },
++				["content|language.mix"] = new byte[] { 10, 11, 12 },
++			});
++			var chinese = Phase11Fingerprint(new Dictionary<string, byte[]>
++			{
++				["content|ra2.mix"] = new byte[] { 1, 2, 3 },
++				["content|language.mix"] = new byte[] { 20, 21, 22, 23 },
++			});
++
++			Assert.That(chinese, Is.EqualTo(english));
++		}
++
++		[Test]
++		public void RC5_GameplayRuleDifferenceIsRejected()
++		{
++			var localContract = Contract(CoreA);
++			var remote = Response(Profile("android", "arm64", "build"), Contract(CoreB));
++			remote.Version = CoreB;
++
++			Assert.That(NetworkCompatibility.Validate(remote, Local(localContract)),
++				Is.EqualTo(NetworkCompatibilityReason.ModMismatch));
++		}
++
++		[Test]
++		public void RC6_MissingRequiredGameplayAssetIsRejected()
++		{
++			var gameplayResources = new RuntimeContractConfiguration(new MiniYaml(null, new[]
++			{
++				new MiniYamlNode("ResourceCapability", "future-gameplay-capability-v1"),
++				new MiniYamlNode("RequiredResources", "content|gameplay-rules.bundle"),
++			}));
++
++			Assert.Throws<InvalidDataException>(() =>
++				RuntimeResourceFingerprint.Create(gameplayResources, _ => null));
++		}
++
++		[Test]
++		public void RC7_ModIdentifierMismatchIsRejected()
++		{
++			var contract = Contract();
++			var remote = Request(Profile("ios", "arm64", "build"), contract);
++			remote.Mod = "different";
++			remote.RuntimeProfile = new RuntimeProfileIdentity(
++				"ios", "arm64", Engine, "build", "different", "dotnet", "external-import").Serialize();
++
++			Assert.That(NetworkCompatibility.Validate(remote, Local(contract)),
++				Is.EqualTo(NetworkCompatibilityReason.ModMismatch));
++		}
++
++		[Test]
++		public void RC8_ModGameplayCompatibilityMismatchIsRejected()
++		{
++			var localContract = Contract(CoreA);
++			var remote = Response(Profile("macos", "arm64", "build"), localContract);
++			remote.Version = CoreB;
++
++			Assert.That(NetworkCompatibility.Validate(remote, Local(localContract)),
++				Is.EqualTo(NetworkCompatibilityReason.ModMismatch));
++		}
++
++		[Test]
++		public void RC9_EngineCompatibilityMismatchIsRejected()
++		{
++			var contract = Contract();
++			var remote = Request(Profile("ios", "arm64", "build"), contract);
++			remote.EngineCompatibility = "different-engine";
++
++			Assert.That(NetworkCompatibility.Validate(remote, Local(contract)),
++				Is.EqualTo(NetworkCompatibilityReason.EngineMismatch));
+ 		}
+ 	}
+ }

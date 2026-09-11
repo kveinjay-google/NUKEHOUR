@@ -10,16 +10,33 @@
 """
 
 import datetime
+import hashlib
+import json
 import os
 import re
 import shutil
+import stat
 import struct
 import subprocess
+import uuid
 import zipfile
 
 REPO = os.path.dirname(os.path.abspath(__file__))
-SUPPORT = os.path.expanduser("~/Library/Application Support/OpenRA")
+SUPPORT = os.path.expanduser("~/Library/Application Support/Nuke Hour")
+LEGACY_SUPPORT = os.path.expanduser("~/Library/Application Support/OpenRA")
 MOD_ID = "ra2"
+
+LEGACY_SUPPORT_PATHS = (
+    "settings.yaml",
+    "ra2-commandbar.yaml",
+    "skirmish.ra2.yaml",
+    "Content/ra2",
+    "maps/ra2",
+    "Saves/ra2",
+    "Replays/ra2",
+    "Screenshots/ra2",
+    "Editor/ra2",
+)
 
 EOF_MARKER = -2
 METADATA_MARKER = -1
@@ -374,11 +391,316 @@ def open_dir(path):
 
 # ------------------------------------------------------------ 内容资产
 
-CORE_PACKAGES = ["ra2.mix", "language.mix", "theme.mix"]
+MINIMUM_PACKAGES = ("ra2.mix", "language.mix")
+CORE_PACKAGES = list(MINIMUM_PACKAGES)
+OPTIONAL_PACKAGES = {
+    "music": ("theme.mix", "thememd.mix"),
+    "yuris_revenge": ("ra2md.mix", "langmd.mix"),
+    "audio": ("audio.bag", "audio.idx"),
+}
+RETAIL_CONTENT_EXTENSIONS = frozenset({".mix", ".bag", ".idx"})
+MAP_CONTENT_EXTENSIONS = frozenset({".map", ".mpr", ".yrm", ".oramap"})
+REJECTED_EXECUTABLE_EXTENSIONS = frozenset({
+    ".app", ".bat", ".cmd", ".com", ".dll", ".dylib", ".exe", ".js",
+    ".msi", ".ps1", ".py", ".sh", ".so", ".vbs",
+})
+EXECUTABLE_MAGICS = (
+    b"MZ",
+    b"\x7fELF",
+    b"\xca\xfe\xba\xbe",
+    b"\xce\xfa\xed\xfe",
+    b"\xcf\xfa\xed\xfe",
+    b"\xfe\xed\xfa\xce",
+    b"\xfe\xed\xfa\xcf",
+)
 
 
-def content_status():
-    base = content_dir()
+class RetailImportError(ValueError):
+    """The selected retail content cannot be imported safely."""
+
+
+def _sha256_file(path):
+    digest = hashlib.sha256()
+    with open(path, "rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def _legacy_support_candidates(legacy_root):
+    candidates = []
+    skipped = []
+    for owned_path in LEGACY_SUPPORT_PATHS:
+        source = os.path.join(legacy_root, *owned_path.split("/"))
+        if not os.path.lexists(source):
+            continue
+        if os.path.islink(source):
+            skipped.append(owned_path)
+            continue
+        if os.path.isfile(source):
+            candidates.append((owned_path, source))
+            continue
+        if not os.path.isdir(source):
+            skipped.append(owned_path)
+            continue
+
+        for root, dirs, files in os.walk(source, followlinks=False):
+            dirs.sort()
+            files.sort()
+            linked_dirs = [name for name in dirs if os.path.islink(os.path.join(root, name))]
+            dirs[:] = [name for name in dirs if name not in linked_dirs]
+            for name in linked_dirs:
+                skipped.append(os.path.relpath(os.path.join(root, name), legacy_root))
+            for name in files:
+                path = os.path.join(root, name)
+                relative = os.path.relpath(path, legacy_root)
+                if os.path.islink(path) or not os.path.isfile(path):
+                    skipped.append(relative)
+                else:
+                    candidates.append((relative, path))
+    return candidates, skipped
+
+
+def _safe_migration_parent(support_root, relative):
+    parent = support_root
+    for part in relative.split(os.sep)[:-1]:
+        parent = os.path.join(parent, part)
+        if os.path.lexists(parent):
+            if os.path.islink(parent) or not os.path.isdir(parent):
+                return None
+        else:
+            os.mkdir(parent)
+    return parent
+
+
+def _copy_migration_file(source, destination):
+    source_before = os.stat(source, follow_symlinks=False)
+    digest = hashlib.sha256()
+    created = False
+    try:
+        with open(source, "rb") as input_stream, open(destination, "xb") as output_stream:
+            created = True
+            for block in iter(lambda: input_stream.read(1024 * 1024), b""):
+                digest.update(block)
+                output_stream.write(block)
+
+        source_after = os.stat(source, follow_symlinks=False)
+        if (source_before.st_size != source_after.st_size
+                or source_before.st_mtime_ns != source_after.st_mtime_ns
+                or source_before.st_ino != source_after.st_ino
+                or os.path.getsize(destination) != source_after.st_size
+                or _sha256_file(destination) != digest.hexdigest()):
+            raise OSError(f"legacy support file changed during migration: {source}")
+        shutil.copystat(source, destination, follow_symlinks=False)
+    except Exception:
+        if created and os.path.isfile(destination) and not os.path.islink(destination):
+            os.remove(destination)
+        raise
+
+
+def migrate_legacy_support(legacy_root=LEGACY_SUPPORT, support_root=SUPPORT):
+    """Copy NUKE HOUR-owned legacy data without deleting or overwriting files."""
+    legacy_root = os.path.abspath(os.fspath(legacy_root))
+    support_root = os.path.abspath(os.fspath(support_root))
+    result = {"copied": [], "conflicts": [], "skipped": []}
+    if not os.path.isdir(legacy_root) or os.path.islink(legacy_root):
+        return {key: tuple(value) for key, value in result.items()}
+    if os.path.realpath(legacy_root) == os.path.realpath(support_root):
+        raise ValueError("legacy and current support directories must be different")
+
+    if os.path.lexists(support_root):
+        if os.path.islink(support_root):
+            raise ValueError("current support directory must not be a symbolic link")
+        if not os.path.isdir(support_root):
+            raise ValueError("current support path must be a directory")
+    else:
+        os.makedirs(support_root)
+    candidates, skipped = _legacy_support_candidates(legacy_root)
+    result["skipped"].extend(skipped)
+    for relative, source in candidates:
+        destination = os.path.join(support_root, *relative.split(os.sep))
+        parent = _safe_migration_parent(support_root, relative)
+        if parent is None or os.path.lexists(destination):
+            if (parent is not None and os.path.isfile(destination)
+                    and not os.path.islink(destination)
+                    and os.path.getsize(source) == os.path.getsize(destination)
+                    and _sha256_file(source) == _sha256_file(destination)):
+                result["skipped"].append(relative)
+            else:
+                result["conflicts"].append(relative)
+            continue
+
+        _copy_migration_file(source, destination)
+        result["copied"].append(relative)
+
+    return {key: tuple(sorted(value)) for key, value in result.items()}
+
+
+def _has_executable_magic(path):
+    try:
+        with open(path, "rb") as stream:
+            prefix = stream.read(4)
+    except OSError as exc:
+        raise RetailImportError(f"cannot read selected file: {os.path.basename(path)}") from exc
+    return any(prefix.startswith(magic) for magic in EXECUTABLE_MAGICS)
+
+
+def _selected_candidates(paths):
+    """Yield regular-looking entries without following directory symlinks."""
+    for selected in paths:
+        selected = os.fspath(selected)
+        if os.path.islink(selected):
+            yield selected
+        elif os.path.isdir(selected):
+            for root, dirs, files in os.walk(selected, followlinks=False):
+                dirs.sort()
+                files.sort()
+                linked_dirs = [name for name in dirs if os.path.islink(os.path.join(root, name))]
+                dirs[:] = [name for name in dirs if name not in linked_dirs]
+                for name in linked_dirs:
+                    yield os.path.join(root, name)
+                for name in files:
+                    yield os.path.join(root, name)
+        else:
+            yield selected
+
+
+def discover_retail_content(paths):
+    """Return safe retail/map files found under *paths* without copying them."""
+    accepted = {}
+    rejected = []
+    supported = RETAIL_CONTENT_EXTENSIONS | MAP_CONTENT_EXTENSIONS
+    for candidate in _selected_candidates(paths):
+        name = os.path.basename(candidate)
+        normalized = name.lower()
+        extension = os.path.splitext(normalized)[1]
+
+        if os.path.islink(candidate):
+            rejected.append({"name": name, "reason": "symlink"})
+            continue
+        if extension in REJECTED_EXECUTABLE_EXTENSIONS:
+            rejected.append({"name": name, "reason": "executable-extension"})
+            continue
+        if extension not in supported:
+            continue
+        try:
+            mode = os.stat(candidate, follow_symlinks=False).st_mode
+        except OSError:
+            rejected.append({"name": name, "reason": "unreadable"})
+            continue
+        if not stat.S_ISREG(mode):
+            rejected.append({"name": name, "reason": "not-regular-file"})
+            continue
+        if _has_executable_magic(candidate):
+            rejected.append({"name": name, "reason": "executable-magic"})
+            continue
+
+        digest = _sha256_file(candidate)
+        existing = accepted.get(normalized)
+        if existing is not None:
+            if existing["sha256"] != digest:
+                raise RetailImportError(f"conflicting duplicate filename: {normalized}")
+            continue
+        accepted[normalized] = {
+            "name": normalized,
+            "path": os.path.abspath(candidate),
+            "size": os.path.getsize(candidate),
+            "sha256": digest,
+        }
+
+    return {
+        "files": [accepted[name] for name in sorted(accepted)],
+        "rejected": sorted(rejected, key=lambda item: (item["name"].lower(), item["reason"])),
+    }
+
+
+def _safe_import_tree(path):
+    resolved = os.path.abspath(os.fspath(path))
+    parent = os.path.dirname(resolved)
+    name = os.path.basename(resolved)
+    token = uuid.uuid4().hex
+    return (
+        resolved,
+        os.path.join(parent, f".{name}.import-staging-{token}"),
+        os.path.join(parent, f".{name}.import-previous-{token}"),
+    )
+
+
+def import_retail_content(paths, destination=None, maps_destination=None, imported_at=None):
+    """Validate, stage, and atomically publish locally selected retail files."""
+    discovery = discover_retail_content(paths)
+    if not discovery["files"]:
+        raise RetailImportError("no supported retail content was selected")
+
+    destination_was_default = destination is None
+    destination, staging, previous = _safe_import_tree(destination or content_dir())
+    maps_destination = os.fspath(maps_destination or user_maps_dir())
+    package_files = [
+        item for item in discovery["files"]
+        if os.path.splitext(item["name"])[1] in RETAIL_CONTENT_EXTENSIONS
+    ]
+    map_files = [
+        item for item in discovery["files"]
+        if os.path.splitext(item["name"])[1] in MAP_CONTENT_EXTENSIONS
+    ]
+    parent = os.path.dirname(destination)
+    os.makedirs(parent, exist_ok=True)
+    if package_files:
+        os.makedirs(staging)
+    moved_previous = False
+    try:
+        if package_files and os.path.isdir(destination):
+            existing = discover_retail_content([destination])
+            for item in existing["files"]:
+                if os.path.splitext(item["name"])[1] in RETAIL_CONTENT_EXTENSIONS:
+                    shutil.copy2(item["path"], os.path.join(staging, item["name"]))
+
+        for item in package_files:
+            shutil.copy2(item["path"], os.path.join(staging, item["name"]))
+
+        if package_files:
+            staged = discover_retail_content([staging])
+            receipt = {
+                "schemaVersion": 1,
+                "importedAt": imported_at or datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                "files": [
+                    {key: item[key] for key in ("name", "size", "sha256")}
+                    for item in staged["files"]
+                ],
+                "rejected": discovery["rejected"],
+            }
+            with open(os.path.join(staging, "import-receipt.json"), "w", encoding="utf-8") as stream:
+                json.dump(receipt, stream, ensure_ascii=False, indent=2, sort_keys=True)
+                stream.write("\n")
+
+            if os.path.exists(destination):
+                os.replace(destination, previous)
+                moved_previous = True
+            os.replace(staging, destination)
+
+        if map_files:
+            os.makedirs(maps_destination, exist_ok=True)
+            for item in map_files:
+                shutil.copy2(item["path"], os.path.join(maps_destination, item["name"]))
+
+        status = content_status(
+            destination,
+            maps_directory=maps_destination if map_files or destination_was_default else None)
+        if moved_previous:
+            shutil.rmtree(previous)
+        return status
+    except Exception:
+        if os.path.isdir(staging):
+            shutil.rmtree(staging)
+        if moved_previous and not os.path.exists(destination) and os.path.exists(previous):
+            os.replace(previous, destination)
+        raise
+
+
+def content_status(directory=None, maps_directory=None):
+    if directory is None and maps_directory is None:
+        maps_directory = user_maps_dir()
+    base = os.fspath(directory or content_dir())
     files = []
     total = 0
     if os.path.isdir(base):
@@ -388,15 +710,26 @@ def content_status():
                 size = os.path.getsize(full)
                 total += size
                 files.append({"name": fn, "size": _fmt_size(size)})
-    present = {f["name"] for f in files}
-    missing_core = [p for p in CORE_PACKAGES if p not in present]
+    present = {f["name"].lower() for f in files}
+    missing_core = [p for p in MINIMUM_PACKAGES if p not in present]
+    capabilities = {
+        "base_game": not missing_core,
+        "music": any(name in present for name in OPTIONAL_PACKAGES["music"]),
+        "yuris_revenge": all(name in present for name in OPTIONAL_PACKAGES["yuris_revenge"]),
+        "audio": all(name in present for name in OPTIONAL_PACKAGES["audio"]),
+        "maps": bool(maps_directory and os.path.isdir(maps_directory) and any(
+            os.path.splitext(name.lower())[1] in MAP_CONTENT_EXTENSIONS
+            for name in os.listdir(maps_directory)
+        )),
+    }
     return {
         "dir": base,
         "files": files,
         "count": len(files),
         "total_size": _fmt_size(total),
         "missing_core": missing_core,
-        "healthy": not missing_core and len(files) > 0,
+        "healthy": not missing_core,
+        "capabilities": capabilities,
     }
 
 

@@ -240,7 +240,7 @@ namespace OpenRA.Mods.RA2.Widgets
 			expanded ? "commandbar-panel" : "commandbar-panel-compact";
 
 		public static string ButtonBackgroundFor(bool isIos, string desktopBackground, string skin) =>
-			isIos ? TouchFactionSkin.QuickbarButtonCollection(skin) : desktopBackground;
+			isIos ? string.Empty : desktopBackground;
 
 		public static string ToggleCollectionFor(bool isIos, string desktopCollection, string skin) =>
 			isIos ? TouchFactionSkin.QuickbarToggleCollection(skin) : desktopCollection;
@@ -279,7 +279,7 @@ namespace OpenRA.Mods.RA2.Widgets
 				throw new ArgumentNullException(nameof(applyToggleCollection));
 
 			applyPanelBackground(TouchFactionSkin.QuickbarPanelCollection(skin, expanded));
-			var buttonBackground = TouchFactionSkin.QuickbarButtonCollection(skin);
+			var buttonBackground = string.Empty;
 			foreach (var button in buttons)
 				applyButtonBackground(button, buttonBackground);
 			applyToggleCollection(TouchFactionSkin.QuickbarToggleCollection(skin));
@@ -453,9 +453,9 @@ namespace OpenRA.Mods.RA2.Widgets
 				x += slot.ButtonSize.Width + Gap;
 			}
 
-			var collapseWidth = snapshot.LogicalPoints(44);
-			var editWidth = snapshot.LogicalPoints(72);
-			var controlsWidth = collapseWidth + Gap + (expanded ? editWidth + Gap : 0);
+			const int CollapseWidth = TouchCompactButtonSize;
+			const int EditWidth = EditButtonWidth;
+			var controlsWidth = CollapseWidth + Gap + (expanded ? EditWidth + Gap : 0);
 			var activeWidth = x + Pad + controlsWidth;
 
 			var trayX = Pad;
@@ -494,27 +494,27 @@ namespace OpenRA.Mods.RA2.Widgets
 
 			if (collapseButton != null)
 			{
-				collapseButton.Bounds.Width = collapseWidth;
+				collapseButton.Bounds.Width = CollapseWidth;
 				collapseButton.Bounds.Height = rowHeight;
-				collapseButton.Bounds.X = placed.Width - Pad - collapseWidth;
+				collapseButton.Bounds.X = placed.Width - Pad - CollapseWidth;
 				collapseButton.Bounds.Y = Pad;
 				collapseButton.IsVisible = () => true;
 				if (collapseIcon != null)
 				{
-					var iconSize = snapshot.LogicalPoints(26);
-					collapseIcon.Bounds.X = (collapseWidth - iconSize) / 2;
-					collapseIcon.Bounds.Y = (rowHeight - iconSize) / 2;
-					collapseIcon.Bounds.Width = iconSize;
-					collapseIcon.Bounds.Height = iconSize;
+					const int IconSize = 26;
+					collapseIcon.Bounds.X = (CollapseWidth - IconSize) / 2;
+					collapseIcon.Bounds.Y = (rowHeight - IconSize) / 2;
+					collapseIcon.Bounds.Width = IconSize;
+					collapseIcon.Bounds.Height = IconSize;
 					collapseIcon.StretchToFit = true;
 				}
 			}
 
 			if (editButton != null)
 			{
-				editButton.Bounds.Width = editWidth;
+				editButton.Bounds.Width = EditWidth;
 				editButton.Bounds.Height = rowHeight;
-				editButton.Bounds.X = placed.Width - Pad - collapseWidth - Gap - editWidth;
+				editButton.Bounds.X = placed.Width - Pad - CollapseWidth - Gap - EditWidth;
 				editButton.Bounds.Y = Pad;
 				editButton.IsVisible = () => expanded;
 			}
@@ -680,6 +680,7 @@ namespace OpenRA.Mods.RA2.Widgets
 		void ApplyTouchChrome()
 		{
 			var skin = TouchFactionSkin.Active;
+			var commandGlyphCollection = TouchFactionSkin.CommandGlyphCollection(skin);
 			ApplyTouchChromeToTargets(
 				skin,
 				expanded,
@@ -691,6 +692,15 @@ namespace OpenRA.Mods.RA2.Widgets
 					if (collapseIcon != null)
 						collapseIcon.ImageCollection = collection;
 				});
+
+			foreach (var pair in icons)
+			{
+				if (pair.Value == null || !buttons.TryGetValue(pair.Key, out var button))
+					continue;
+
+				pair.Value.ImageCollection = commandGlyphCollection;
+				WidgetUtils.BindButtonIcon(button);
+			}
 
 			lastTouchSkin = skin;
 			lastTouchExpanded = expanded;
@@ -715,7 +725,7 @@ namespace OpenRA.Mods.RA2.Widgets
 				icon.Bounds.Y = slot.IconBounds.Y;
 				icon.Bounds.Width = slot.IconBounds.Width;
 				icon.Bounds.Height = slot.IconBounds.Height;
-				icon.StretchToFit = CommandBarLayoutPolicy.IsRequiredTouchId(id, true);
+				icon.StretchToFit = true;
 			}
 		}
 

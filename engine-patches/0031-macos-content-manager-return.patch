@@ -1,0 +1,93 @@
+diff -ruN a/OpenRA.Game/Game.cs b/OpenRA.Game/Game.cs
+--- a/OpenRA.Game/Game.cs	2026-09-10 05:00:00
++++ b/OpenRA.Game/Game.cs	2026-09-10 05:00:00
+@@ -45,6 +45,7 @@
+ 		public static Settings Settings;
+ 		public static CursorManager Cursor;
+ 		public static bool HideCursor;
++		public static bool ContentManagerReturnToLauncher { get; private set; }
+ 
+ 		static WorldRenderer worldRenderer;
+ 		static string modLaunchWrapper;
+@@ -376,6 +377,10 @@
+ 
+ 		static void Initialize(Arguments args)
+ 		{
++			ContentManagerReturnToLauncher = string.Equals(
++				args.GetValue("Game.ContentManagerReturnToLauncher", "false"),
++				"true", StringComparison.OrdinalIgnoreCase);
++
+ 			var engineDirArg = args.GetValue("Engine.EngineDir", null);
+ 			if (!string.IsNullOrEmpty(engineDirArg))
+ 				Platform.OverrideEngineDir(engineDirArg);
+@@ -1037,6 +1042,22 @@
+ 		public static void Exit()
+ 		{
+ 			state = RunStatus.Success;
++		}
++
++		public static void ClearContentManagerReturnToLauncher()
++		{
++			ContentManagerReturnToLauncher = false;
++		}
++
++		public static void ReturnFromContentManager(string mod)
++		{
++			if (ContentManagerReturnToLauncher)
++			{
++				Exit();
++				return;
++			}
++
++			RunAfterTick(() => InitializeMod(mod, new Arguments()));
+ 		}
+ 
+ 		public static void Disconnect()
+diff -ruN a/OpenRA.Mods.Common/FileSystem/ContentInstallerFileSystemLoader.cs b/OpenRA.Mods.Common/FileSystem/ContentInstallerFileSystemLoader.cs
+--- a/OpenRA.Mods.Common/FileSystem/ContentInstallerFileSystemLoader.cs	2026-09-10 19:04:07
++++ b/OpenRA.Mods.Common/FileSystem/ContentInstallerFileSystemLoader.cs	2026-09-10 19:04:07
+@@ -62,6 +62,8 @@
+ 		{
+ 			if (!isContentAvailable)
+ 				Game.InitializeMod(ContentInstallerMod, new Arguments());
++			else
++				Game.ClearContentManagerReturnToLauncher();
+ 
+ 			return !isContentAvailable;
+ 		}
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/Installation/ModContentLogic.cs b/OpenRA.Mods.Common/Widgets/Logic/Installation/ModContentLogic.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/Installation/ModContentLogic.cs	2026-09-10 19:04:07
++++ b/OpenRA.Mods.Common/Widgets/Logic/Installation/ModContentLogic.cs	2026-09-10 19:04:07
+@@ -37,7 +37,7 @@
+ 			{
+ 				var widgetArgs = new WidgetArgs
+ 				{
+-					{ "onCancel", () => Game.RunAfterTick(() => Game.InitializeMod(content.Mod, new Arguments())) },
++					{ "onCancel", () => Game.ReturnFromContentManager(content.Mod) },
+ 					{ "content", content },
+ 				};
+ 
+diff -ruN a/OpenRA.Test/Ra2ContentInstallerManifestTest.cs b/OpenRA.Test/Ra2ContentInstallerManifestTest.cs
+--- a/OpenRA.Test/Ra2ContentInstallerManifestTest.cs	2026-09-10 05:00:00
++++ b/OpenRA.Test/Ra2ContentInstallerManifestTest.cs	2026-09-10 05:00:00
+@@ -113,5 +113,20 @@
+ 			StringAssert.Contains("label-select-install-directory", chinese);
+ 			StringAssert.Contains("label-selected-directory-invalid", chinese);
+ 		}
++
++		[Test]
++		public void LauncherOwnedContentManagerReturnsToLauncherInsteadOfReloadingTheMod()
++		{
++			var root = RepositoryRoot();
++			var game = File.ReadAllText(Path.Combine(root, "engine", "OpenRA.Game", "Game.cs"));
++			var loader = File.ReadAllText(Path.Combine(root, "engine", "OpenRA.Mods.Common", "FileSystem",
++				"ContentInstallerFileSystemLoader.cs"));
++			var logic = File.ReadAllText(Path.Combine(root, "engine", "OpenRA.Mods.Common", "Widgets", "Logic",
++				"Installation", "ModContentLogic.cs"));
++
++			StringAssert.Contains("ContentManagerReturnToLauncher", game);
++			StringAssert.Contains("ClearContentManagerReturnToLauncher", loader);
++			StringAssert.Contains("ReturnFromContentManager", logic);
++		}
+ 	}
+ }

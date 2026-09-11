@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from packaging.public_bundle_audit import audit_tree, inventory_tree
+from packaging.public_bundle_audit import audit_tree, inventory_tree, tree_inventory
 
 
 class PublicBundleAuditTest(unittest.TestCase):
@@ -51,6 +51,41 @@ class PublicBundleAuditTest(unittest.TestCase):
 
         self.assertIn("retail-extension", self.error_codes(result))
 
+    def test_reviewed_redistributable_shp_tree_passes_by_exact_inventory_digest(self):
+        self.write("mods/ra2/bits/isodepth.shp", b"redistributable support art")
+        inventory = tree_inventory(self.root / "mods/ra2/bits")
+        self.manifest["trees"] = [{
+            "path": "mods/ra2/bits",
+            "sha256": inventory["sha256"],
+            "size": inventory["size"],
+            "fileCount": inventory["fileCount"],
+            "category": "redistributable-third-party",
+            "license": "GPL-3.0-only / OpenRA RA2 project",
+            "public": True,
+        }]
+
+        result = audit_tree(self.root, self.manifest)
+
+        self.assertEqual((), result.errors)
+
+    def test_reviewed_tree_rejects_an_added_or_modified_file(self):
+        self.write("mods/ra2/bits/isodepth.shp", b"reviewed")
+        inventory = tree_inventory(self.root / "mods/ra2/bits")
+        self.manifest["trees"] = [{
+            "path": "mods/ra2/bits",
+            "sha256": inventory["sha256"],
+            "size": inventory["size"],
+            "fileCount": inventory["fileCount"],
+            "category": "redistributable-third-party",
+            "license": "GPL-3.0-only / OpenRA RA2 project",
+            "public": True,
+        }]
+        self.write("mods/ra2/bits/unreviewed.shp", b"added later")
+
+        result = audit_tree(self.root, self.manifest)
+
+        self.assertIn("tree-inventory-mismatch", self.error_codes(result))
+
     def test_actool_generated_app_icon_outputs_are_allowed(self):
         self.write("Assets.car", b"compiled catalog")
         self.write("AppIcon60x60@2x.png", b"compiled phone icon")
@@ -60,27 +95,32 @@ class PublicBundleAuditTest(unittest.TestCase):
 
         self.assertEqual((), result.errors)
 
-    def test_unlisted_top_level_png_is_not_treated_as_generated_app_icon(self):
-        self.write("UnrelatedArtwork.png", b"private artwork")
-
-        result = audit_tree(self.root, self.manifest)
-
-        self.assertIn("unclassified-resource", self.error_codes(result))
-
-    def test_generated_root_managed_and_aot_outputs_are_allowed(self):
-        self.write("OpenRA.Game.dll", b"managed")
-        self.write("OpenRA.Game.aotdata.arm64", b"aot")
-        self.write("OpenRA.iOS", b"native executable")
-        self.write("runtimeconfig.bin", b"runtime")
-        self.write("icudt.dat", b"runtime globalization data")
-        self.write("archived-expanded-entitlements.xcent", b"generated entitlements")
+    def test_top_level_ios_runtime_outputs_are_allowed(self):
+        for path in (
+            "OpenRA.iOS",
+            "OpenRA.iOS.dll",
+            "OpenRA.iOS.aotdata.arm64",
+            "Eluant.dll.config",
+            "runtimeconfig.bin",
+            "icudt.dat",
+            "libSystem.Native.dylib",
+            "archived-expanded-entitlements.xcent",
+        ):
+            self.write(path, b"generated runtime")
 
         result = audit_tree(self.root, self.manifest)
 
         self.assertEqual((), result.errors)
 
-    def test_nested_unlisted_dll_is_not_treated_as_generated_output(self):
-        self.write("mods/ra2/unreviewed.dll", b"not a root build output")
+    def test_runtime_lookalike_below_resource_tree_is_rejected(self):
+        self.write("mods/ra2/private.dll", b"not a generated runtime")
+
+        result = audit_tree(self.root, self.manifest)
+
+        self.assertIn("unclassified-resource", self.error_codes(result))
+
+    def test_unlisted_top_level_png_is_not_treated_as_generated_app_icon(self):
+        self.write("UnrelatedArtwork.png", b"private artwork")
 
         result = audit_tree(self.root, self.manifest)
 

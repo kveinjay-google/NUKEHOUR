@@ -117,16 +117,10 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 				return parent;
 			}
 
-			var mapRepository = modData.Manifest.Get<WebServices>().MapRepository;
-
 			Widget SetUpInstallButton(Widget parent)
 			{
 				var button = parent.Get<ButtonWidget>("MAP_INSTALL");
-				button.IsHighlighted = () => blink;
-				button.OnClick = () =>
-				{
-					getMap().Map.Install(mapRepository, OnMapInstallSucceeded);
-				};
+				button.Visible = false;
 
 				return parent;
 			}
@@ -165,19 +159,7 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 			}
 
 			retryButton = widget.Get<ButtonWidget>("MAP_RETRY");
-			retryButton.OnClick = () =>
-			{
-				retryTriggered = true;
-				var (map, _) = getMap();
-
-				var uid = modData.MapCache.GetUpdatedMap(map.Uid);
-				mapUpdateAvailable = mapUpdatesEnabled && uid != null && map.Uid != uid;
-
-				if (map.Status == MapStatus.DownloadError)
-					map.Install(mapRepository, OnMapInstallSucceeded);
-				else if (map.Status == MapStatus.Unavailable)
-					modData.MapCache.QueryRemoteMapDetails(mapRepository, new[] { map.Uid });
-			};
+			retryButton.Visible = false;
 
 			var retryInstall = FluentProvider.GetMessage(RetryInstall);
 			var retrySearch = FluentProvider.GetMessage(RetrySearch);

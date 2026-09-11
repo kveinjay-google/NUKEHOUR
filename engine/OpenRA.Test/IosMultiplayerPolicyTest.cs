@@ -9,6 +9,12 @@ namespace OpenRA.Test
 	[TestFixture]
 	public sealed class IosMultiplayerPolicyTest
 	{
+		sealed class BooleanSyncFixture : ISync
+		{
+			[Sync]
+			public bool Value;
+		}
+
 		static string RepositoryRoot()
 		{
 			var directory = new DirectoryInfo(TestContext.CurrentContext.TestDirectory);
@@ -174,7 +180,70 @@ namespace OpenRA.Test
 		}
 
 		[Test]
-		public void MultiplayerSmokeRequiresAnExpectedRuntimeBundleHash()
+		public void MultiplayerSmokeValidatesOnlineRoomListAndCodeDiscovery()
+		{
+			var common = new Dictionary<string, string>
+			{
+				["OPENRA_IOS_MULTIPLAYER_SMOKE_ROLE"] = "client",
+				["OPENRA_IOS_MULTIPLAYER_SMOKE_ONLINE_LOBBY_URL"] = "https://lobby.nukehour.com/",
+				["OPENRA_IOS_MULTIPLAYER_SMOKE_LAUNCH_NONCE"] = new string('1', 32),
+				["OPENRA_IOS_MULTIPLAYER_SMOKE_PARTICIPANT_NONCE"] = new string('2', 32),
+				["OPENRA_IOS_MULTIPLAYER_SMOKE_EXPECTED_REMOTE_NONCE"] = new string('3', 32)
+			};
+
+			var listValues = new Dictionary<string, string>(common)
+			{
+				["OPENRA_IOS_MULTIPLAYER_SMOKE_DISCOVERY_MODE"] = "online-list",
+				["OPENRA_IOS_MULTIPLAYER_SMOKE_ONLINE_SERVER_ID"] = "phase3-public"
+			};
+			var list = IosMultiplayerSmokeConfiguration.Parse(
+				name => listValues.TryGetValue(name, out var value) ? value : null);
+
+			var codeValues = new Dictionary<string, string>(common)
+			{
+				["OPENRA_IOS_MULTIPLAYER_SMOKE_DISCOVERY_MODE"] = "online-code",
+				["OPENRA_IOS_MULTIPLAYER_SMOKE_ONLINE_ROOM_CODE"] = "a7k9q2"
+			};
+			var code = IosMultiplayerSmokeConfiguration.Parse(
+				name => codeValues.TryGetValue(name, out var value) ? value : null);
+
+			Assert.Multiple(() =>
+			{
+				Assert.That(list.Enabled, Is.True);
+				Assert.That(list.DiscoveryMode, Is.EqualTo(IosMultiplayerSmokeDiscoveryMode.OnlineList));
+				Assert.That(list.OnlineServerId, Is.EqualTo("phase3-public"));
+				Assert.That(list.CreatesPlayerHostedServer, Is.False);
+				Assert.That(code.Enabled, Is.True);
+				Assert.That(code.DiscoveryMode, Is.EqualTo(IosMultiplayerSmokeDiscoveryMode.OnlineCode));
+				Assert.That(code.OnlineRoomCode, Is.EqualTo("A7K9Q2"));
+			});
+		}
+
+		[Test]
+		public void MultiplayerSmokeRejectsIncompleteOnlineDiscoveryConfiguration()
+		{
+			IosMultiplayerSmokeConfiguration Parse(string mode, string lobby = null) =>
+				IosMultiplayerSmokeConfiguration.Parse(name => name switch
+				{
+					"OPENRA_IOS_MULTIPLAYER_SMOKE_ROLE" => "client",
+					"OPENRA_IOS_MULTIPLAYER_SMOKE_DISCOVERY_MODE" => mode,
+					"OPENRA_IOS_MULTIPLAYER_SMOKE_ONLINE_LOBBY_URL" => lobby,
+					"OPENRA_IOS_MULTIPLAYER_SMOKE_LAUNCH_NONCE" => new string('1', 32),
+					"OPENRA_IOS_MULTIPLAYER_SMOKE_PARTICIPANT_NONCE" => new string('2', 32),
+					"OPENRA_IOS_MULTIPLAYER_SMOKE_EXPECTED_REMOTE_NONCE" => new string('3', 32),
+					_ => null
+				});
+
+			Assert.Multiple(() =>
+			{
+				Assert.That(Parse("online-list", "https://lobby.nukehour.com/").Enabled, Is.False);
+				Assert.That(Parse("online-code", "https://lobby.nukehour.com/").Enabled, Is.False);
+				Assert.That(Parse("online-list", "http://public.example/").Enabled, Is.False);
+			});
+		}
+
+		[Test]
+		public void MultiplayerSmokeDerivesRuntimeIdentityWhenNoExpectedHashIsSupplied()
 		{
 			var config = IosMultiplayerSmokeConfiguration.Parse(name => name switch
 			{
@@ -185,8 +254,117 @@ namespace OpenRA.Test
 				_ => null
 			});
 
-			Assert.That(config.Enabled, Is.False);
-			StringAssert.Contains("runtime", config.ValidationError.ToLowerInvariant());
+			Assert.That(config.Enabled, Is.True,
+				"Cross-platform smoke identity must come from the active RuntimeContract.");
+			Assert.That(config.ExpectedRuntimeHash, Is.Empty);
+		}
+
+		[Test]
+		public void HostRoleCanLeadASeparateDedicatedServerWithoutCreatingALocalHost()
+		{
+			var values = new Dictionary<string, string>
+			{
+				["OPENRA_IOS_MULTIPLAYER_SMOKE_ROLE"] = "host",
+				["OPENRA_IOS_MULTIPLAYER_SMOKE_ENDPOINT"] = "127.0.0.1:12340",
+				["OPENRA_IOS_MULTIPLAYER_SMOKE_DISCOVERY_MODE"] = "direct",
+				["OPENRA_IOS_MULTIPLAYER_SMOKE_LAUNCH_NONCE"] = new string('1', 32),
+				["OPENRA_IOS_MULTIPLAYER_SMOKE_PARTICIPANT_NONCE"] = new string('2', 32),
+				["OPENRA_IOS_MULTIPLAYER_SMOKE_EXPECTED_REMOTE_NONCE"] = new string('3', 32)
+			};
+			var config = IosMultiplayerSmokeConfiguration.Parse(
+				name => values.TryGetValue(name, out var value) ? value : null);
+
+			Assert.Multiple(() =>
+			{
+				Assert.That(config.Enabled, Is.True);
+				Assert.That(config.CreatesPlayerHostedServer, Is.False);
+				Assert.That(config.TryGetTarget(out _), Is.True);
+			});
+		}
+
+		[Test]
+		public void MultiplayerSmokeUsesRuntimeContractAndRecordsCanonicalHandshakeEvidence()
+		{
+			var source = File.ReadAllText(Path.Combine(RepositoryRoot(), "engine",
+				"OpenRA.Game", "Support", "IosMultiplayerSmoke.cs"));
+
+			StringAssert.Contains("Game.ModData.RuntimeContract.Digest", source);
+			StringAssert.Contains("Game.ModData.RuntimeProfile.Serialize()", source);
+			StringAssert.Contains("Game.ModData.RuntimeContract.Serialize()", source);
+			StringAssert.Contains("runtimeProfile", source);
+			StringAssert.Contains("runtimeContract", source);
+			StringAssert.Contains("resourceCapability", source);
+		}
+
+		[Test]
+		public void MultiplayerSmokeGameplayClosureRequiresEveryRequestedAction()
+		{
+			var source = File.ReadAllText(Path.Combine(RepositoryRoot(), "engine",
+				"OpenRA.Game", "Support", "IosMultiplayerSmoke.cs"));
+
+			StringAssert.Contains("OPENRA_IOS_MULTIPLAYER_SMOKE_REQUIRE_GAMEPLAY", source);
+			StringAssert.Contains("world.Selection.Combine", source);
+			StringAssert.Contains("new Order(\"Move\"", source);
+			StringAssert.Contains("new Order(\"DevGiveCash\"", source);
+			StringAssert.Contains("Order.StartProduction", source);
+			StringAssert.Contains("new Order(\"PlaceBuilding\"", source);
+			StringAssert.Contains("new Order(\"DevVisibility\"", source);
+			StringAssert.Contains("actor.CanBeViewedByPlayer(player)", source);
+			StringAssert.Contains("actor.IsTargetableBy(combatActor)", source);
+			StringAssert.Contains("new Order(\"Attack\"", source);
+			StringAssert.Contains("new Order(\"ForceAttack\"", source,
+				"The physical smoke must use a deterministic terrain attack fallback when distant spawn points leave no visible actor target.");
+			StringAssert.Contains("attackOrderIssued && !attackObserved && !terrainAttackFallback", source,
+				"A normal actor attack that is rejected by stance or target conditions must fall back instead of hanging the physical smoke.");
+			StringAssert.DoesNotContain("world.WorldTick > attackIssuedAtTick + 5", source,
+				"Short attack activities must be observed from the first synchronized tick.");
+			foreach (var field in new[]
+			{
+				"selectObserved", "movementObserved", "resourceUpdateObserved",
+				"productionObserved", "completedProductionObserved", "attackObserved"
+			})
+				StringAssert.Contains(field, source);
+		}
+
+		[Test]
+		public void Phase12RunnerExercisesBothDirectPhysicalDirections()
+		{
+			var runner = Path.Combine(RepositoryRoot(), "ios", "scripts",
+				"run-macos-ios-multiplayer-smoke.sh");
+			Assert.That(File.Exists(runner), Is.True);
+			var source = File.ReadAllText(runner);
+
+			StringAssert.Contains("ios-host-macos-client", source);
+			StringAssert.Contains("macos-host-ios-client", source);
+			StringAssert.Contains("OPENRA_IOS_MULTIPLAYER_SMOKE_DISCOVERY_MODE=\"$discovery\"", source);
+			StringAssert.Contains("launch_mac client \"$ios_lan_ip:$port\" direct", source);
+			StringAssert.Contains("launch_ios client \"$mac_lan_ip:$port\" direct", source);
+			StringAssert.Contains("OPENRA_IOS_MULTIPLAYER_SMOKE_REQUIRE_GAMEPLAY=true", source);
+			StringAssert.Contains("port=\"${OPENRA_IOS_MULTIPLAYER_SMOKE_PORT:-1234}\"", source);
+			StringAssert.Contains("OPENRA_DEDICATED_SMOKE_ENDPOINT", source);
+			StringAssert.Contains("[ \"$port\" != 1234 ]", source,
+				"Player-hosted Local Multiplayer must keep TCP 1234 while dedicated endpoints may be dynamic.");
+			StringAssert.Contains("connection_port=\"${dedicated_endpoint##*:}\"", source,
+				"Dedicated smoke validation must use the endpoint's dynamic port.");
+			StringAssert.Contains("python3 - \"$1\" \"$2\" \"$connection_port\"", source);
+			StringAssert.Contains("assert_journal", source);
+		}
+
+		[Test]
+		public void Phase3RunnerExercisesOnlineListAndRoomCodeWithoutDirectIp()
+		{
+			var source = File.ReadAllText(Path.Combine(RepositoryRoot(), "ios", "scripts",
+				"run-macos-ios-multiplayer-smoke.sh"));
+
+			StringAssert.Contains("OPENRA_PHASE3_LOBBY_URL", source);
+			StringAssert.Contains("OPENRA_PHASE3_SERVER_ID", source);
+			StringAssert.Contains("OPENRA_IOS_MULTIPLAYER_SMOKE_ONLINE_LOBBY_URL", source);
+			StringAssert.Contains("OPENRA_IOS_MULTIPLAYER_SMOKE_ONLINE_SERVER_ID", source);
+			StringAssert.Contains("OPENRA_IOS_MULTIPLAYER_SMOKE_ONLINE_ROOM_CODE", source);
+			StringAssert.Contains("online-list", source);
+			StringAssert.Contains("online-code", source);
+			StringAssert.Contains("online-room-list-matched", source);
+			StringAssert.Contains("online-room-code-matched", source);
 		}
 
 		[Test]
@@ -437,6 +615,40 @@ namespace OpenRA.Test
 			StringAssert.Contains("remoteIdentityVerified, remoteAcknowledgedLocalIdentity,", source);
 			StringAssert.Contains(
 				"remoteIdentityVerified && remoteIdentityCurrentlyValid && humans.Length == 2", source);
+		}
+
+		[Test]
+		public void Phase12RunnerSelectsTheIosAddressOnTheMacLan()
+		{
+			var source = File.ReadAllText(Path.Combine(RepositoryRoot(), "ios", "scripts",
+				"run-macos-ios-multiplayer-smoke.sh"));
+
+			StringAssert.Contains("private_ios_address \"$host_journal\" \"$mac_lan_ip\"", source);
+			StringAssert.Contains("max(candidates, key=lambda address: common_prefix(address, mac))", source,
+				"A device may expose VPN, cellular, and Wi-Fi addresses; Direct IP must choose the LAN peer.");
+		}
+
+		[Test]
+		public void DirectIpDoesNotRequireAnUndiscoveredAdvertisementSession()
+		{
+			var source = File.ReadAllText(Path.Combine(RepositoryRoot(), "engine",
+				"OpenRA.Game", "Support", "IosMultiplayerSmoke.cs"));
+
+			StringAssert.Contains(
+				"config.DiscoveryMode == IosMultiplayerSmokeDiscoveryMode.Auto &&\n\t\t\t\t\t!string.Equals(identity.SessionGuid, observedRemoteSessionGuid",
+				source,
+				"Direct IP has no advertisement session to compare; the authenticated host identity is sufficient.");
+		}
+
+		[TestCase(false, 0x555)]
+		[TestCase(true, 0xAAA)]
+		public void DesktopAndIosUseTheSameBooleanSyncHash(bool value, int expected)
+		{
+			var hash = typeof(Sync).GetMethod("Hash",
+				System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
+			Assert.That(hash, Is.Not.Null);
+			Assert.That(hash!.Invoke(null, new object[] { new BooleanSyncFixture { Value = value } }),
+				Is.EqualTo(expected));
 		}
 
 		[Test]

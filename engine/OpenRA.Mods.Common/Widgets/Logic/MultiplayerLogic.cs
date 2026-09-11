@@ -35,6 +35,8 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 			this.onExit = onExit;
 
 			var directConnectButton = widget.Get<ButtonWidget>("DIRECTCONNECT_BUTTON");
+			directConnectButton.IsVisible = () =>
+				MultiplayerServerModePolicy.ShowsDirectIp(serverListLogic.Mode);
 			directConnectButton.OnClick = () =>
 			{
 				Ui.OpenWindow("DIRECTCONNECT_PANEL", new WidgetArgs
@@ -46,6 +48,8 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 			};
 
 			var createServerButton = widget.Get<ButtonWidget>("CREATE_BUTTON");
+			createServerButton.IsVisible = () =>
+				MultiplayerServerModePolicy.ShowsLocalHosting(serverListLogic.Mode);
 			createServerButton.OnClick = () =>
 			{
 				Ui.OpenWindow("MULTIPLAYER_CREATESERVER_PANEL", new WidgetArgs

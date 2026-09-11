@@ -364,6 +364,9 @@ button-selected-server-join = 加入
 dropdownbutton-multiplayer-panel-filters = 筛选游戏
 button-multiplayer-panel-directconnect = IP 直连
 button-multiplayer-panel-create = 创建
+button-multiplayer-panel-local = 局域网联机
+button-multiplayer-panel-online = 在线联机
+button-multiplayer-panel-room-code = 通过房间码加入
 
 ## multiplayer-browserpanels.yaml
 checkbox-multiplayer-filter-panel-waiting-for-players = 等待中
@@ -552,10 +555,6 @@ label-game-admin = 游戏管理员
 ## gamesave-loading.yaml
 label-gamesave-loading-screen-title = 正在载入存档
 label-gamesave-loading-screen-desc = 按 Esc 取消载入并返回主菜单
-notification-runtime-persistence-mismatch = 所选{ $kind }属于不同的内容配置或版本，无法载入。
-notification-runtime-persistence-legacy-hidden = 旧版{ $kind }缺少经验证的内容标识，已隐藏。
-notification-runtime-persistence-kind-saved-game = 存档
-notification-runtime-persistence-kind-replay = 回放
 button-ios-lobby-start-validating = 地图校验中…
 button-ios-lobby-start-map-unavailable = 地图不可用
 button-ios-lobby-start-client-failed = { $player } 下载失败

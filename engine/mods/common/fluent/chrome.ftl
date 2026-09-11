@@ -364,6 +364,9 @@ button-selected-server-join = Join
 dropdownbutton-multiplayer-panel-filters = Filter Games
 button-multiplayer-panel-directconnect = Direct IP
 button-multiplayer-panel-create = Create
+button-multiplayer-panel-local = Local
+button-multiplayer-panel-online = Online
+button-multiplayer-panel-room-code = Join Room Code
 
 ## multiplayer-browserpanels.yaml
 checkbox-multiplayer-filter-panel-waiting-for-players = Waiting
@@ -552,10 +555,6 @@ label-game-admin = Game Admin
 ## gamesave-loading.yaml
 label-gamesave-loading-screen-title = Loading Saved Game
 label-gamesave-loading-screen-desc = Press Escape to cancel loading and return to the main menu
-notification-runtime-persistence-mismatch = The selected { $kind } belongs to a different content profile or build and cannot be loaded.
-notification-runtime-persistence-legacy-hidden = The legacy { $kind } has no verified content identity and is hidden.
-notification-runtime-persistence-kind-saved-game = saved game
-notification-runtime-persistence-kind-replay = replay
 button-ios-lobby-start-validating = Validating map…
 button-ios-lobby-start-map-unavailable = Map unavailable
 button-ios-lobby-start-client-failed = { $player } failed

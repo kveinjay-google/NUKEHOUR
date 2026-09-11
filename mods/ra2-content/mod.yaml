@@ -1,6 +1,7 @@
 Metadata:
 	Title: mod-title
-	Version: {DEV_VERSION}
+	Version: nukehour-storage-v1
+	WindowTitle: mod-windowtitle
 	Hidden: true
 
 FileSystem: DefaultFileSystem
@@ -8,6 +9,7 @@ FileSystem: DefaultFileSystem
 		^EngineDir
 		^EngineDir|mods/common-content: content
 		^EngineDir|mods/common: common
+		$ra2: ra2
 		$ra2-content: ra2content
 
 Rules:
@@ -44,35 +46,35 @@ FluentMessages:
 
 Fonts:
 	Regular:
-		Font: common|FreeSans.ttf
+		Font: ra2|fonts/NotoSansCJKsc-Regular.otf
 		Size: 14
 		Ascender: 11
 	Bold:
-		Font: common|FreeSansBold.ttf
+		Font: ra2|fonts/NotoSansCJKsc-Bold.otf
 		Size: 14
 		Ascender: 11
 	Title:
-		Font: common|FreeSansBold.ttf
+		Font: ra2|fonts/NotoSansCJKsc-Bold.otf
 		Size: 32
 		Ascender: 24
 	BigBold:
-		Font: common|FreeSansBold.ttf
+		Font: ra2|fonts/NotoSansCJKsc-Bold.otf
 		Size: 24
 		Ascender: 18
 	MediumBold:
-		Font: common|FreeSansBold.ttf
+		Font: ra2|fonts/NotoSansCJKsc-Bold.otf
 		Size: 18
 		Ascender: 14
 	Small:
-		Font: common|FreeSans.ttf
+		Font: ra2|fonts/NotoSansCJKsc-Regular.otf
 		Size: 12
 		Ascender: 9
 	Tiny:
-		Font: common|FreeSans.ttf
+		Font: ra2|fonts/NotoSansCJKsc-Regular.otf
 		Size: 10
 		Ascender: 8
 	TinyBold:
-		Font: common|FreeSansBold.ttf
+		Font: ra2|fonts/NotoSansCJKsc-Bold.otf
 		Size: 10
 		Ascender: 8
 
@@ -83,24 +85,25 @@ ModContent:
 			Title: modcontent-package-basefiles
 			Identifier: base
 			TestFiles: ^SupportDir|Content/ra2/ra2.mix, ^SupportDir|Content/ra2/language.mix
-			Sources: ra2-disk, origin, tfd
+			Sources: macos-directory, ra2-disk, origin, tfd
 			Required: true
 		ContentPackage@music:
 			Title: modcontent-package-music
 			Identifier: music
 			TestFiles: ^SupportDir|Content/ra2/theme.mix
-			Sources: ra2-disk, origin, tfd
+			Sources: macos-directory, ra2-disk, origin, tfd
 		ContentPackage@yuri:
 			Title: modcontent-package-yurifiles
 			Identifier: yuri
 			TestFiles: ^SupportDir|Content/ra2/ra2md.mix, ^SupportDir|Content/ra2/langmd.mix
-			Sources: origin, tfd
+			Sources: macos-directory, origin, tfd
 		ContentPackage@yuri-music:
 			Title: modcontent-package-yurimusic
 			Identifier: yuri-music
 			TestFiles: ^SupportDir|Content/ra2/thememd.mix
-			Sources: origin, tfd
+			Sources: macos-directory, origin, tfd
 	Sources:
+		ra2content|installer/macos-directory.yaml
 		ra2content|installer/ra2-disk.yaml
 		ra2content|installer/origin.yaml
 		ra2content|installer/firstdecade.yaml

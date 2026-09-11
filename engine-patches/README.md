@@ -32,9 +32,24 @@ Patches apply in filename order with `patch -p1` from the engine root.
 | `0017-ios-safe-start-rejection-correlation.patch` | 12 engine networking, server, lobby, and regression-test paths | Advances to Orders23 with correlated safe-start requests and rejections, prevents a stale response from clearing a newer pending request, and shows the authoritative blocker or progress immediately. It changes no Fluent/YAML, desktop behavior, or safe-start safety semantics. |
 | `0018-nuke-hour-brand-language.patch` | 10 engine language, menu/settings, and regression-test paths | Adds the persistent `System` / `zh-CN` / `en` language policy, quick main-menu selector, simplified game-settings title, and NUKE HOUR branding assertions. Root mod, iOS, launcher, artwork, and packaging changes remain outside this engine patch. |
 | `0019-ios-support-powers-beside-production.patch` | `OpenRA.Mods.Common/Widgets/Logic/Ingame/IosSupportPowerLayoutPolicy.cs`, `OpenRA.Mods.Common/Widgets/Logic/Ingame/SupportPowerBinLogic.cs`, `OpenRA.Test/IosSupportPowerLayoutPolicyTest.cs` | Places compact iPhone support powers immediately beside the full visible production sidebar, fills columns bottom-to-top and leftward, and adds layout and visible-widget-tree regression coverage. |
-| `0020-ios-retail-archive-envelopes.patch` | 24 engine validator, package, catalog, and regression-test paths | Adds finite ZIP, PNG, MIX, IDX/BAG, and XCC envelope validation; ref-counted retained entry sources; and the Task 2 RA2/Yuri retail archive graph and source-discovery contracts. |
-| `0021-ios-retail-runtime-profiles.patch` | 18 engine startup, lifecycle, manifest/profile, argument, and regression-test paths | Adds trusted manifest selection, isolated pre-game construction, exact runtime-profile identity, owned startup/provider lifetimes, signal-driven preview and lifecycle drainage, and total cleanup for RA2 retail runtime profiles. |
-| `0022-ios-retail-runtime-contract.patch` | 22 engine runtime-contract, persistence, server/browser, localization, and regression-test paths | Authenticates the RA2 runtime resource contract, isolates saves/replays/server/skirmish state by profile digest, and enforces compatible identities at every actual load entry. |
+| `0020-macos-nuke-hour-runtime-branding.patch` | `OpenRA.Game/Game.cs`, `OpenRA.Game/Settings.cs`, `OpenRA.Mods.Common/Widgets/Logic/MainMenuLogic.cs`, `OpenRA.Test/IosMenuLayoutPolicyTest.cs`, `OpenRA.Test/NukeHourBrandingTest.cs` | Aligns the default player identity and local skirmish title with NUKE HOUR, adds the macOS-only About flow, and covers desktop/iOS menu isolation with regression tests. |
+| `0021-independent-product-and-compatibility-versions.patch` | Engine manifest, networking, diagnostics, version-label logic, and regression tests | Separates the user-visible product release from stable storage and deterministic multiplayer compatibility while preserving the existing handshake wire field. |
+| `0022-macos-content-source-delivery.patch` | 9 installer/content-source engine and regression-test paths | Captures the already-committed bounded macOS retail-content discovery overlay so a fresh engine checkout reproduces the shipping content importer exactly. |
+| `0023-nukehour-multiplayer-protocol.patch` | 11 shared handshake, compatibility, lobby, localization, and regression-test paths | Adds the symmetric NUKE HOUR handshake schema, canonical runtime profile/contract, stable rejection reasons, and real TCP-framing interoperability tests. |
+| `0024-runtime-contract-resource-compatibility.patch` | 3 RuntimeContract and regression-test paths | Replaces whole-retail-archive identity with required presentation-capability validation, advances the capability id, and adds RC1-RC9 false-rejection and safety coverage. |
+| `0025-phase12-cross-platform-physical-smoke.patch` | `OpenRA.Game/Support/IosMultiplayerSmoke.cs`, `OpenRA.Game/Sync.cs`, `OpenRA.Test/IosMultiplayerPolicyTest.cs` | Makes the opt-in physical smoke use the active cross-platform RuntimeContract, requires observable gameplay and sustained-sync evidence, and unifies desktop/iOS boolean sync hashing after physical-device desync diagnosis. |
+| `0026-nukehour-dedicated-server-foundation.patch` | 10 engine runtime, server, physical-smoke, and regression-test paths | Adds explicit dedicated-server identity, a presentation-only headless RuntimeContract path, numeric listen-address/dynamic-port settings, bounded capacity and idle handling, one-process/one-room lifecycle, atomic health status, and signal-safe clean exit without changing the shared Phase 1 protocol. |
+| `0027-post-phase2-engine-sync.patch` | 4 iOS sidebar/startup-notice engine and regression-test paths | Captures the already-committed full-height iOS production-sidebar correction and startup distribution-notice test so a fresh checkout matches the current product baseline before Phase 3. |
+| `0028-online-lobby-room-directory.patch` | 21 shared directory, dedicated-server registration, multiplayer-browser, physical-smoke, responsive layout, localization, and regression-test paths | Adds authenticated official-room registration, short-lived metadata discovery, Local/Online client modes, room-list and room-code lookup, HTTPS-only directory access, preflight compatibility checks, hidden Online endpoints, and direct gameplay handoff without changing the shared game protocol. |
+| `0029-ios-ingame-sidebar-quickbar.patch` | 5 iOS production-sidebar layout/runtime and command-bar regression-test paths | Sizes the final production-sidebar fill row to the exact remaining height so it cannot overlap the bottom cap, and records the larger, label-aware, frameless touch-command icon layout used by the outer RA2 widget implementation. |
+| `0031-macos-content-manager-return.patch` | `OpenRA.Game/Game.cs`, content availability/manager logic, and `OpenRA.Test/Ra2ContentInstallerManifestTest.cs` | Gives launcher-owned clean-build content management an explicit cancel contract: Back exits the game child and restores the still-running macOS launcher, while successful content validation clears the one-shot policy so later in-game content management still returns to the game menu. |
+| `0032-ios-sidebar-scroll-button-slot.patch` | iOS production-sidebar layout/runtime and `IosProductionBatchToggleTest.cs` | Anchors both production scroll buttons to the authored slot at the top of the full-height sidebar bottom cap, applying the nested production-type offset exactly once so the artwork and hit targets cannot fall below the cap. |
+| `0033-ios-hide-main-menu-quit.patch` | `MainMenuLogic.cs`, `IosMainMenuQuitPolicyTest.cs`, and `NukeHourBrandingTest.cs` | Removes the desktop-only quit action from iPhone/iPad and keeps the five remaining iOS main-menu controls in the adaptive touch layout without changing desktop behavior. |
+| `0034-ios-commandbar-sidebar-menu-layout.patch` | iOS command-slot, production-sidebar, main-menu layout/runtime, and regression-test paths | Gives every touch command a common slot geometry and icon source, reapplies complete production scroll-button bounds after runtime relayout, and expands the five-button iOS main menu across the original six-row footprint. |
+| `0035-ios-faction-touch-control-skins.patch` | `TouchFactionSkin.cs`, `IosViewportActionsLogic.cs`, and `IosViewportActionLayoutTest.cs` | Adds faction-routed command-glyph collections, hides redundant captions under the self-explanatory floating action icons, and locks the complete 33-glyph V3 touch-art contract into the engine replay series. |
+| `0036-ios-compact-main-menu.patch` | `MainMenuLogic.cs` and three main-menu regression-test files | Removes the redundant iOS content-manager entry, shortens the system-language label, and evenly redistributes the four remaining touch targets across the established main-menu frame. |
+| `0037-ios-restore-skirmish-and-settings.patch` | iOS lobby/color-picker/settings source, common chrome, and regression tests | Permanently restores the skirmish-only five-column layout, removes handicap/ready, limits skirmish and preferred colours to the nine classic swatches, and keeps the four retired Advanced modules out of rebuilt engines. |
+| `0038-ios-main-menu-single-tap-language.patch` | `MainMenuLogic.cs` and `IosMenuLayoutPolicyTest.cs` | Replaces the start-menu language dropdown with a one-tap System/Chinese/English cycle and reserves balanced 20-point vertical breathing room while retaining safe touch targets. |
 
 ## Regenerating after editing engine sources
 
@@ -47,7 +62,7 @@ export LC_ALL=C LANG=C
 REPO=$(git rev-parse --show-toplevel)
 ARCHIVE=/path/to/openra-release-20250330.zip
 EXPECTED_ZIP_SHA256=ef593816d1a15443c82e865dfd1efa48e9c82e249245b208ce80e6a2900d9d0a
-TARGET=0022-ios-retail-runtime-contract.patch
+TARGET=0024-runtime-contract-resource-compatibility.patch
 BASE_DIR=$(mktemp -d /private/tmp/openra-engine-base.XXXXXX)
 STAGE=$(mktemp -d /private/tmp/openra-engine-patch-stage.XXXXXX)
 ALLOWLIST="$STAGE/allowlist.txt"
@@ -57,8 +72,8 @@ CANDIDATE="$STAGE/$TARGET"
 ditto -x -k "$ARCHIVE" "$BASE_DIR"
 BASE="$BASE_DIR/OpenRA-release-20250330"
 
-# Replay the exact numeric predecessor range 0001 through 0021. Do not glob
-# every patch after 0022 exists, and require exactly one patch per prefix.
+# Replay the exact numeric predecessor range 0001 through 0023. Do not glob
+# every patch after 0024 exists, and require exactly one patch per prefix.
 # 0007 has two pinned historical diagnostics against the post-0006 baseline;
 # every other predecessor must apply without offset or fuzz.
 KNOWN_0007_DIAGNOSTICS='Hunk #1 succeeded at 254 with fuzz 2 (offset -1 lines).
@@ -66,7 +81,8 @@ Hunk #5 succeeded at 352 (offset -1 lines).'
 mkdir -p "$STAGE/predecessor-logs"
 : > "$STAGE/predecessors-combined.log"
 for prefix in 0001 0002 0003 0004 0005 0006 0007 0008 0009 \
-	0010 0011 0012 0013 0014 0015 0016 0017 0018 0019 0020 0021; do
+	0010 0011 0012 0013 0014 0015 0016 0017 0018 0019 \
+	0020 0021 0022 0023; do
 	set -- "$REPO"/engine-patches/"$prefix"-*.patch
 	[ "$#" -eq 1 ] && [ -f "$1" ] || exit 1
 	p=$1
@@ -96,28 +112,9 @@ if find "$BASE" -type f \( -name '*.rej' -o -name '*.orig' \) | grep -q .; then
 fi
 
 FILES='
-OpenRA.Game/Game.cs
-OpenRA.Game/GameInformation.cs
-OpenRA.Game/Manifest.cs
-OpenRA.Game/Network/GameSave.cs
-OpenRA.Game/Network/GameServer.cs
-OpenRA.Game/Network/Handshake.cs
-OpenRA.Game/Network/ReplayRecorder.cs
-OpenRA.Game/Network/Session.cs
-OpenRA.Game/Network/UnitOrders.cs
-OpenRA.Game/RuntimeContractStorage.cs
-OpenRA.Game/Server/Server.cs
-OpenRA.Game/Settings.cs
-OpenRA.Mods.Common/ServerTraits/SkirmishLogic.cs
-OpenRA.Mods.Common/Widgets/Logic/GameSaveBrowserLogic.cs
-OpenRA.Mods.Common/Widgets/Logic/MainMenuLogic.cs
-OpenRA.Mods.Common/Widgets/Logic/ReplayBrowserLogic.cs
-OpenRA.Mods.Common/Widgets/Logic/ServerListLogic.cs
-OpenRA.Test/RuntimeContractBuilderTest.cs
-OpenRA.Test/RuntimeContractHandshakeTest.cs
-OpenRA.Test/RuntimeContractPersistenceTest.cs
-mods/common/fluent/chrome.ftl
-mods/common/fluent/zh-CN/chrome.ftl
+OpenRA.Game/Network/NukeHourNetworkCompatibility.cs
+OpenRA.Test/NukeHourDirectTcpHandshakeTest.cs
+OpenRA.Test/NukeHourNetworkProtocolTest.cs
 '
 printf '%s\n' $FILES > "$ALLOWLIST"
 
@@ -132,15 +129,15 @@ diff_rc=0
 (cd "$STAGE" && diff -ruN a b) > "$CANDIDATE" || diff_rc=$?
 [ "$diff_rc" -eq 1 ] || exit 1
 
-# The verifier creates a second fresh extraction, replays exactly 0001-0021,
-# validates 22 unique paired headers, and publishes evidence atomically only
+# The verifier creates a second fresh extraction, replays exactly 0001-0023,
+# validates three unique paired headers, and publishes evidence atomically only
 # after all strict application, byte-identity, duplicate, and reverse gates pass.
-python3.11 "$REPO/packaging/verify_engine_patch_delivery.py" \
+python3 "$REPO/packaging/verify_engine_patch_delivery.py" \
 	--repository "$REPO" \
 	--official-zip "$ARCHIVE" \
 	--expected-zip-sha256 "$EXPECTED_ZIP_SHA256" \
 	--predecessor-start 1 \
-	--predecessor-end 21 \
+	--predecessor-end 23 \
 	--allowlist-file "$ALLOWLIST" \
 	--candidate "$CANDIDATE" \
 	--workspace "$REPO/engine" \
@@ -152,7 +149,7 @@ verbose output, and apply every predecessor with the verbose replay command
 shown above. Any nonzero exit, unexpected `offset`/`fuzz` diagnostic, or
 `.rej`/`.orig` file fails the gate. The only historical exception is the exact
 two-diagnostic `0007` result pinned above; new patches do not inherit it.
-For `0022`, verify exactly 22 unique, paired `diff -ruN a/... b/...` sections.
+For `0024`, verify exactly three unique, paired `diff -ruN a/... b/...` sections.
 The verifier consumes each section's headers and every unified hunk through its
 declared old/new line counts; it rejects preambles, indentation, alternate
 prefixes, binary/index/rename metadata, or any other trailing content.
@@ -167,7 +164,7 @@ portable verifier performs the equivalent strict gates:
 ```
 
 `-F 0` disables fuzz but does not disable offsets, so the captured strict log
-must independently contain no offset/fuzz diagnostics. All 22 allowlisted
+must independently contain no offset/fuzz diagnostics. All three allowlisted
 results must compare byte-for-byte with `engine/`, and every path in the union
 of `git ls-files -z -- engine` and the allowlist must be present and identical.
 A failed forward dry-run must leave the Python byte-sorted full-tree SHA-256

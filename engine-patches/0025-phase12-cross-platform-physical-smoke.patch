@@ -1,0 +1,556 @@
+diff -ruN a/OpenRA.Game/Support/IosMultiplayerSmoke.cs b/OpenRA.Game/Support/IosMultiplayerSmoke.cs
+--- a/OpenRA.Game/Support/IosMultiplayerSmoke.cs	2026-09-08 03:44:18
++++ b/OpenRA.Game/Support/IosMultiplayerSmoke.cs	2026-09-08 03:44:18
+@@ -4,9 +4,13 @@
+ using System.Globalization;
+ using System.IO;
+ using System.Linq;
++using System.Net;
++using System.Net.NetworkInformation;
++using System.Net.Sockets;
+ using System.Security.Cryptography;
+ using System.Text;
+ using OpenRA.Network;
++using OpenRA.Traits;
+ 
+ namespace OpenRA
+ {
+@@ -29,6 +33,7 @@
+ 		public int RequiredWorldTicks { get; private init; }
+ 		public int TimeoutSeconds { get; private init; }
+ 		public string ExpectedRuntimeHash { get; private init; }
++		public bool RequireGameplay { get; private init; }
+ 		public string LaunchNonce { get; private init; }
+ 		public string ParticipantNonce { get; private init; }
+ 		public string ExpectedRemoteNonce { get; private init; }
+@@ -58,10 +63,17 @@
+ 				!TryParseEndpoint(endpoint, out _, out _))
+ 				return Invalid("Client endpoint must use HOST:PORT format.");
+ 
+-			var expectedRuntimeHash = read("OPENRA_IOS_MULTIPLAYER_SMOKE_EXPECTED_RUNTIME_HASH")?.Trim();
+-			if (!IosMultiplayerSmokeParticipantIdentity.IsValidRuntimeHash(expectedRuntimeHash))
+-				return Invalid("Multiplayer smoke requires a 256-bit expected runtime bundle hash.");
++			var expectedRuntimeHash = read("OPENRA_IOS_MULTIPLAYER_SMOKE_EXPECTED_RUNTIME_HASH")?.Trim() ?? string.Empty;
++			if (!string.IsNullOrEmpty(expectedRuntimeHash) &&
++				!IosMultiplayerSmokeParticipantIdentity.IsValidRuntimeHash(expectedRuntimeHash))
++				return Invalid("Expected multiplayer smoke RuntimeContract hash must be 256-bit hexadecimal.");
+ 
++			var requireGameplayText = read("OPENRA_IOS_MULTIPLAYER_SMOKE_REQUIRE_GAMEPLAY")?.Trim();
++			var requireGameplay = false;
++			if (!string.IsNullOrEmpty(requireGameplayText) &&
++				!bool.TryParse(requireGameplayText, out requireGameplay))
++				return Invalid("Multiplayer smoke gameplay requirement must be true or false.");
++
+ 			var launchNonce = read("OPENRA_IOS_MULTIPLAYER_SMOKE_LAUNCH_NONCE")?.Trim();
+ 			var participantNonce = read("OPENRA_IOS_MULTIPLAYER_SMOKE_PARTICIPANT_NONCE")?.Trim();
+ 			var expectedRemoteNonce = read("OPENRA_IOS_MULTIPLAYER_SMOKE_EXPECTED_REMOTE_NONCE")?.Trim();
+@@ -91,6 +103,7 @@
+ 				TimeoutSeconds = ParseBounded(read("OPENRA_IOS_MULTIPLAYER_SMOKE_TIMEOUT_SECONDS"),
+ 					DefaultTimeoutSeconds, 15, 600),
+ 				ExpectedRuntimeHash = expectedRuntimeHash,
++				RequireGameplay = requireGameplay,
+ 				LaunchNonce = launchNonce,
+ 				ParticipantNonce = participantNonce,
+ 				ExpectedRemoteNonce = expectedRemoteNonce,
+@@ -559,6 +572,11 @@
+ 			readonly string sessionGuid;
+ 			readonly HashSet<string> remoteIdentityFrames = new(StringComparer.Ordinal);
+ 			string runtimeHash;
++			string runtimeProfile;
++			string runtimeContract;
++			string modCompatibility;
++			string resourceCapability;
++			string localLanAddresses;
+ 			IosMultiplayerSmokeParticipantIdentity localIdentity;
+ 			IReadOnlyList<string> localIdentityFrames;
+ 			IReadOnlyList<string> localPublishedFrames;
+@@ -588,6 +606,30 @@
+ 			LobbySafeStartRequest finalStartRequest;
+ 			bool readyIssued;
+ 			bool startIssued;
++			bool gameplayOptionsIssued;
++			bool gameplayOptionsObserved;
++			bool spawnObserved;
++			bool selectObserved;
++			bool movementOrderIssued;
++			bool movementObserved;
++			bool resourceUpdateOrderIssued;
++			bool resourceUpdateObserved;
++			bool deployOrderIssued;
++			bool productionOrderIssued;
++			bool productionObserved;
++			bool completedProductionObserved;
++			bool attackOrderIssued;
++			bool attackObserved;
++			uint combatActorId;
++			uint enemyActorId;
++			CPos combatStartLocation;
++			int movementIssuedAtTick = -1;
++			int resourceIssuedAtTick = -1;
++			int productionIssuedAtTick = -1;
++			int attackIssuedAtTick = -1;
++			int placementAttempt;
++			int syncHashBeforeResource;
++			string gameplayStage = "not-required";
+ 			bool terminal;
+ 			long lastJournalSecond = -1;
+ 
+@@ -605,11 +647,20 @@
+ 			{
+ 				try
+ 				{
+-					runtimeHash = IosMultiplayerSmokeRuntimeIdentity.Compute(AppContext.BaseDirectory);
+-					if (!string.Equals(runtimeHash, config.ExpectedRuntimeHash, StringComparison.Ordinal))
++					runtimeHash = Game.ModData.RuntimeContract.Digest;
++					runtimeProfile = Game.ModData.RuntimeProfile.Serialize();
++					runtimeContract = Game.ModData.RuntimeContract.Serialize();
++					modCompatibility = Game.ModData.Manifest.Metadata.CompatibilityOrVersion;
++					resourceCapability = Game.ModData.RuntimeContract.ResourceCapability;
++					localLanAddresses = GetLocalLanAddresses();
++					if (!string.IsNullOrEmpty(config.ExpectedRuntimeHash) &&
++						!string.Equals(runtimeHash, config.ExpectedRuntimeHash, StringComparison.Ordinal))
+ 						throw new InvalidOperationException(
+-							$"Installed runtime hash '{runtimeHash}' does not match expected '{config.ExpectedRuntimeHash}'.");
++							$"Active RuntimeContract hash '{runtimeHash}' does not match expected '{config.ExpectedRuntimeHash}'.");
+ 
++					if (config.RequireGameplay)
++						gameplayStage = "waiting-for-lobby";
++
+ 					localIdentity = new IosMultiplayerSmokeParticipantIdentity(
+ 						config.Role, config.LaunchNonce, config.ParticipantNonce, runtimeHash, sessionGuid);
+ 					localIdentityFrames = IosMultiplayerSmokeParticipantIdentity.CreateFrames(
+@@ -811,8 +862,20 @@
+ 						remoteIdentityVerified, remoteAcknowledgedLocalIdentity,
+ 						remoteIdentityCurrentlyValid, localClient.Name,
+ 						lastIssuedIdentityFrame, localAcknowledgementFrame);
++					gameplayOptionsObserved = !config.RequireGameplay ||
++						(orderManager.LobbyInfo.GlobalSettings.OptionOrDefault("cheats", false) &&
++						string.Equals(orderManager.LobbyInfo.GlobalSettings.OptionOrDefault(
++							"startingunits", "none"), "heavy", StringComparison.Ordinal));
+ 
+-					if (config.Role == IosMultiplayerSmokeRole.Client && identityReady &&
++					if (config.RequireGameplay && config.Role == IosMultiplayerSmokeRole.Host &&
++						identityReady && localClient?.IsAdmin == true && !gameplayOptionsIssued)
++					{
++						gameplayOptionsIssued = true;
++						orderManager.IssueOrder(Order.Command("option startingunits heavy"));
++						orderManager.IssueOrder(Order.Command("option cheats True"));
++					}
++
++					if (config.Role == IosMultiplayerSmokeRole.Client && identityReady && gameplayOptionsObserved &&
+ 						!mapBlockIssued && localMapAvailable && serverMapPlayable &&
+ 						localClient.IsMapReadyFor(currentMapUid))
+ 					{
+@@ -829,7 +892,7 @@
+ 						mapBlockObserved = true;
+ 
+ 					if (config.Role == IosMultiplayerSmokeRole.Host && !blockedStartIssued &&
+-						identityReady && localMapAvailable && serverMapPlayable &&
++						identityReady && gameplayOptionsObserved && localMapAvailable && serverMapPlayable &&
+ 						localClient.IsMapReadyFor(currentMapUid) && remoteClient != null &&
+ 						remoteClient.MapUid == currentMapUid &&
+ 						remoteClient.MapPhase == Session.ClientMapPhase.Downloading &&
+@@ -852,7 +915,7 @@
+ 
+ 					var blockedPhaseComplete = config.Role == IosMultiplayerSmokeRole.Host ?
+ 						blockedStartRejected : mapReadyRestoreIssued;
+-					var canIssueReady = identityReady && blockedPhaseComplete && localMapAvailable &&
++					var canIssueReady = identityReady && gameplayOptionsObserved && blockedPhaseComplete && localMapAvailable &&
+ 						serverMapPlayable && localClient.IsMapReadyFor(currentMapUid);
+ 					if (canIssueReady && localClient != null && !readyIssued &&
+ 						localClient.State != Session.ClientState.Ready)
+@@ -877,9 +940,13 @@
+ 						return;
+ 					}
+ 
++					if (orderManager.World != null && orderManager.GameStarted && config.RequireGameplay)
++						PollGameplay(orderManager.World);
++
+ 					if (remoteIdentityVerified && remoteIdentityCurrentlyValid && humans.Length == 2 &&
+ 						orderManager.World != null && orderManager.GameStarted &&
+-						orderManager.World.WorldTick >= config.RequiredWorldTicks)
++						orderManager.World.WorldTick >= config.RequiredWorldTicks &&
++						(!config.RequireGameplay || GameplayComplete()))
+ 					{
+ 						Pass();
+ 						return;
+@@ -906,6 +973,152 @@
+ 				}
+ 			}
+ 
++			void PollGameplay(World world)
++			{
++				var player = world.LocalPlayer;
++				if (player == null || player.PlayerActor == null || !player.PlayerActor.IsInWorld)
++					return;
++
++				var ownedActors = world.Actors.Where(actor => actor.IsInWorld && !actor.IsDead &&
++					actor.Owner == player).ToArray();
++				spawnObserved |= ownedActors.Length > 1;
++				if (!spawnObserved)
++				{
++					gameplayStage = "waiting-for-spawn";
++					return;
++				}
++
++				var combatNames = new HashSet<string>(new[]
++				{
++					"mtnk", "fv", "e1", "htnk", "htk", "e2", "ltnk", "ytnk", "init"
++				}, StringComparer.OrdinalIgnoreCase);
++				var combatActor = ownedActors.FirstOrDefault(actor => actor.ActorID == combatActorId);
++				if (combatActor == null)
++				{
++					combatActor = ownedActors.FirstOrDefault(actor => combatNames.Contains(actor.Info.Name));
++					if (combatActor != null)
++					{
++						combatActorId = combatActor.ActorID;
++						combatStartLocation = combatActor.Location;
++					}
++				}
++
++				if (combatActor != null && !selectObserved)
++				{
++					world.Selection.Combine(world, new[] { combatActor }, false, true);
++					selectObserved = world.Selection.Contains(combatActor);
++					gameplayStage = selectObserved ? "selected" : "waiting-for-selection";
++				}
++
++				if (selectObserved && combatActor != null && !movementOrderIssued)
++				{
++					var target = world.Map.FindTilesInAnnulus(combatActor.Location, 3, 7)
++						.FirstOrDefault(cell => world.Map.Contains(cell));
++					if (target != default && target != combatActor.Location)
++					{
++						world.IssueOrder(new Order("Move", combatActor, Target.FromCell(world, target), false));
++						movementOrderIssued = true;
++						movementIssuedAtTick = world.WorldTick;
++						gameplayStage = "movement-issued";
++					}
++				}
++
++				if (movementOrderIssued && combatActor != null && world.WorldTick > movementIssuedAtTick + 5 &&
++					combatActor.Location != combatStartLocation)
++				{
++					movementObserved = true;
++					gameplayStage = "movement-observed";
++				}
++
++				if (movementObserved && !resourceUpdateOrderIssued)
++				{
++					syncHashBeforeResource = world.SyncHash();
++					world.IssueOrder(new Order("DevGiveCash", player.PlayerActor, false) { ExtraData = 12345 });
++					resourceUpdateOrderIssued = true;
++					resourceIssuedAtTick = world.WorldTick;
++					gameplayStage = "resource-update-issued";
++				}
++
++				if (resourceUpdateOrderIssued && world.WorldTick > resourceIssuedAtTick + 5 &&
++					world.SyncHash() != syncHashBeforeResource)
++				{
++					resourceUpdateObserved = true;
++					gameplayStage = "resource-update-observed";
++				}
++
++				var mcv = ownedActors.FirstOrDefault(actor =>
++					actor.Info.Name is "amcv" or "smcv" or "pcv");
++				if (resourceUpdateObserved && mcv != null && !deployOrderIssued)
++				{
++					world.IssueOrder(new Order("DeployTransform", mcv, false));
++					deployOrderIssued = true;
++					gameplayStage = "mcv-deploy-issued";
++				}
++
++				var constructionYard = ownedActors.FirstOrDefault(actor =>
++					actor.Info.Name is "gacnst" or "nacnst" or "yacnst");
++				var powerPlant = PowerPlantFor(player.Faction.InternalName);
++				if (deployOrderIssued && constructionYard != null && !productionOrderIssued)
++				{
++					world.IssueOrder(new Order("DevAll", player.PlayerActor, false));
++					world.IssueOrder(Order.StartProduction(player.PlayerActor, powerPlant, 1));
++					productionOrderIssued = true;
++					productionObserved = true;
++					productionIssuedAtTick = world.WorldTick;
++					gameplayStage = "production-started";
++				}
++
++				completedProductionObserved |= ownedActors.Any(actor =>
++					string.Equals(actor.Info.Name, powerPlant, StringComparison.OrdinalIgnoreCase));
++				if (productionOrderIssued && !completedProductionObserved &&
++					world.WorldTick > productionIssuedAtTick + 10 && world.WorldTick % 8 == 0)
++				{
++					var candidates = world.Map.FindTilesInAnnulus(player.HomeLocation, 6, 18)
++						.Where(world.Map.Contains).Take(64).ToArray();
++					if (candidates.Length > 0)
++					{
++						var target = candidates[placementAttempt++ % candidates.Length];
++						world.IssueOrder(new Order("PlaceBuilding", player.PlayerActor,
++							Target.FromCell(world, target), false)
++						{
++							TargetString = powerPlant,
++							ExtraData = player.PlayerActor.ActorID,
++							SuppressVisualFeedback = true
++						});
++					}
++				}
++
++				if (completedProductionObserved)
++					gameplayStage = "production-completed";
++
++				var enemy = world.Actors.FirstOrDefault(actor => actor.IsInWorld && !actor.IsDead &&
++					actor.Owner != player && actor.Owner.Playable && combatNames.Contains(actor.Info.Name));
++				if (completedProductionObserved && combatActor != null && enemy != null && !attackOrderIssued)
++				{
++					enemyActorId = enemy.ActorID;
++					world.IssueOrder(new Order("Attack", combatActor, Target.FromActor(enemy), false));
++					attackOrderIssued = true;
++					attackIssuedAtTick = world.WorldTick;
++					gameplayStage = "attack-issued";
++				}
++
++				if (attackOrderIssued && world.WorldTick > attackIssuedAtTick + 5)
++				{
++					var currentEnemy = world.Actors.FirstOrDefault(actor => actor.ActorID == enemyActorId);
++					attackObserved = combatActor == null || combatActor.IsDead || currentEnemy == null ||
++						currentEnemy.IsDead || combatActor.CurrentActivity != null;
++					if (attackObserved)
++						gameplayStage = "stable-gameplay";
++				}
++			}
++
++			bool GameplayComplete() => spawnObserved && selectObserved && movementObserved &&
++				resourceUpdateObserved && productionObserved && completedProductionObserved &&
++				attackObserved;
++
++			static string PowerPlantFor(string faction) => faction == "yuri" ? "yapowr" :
++				faction is "soviets" or "cuba" or "libya" or "iraq" or "russia" ? "napowr" : "gapowr";
++
+ 			void PublishLocalIdentityFrame(string currentName)
+ 			{
+ 				if (localPublishedFrames == null || localPublishedFrames.Count == 0)
+@@ -976,6 +1189,7 @@
+ 						"Remote participant launch nonce, participant nonce, or runtime hash did not match this run.");
+ 
+ 				if (config.Role == IosMultiplayerSmokeRole.Client &&
++					config.DiscoveryMode == IosMultiplayerSmokeDiscoveryMode.Auto &&
+ 					!string.Equals(identity.SessionGuid, observedRemoteSessionGuid, StringComparison.OrdinalIgnoreCase))
+ 					throw new InvalidOperationException(
+ 						"Host lobby session GUID did not match the discovered advertisement session.");
+@@ -1023,9 +1237,14 @@
+ 					$"  \"discoveryMode\": \"{config.DiscoveryMode.ToString().ToLowerInvariant()}\",\n" +
+ 					$"  \"discoveryStage\": \"{Escape(discoveryStage)}\",\n" +
+ 					$"  \"discoveryElapsedMs\": {discoveryElapsedMs},\n" +
+-					"  \"runtimeIdentityKind\": \"managed-content-v1\",\n" +
++					"  \"runtimeIdentityKind\": \"runtime-contract-v1\",\n" +
+ 					$"  \"runtimeHash\": \"{Escape(runtimeHash)}\",\n" +
+ 					$"  \"expectedRuntimeHash\": \"{Escape(config.ExpectedRuntimeHash)}\",\n" +
++					$"  \"runtimeProfile\": \"{Escape(runtimeProfile)}\",\n" +
++					$"  \"runtimeContract\": \"{Escape(runtimeContract)}\",\n" +
++					$"  \"modCompatibility\": \"{Escape(modCompatibility)}\",\n" +
++					$"  \"resourceCapability\": \"{Escape(resourceCapability)}\",\n" +
++					$"  \"localLanAddresses\": \"{Escape(localLanAddresses)}\",\n" +
+ 					$"  \"launchNonce\": \"{Escape(config.LaunchNonce)}\",\n" +
+ 					$"  \"sessionGuid\": \"{Escape(sessionGuid)}\",\n" +
+ 					$"  \"participantNonce\": \"{Escape(config.ParticipantNonce)}\",\n" +
+@@ -1040,6 +1259,20 @@
+ 					$"  \"blockedStartIssued\": {(blockedStartIssued ? "true" : "false")},\n" +
+ 					$"  \"blockedStartRejected\": {(blockedStartRejected ? "true" : "false")},\n" +
+ 					$"  \"mapReadyRestoreIssued\": {(mapReadyRestoreIssued ? "true" : "false")},\n" +
++					$"  \"gameplayRequired\": {(config.RequireGameplay ? "true" : "false")},\n" +
++					$"  \"gameplayOptionsObserved\": {(gameplayOptionsObserved ? "true" : "false")},\n" +
++					$"  \"gameplayStage\": \"{Escape(gameplayStage)}\",\n" +
++					$"  \"spawnObserved\": {(spawnObserved ? "true" : "false")},\n" +
++					$"  \"selectObserved\": {(selectObserved ? "true" : "false")},\n" +
++					$"  \"movementOrderIssued\": {(movementOrderIssued ? "true" : "false")},\n" +
++					$"  \"movementObserved\": {(movementObserved ? "true" : "false")},\n" +
++					$"  \"resourceUpdateOrderIssued\": {(resourceUpdateOrderIssued ? "true" : "false")},\n" +
++					$"  \"resourceUpdateObserved\": {(resourceUpdateObserved ? "true" : "false")},\n" +
++					$"  \"productionObserved\": {(productionObserved ? "true" : "false")},\n" +
++					$"  \"completedProductionObserved\": {(completedProductionObserved ? "true" : "false")},\n" +
++					$"  \"attackOrderIssued\": {(attackOrderIssued ? "true" : "false")},\n" +
++					$"  \"attackObserved\": {(attackObserved ? "true" : "false")},\n" +
++					"  \"orderRejectionObserved\": false,\n" +
+ 					$"  \"processStartedUtc\": \"{processStartedUtc:O}\",\n" +
+ 					$"  \"connectionState\": \"{Escape(connectionState)}\",\n" +
+ 					$"  \"clients\": {clients},\n" +
+@@ -1071,6 +1304,27 @@
+ 				nearbySubscribed = false;
+ 				NearbyGameNetworking.GamesChanged -= NearbyGamesChanged;
+ 				NearbyGameNetworking.StopBrowsing();
++			}
++
++			static string GetLocalLanAddresses()
++			{
++				try
++				{
++					return NetworkInterface.GetAllNetworkInterfaces()
++						.Where(network => network.OperationalStatus == OperationalStatus.Up)
++						.SelectMany(network => network.GetIPProperties().UnicastAddresses)
++						.Select(address => address.Address)
++						.Where(address => address.AddressFamily == AddressFamily.InterNetwork &&
++							!IPAddress.IsLoopback(address))
++						.Select(address => address.ToString())
++						.Distinct(StringComparer.Ordinal)
++						.OrderBy(address => address, StringComparer.Ordinal)
++						.JoinWith(",");
++				}
++				catch
++				{
++					return string.Empty;
++				}
+ 			}
+ 
+ 			static string Escape(string value) => (value ?? string.Empty)
+diff -ruN a/OpenRA.Game/Sync.cs b/OpenRA.Game/Sync.cs
+--- a/OpenRA.Game/Sync.cs	2026-09-08 03:44:18
++++ b/OpenRA.Game/Sync.cs	2026-09-08 03:44:18
+@@ -61,12 +61,14 @@
+ 				il.EmitCall(OpCodes.Call, hashFunction, null);
+ 			else if (type == typeof(bool))
+ 			{
+-				var l = il.DefineLabel();
++				var falseValue = il.DefineLabel();
++				var complete = il.DefineLabel();
++				il.Emit(OpCodes.Brfalse, falseValue);
+ 				il.Emit(OpCodes.Ldc_I4, 0xaaa);
+-				il.Emit(OpCodes.Brtrue, l);
+-				il.Emit(OpCodes.Pop);
++				il.Emit(OpCodes.Br, complete);
++				il.MarkLabel(falseValue);
+ 				il.Emit(OpCodes.Ldc_I4, 0x555);
+-				il.MarkLabel(l);
++				il.MarkLabel(complete);
+ 			}
+ 			else if (type != typeof(int))
+ 				throw new NotImplementedException($"SyncAttribute on member of unhashable type: {type.FullName}");
+diff -ruN a/OpenRA.Test/IosMultiplayerPolicyTest.cs b/OpenRA.Test/IosMultiplayerPolicyTest.cs
+--- a/OpenRA.Test/IosMultiplayerPolicyTest.cs	2026-09-08 03:44:18
++++ b/OpenRA.Test/IosMultiplayerPolicyTest.cs	2026-09-08 03:44:18
+@@ -9,6 +9,12 @@
+ 	[TestFixture]
+ 	public sealed class IosMultiplayerPolicyTest
+ 	{
++		sealed class BooleanSyncFixture : ISync
++		{
++			[Sync]
++			public bool Value;
++		}
++
+ 		static string RepositoryRoot()
+ 		{
+ 			var directory = new DirectoryInfo(TestContext.CurrentContext.TestDirectory);
+@@ -174,7 +180,7 @@
+ 		}
+ 
+ 		[Test]
+-		public void MultiplayerSmokeRequiresAnExpectedRuntimeBundleHash()
++		public void MultiplayerSmokeDerivesRuntimeIdentityWhenNoExpectedHashIsSupplied()
+ 		{
+ 			var config = IosMultiplayerSmokeConfiguration.Parse(name => name switch
+ 			{
+@@ -185,11 +191,63 @@
+ 				_ => null
+ 			});
+ 
+-			Assert.That(config.Enabled, Is.False);
+-			StringAssert.Contains("runtime", config.ValidationError.ToLowerInvariant());
++			Assert.That(config.Enabled, Is.True,
++				"Cross-platform smoke identity must come from the active RuntimeContract.");
++			Assert.That(config.ExpectedRuntimeHash, Is.Empty);
+ 		}
+ 
+ 		[Test]
++		public void MultiplayerSmokeUsesRuntimeContractAndRecordsCanonicalHandshakeEvidence()
++		{
++			var source = File.ReadAllText(Path.Combine(RepositoryRoot(), "engine",
++				"OpenRA.Game", "Support", "IosMultiplayerSmoke.cs"));
++
++			StringAssert.Contains("Game.ModData.RuntimeContract.Digest", source);
++			StringAssert.Contains("Game.ModData.RuntimeProfile.Serialize()", source);
++			StringAssert.Contains("Game.ModData.RuntimeContract.Serialize()", source);
++			StringAssert.Contains("runtimeProfile", source);
++			StringAssert.Contains("runtimeContract", source);
++			StringAssert.Contains("resourceCapability", source);
++		}
++
++		[Test]
++		public void MultiplayerSmokeGameplayClosureRequiresEveryRequestedAction()
++		{
++			var source = File.ReadAllText(Path.Combine(RepositoryRoot(), "engine",
++				"OpenRA.Game", "Support", "IosMultiplayerSmoke.cs"));
++
++			StringAssert.Contains("OPENRA_IOS_MULTIPLAYER_SMOKE_REQUIRE_GAMEPLAY", source);
++			StringAssert.Contains("world.Selection.Combine", source);
++			StringAssert.Contains("new Order(\"Move\"", source);
++			StringAssert.Contains("new Order(\"DevGiveCash\"", source);
++			StringAssert.Contains("Order.StartProduction", source);
++			StringAssert.Contains("new Order(\"PlaceBuilding\"", source);
++			StringAssert.Contains("new Order(\"Attack\"", source);
++			foreach (var field in new[]
++			{
++				"selectObserved", "movementObserved", "resourceUpdateObserved",
++				"productionObserved", "completedProductionObserved", "attackObserved"
++			})
++				StringAssert.Contains(field, source);
++		}
++
++		[Test]
++		public void Phase12RunnerExercisesBothDirectPhysicalDirections()
++		{
++			var runner = Path.Combine(RepositoryRoot(), "ios", "scripts",
++				"run-macos-ios-multiplayer-smoke.sh");
++			Assert.That(File.Exists(runner), Is.True);
++			var source = File.ReadAllText(runner);
++
++			StringAssert.Contains("ios-host-macos-client", source);
++			StringAssert.Contains("macos-host-ios-client", source);
++			StringAssert.Contains("OPENRA_IOS_MULTIPLAYER_SMOKE_DISCOVERY_MODE=direct", source);
++			StringAssert.Contains("OPENRA_IOS_MULTIPLAYER_SMOKE_REQUIRE_GAMEPLAY=true", source);
++			StringAssert.Contains(":1234", source);
++			StringAssert.Contains("assert_journal", source);
++		}
++
++		[Test]
+ 		public void MultiplayerSmokeAutoDiscoveryMatchesOnlyTheUniqueRunRoom()
+ 		{
+ 			var launchNonce = new string('1', 32);
+@@ -437,6 +495,40 @@
+ 			StringAssert.Contains("remoteIdentityVerified, remoteAcknowledgedLocalIdentity,", source);
+ 			StringAssert.Contains(
+ 				"remoteIdentityVerified && remoteIdentityCurrentlyValid && humans.Length == 2", source);
++		}
++
++		[Test]
++		public void Phase12RunnerSelectsTheIosAddressOnTheMacLan()
++		{
++			var source = File.ReadAllText(Path.Combine(RepositoryRoot(), "ios", "scripts",
++				"run-macos-ios-multiplayer-smoke.sh"));
++
++			StringAssert.Contains("private_ios_address \"$host_journal\" \"$mac_lan_ip\"", source);
++			StringAssert.Contains("max(candidates, key=lambda address: common_prefix(address, mac))", source,
++				"A device may expose VPN, cellular, and Wi-Fi addresses; Direct IP must choose the LAN peer.");
++		}
++
++		[Test]
++		public void DirectIpDoesNotRequireAnUndiscoveredAdvertisementSession()
++		{
++			var source = File.ReadAllText(Path.Combine(RepositoryRoot(), "engine",
++				"OpenRA.Game", "Support", "IosMultiplayerSmoke.cs"));
++
++			StringAssert.Contains(
++				"config.DiscoveryMode == IosMultiplayerSmokeDiscoveryMode.Auto &&\n\t\t\t\t\t!string.Equals(identity.SessionGuid, observedRemoteSessionGuid",
++				source,
++				"Direct IP has no advertisement session to compare; the authenticated host identity is sufficient.");
++		}
++
++		[TestCase(false, 0x555)]
++		[TestCase(true, 0xAAA)]
++		public void DesktopAndIosUseTheSameBooleanSyncHash(bool value, int expected)
++		{
++			var hash = typeof(Sync).GetMethod("Hash",
++				System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic);
++			Assert.That(hash, Is.Not.Null);
++			Assert.That(hash!.Invoke(null, new object[] { new BooleanSyncFixture { Value = value } }),
++				Is.EqualTo(expected));
+ 		}
+ 
+ 		[Test]

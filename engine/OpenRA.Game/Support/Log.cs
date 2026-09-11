@@ -102,11 +102,7 @@ namespace OpenRA
 
 		static void WriteValue(ChannelData item)
 		{
-			// Logging may begin while an early startup component is still registering
-			// output channels. Dropping that diagnostic is safer than terminating the
-			// process from the asynchronous logging thread.
-			if (!Channels.TryGetValue(item.Channel, out var channel))
-				return;
+			var channel = GetChannel(item.Channel);
 			var writer = channel.Writer;
 			if (writer == null)
 				return;

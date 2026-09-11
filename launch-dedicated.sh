@@ -50,11 +50,14 @@ else
 	export DOTNET_ROLL_FORWARD="${DOTNET_ROLL_FORWARD:-LatestMajor}"
 fi
 
-NAME="${Name:-"Dedicated Server"}"
+NAME="${Name:-"NUKE HOUR Dedicated Server"}"
 LAUNCH_MOD="${Mod:-"${MOD_ID}"}"
 MAP="${Map:-""}"
+LISTEN_ADDRESS="${ListenAddress:-"0.0.0.0"}"
 LISTEN_PORT="${ListenPort:-"1234"}"
-ADVERTISE_ONLINE="${AdvertiseOnline:-"True"}"
+MAX_PLAYERS="${MaxPlayers:-"8"}"
+IDLE_TIMEOUT_SECONDS="${IdleTimeoutSeconds:-"900"}"
+STATUS_FILE="${StatusFile:-"status/server-status.json"}"
 PASSWORD="${Password:-""}"
 RECORD_REPLAYS="${RecordReplays:-"False"}"
 
@@ -70,7 +73,8 @@ SHARE_ANONYMISED_IPS="${ShareAnonymizedIPs:-"True"}"
 
 FLOOD_LIMIT_JOIN_COOLDOWN="${FloodLimitJoinCooldown:-"5000"}"
 
-SUPPORT_DIR="${SupportDir:-""}"
+SUPPORT_DIR="${SupportDir:-"${TEMPLATE_ROOT}/support/server"}"
+mkdir -p "${SUPPORT_DIR}"
 
 cd "${TEMPLATE_ROOT}"
 if [ ! -f "${ENGINE_DIRECTORY}/bin/OpenRA.Server.dll" ] || [ "$(cat "${ENGINE_DIRECTORY}/VERSION")" != "${ENGINE_VERSION}" ]; then
@@ -81,23 +85,24 @@ fi
 
 cd "${ENGINE_DIRECTORY}"
 
-while true; do
-     MOD_SEARCH_PATHS="${MOD_SEARCH_PATHS}" \
-     ${RUNTIME_LAUNCHER} bin/OpenRA.Server.dll Engine.EngineDir=".." Game.Mod="${LAUNCH_MOD}" \
-     Server.Name="${NAME}" \
-     Server.Map="${MAP}" \
-     Server.ListenPort="${LISTEN_PORT}" \
-     Server.AdvertiseOnline="${ADVERTISE_ONLINE}" \
-     Server.Password="${PASSWORD}" \
-     Server.RecordReplays="${RECORD_REPLAYS}" \
-     Server.RequireAuthentication="${REQUIRE_AUTHENTICATION}" \
-     Server.ProfileIDBlacklist="${PROFILE_ID_BLACKLIST}" \
-     Server.ProfileIDWhitelist="${PROFILE_ID_WHITELIST}" \
-     Server.EnableSingleplayer="${ENABLE_SINGLE_PLAYER}" \
-     Server.EnableSyncReports="${ENABLE_SYNC_REPORTS}" \
-     Server.EnableGeoIP="${ENABLE_GEOIP}" \
-     Server.EnableLintChecks="${ENABLE_LINT_CHECKS}" \
-     Server.ShareAnonymizedIPs="${SHARE_ANONYMISED_IPS}" \
-     Server.FloodLimitJoinCooldown="${FLOOD_LIMIT_JOIN_COOLDOWN}" \
-     Engine.SupportDir="${SUPPORT_DIR}"
-done
+MOD_SEARCH_PATHS="${MOD_SEARCH_PATHS}" \
+exec ${RUNTIME_LAUNCHER} bin/OpenRA.Server.dll Engine.EngineDir=".." Game.Mod="${LAUNCH_MOD}" \
+Server.Name="${NAME}" \
+Server.Map="${MAP}" \
+Server.ListenAddress="${LISTEN_ADDRESS}" \
+Server.ListenPort="${LISTEN_PORT}" \
+Server.MaxPlayers="${MAX_PLAYERS}" \
+Server.IdleTimeoutSeconds="${IDLE_TIMEOUT_SECONDS}" \
+Server.StatusFile="${STATUS_FILE}" \
+Server.Password="${PASSWORD}" \
+Server.RecordReplays="${RECORD_REPLAYS}" \
+Server.RequireAuthentication="${REQUIRE_AUTHENTICATION}" \
+Server.ProfileIDBlacklist="${PROFILE_ID_BLACKLIST}" \
+Server.ProfileIDWhitelist="${PROFILE_ID_WHITELIST}" \
+Server.EnableSingleplayer="${ENABLE_SINGLE_PLAYER}" \
+Server.EnableSyncReports="${ENABLE_SYNC_REPORTS}" \
+Server.EnableGeoIP="${ENABLE_GEOIP}" \
+Server.EnableLintChecks="${ENABLE_LINT_CHECKS}" \
+Server.ShareAnonymizedIPs="${SHARE_ANONYMISED_IPS}" \
+Server.FloodLimitJoinCooldown="${FLOOD_LIMIT_JOIN_COOLDOWN}" \
+Engine.SupportDir="${SUPPORT_DIR}"

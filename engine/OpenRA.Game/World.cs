@@ -234,7 +234,8 @@ namespace OpenRA
 			gameInfo = new GameInformation
 			{
 				Mod = Game.ModData.Manifest.Id,
-				Version = Game.ModData.Manifest.Metadata.Version,
+				Version = Game.ModData.Manifest.Metadata.CompatibilityOrVersion,
+				ProductVersion = Game.ModData.Manifest.Metadata.DisplayVersionOrVersion,
 
 				MapUid = Map.Uid,
 				MapTitle = Map.Title

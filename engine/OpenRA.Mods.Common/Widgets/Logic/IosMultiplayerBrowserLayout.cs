@@ -18,6 +18,8 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 	{
 		public WidgetBounds Window { get; }
 		public WidgetBounds Header { get; }
+		public WidgetBounds LocalMode { get; }
+		public WidgetBounds OnlineMode { get; }
 		public WidgetBounds Table { get; }
 		public WidgetBounds TableHeader { get; }
 		public WidgetBounds ServerList { get; }
@@ -26,6 +28,8 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 		public WidgetBounds Filters { get; }
 		public WidgetBounds Reload { get; }
 		public WidgetBounds PlayerCount { get; }
+		public WidgetBounds RoomCodeInput { get; }
+		public WidgetBounds RoomCodeButton { get; }
 		public WidgetBounds DirectConnect { get; }
 		public WidgetBounds CreateButton { get; }
 		public WidgetBounds Back { get; }
@@ -39,7 +43,12 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 			width = Math.Max(1, width);
 			height = Math.Max(1, height);
 			Window = new WidgetBounds(0, 0, width, height);
-			Header = new WidgetBounds(0, 0, width, Math.Min(height, policy.HeaderHeight));
+			var headerHeight = Math.Min(height, policy.HeaderHeight);
+			var modeWidth = Math.Min(3 * policy.MinimumTarget, Math.Max(0, (width - 2 * policy.Gap) / 3));
+			LocalMode = new WidgetBounds(0, 0, modeWidth, headerHeight);
+			OnlineMode = new WidgetBounds(LocalMode.Right + policy.Gap, 0, modeWidth, headerHeight);
+			var headerX = Math.Min(width, OnlineMode.Right + policy.Gap);
+			Header = new WidgetBounds(headerX, 0, Math.Max(0, width - headerX), headerHeight);
 			var footerY = Math.Max(Header.Bottom + policy.Gap, height - policy.FooterHeight);
 			Footer = new WidgetBounds(0, footerY, width, Math.Max(0, height - footerY));
 
@@ -63,6 +72,10 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 			Filters = footerCells[0];
 			Reload = footerCells[1];
 			PlayerCount = footerCells[2];
+			RoomCodeInput = Filters;
+			var roomCodeButtonX = Math.Min(PlayerCount.Right, Reload.Right + policy.Gap);
+			RoomCodeButton = new WidgetBounds(
+				roomCodeButtonX, Reload.Y, PlayerCount.Right - roomCodeButtonX, Reload.Height);
 			DirectConnect = footerCells[3];
 			CreateButton = footerCells[4];
 			Back = footerCells[5];

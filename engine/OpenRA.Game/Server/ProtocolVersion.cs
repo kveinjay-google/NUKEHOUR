@@ -50,13 +50,19 @@ namespace OpenRA.Server
 		//   - Int32 specifying the handshake protocol version
 		//   - Int32 specifying the new connection's client ID
 		// - Server sends a packet that contains a single Handshake (0xFE) order that
-		//   encodes a HandshakeRequest yaml blob containing at least:
+		//   encodes a HandshakeRequest yaml blob containing:
+		//   - HandshakeSchema: Required NUKE HOUR YAML handshake schema
+		//   - OrdersProtocol: ProtocolVersion.Orders used by the server
+		//   - EngineCompatibility: Platform-neutral OpenRA engine baseline
 		//   - Mod: Internal ID for the active mod
 		//   - Version: Internal version string for the active mod
+		//   - RuntimeProfile: Canonical path-free diagnostic runtime identity
+		//   - RuntimeContract: Canonical gameplay/resource compatibility identity
 		//   - [optional] AuthToken: Blob of random data that the client can sign to verify their AuthID
 		// - Client disconnects and optionally shows a switch-mod dialog if the Mod or Version do not match
 		// - Client responds with a packet that contains a single Handshake (0xFE) order that
-		//   encodes a HandshakeResponse yaml blob containing at least:
+		//   encodes a HandshakeResponse yaml blob containing the same required
+		//   compatibility fields as HandshakeRequest plus:
 		//   - Mod: Internal ID for the active mod
 		//   - Version: Internal version string for the active mod
 		//   - Client: Yaml blob encoding client metadata:
@@ -73,6 +79,10 @@ namespace OpenRA.Server
 		// The protocol for the initial handshake request and response
 		// Backwards incompatible changes will break runtime mod switching, so only change as a last resort!
 		public const int Handshake = 7;
+
+		// Required YAML handshake schema shared by NUKE HOUR on every platform.
+		// Adding a required field or changing field semantics must bump this version.
+		public const int HandshakeSchema = 1;
 
 		// The protocol for server and world orders
 		// This applies after the handshake has completed, and is provided to support

@@ -17,64 +17,39 @@ namespace OpenRA.Mods.Cnc.FileFormats
 {
 	public sealed class XccGlobalDatabase : IDisposable
 	{
-		const long MaximumTrustedDatabaseBytes = 64L << 20;
-		const int MaximumTrustedDatabaseNames = 1_000_000;
 		public readonly string[] Entries;
 		readonly Stream s;
 
 		public XccGlobalDatabase(Stream stream)
-			: this(stream, MaximumTrustedDatabaseBytes, MaximumTrustedDatabaseNames)
 		{
-		}
+			s = stream;
 
-		public XccGlobalDatabase(Stream stream, long maximumBytes, int maximumNames)
-		{
-			s = stream ?? throw new ArgumentNullException(nameof(stream));
-			if (!s.CanRead || !s.CanSeek || maximumBytes <= 0 || maximumNames <= 0 || s.Length > maximumBytes)
+			var entries = new List<string>();
+			var chars = new char[32];
+			while (s.Peek() > -1)
 			{
-				s.Dispose();
-				throw new InvalidDataException("The global MIX database envelope is invalid.");
-			}
-
-			try
-			{
-				var entries = new List<string>();
-				var chars = new char[32];
-				while (s.Peek() > -1)
+				var count = s.ReadInt32();
+				entries.Capacity += count;
+				for (var i = 0; i < count; i++)
 				{
-					var count = s.ReadInt32();
-					if (count < 0 || count > maximumNames - entries.Count)
-						throw new InvalidDataException("The global MIX database name count is invalid.");
-					entries.Capacity += count;
-					for (var i = 0; i < count; i++)
+					// Read filename
+					byte c;
+					var charsIndex = 0;
+					while ((c = s.ReadUInt8()) != 0)
 					{
-						byte c;
-						var charsIndex = 0;
-						while ((c = s.ReadUInt8()) != 0)
-						{
-							if (c > 0x7F || charsIndex >= 4096)
-								throw new InvalidDataException("The global MIX database name is invalid.");
-							if (charsIndex >= chars.Length)
-								Array.Resize(ref chars, chars.Length * 2);
-							chars[charsIndex++] = (char)c;
-						}
-
-						entries.Add(new string(chars, 0, charsIndex));
-
-						var commentBytes = 0;
-						while (s.ReadUInt8() != 0)
-							if (++commentBytes > 4096)
-								throw new InvalidDataException("The global MIX database comment is invalid.");
+						if (charsIndex >= chars.Length)
+							Array.Resize(ref chars, chars.Length * 2);
+						chars[charsIndex++] = (char)c;
 					}
-				}
 
-				Entries = entries.ToArray();
+					entries.Add(new string(chars, 0, charsIndex));
+
+					// Skip comment
+					while (s.ReadUInt8() != 0) { }
+				}
 			}
-			catch
-			{
-				s.Dispose();
-				throw;
-			}
+
+			Entries = entries.ToArray();
 		}
 
 		public void Dispose()

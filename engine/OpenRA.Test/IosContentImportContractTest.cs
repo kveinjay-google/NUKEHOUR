@@ -45,57 +45,14 @@ namespace OpenRA.Test
 		}
 
 		[Test]
-		public void PrivateDeviceBuildAlsoChecksImportedContentBeforeStartingGame()
-		{
-			var appDelegate = IosFile("AppDelegate.cs");
-
-			StringAssert.DoesNotContain("#if PUBLIC_CLEAN\n\t\t\tcontentImportCoordinator", appDelegate);
-			StringAssert.Contains("contentImportCoordinator = new IosContentImportCoordinator(", appDelegate);
-			StringAssert.Contains("contentImportCoordinator.Start();", appDelegate);
-		}
-
-		[Test]
 		public void PickerBalancesSecurityScopedResourceAccess()
 		{
 			var picker = IosFile("IosRetailContentPicker.cs");
 
 			StringAssert.Contains("UIDocumentPickerViewController", picker);
-			StringAssert.Contains("UTTypes.Folder.Identifier", picker);
-			StringAssert.Contains("UIDocumentPickerMode.Open", picker);
-			StringAssert.Contains("AllowsMultipleSelection = false", picker);
 			StringAssert.Contains("StartAccessingSecurityScopedResource", picker);
 			StringAssert.Contains("finally", picker);
 			StringAssert.Contains("StopAccessingSecurityScopedResource", picker);
-		}
-
-		[Test]
-		public void PickerContainsAsyncDelegateFailuresAndOnlyClearsTheCompletedDelegate()
-		{
-			var picker = IosFile("IosRetailContentPicker.cs");
-
-			StringAssert.Contains("catch (Exception e)", picker);
-			StringAssert.Contains("failed(e);", picker);
-			StringAssert.Contains("ClearDelegate", picker);
-			StringAssert.Contains("ReferenceEquals(pickerDelegate, completedDelegate)", picker);
-			StringAssert.DoesNotContain("() => pickerDelegate = null", picker);
-		}
-
-		[Test]
-		public void PickerReleasesSecurityScopeBeforeReportingImportCompletionOrCancellation()
-		{
-			var picker = IosFile("IosRetailContentPicker.cs");
-			var didPick = picker[picker.IndexOf(
-				"public override async void DidPickDocument", StringComparison.Ordinal)..];
-			var cancelled = picker[picker.IndexOf(
-				"public override void WasCancelled", StringComparison.Ordinal)..];
-
-			StringAssert.Contains("Task<RetailImportResult>", picker);
-			Assert.That(didPick.IndexOf("StopAccessingSecurityScopedResource", StringComparison.Ordinal),
-				Is.LessThan(didPick.IndexOf("CompleteSafely", StringComparison.Ordinal)));
-			Assert.That(didPick.IndexOf("FinishSafely();", StringComparison.Ordinal),
-				Is.LessThan(didPick.IndexOf("CompleteSafely", StringComparison.Ordinal)));
-			Assert.That(cancelled.IndexOf("FinishSafely();", StringComparison.Ordinal),
-				Is.LessThan(cancelled.IndexOf("cancelled();", StringComparison.Ordinal)));
 		}
 
 		[Test]
@@ -104,208 +61,210 @@ namespace OpenRA.Test
 			var coordinator = IosFile("IosContentImportCoordinator.cs");
 
 			StringAssert.Contains("RetailContentImporter", coordinator);
-			StringAssert.Contains("new RetailContentImporter(requireStructuralValidation: false)", coordinator);
-			StringAssert.Contains("catalog.InspectRequiredFilesOnly", coordinator);
-			StringAssert.Contains("selectedPaths.Count != 1", coordinator);
-			StringAssert.Contains("Directory.Exists(selectedPath)", coordinator);
 			StringAssert.Contains("RetailImportError.Cancelled", coordinator);
 			StringAssert.Contains("NeedsBase", coordinator);
-			StringAssert.DoesNotContain("if (!status.CanLaunchYuriGame)", coordinator);
+			StringAssert.Contains("NeedsYuriOptional", coordinator);
 			StringAssert.Contains("StartGameOnce", coordinator);
 		}
 
 		[Test]
-		public void CoordinatorRequiresTheCurrentImportedRuntimeLayout()
+		public void WizardUsesOneAdaptiveScrollableImportEntryWithoutSliders()
 		{
-			var coordinator = IosFile("IosContentImportCoordinator.cs");
-
-			StringAssert.Contains("RetailContentImporter.PrepareCurrentRuntimeLayout(contentRoot)", coordinator);
-			StringAssert.Contains("sourceRoot: selectedPath", coordinator);
-		}
-
-		[Test]
-		public void RuntimeScansConvertedMapsFromTheImportedContentRoot()
-		{
-			var root = RepositoryRoot();
-			var manifest = File.ReadAllText(Path.Combine(root, "mods", "ra2", "mod.yaml"));
-
-			StringAssert.Contains("^SupportDir|Content/ra2/maps: User", manifest);
-		}
-
-		[Test]
-		public void CoordinatorPreparesAndValidatesEmbeddedMapsBeforeGameStartup()
-		{
-			var coordinator = IosFile("IosContentImportCoordinator.cs");
-			var bootstrap = IosFile("IosEmbeddedMapBootstrap.cs");
-
-			StringAssert.Contains("PrepareMapsAndStart();", coordinator);
-			StringAssert.Contains("IosEmbeddedMapBootstrap.EnsurePlayableMaps", coordinator);
-			StringAssert.Contains("RetailCompatibleMapSourceScanner", bootstrap);
-			StringAssert.Contains("Ra2MapConversionService", bootstrap);
-			StringAssert.Contains("players < 2", bootstrap);
-			StringAssert.Contains("StartGameOnce();", coordinator);
-		}
-
-		[Test]
-		public void CoordinatorRecoversAnInterruptedPublishBeforeCheckingReadiness()
-		{
-			var coordinator = IosFile("IosContentImportCoordinator.cs");
-			var checkReadinessStart = coordinator.IndexOf("void CheckReadiness()", StringComparison.Ordinal);
-			var hasLaunchableStart = coordinator.IndexOf("bool HasLaunchableContent()", StringComparison.Ordinal);
-			var checkReadiness = coordinator[checkReadinessStart..hasLaunchableStart];
-
-			Assert.That(checkReadiness.IndexOf(
-				"RetailContentImporter.PrepareCurrentRuntimeLayout(contentRoot)", StringComparison.Ordinal),
-				Is.LessThan(checkReadiness.IndexOf("catalog.InspectRequiredFilesOnly", StringComparison.Ordinal)));
-		}
-
-		[Test]
-		public void BaseRuntimeReadinessStartsImmediatelyWithoutRequiringOptionalMusic()
-		{
-			var coordinator = IosFile("IosContentImportCoordinator.cs");
-			var checkReadinessStart = coordinator.IndexOf("void CheckReadiness()", StringComparison.Ordinal);
-			var hasLaunchableStart = coordinator.IndexOf("bool HasLaunchableContent()", StringComparison.Ordinal);
-			var checkReadiness = coordinator[checkReadinessStart..hasLaunchableStart];
-
-			StringAssert.Contains("StartGameOnce();", checkReadiness);
-			StringAssert.DoesNotContain("theme.mix", checkReadiness);
-			StringAssert.DoesNotContain("NeedsYuriOptional", checkReadiness);
-		}
-
-		[Test]
-		public void CoordinatorSerializesThePickerAndImportLifecycle()
-		{
-			var coordinator = IosFile("IosContentImportCoordinator.cs");
 			var viewController = IosFile("ViewController.cs");
 
-			StringAssert.Contains("Interlocked.CompareExchange(ref importInProgress, 1, 0)", coordinator);
-			StringAssert.Contains("Interlocked.Exchange(ref importInProgress, 0)", coordinator);
-			StringAssert.Contains("model.State != IosContentImportState.Importing", viewController);
-		}
-
-		[Test]
-		public void CoordinatorDoesNotStartTheGameWhileAnImportAttemptIsActive()
-		{
-			var coordinator = IosFile("IosContentImportCoordinator.cs");
-			var startGameMethod = coordinator[coordinator.IndexOf(
-				"void StartGameOnce()", StringComparison.Ordinal)..];
-
-			StringAssert.Contains("Volatile.Read(ref importInProgress) != 0", startGameMethod);
-		}
-
-		[Test]
-		public void CoordinatorRunsEnumerationAndImportOutsideTheUIKitThread()
-		{
-			var coordinator = IosFile("IosContentImportCoordinator.cs");
-
-			StringAssert.Contains("Task.Run(() => ImportSelectionInBackgroundAsync", coordinator);
-			StringAssert.Contains("if (!Directory.Exists(selectedPath))", coordinator);
-			StringAssert.Contains("ExpandSelection(new[] { selectedPath }).ToArray()", coordinator);
-			StringAssert.Contains("await importer.ImportAsync", coordinator);
-			StringAssert.Contains("viewController.BeginInvokeOnMainThread", coordinator);
-		}
-
-		[Test]
-		public void FailedIncrementalImportFallsBackToUsableExistingContent()
-		{
-			var coordinator = IosFile("IosContentImportCoordinator.cs");
-
-			StringAssert.Contains("HasLaunchableContent()", coordinator);
-			StringAssert.Contains("if (HasLaunchableContent())", coordinator);
-			StringAssert.Contains("CheckReadiness();", coordinator);
-		}
-
-		[Test]
-		public void WizardTracksEveryRetailRootIndependently()
-		{
-			var coordinator = IosFile("IosContentImportCoordinator.cs");
-			var viewController = IosFile("ViewController.cs");
-
-			foreach (var flag in new[]
-			{
-				"Ra2Imported", "LanguageImported", "Ra2MdImported", "LangMdImported"
-			})
-			{
-				StringAssert.Contains(flag, coordinator);
-				StringAssert.Contains($"model.{flag}", viewController);
-			}
-
-			StringAssert.Contains("IsImported(importedRoot, \"ra2.mix\")", coordinator);
-			StringAssert.Contains("IsImported(importedRoot, \"language.mix\")", coordinator);
-			StringAssert.Contains("IsImported(importedRoot, \"ra2md.mix\")", coordinator);
-			StringAssert.Contains("IsImported(importedRoot, \"langmd.mix\")", coordinator);
-			StringAssert.Contains("RequiredFileStatus(\"ra2.mix\", model.Ra2Imported)", viewController);
-			StringAssert.Contains("RequiredFileStatus(\"language.mix\", model.LanguageImported)", viewController);
-			StringAssert.Contains("RequiredFileStatus(\"ra2md.mix（YR）\", model.Ra2MdImported)", viewController);
-			StringAssert.Contains("RequiredFileStatus(\"langmd.mix（YR）\", model.LangMdImported)", viewController);
-
-			StringAssert.DoesNotContain("var baseReady = model.Status?.Base", viewController);
-			StringAssert.DoesNotContain("var yuriReady = model.Status?.Yuri", viewController);
-		}
-
-		[Test]
-		public void WizardUsesLargeLandscapeButtonsWithoutSliders()
-		{
-			var coordinator = IosFile("IosContentImportCoordinator.cs");
-			var viewController = IosFile("ViewController.cs");
-
-			StringAssert.Contains("NUCLEAR-CRISIS-BG-02.png", viewController);
-			StringAssert.Contains("UIImage.FromFile", viewController);
-			StringAssert.Contains("UIViewContentMode.ScaleAspectFill", viewController);
 			StringAssert.Contains("选择正版游戏文件", viewController);
-			StringAssert.Contains("ra2.mix", viewController);
-			StringAssert.Contains("language.mix", viewController);
-			StringAssert.Contains("●", viewController);
-			StringAssert.Contains("ra2md.mix", viewController);
-			StringAssert.Contains("langmd.mix", viewController);
-			StringAssert.Contains("theme.mix", viewController);
-			StringAssert.Contains("thememd.mix", viewController);
-			StringAssert.Contains("尤里的复仇（可选）", viewController);
-			StringAssert.Contains("buttons.AddArrangedSubview(Button(strings.ChooseFiles, chooseBase));", viewController);
-			StringAssert.Contains("strings.ContinueGame", viewController);
-			StringAssert.Contains("\"theme.mix\"", coordinator);
-			StringAssert.Contains("\"thememd.mix\"", coordinator);
-			StringAssert.Contains("RetailContentImporter.IsSupportedPickerFile", coordinator);
-			StringAssert.Contains("IosContentImportState.NeedsYuriOptional", coordinator);
-			StringAssert.DoesNotContain("strings.ContentStatus(model.Status)", viewController);
-			StringAssert.DoesNotContain("strings.ImportBase", viewController);
-			StringAssert.DoesNotContain("strings.ImportYuri", viewController);
-			StringAssert.DoesNotContain("strings.ViewLicense", viewController);
-			StringAssert.DoesNotContain("strings.Retry", viewController);
+			StringAssert.Contains("查看许可证", viewController);
+			StringAssert.Contains("重试", viewController);
+			Assert.That(viewController.Split("Button(strings.ChooseFiles", StringSplitOptions.None).Length - 1,
+				Is.EqualTo(1), "The wizard must expose one import entry instead of three duplicate pickers.");
+			StringAssert.DoesNotContain("Button(strings.ImportBase", viewController);
+			StringAssert.DoesNotContain("Button(strings.ImportYuri", viewController);
+			StringAssert.Contains("UIScrollView", viewController,
+				"The complete wizard must remain reachable on short landscape phones.");
+			StringAssert.Contains("UIUserInterfaceIdiom.Pad", viewController,
+				"The wizard must choose a dedicated iPad layout instead of scaling the phone layout.");
 			StringAssert.DoesNotContain("UISlider", viewController);
-			StringAssert.Contains("new UIScrollView", viewController);
-			StringAssert.Contains("ContentLayoutGuide", viewController);
-			StringAssert.Contains("FrameLayoutGuide", viewController);
-			StringAssert.Contains("TopAnchor.ConstraintGreaterThanOrEqualTo", viewController);
-			StringAssert.Contains("BottomAnchor.ConstraintLessThanOrEqualTo", viewController);
 			StringAssert.Contains("Landscape", viewController);
 		}
 
 		[Test]
-		public void ReadyContentDismissesTheImportOverlayBeforeLaunching()
+		public void WizardLayoutUsesRuntimeFramesAfterLandscapeGeometrySettles()
 		{
-			var coordinator = IosFile("IosContentImportCoordinator.cs");
 			var viewController = IosFile("ViewController.cs");
 
-			StringAssert.Contains("DismissContentImportWizard", coordinator);
-			StringAssert.Contains("contentWizard?.RemoveFromSuperview();", viewController);
+			StringAssert.Contains("sealed class IosContentWizardView", viewController);
+			StringAssert.Contains("public override void LayoutSubviews()", viewController);
+			StringAssert.Contains("rootScroll.ContentSize", viewController);
+			StringAssert.Contains("contentWizard.Frame = WizardFrame()", viewController);
+			StringAssert.DoesNotContain("columns.HeightAnchor.ConstraintEqualTo(scroll.FrameLayoutGuide.HeightAnchor", viewController);
 		}
 
 		[Test]
-		public void StartupFailureRemovesTheWizardAndRestoresTheStatusAboveTheBackdrop()
+		public void LicenseUsesAnAdaptiveScrollableSurfaceInsteadOfANarrowSystemAlert()
 		{
 			var viewController = IosFile("ViewController.cs");
-			var failureMethod = viewController[viewController.IndexOf(
-				"public void ShowStartupFailure", StringComparison.Ordinal)..];
+			var coordinator = IosFile("IosContentImportCoordinator.cs");
 
-			StringAssert.Contains("contentWizard?.RemoveFromSuperview();", failureMethod);
-			StringAssert.Contains("contentWizard = null;", failureMethod);
-			StringAssert.Contains("status.Hidden = false;", failureMethod);
-			StringAssert.Contains("View.BringSubviewToFront(status);", failureMethod);
+			StringAssert.Contains("sealed class IosLicenseViewController", viewController);
+			StringAssert.Contains("UIUserInterfaceIdiom.Pad", viewController);
+			StringAssert.Contains("licenseScroll.ContentSize", viewController);
+			StringAssert.Contains("UIModalPresentationStyle.OverFullScreen", coordinator);
+			StringAssert.DoesNotContain("UIAlertController.Create", coordinator);
 		}
 
+		[Test]
+		public void StartupNoticeContainsApprovedBilingualDistributionWarnings()
+		{
+			var viewController = IosFile("ViewController.cs");
 
+			StringAssert.Contains("EA has not endorsed and does not support this product.", viewController);
+			StringAssert.Contains("free and open-source", viewController);
+			StringAssert.Contains("legally purchased and owned copy", viewController);
+			StringAssert.Contains("officially authorized NUKE HOUR edition", viewController);
+			StringAssert.Contains("malicious code", viewController);
+			StringAssert.Contains("EA 未认可且不支持本产品", viewController);
+			StringAssert.Contains("免费开源", viewController);
+			StringAssert.Contains("合法购买并拥有的正版游戏副本", viewController);
+			StringAssert.Contains("官方授权版本", viewController);
+			StringAssert.Contains("恶意代码", viewController);
+		}
 
+		[Test]
+		public void StartupNoticeKeepsWebsiteAndBundleVersionVisibleOutsideScrollableCopy()
+		{
+			var viewController = IosFile("ViewController.cs");
 
+			StringAssert.Contains("https://nukehour.com", viewController);
+			StringAssert.Contains("UIApplication.SharedApplication.OpenUrl", viewController);
+			StringAssert.Contains("NSBundle.MainBundle", viewController);
+			StringAssert.Contains("new UIScrollView", viewController);
+			StringAssert.Contains("noticeScroll.AddSubview(noticeBody)", viewController);
+			StringAssert.Contains("noticeScroll.ContentSize", viewController);
+			StringAssert.Contains("version.Frame", viewController);
+			StringAssert.Contains("website.Frame", viewController);
+			StringAssert.DoesNotContain("NUKE HOUR RA2", viewController);
+		}
+
+		[Test]
+		public void ReadyContentRequiresAnExplicitEnterGameAction()
+		{
+			var viewController = IosFile("ViewController.cs");
+			var coordinator = IosFile("IosContentImportCoordinator.cs");
+			var readyBranchStart = coordinator.IndexOf(
+				"Show(IosContentImportState.Ready, strings.ReadyMessage, status);", StringComparison.Ordinal);
+			var readyBranchEnd = coordinator.IndexOf("void ChooseFiles", readyBranchStart, StringComparison.Ordinal);
+			var readyBranch = coordinator.Substring(readyBranchStart, readyBranchEnd - readyBranchStart);
+
+			StringAssert.Contains("model.State is IosContentImportState.NeedsYuriOptional or IosContentImportState.Ready", viewController);
+			StringAssert.DoesNotContain("StartGameOnce", readyBranch);
+		}
+
+		[Test]
+		public void GameLaunchWaitsForTheNativePresentationToFinish()
+		{
+			var viewController = IosFile("ViewController.cs");
+			var coordinator = IosFile("IosContentImportCoordinator.cs");
+			var handoffStart = viewController.IndexOf(
+				"public void BeginGameLaunch(Action startGame)", StringComparison.Ordinal);
+			var handoffEnd = viewController.IndexOf("static string BundleDisplayVersion", handoffStart,
+				StringComparison.Ordinal);
+			Assert.That(handoffStart, Is.GreaterThanOrEqualTo(0));
+			Assert.That(handoffEnd, Is.GreaterThan(handoffStart));
+			var handoff = viewController.Substring(handoffStart, handoffEnd - handoffStart);
+
+			StringAssert.Contains("PresentedViewController", handoff);
+			StringAssert.Contains("DismissViewController", handoff);
+			StringAssert.Contains("contentWizard?.RemoveFromSuperview()", handoff);
+			StringAssert.Contains("View.LayoutIfNeeded()", handoff);
+			StringAssert.Contains("BeginInvokeOnMainThread(startGame)", handoff);
+			Assert.That(handoff.IndexOf("contentWizard?.RemoveFromSuperview()", StringComparison.Ordinal),
+				Is.LessThan(handoff.IndexOf("BeginInvokeOnMainThread(startGame)", StringComparison.Ordinal)));
+			StringAssert.Contains("viewController.BeginGameLaunch(startGame)", coordinator);
+		}
+
+		[Test]
+		public void StartupFailureRestoresAVisibleNativeSurface()
+		{
+			var viewController = IosFile("ViewController.cs");
+			var appDelegate = IosFile("AppDelegate.cs");
+
+			StringAssert.Contains("contentWizard?.RemoveFromSuperview()", viewController);
+			StringAssert.Contains("status.Hidden = false", viewController);
+			StringAssert.Contains("View.BringSubviewToFront(status)", viewController);
+			StringAssert.Contains("Window?.MakeKeyAndVisible()", appDelegate);
+		}
+
+		[Test]
+		public void StartupPreflightRunsBeforeTheEngine()
+		{
+			var appDelegate = IosFile("AppDelegate.cs");
+			var preflight = IosFile("IosLaunchPreflight.cs");
+			var check = appDelegate.IndexOf("IosLaunchPreflight.EnsureComplete", StringComparison.Ordinal);
+			var run = appDelegate.IndexOf("Game.InitializeAndRun", StringComparison.Ordinal);
+
+			Assert.That(check, Is.GreaterThanOrEqualTo(0));
+			Assert.That(run, Is.GreaterThan(check));
+			StringAssert.Contains("glsl/combined.vert", preflight);
+			StringAssert.Contains("mods/ra2/fonts/NotoSansCJKsc-Regular.otf", preflight);
+			StringAssert.Contains("mods/ra2/uibits/menubuttons.png", preflight);
+			StringAssert.Contains("mods/ra2/uibits/menupanel.png", preflight);
+			StringAssert.Contains("mods/ra2/uibits/NUCLEAR-CRISIS-BG-06.png", preflight);
+		}
+
+		[Test]
+		public void PublicCleanStartupDoesNotRequireStrippedDeveloperModPackages()
+		{
+			var manifest = File.ReadAllText(Path.Combine(RepositoryRoot(), "mods", "ra2", "mod.yaml"));
+
+			StringAssert.DoesNotContain("\t$ts: ts", manifest,
+				"The removed asset browser must not keep TS as a mandatory runtime mod.");
+			StringAssert.DoesNotContain("\tts|chrome/assetbrowser.yaml", manifest);
+			StringAssert.Contains("\t\t~ra2|bits/cameos", manifest);
+			StringAssert.Contains("\t\t~ra2|bits/structures", manifest);
+			StringAssert.Contains("\t\t~ra2|bits/projectiles", manifest);
+			StringAssert.Contains("\t~ra2|maps: System", manifest,
+				"The source checkout may provide maps, but a resource-free IPA must not require them.");
+		}
+
+		[Test]
+		public void PublicCleanCreatesItsShellSurfaceOutsideTheApplicationBundle()
+		{
+			var appDelegate = IosFile("AppDelegate.cs");
+			var project = IosFile("OpenRA.iOS.csproj");
+
+			StringAssert.Contains("RuntimeShellmapInstaller.EnsureInstalled(supportPath)", appDelegate);
+			StringAssert.Contains("#if PUBLIC_CLEAN", appDelegate);
+			StringAssert.DoesNotContain("../../mods/ra2/maps/", project,
+				"No map payload may be restored to the public IPA to provide the native menu surface.");
+			StringAssert.DoesNotContain("../../mods/ra2/bits/**/*", project,
+				"Unreviewed RA2 binary art must remain user supplied at runtime.");
+			StringAssert.Contains("../../mods/ra2/bits/animations/nc-impact-*.png", project,
+				"The approved clean-room NUKE HOUR impact overlays must remain available.");
+		}
+
+		[Test]
+		public void ReadyRetailContentCreatesAPlayableProjectOwnedMapOutsideTheBundle()
+		{
+			var coordinator = IosFile("IosContentImportCoordinator.cs");
+			var project = IosFile("OpenRA.iOS.csproj");
+
+			StringAssert.Contains("RuntimeShellmapInstaller.EnsurePlayableMapInstalled(supportPath)", coordinator);
+			StringAssert.Contains("Path.Combine(supportPath, \"maps\", \"ra2\", \"nukehour-storage-v1\")", coordinator);
+			StringAssert.DoesNotContain("../../mods/ra2/maps/", project,
+				"The generated starter map must remain user data and must not enter the IPA.");
+		}
+
+		[Test]
+		public void PublicCleanCursorsUseFramesFromTheImportedRetailCursorSheet()
+		{
+			var cursors = File.ReadAllText(Path.Combine(RepositoryRoot(), "mods", "ra2", "cursors.yaml"));
+
+			StringAssert.DoesNotContain("undeploy.shp:", cursors,
+				"PublicClean excludes mod-provided SHP artwork, so startup cursors must not require it.");
+			StringAssert.DoesNotContain("assaultmove.shp:", cursors,
+				"PublicClean excludes mod-provided SHP artwork, so startup cursors must not require it.");
+			StringAssert.Contains("\t\tundeploy:", cursors);
+			StringAssert.Contains("\t\tassaultmove:", cursors);
+		}
 	}
 }

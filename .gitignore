@@ -6,10 +6,6 @@ engine
 Release
 bin
 obj
-artifacts/
-DerivedData/
-*.aotdata
-*.aotid
 *.ncb
 *.vcproj*
 *.suo
@@ -48,22 +44,13 @@ _ReSharper.*/
 # Support directory
 /Support
 
-# Private signing material and local release evidence
-*.mobileprovision
-*.provisionprofile
-*.p12
-*.pfx
-*.pem
-*.key
-/private/
-/signing/
-
 # IntelliJ files
 .idea
 
 # Launcher-managed user AI profiles (regenerated from launcher UI)
 /launcher_ai_profiles.json
 /__pycache__/
+**/__pycache__/
 
 # Launcher runtime state
 launcher_skirmish.json

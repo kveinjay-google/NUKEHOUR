@@ -25,13 +25,6 @@ namespace OpenRA.FileSystem
 		bool TryParsePackage(Stream s, string filename, FileSystem context, out IReadOnlyPackage package);
 	}
 
-	/// <summary>Opt-in loader contract for untrusted package streams bound to one aggregate read context.</summary>
-	public interface IBoundedPackageLoader : IPackageLoader
-	{
-		bool TryParsePackage(Stream stream, string filename, FileSystem context,
-			PackageReadContext readContext, out IReadOnlyPackage package);
-	}
-
 	public interface IReadOnlyPackage : IDisposable
 	{
 		string Name { get; }

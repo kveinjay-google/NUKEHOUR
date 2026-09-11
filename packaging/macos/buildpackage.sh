@@ -45,6 +45,10 @@ PACKAGING_DIR=$(python3 -c "import os; print(os.path.dirname(os.path.realpath('$
 TEMPLATE_ROOT="${PACKAGING_DIR}/../../"
 ARTWORK_DIR="${PACKAGING_DIR}/../artwork/"
 
+python3 "${TEMPLATE_ROOT}/packaging/nukehour_version.py" check
+CANONICAL_VERSION=$(python3 -c "import json; print(json.load(open('${TEMPLATE_ROOT}/packaging/nukehour-version.json'))['version'])")
+CANONICAL_BUILD=$(python3 -c "import json; print(json.load(open('${TEMPLATE_ROOT}/packaging/nukehour-version.json'))['build'])")
+
 # shellcheck source=mod.config
 . "${TEMPLATE_ROOT}/mod.config"
 
@@ -79,6 +83,10 @@ if [ -n "${MACOS_DEVELOPER_CERTIFICATE_BASE64}" ] && [ -n "${MACOS_DEVELOPER_CER
 fi
 
 TAG="$1"
+if [ "${TAG}" != "${CANONICAL_VERSION}" ]; then
+	echo >&2 "Release tag ${TAG} does not match canonical macOS version ${CANONICAL_VERSION}."
+	exit 1
+fi
 if [ $# -eq "1" ]; then
 	OUTPUTDIR=$(python3 -c "import os; print(os.path.realpath('.'))")
 else
@@ -124,6 +132,7 @@ echo "APPL????" > "${LAUNCHER_CONTENTS_DIR}/PkgInfo"
 cp "${TEMPLATE_ROOT}/${ENGINE_DIRECTORY}/packaging/macos/Info.plist.in" "${LAUNCHER_CONTENTS_DIR}/Info.plist"
 
 modify_plist "{DEV_VERSION}" "${TAG}" "${LAUNCHER_CONTENTS_DIR}/Info.plist"
+/usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${CANONICAL_BUILD}" "${LAUNCHER_CONTENTS_DIR}/Info.plist"
 modify_plist "{FAQ_URL}" "${PACKAGING_FAQ_URL}" "${LAUNCHER_CONTENTS_DIR}/Info.plist"
 modify_plist "{MOD_ID}" "${MOD_ID}" "${LAUNCHER_CONTENTS_DIR}/Info.plist"
 modify_plist "{MINIMUM_SYSTEM_VERSION}" "10.11" "${LAUNCHER_CONTENTS_DIR}/Info.plist"
@@ -179,11 +188,10 @@ if ! cmp -s "${TEMPLATE_ROOT}/mods/${MOD_ID}/uibits/NUCLEAR-CRISIS-BG-06.png" \
 fi
 
 set_engine_version "${ENGINE_VERSION}" "${LAUNCHER_RESOURCES_DIR}"
-if [ "${PACKAGING_OVERWRITE_MOD_VERSION}" == "True" ]; then
-	set_mod_version "${TAG}" "${LAUNCHER_RESOURCES_DIR}/mods/${MOD_ID}/mod.yaml"
-else
-	MOD_VERSION=$(grep 'Version:' "${LAUNCHER_RESOURCES_DIR}/mods/${MOD_ID}/mod.yaml" | awk '{print $2}')
-	echo "Mod version ${MOD_VERSION} will remain unchanged.";
+MOD_VERSION=$(grep 'Version:' "${LAUNCHER_RESOURCES_DIR}/mods/${MOD_ID}/mod.yaml" | awk '{print $2; exit}')
+if [ "${MOD_VERSION}" != "nukehour-storage-v1" ]; then
+	echo >&2 "Unexpected NUKE HOUR storage identity: ${MOD_VERSION}"
+	exit 1
 fi
 
 # Reuse the verified NUKE HOUR icon installed by the desktop build.

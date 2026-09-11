@@ -1,0 +1,284 @@
+diff -ruN a/OpenRA.Game/GameInformation.cs b/OpenRA.Game/GameInformation.cs
+--- a/OpenRA.Game/GameInformation.cs	2026-09-06 14:30:08
++++ b/OpenRA.Game/GameInformation.cs	2026-09-06 14:30:08
+@@ -24,6 +24,7 @@
+ 
+ 		public string Mod;
+ 		public string Version;
++		public string ProductVersion;
+ 
+ 		public string MapUid;
+ 		public string MapTitle;
+diff -ruN a/OpenRA.Game/Manifest.cs b/OpenRA.Game/Manifest.cs
+--- a/OpenRA.Game/Manifest.cs	2026-09-06 14:30:08
++++ b/OpenRA.Game/Manifest.cs	2026-09-06 14:30:08
+@@ -50,6 +50,8 @@
+ 		[FluentReference]
+ 		readonly string Title;
+ 		public readonly string Version;
++		public readonly string DisplayVersion;
++		public readonly string Compatibility;
+ 		public readonly string Website;
+ 		public readonly string WebIcon32;
+ 		[FluentReference]
+@@ -59,6 +61,8 @@
+ 
+ 		public string TitleTranslated => FluentProvider.GetMessage(Title);
+ 		public string WindowTitleTranslated => WindowTitle != null ? FluentProvider.GetMessage(WindowTitle) : null;
++		public string DisplayVersionOrVersion => string.IsNullOrEmpty(DisplayVersion) ? Version : DisplayVersion;
++		public string CompatibilityOrVersion => string.IsNullOrEmpty(Compatibility) ? Version : Compatibility;
+ 	}
+ 
+ 	/// <summary>Describes what is to be loaded in order to run a mod.</summary>
+diff -ruN a/OpenRA.Game/Network/GameServer.cs b/OpenRA.Game/Network/GameServer.cs
+--- a/OpenRA.Game/Network/GameServer.cs	2026-09-06 14:30:09
++++ b/OpenRA.Game/Network/GameServer.cs	2026-09-06 14:30:09
+@@ -191,7 +191,7 @@
+ 			var activeManifest = Game.ModData.Manifest;
+ 			IsCompatible = IsAdvertisedModCompatible(
+ 				Mod, Version,
+-				activeManifest.Id, activeManifest.Metadata.Version,
++				activeManifest.Id, activeManifest.Metadata.CompatibilityOrVersion,
+ 				hasCompatibleExternalRegistration);
+ 
+ 			// Games advertised using the old API used local mod metadata
+@@ -239,7 +239,7 @@
+ 			MaxPlayers = server.LobbyInfo.Slots.Count(s => !s.Value.Closed) - server.LobbyInfo.Clients.Count(c1 => c1.Bot != null);
+ 			Map = server.Map.Uid;
+ 			Mod = manifest.Id;
+-			Version = manifest.Metadata.Version;
++			Version = manifest.Metadata.CompatibilityOrVersion;
+ 			ModTitle = manifest.Metadata.TitleTranslated;
+ 			ModWebsite = manifest.Metadata.Website;
+ 			ModIcon32 = manifest.Metadata.WebIcon32;
+diff -ruN a/OpenRA.Game/Network/UnitOrders.cs b/OpenRA.Game/Network/UnitOrders.cs
+--- a/OpenRA.Game/Network/UnitOrders.cs	2026-09-06 14:30:09
++++ b/OpenRA.Game/Network/UnitOrders.cs	2026-09-06 14:30:09
+@@ -247,7 +247,7 @@
+ 					var request = HandshakeRequest.Deserialize(order.TargetString, order.OrderString);
+ 
+ 					var externalKey = ExternalMod.MakeKey(request.Mod, request.Version);
+-					if ((request.Mod != mod.Id || request.Version != mod.Metadata.Version) &&
++					if ((request.Mod != mod.Id || request.Version != mod.Metadata.CompatibilityOrVersion) &&
+ 						Game.ExternalMods.TryGetValue(externalKey, out var external))
+ 					{
+ 						// The ConnectionFailedLogic will prompt the user to switch mods
+@@ -276,7 +276,7 @@
+ 					{
+ 						Client = info,
+ 						Mod = mod.Id,
+-						Version = mod.Metadata.Version,
++						Version = mod.Metadata.CompatibilityOrVersion,
+ 						Password = CurrentServerSettings.Password,
+ 						Fingerprint = localProfile.Fingerprint,
+ 						OrdersProtocol = ProtocolVersion.Orders
+diff -ruN a/OpenRA.Game/Server/Server.cs b/OpenRA.Game/Server/Server.cs
+--- a/OpenRA.Game/Server/Server.cs	2026-09-06 14:30:09
++++ b/OpenRA.Game/Server/Server.cs	2026-09-06 14:30:09
+@@ -199,7 +199,7 @@
+ 			var request = new HandshakeRequest
+ 			{
+ 				Mod = ModData.Manifest.Id,
+-				Version = ModData.Manifest.Metadata.Version,
++				Version = ModData.Manifest.Metadata.CompatibilityOrVersion,
+ 			};
+ 
+ 			recorder.ReceiveFrame(0, 0, new Order("HandshakeRequest", null, false)
+@@ -212,7 +212,7 @@
+ 			var response = new HandshakeResponse()
+ 			{
+ 				Mod = ModData.Manifest.Id,
+-				Version = ModData.Manifest.Metadata.Version,
++				Version = ModData.Manifest.Metadata.CompatibilityOrVersion,
+ 				OrdersProtocol = ProtocolVersion.Orders,
+ 				Client = new Session.Client(),
+ 			};
+@@ -444,7 +444,7 @@
+ 				var request = new HandshakeRequest
+ 				{
+ 					Mod = ModData.Manifest.Id,
+-					Version = ModData.Manifest.Metadata.Version,
++					Version = ModData.Manifest.Metadata.CompatibilityOrVersion,
+ 					AuthToken = token
+ 				};
+ 
+@@ -512,7 +512,7 @@
+ 					return;
+ 				}
+ 
+-				if (ModData.Manifest.Metadata.Version != handshake.Version)
++				if (ModData.Manifest.Metadata.CompatibilityOrVersion != handshake.Version)
+ 				{
+ 					Log.Write("server", $"Rejected connection from {newConn.EndPoint}; Not running the same version.");
+ 
+@@ -1340,7 +1340,8 @@
+ 				gameInfo = new GameInformation()
+ 				{
+ 					Mod = Game.ModData.Manifest.Id,
+-					Version = Game.ModData.Manifest.Metadata.Version,
++					Version = Game.ModData.Manifest.Metadata.CompatibilityOrVersion,
++					ProductVersion = Game.ModData.Manifest.Metadata.DisplayVersionOrVersion,
+ 					MapUid = Map.Uid,
+ 					MapTitle = Map.Title,
+ 					StartTimeUtc = DateTime.UtcNow,
+diff -ruN a/OpenRA.Game/Support/Benchmark.cs b/OpenRA.Game/Support/Benchmark.cs
+--- a/OpenRA.Game/Support/Benchmark.cs	2026-09-06 14:30:09
++++ b/OpenRA.Game/Support/Benchmark.cs	2026-09-06 14:30:09
+@@ -153,7 +153,7 @@
+ 				SchemaVersion = 1,
+ 				CreatedUtc = DateTime.UtcNow,
+ 				Prefix = prefix,
+-				Build = Game.ModData?.Manifest.Metadata.Version,
++				Build = Game.ModData?.Manifest.Metadata.DisplayVersionOrVersion,
+ 				Scenario = ReadScenario(),
+ 				Summary = PerformanceBenchmarkSummary.Create(performanceSamples),
+ 				TopCategories = PerformanceCategoryProfiler.Global.SnapshotTop(20),
+diff -ruN a/OpenRA.Game/Support/ExceptionHandler.cs b/OpenRA.Game/Support/ExceptionHandler.cs
+--- a/OpenRA.Game/Support/ExceptionHandler.cs	2026-09-06 14:30:09
++++ b/OpenRA.Game/Support/ExceptionHandler.cs	2026-09-06 14:30:09
+@@ -109,7 +109,10 @@
+ 				var modData = Game.ModData;
+ 				var manifest = modData?.Manifest;
+ 				if (manifest != null)
+-					report.AppendLine($"{manifest.Id} mod version {manifest.Metadata.Version}");
++				{
++					report.AppendLine($"{manifest.Id} product version {manifest.Metadata.DisplayVersionOrVersion}");
++					report.AppendLine($"{manifest.Id} compatibility {manifest.Metadata.CompatibilityOrVersion}");
++				}
+ 			});
+ 
+ 			AppendReportSection(report, "world", () =>
+diff -ruN a/OpenRA.Game/World.cs b/OpenRA.Game/World.cs
+--- a/OpenRA.Game/World.cs	2026-09-06 14:30:09
++++ b/OpenRA.Game/World.cs	2026-09-06 14:30:09
+@@ -234,7 +234,8 @@
+ 			gameInfo = new GameInformation
+ 			{
+ 				Mod = Game.ModData.Manifest.Id,
+-				Version = Game.ModData.Manifest.Metadata.Version,
++				Version = Game.ModData.Manifest.Metadata.CompatibilityOrVersion,
++				ProductVersion = Game.ModData.Manifest.Metadata.DisplayVersionOrVersion,
+ 
+ 				MapUid = Map.Uid,
+ 				MapTitle = Map.Title
+diff -ruN a/OpenRA.Mods.Common/WebServices.cs b/OpenRA.Mods.Common/WebServices.cs
+--- a/OpenRA.Mods.Common/WebServices.cs	2026-09-06 14:30:09
++++ b/OpenRA.Mods.Common/WebServices.cs	2026-09-06 14:30:09
+@@ -37,7 +37,7 @@
+ 					{ "protocol", VersionCheckProtocol },
+ 					{ "engine", Game.EngineVersion },
+ 					{ "mod", Game.ModData.Manifest.Id },
+-					{ "version", Game.ModData.Manifest.Metadata.Version }
++					{ "version", Game.ModData.Manifest.Metadata.CompatibilityOrVersion }
+ 				}.ToString();
+ 
+ 				try
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/MainMenuLogic.cs b/OpenRA.Mods.Common/Widgets/Logic/MainMenuLogic.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/MainMenuLogic.cs	2026-09-06 14:30:09
++++ b/OpenRA.Mods.Common/Widgets/Logic/MainMenuLogic.cs	2026-09-06 14:30:09
+@@ -485,7 +485,7 @@
+ 								{
+ 									{ "version", Game.EngineVersion },
+ 									{ "mod", modData.Manifest.Id },
+-									{ "modversion", modData.Manifest.Metadata.Version }
++									{ "modversion", modData.Manifest.Metadata.DisplayVersionOrVersion }
+ 								}.ToString();
+ 
+ 								var response = await client.GetStringAsync(url);
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/ReplayUtils.cs b/OpenRA.Mods.Common/Widgets/Logic/ReplayUtils.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/ReplayUtils.cs	2026-09-06 14:30:09
++++ b/OpenRA.Mods.Common/Widgets/Logic/ReplayUtils.cs	2026-09-06 14:30:09
+@@ -60,7 +60,7 @@
+ 			if (!Game.Mods.ContainsKey(mod))
+ 				return IncompatibleReplayDialog(modData, onCancel, UnvailableMod, "mod", mod);
+ 
+-			if (Game.Mods[mod].Metadata.Version != version)
++			if (Game.Mods[mod].Metadata.CompatibilityOrVersion != version)
+ 				return IncompatibleReplayDialog(modData, onCancel, IncompatibleVersion, "version", version);
+ 
+ 			if (replayMeta.GameInfo.MapPreview.Status != MapStatus.Available)
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/ServerListLogic.cs b/OpenRA.Mods.Common/Widgets/Logic/ServerListLogic.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/ServerListLogic.cs	2026-09-06 14:30:09
++++ b/OpenRA.Mods.Common/Widgets/Logic/ServerListLogic.cs	2026-09-06 14:30:09
+@@ -604,7 +604,7 @@
+ 				{ "protocol", GameServer.ProtocolVersion },
+ 				{ "engine", Game.EngineVersion },
+ 				{ "mod", Game.ModData.Manifest.Id },
+-				{ "version", Game.ModData.Manifest.Metadata.Version }
++				{ "version", Game.ModData.Manifest.Metadata.CompatibilityOrVersion }
+ 			}.ToString();
+ 
+ 			Task.Run(async () =>
+@@ -752,7 +752,7 @@
+ 
+ 			// Games for the current mod+version are sorted first
+ 			if (testEntry.Mod == modData.Manifest.Id)
+-				return testEntry.Version == modData.Manifest.Metadata.Version ? 4 : 3;
++				return testEntry.Version == modData.Manifest.Metadata.CompatibilityOrVersion ? 4 : 3;
+ 
+ 			// Followed by games for different mods that are joinable
+ 			return 2;
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/VersionLabelLogic.cs b/OpenRA.Mods.Common/Widgets/Logic/VersionLabelLogic.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/VersionLabelLogic.cs	2026-09-06 14:30:09
++++ b/OpenRA.Mods.Common/Widgets/Logic/VersionLabelLogic.cs	2026-09-06 14:30:09
+@@ -18,7 +18,7 @@
+ 		[ObjectCreator.UseCtor]
+ 		public VersionLabelLogic(LabelWidget widget, ModData modData)
+ 		{
+-			var versionText = modData.Manifest.Metadata.Version;
++			var versionText = modData.Manifest.Metadata.DisplayVersionOrVersion;
+ 			widget.GetText = () => versionText;
+ 		}
+ 	}
+diff -ruN a/OpenRA.Test/NukeHourVersionCompatibilityTest.cs b/OpenRA.Test/NukeHourVersionCompatibilityTest.cs
+--- a/OpenRA.Test/NukeHourVersionCompatibilityTest.cs	1969-12-31 16:00:00
++++ b/OpenRA.Test/NukeHourVersionCompatibilityTest.cs	2026-09-06 14:30:09
+@@ -0,0 +1,48 @@
++using System.Linq;
++using NUnit.Framework;
++using OpenRA.Network;
++
++namespace OpenRA.Test
++{
++	[TestFixture]
++	public sealed class NukeHourVersionCompatibilityTest
++	{
++		static ModMetadata LoadMetadata(string yaml)
++		{
++			var node = MiniYaml.FromString(yaml, "test metadata").Single();
++			return FieldLoader.Load<ModMetadata>(node.Value);
++		}
++
++		[Test]
++		public void ProductAndCompatibilityVersionsFallBackForExistingMods()
++		{
++			var metadata = LoadMetadata("Metadata:\n\tVersion: release-1\n");
++
++			Assert.That(metadata.DisplayVersionOrVersion, Is.EqualTo("release-1"));
++			Assert.That(metadata.CompatibilityOrVersion, Is.EqualTo("release-1"));
++		}
++
++		[Test]
++		public void ProductAndCompatibilityVersionsAreIndependent()
++		{
++			var metadata = LoadMetadata(
++				"Metadata:\n\tVersion: nukehour-storage-v1\n" +
++				"\tDisplayVersion: NUKE HOUR macOS 1.0.1 (Build 1)\n" +
++				"\tCompatibility: nukehour-core-sha256-abc\n");
++
++			Assert.That(metadata.Version, Is.EqualTo("nukehour-storage-v1"));
++			Assert.That(metadata.DisplayVersionOrVersion,
++				Is.EqualTo("NUKE HOUR macOS 1.0.1 (Build 1)"));
++			Assert.That(metadata.CompatibilityOrVersion,
++				Is.EqualTo("nukehour-core-sha256-abc"));
++		}
++
++		[Test]
++		public void ServerCompatibilityCanIgnoreProductVersion()
++		{
++			const string compatibility = "nukehour-core-sha256-abc";
++			Assert.That(GameServer.IsAdvertisedModCompatible(
++				"ra2", compatibility, "ra2", compatibility, false), Is.True);
++		}
++	}
++}

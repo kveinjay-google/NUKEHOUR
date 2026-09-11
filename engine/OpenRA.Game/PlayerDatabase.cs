@@ -9,17 +9,13 @@
  */
 #endregion
 
-using System.Threading.Tasks;
-using OpenRA.FileFormats;
 using OpenRA.Graphics;
 using OpenRA.Primitives;
-using OpenRA.Support;
 
 namespace OpenRA
 {
 	public class PlayerDatabase : IGlobalModData
 	{
-		public readonly string Profile = "https://forum.openra.net/openra/info/";
 		public readonly int IconSize = 24;
 
 		// 512x512 is large enough for 49 unique 72x72 badges
@@ -36,28 +32,6 @@ namespace OpenRA
 		{
 			var spriteSize = IconSize * density;
 			var sprite = sheetBuilder.Allocate(new Size(spriteSize, spriteSize), 1f / density);
-
-			Task.Run(async () =>
-			{
-				try
-				{
-					var client = HttpClientFactory.Create();
-
-					var httpResponseMessage = await client.GetAsync(url);
-					var result = await httpResponseMessage.Content.ReadAsStreamAsync();
-
-					var icon = new Png(result);
-					if (icon.Width == spriteSize && icon.Height == spriteSize)
-					{
-						Game.RunAfterTick(() =>
-						{
-							Util.FastCopyIntoSprite(sprite, icon);
-							sprite.Sheet.CommitBufferedData();
-						});
-					}
-				}
-				catch { }
-			});
 
 			return sprite;
 		}

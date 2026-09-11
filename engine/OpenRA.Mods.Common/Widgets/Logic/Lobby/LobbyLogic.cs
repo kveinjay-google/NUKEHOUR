@@ -68,7 +68,6 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 		readonly WorldRenderer worldRenderer;
 		readonly bool skirmishMode;
 		readonly Ruleset modRules;
-		readonly WebServices services;
 
 		enum PanelType { Players, Options, Music, Servers, Kick, ForceStart }
 		PanelType panel = PanelType.Players;
@@ -229,8 +228,6 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 
 			// TODO: This needs to be reworked to support per-map tech levels, bots, etc.
 			modRules = modData.DefaultRules;
-
-			services = modData.Manifest.Get<WebServices>();
 
 			Game.LobbyInfoChanged += UpdateCurrentMap;
 			Game.LobbyInfoChanged += UpdatePlayerList;
@@ -812,6 +809,7 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 				if (label != null)
 					label.IsVisible = () => !isSkirmish;
 			}
+
 			foreach (var label in header.Children.OfType<LabelWidget>())
 			{
 				label.WordWrap = true;
@@ -1042,11 +1040,6 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 				return;
 
 			map = modData.MapCache[uid];
-
-			// We don't have the map
-			if (map.Status != MapStatus.Available && map.Status != MapStatus.DownloadAvailable &&
-				Game.Settings.Game.AllowDownloading)
-				modData.MapCache.QueryRemoteMapDetails(services.MapRepository, new[] { uid });
 		}
 
 		void UpdatePlayerList()

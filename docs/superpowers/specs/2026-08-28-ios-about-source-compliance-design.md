@@ -1,7 +1,7 @@
 # iOS/iPadOS About and Source Compliance Design
 
 Date: 2026-08-28
-Status: Design approved; PersonalDistribution implementation may begin after retail-content import device acceptance; PublicClean distribution remains deferred until its runtime closure is complete
+Status: Design approved; implementation deferred until retail-content import and PublicClean runtime closure are complete
 
 ## Goal
 
@@ -158,7 +158,7 @@ The public content manifest and legal SBOM record the bundle/source path mapping
 
 The generated iOS application registry is refreshed only if the new logic requires it. The generator coverage test and byte-level registry diff are authoritative; entries are not edited manually to silence a test.
 
-OpenRA engine changes for the registered-device PersonalDistribution milestone are delivered in the next sequential engine patch after all importer patches, using the strict replay tree produced by that immediate predecessor. The unresolved PublicClean runtime closure does not move ahead of, merge into, or become satisfied by this Personal-only release patch; any later PublicClean distribution work starts from the then-current strict replay and retains its independent zero-error gate. Historical patches remain unchanged. The About patch has an exact path allowlist, strict no-fuzz application, duplicate-forward rejection, reverse dry-run success, and byte-for-byte replay comparison.
+OpenRA engine changes are delivered in the next sequential engine patch after all importer and PublicClean runtime patches that precede this deferred feature. Its baseline is the strict replay tree produced by that immediate predecessor. Historical patches remain unchanged. The About patch has an exact path allowlist, strict no-fuzz application, duplicate-forward rejection, reverse dry-run success, and byte-for-byte replay comparison.
 
 ## Error handling and security boundaries
 
@@ -180,8 +180,8 @@ The implementation follows test-driven development and must include:
 4. Document-policy tests for every valid document and tamper cases covering missing files, wrong hashes, symlinks, traversal, unknown identifiers, duplicate resources, and non-regular files.
 5. Source-link tests for the immutable GitHub URL contract, main-thread host handoff, missing-link fallback, and rejected schemes/hosts/revisions.
 6. Dependency-inventory tests that compare the final managed/native package graph with `THIRD_PARTY_LICENSES` and fail on unresolved or stale provenance.
-7. Personal distribution and unsigned PublicClean diagnostic bundle audits proving the five document bytes, manifest/SBOM mappings, absence of stale alternatives, and distribution failure without a configured immutable source URL. The diagnostic is not a PublicClean release pass.
-8. AOT registry coverage, YAML/Fluent validation, focused tests, the complete C# suite, packaging discovery, Release builds, strict replay of the new sequential About patch, and the final signed Personal Ad Hoc bundle audit. A final signed PublicClean audit remains deferred to its independent runtime closure.
+7. Personal and PublicClean bundle audits proving the five document bytes, manifest/SBOM mappings, absence of stale alternatives, and release failure without a configured immutable source URL.
+8. AOT registry coverage, YAML/Fluent validation, focused tests, the complete C# suite, packaging discovery, Release builds, strict replay of the new sequential About patch, and final signed personal/PublicClean iOS bundle audits.
 
 The signed-artifact checks are mandatory distribution gates. If signing credentials or an eligible device are unavailable, implementation tests may complete but release acceptance remains explicitly blocked. No completion claim is made while the corresponding-source URL, a shipped dependency's provenance, or a required signed artifact gate remains unresolved.
 

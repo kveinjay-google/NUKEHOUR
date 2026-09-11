@@ -14,28 +14,20 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading;
 using OpenRA.FileSystem;
 
 namespace OpenRA
 {
-	public class InstalledMods : IReadOnlyDictionary<string, Manifest>, IDisposable
+	public class InstalledMods : IReadOnlyDictionary<string, Manifest>
 	{
 		readonly Dictionary<string, Manifest> mods;
-		readonly Dictionary<string, string> modPaths;
-		int disposeState;
 
 		/// <summary>Initializes the collection of locally installed mods.</summary>
 		/// <param name="searchPaths">Filesystem paths to search for mod packages.</param>
 		/// <param name="explicitPaths">Filesystem paths to additional mod packages.</param>
 		public InstalledMods(IEnumerable<string> searchPaths, IEnumerable<string> explicitPaths)
 		{
-			if (searchPaths == null)
-				throw new ArgumentNullException(nameof(searchPaths));
-			if (explicitPaths == null)
-				throw new ArgumentNullException(nameof(explicitPaths));
-
-			(mods, modPaths) = GetInstalledMods(searchPaths, explicitPaths);
+			mods = GetInstalledMods(searchPaths, explicitPaths);
 		}
 
 		static IEnumerable<(string Id, string Path)> GetCandidateMods(IEnumerable<string> searchPaths)
@@ -87,11 +79,9 @@ namespace OpenRA
 			return null;
 		}
 
-		static (Dictionary<string, Manifest> Mods, Dictionary<string, string> Paths) GetInstalledMods(
-			IEnumerable<string> searchPaths, IEnumerable<string> explicitPaths)
+		static Dictionary<string, Manifest> GetInstalledMods(IEnumerable<string> searchPaths, IEnumerable<string> explicitPaths)
 		{
 			var ret = new Dictionary<string, Manifest>();
-			var paths = new Dictionary<string, string>();
 			var candidates = GetCandidateMods(searchPaths)
 				.Concat(explicitPaths.Select(p => (Id: Path.GetFileNameWithoutExtension(p), Path: p)));
 
@@ -99,39 +89,10 @@ namespace OpenRA
 			{
 				var mod = LoadMod(pair.Id, pair.Path);
 				if (mod != null)
-				{
 					ret[pair.Id] = mod;
-					paths[pair.Id] = pair.Path;
-				}
 			}
 
-			return (ret, paths);
-		}
-
-		internal Manifest OpenManifest(TrustedManifestSelection selection)
-		{
-			if (Volatile.Read(ref disposeState) != 0)
-				throw new ObjectDisposedException(nameof(InstalledMods));
-			if (!selection.IsValid)
-				throw new ArgumentException("The manifest selection is not initialized.", nameof(selection));
-			if (!modPaths.TryGetValue(selection.ModId, out var path))
-				throw new InvalidOperationException($"Unknown or invalid mod '{selection.ModId}'.");
-
-			IReadOnlyPackage package = new Folder(path);
-			try
-			{
-				if (!package.Contains(selection.EntryName))
-					throw new FileNotFoundException(
-						$"The selected manifest entry '{selection.EntryName}' was not found.", selection.EntryName);
-
-				var manifest = new Manifest(selection.ModId, package, selection.EntryName);
-				package = null;
-				return manifest;
-			}
-			finally
-			{
-				package?.Dispose();
-			}
+			return ret;
 		}
 
 		public Manifest this[string key] => mods[key];
@@ -142,25 +103,5 @@ namespace OpenRA
 		public IEnumerator<KeyValuePair<string, Manifest>> GetEnumerator() { return mods.GetEnumerator(); }
 		public bool TryGetValue(string key, out Manifest value) { return mods.TryGetValue(key, out value); }
 		IEnumerator IEnumerable.GetEnumerator() { return mods.GetEnumerator(); }
-
-		public void Dispose()
-		{
-			if (Interlocked.Exchange(ref disposeState, 1) != 0)
-				return;
-
-			var manifests = mods.Values.ToArray();
-			Exception firstFailure = null;
-			foreach (var manifest in manifests)
-			{
-				try { manifest.Dispose(); }
-				catch (Exception exception) { firstFailure ??= exception; }
-				try { manifest.Package.Dispose(); }
-				catch (Exception exception) { firstFailure ??= exception; }
-			}
-
-			GC.SuppressFinalize(this);
-			if (firstFailure != null)
-				throw firstFailure;
-		}
 	}
 }

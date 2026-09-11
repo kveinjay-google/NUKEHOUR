@@ -213,13 +213,6 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 			remoteMapLabel.IsVisible = () => remoteMapPool != null && (remoteSearching > 0 || remoteUnavailable > 0);
 			remoteMapLabel.GetText = () => remoteMapText.Update((remoteSearching, remoteUnavailable));
 
-			// SetupMapTab (through RefreshMap) depends on the map search having already started
-			if (remoteMapPool != null && Game.Settings.Game.AllowDownloading)
-			{
-				var services = modData.Manifest.Get<WebServices>();
-				modData.MapCache.QueryRemoteMapDetails(services.MapRepository, remoteMapPool);
-			}
-
 			SetupMapTab(MapClassification.User, filter, "USER_MAPS_TAB_BUTTON", "USER_MAPS_TAB");
 			SetupMapTab(MapClassification.System, filter, "SYSTEM_MAPS_TAB_BUTTON", "SYSTEM_MAPS_TAB");
 			SetupMapTab(MapClassification.Remote, filter, "REMOTE_MAPS_TAB_BUTTON", "REMOTE_MAPS_TAB");

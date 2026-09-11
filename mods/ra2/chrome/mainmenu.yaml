@@ -53,7 +53,7 @@ Container@MAINMENU:
 							Width: 264
 							Height: 46
 							VisualHeight: 0
-							Background: menu-button
+							Background: main-menu-button
 							Text: label-singleplayer-title
 							Font: Bold
 						Button@MULTIPLAYER_BUTTON:
@@ -62,7 +62,7 @@ Container@MAINMENU:
 							Width: 264
 							Height: 46
 							VisualHeight: 0
-							Background: menu-button
+							Background: main-menu-button
 							Text: label-multiplayer-title
 							Font: Bold
 						Button@SETTINGS_BUTTON:
@@ -71,16 +71,16 @@ Container@MAINMENU:
 							Width: 264
 							Height: 46
 							VisualHeight: 0
-							Background: menu-button
+							Background: main-menu-button
 							Text: button-settings-title
 							Font: Bold
-						DropDownButton@LANGUAGE_DROPDOWN:
+						Button@LANGUAGE_BUTTON:
 							X: 28
 							Y: 204
 							Width: 264
 							Height: 46
 							VisualHeight: 0
-							Background: menu-button
+							Background: main-menu-button
 							Font: Bold
 						Button@CONTENT_BUTTON:
 							X: 28
@@ -88,16 +88,25 @@ Container@MAINMENU:
 							Width: 264
 							Height: 46
 							VisualHeight: 0
-							Background: menu-button
+							Background: main-menu-button
 							Text: button-main-menu-content
 							Font: Bold
-						Button@QUIT_BUTTON:
+						Button@ABOUT_BUTTON:
 							X: 28
 							Y: 316
 							Width: 264
 							Height: 46
 							VisualHeight: 0
-							Background: menu-button
+							Background: main-menu-button
+							Text: button-main-menu-about
+							Font: Bold
+						Button@QUIT_BUTTON:
+							X: 28
+							Y: 372
+							Width: 264
+							Height: 46
+							VisualHeight: 0
+							Background: main-menu-button
 							Text: button-quit
 							Font: Bold
 				Background@SINGLEPLAYER_MENU:
@@ -215,3 +224,72 @@ Container@MAINMENU:
 							Y: 5
 							Width: 200
 							Height: 200
+
+Background@ABOUT_PANEL:
+	X: (WINDOW_WIDTH - WIDTH) / 2
+	Y: (WINDOW_HEIGHT - HEIGHT) / 2
+	Width: 620
+	Height: 420
+	Background: dialog4
+	Children:
+		Label@ABOUT_TITLE:
+			X: 40
+			Y: 30
+			Width: PARENT_WIDTH - 80
+			Height: 48
+			Align: Center
+			VAlign: Middle
+			Font: BigBold
+			Text: label-nuke-hour-about-title
+		Label@ABOUT_DESCRIPTION:
+			X: 55
+			Y: 102
+			Width: PARENT_WIDTH - 110
+			Height: 88
+			Align: Center
+			VAlign: Middle
+			Font: Regular
+			WordWrap: true
+			Text: label-nuke-hour-about-description
+		Label@VERSION_CAPTION:
+			X: 90
+			Y: 218
+			Width: 190
+			Height: 30
+			Align: Right
+			VAlign: Middle
+			Font: MediumBold
+			Text: label-nuke-hour-about-version
+		Label@VERSION_VALUE:
+			Logic: VersionLabelLogic
+			X: 295
+			Y: 218
+			Width: 235
+			Height: 30
+			VAlign: Middle
+			Font: Regular
+		Label@WEBSITE_CAPTION:
+			X: 90
+			Y: 260
+			Width: 190
+			Height: 30
+			Align: Right
+			VAlign: Middle
+			Font: MediumBold
+			Text: label-nuke-hour-about-website
+		Label@WEBSITE_URL:
+			X: 295
+			Y: 260
+			Width: 235
+			Height: 30
+			VAlign: Middle
+			Font: Regular
+			Text: label-nuke-hour-about-url
+		Button@BACK_BUTTON:
+			X: (PARENT_WIDTH - WIDTH) / 2
+			Y: 332
+			Width: 220
+			Height: 54
+			Font: BigBold
+			Text: button-back
+			Key: escape

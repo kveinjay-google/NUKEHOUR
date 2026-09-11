@@ -248,8 +248,6 @@ namespace OpenRA.Network
 		{
 			public string ServerName;
 			public string Map;
-			public string RuntimeProfile;
-			public string RuntimeContract;
 			public MapStatus MapStatus;
 			public int RandomSeed = 0;
 			public bool AllowSpectators = false;
@@ -279,12 +277,7 @@ namespace OpenRA.Network
 
 			public MiniYamlNode Serialize()
 			{
-				var global = FieldSaver.Save(this);
-				if (RuntimeProfile == null && RuntimeContract == null)
-					global = global.WithNodes(global.Nodes.Where(node =>
-						node.Key != nameof(RuntimeProfile) && node.Key != nameof(RuntimeContract)));
-
-				var data = new MiniYamlNode("GlobalSettings", global);
+				var data = new MiniYamlNode("GlobalSettings", FieldSaver.Save(this));
 				var options = LobbyOptions.Select(kv => new MiniYamlNode(kv.Key, FieldSaver.Save(kv.Value)));
 				data = data.WithValue(data.Value.WithNodesAppended(
 					new[] { new MiniYamlNode("Options", new MiniYaml(null, options)) }));

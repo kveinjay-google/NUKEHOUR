@@ -62,6 +62,8 @@ namespace OpenRA.Mods.Common.FileSystem
 		{
 			if (!isContentAvailable)
 				Game.InitializeMod(ContentInstallerMod, new Arguments());
+			else
+				Game.ClearContentManagerReturnToLauncher();
 
 			return !isContentAvailable;
 		}

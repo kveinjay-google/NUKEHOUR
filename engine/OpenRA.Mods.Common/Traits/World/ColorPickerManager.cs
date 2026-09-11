@@ -184,10 +184,15 @@ namespace OpenRA.Mods.Common.Traits
 
 			var colors = PresetColors.Take(9).ToArray();
 			var grid = Ui.LoadWidget("IOS_SKIRMISH_COLOR_GRID", null, new WidgetArgs());
-			for (var i = 0; i < colors.Length; i++)
+			for (var i = 0; i < 9; i++)
 			{
-				var color = colors[i];
 				var swatch = grid.Get<ColorBlockWidget>($"SWATCH_{i}");
+				var visible = i < colors.Length;
+				swatch.IsVisible = () => visible;
+				if (!visible)
+					continue;
+
+				var color = colors[i];
 				swatch.GetColor = () => color;
 				swatch.Get<ImageWidget>("SELECTED").IsVisible = () => initialColor == color;
 				swatch.OnMouseDown = _ =>

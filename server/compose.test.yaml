@@ -1,0 +1,28 @@
+services:
+  nukehour-server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: nukehour/server:phase2-test
+    ports:
+      - "12340:1234/tcp"
+    environment:
+      Name: NUKE HOUR Phase 2 Container Test
+      ListenAddress: 0.0.0.0
+      ListenPort: "1234"
+      EnableSyncReports: "True"
+      IdleTimeoutSeconds: "900"
+      SupportDir: /data
+    read_only: true
+    tmpfs:
+      - /tmp
+    volumes:
+      - nukehour-test-data:/data
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    restart: "no"
+
+volumes:
+  nukehour-test-data:

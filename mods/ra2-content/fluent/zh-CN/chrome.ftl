@@ -1,3 +1,21 @@
+mod-windowtitle = NUKE HOUR
+
+label-content-panel-title = 管理游戏内容
+label-package-template-required = 必需
+button-package-template-download = 下载
+label-package-template-installed = 已安装
+label-package-template-requires-source = 需要原版光盘
+button-content-panel-check-source = 检测光盘或安装目录
+button-content-panel-choose-source = 选择安装目录…
+button-content-panel-auto-search = 自动搜索
+label-select-install-directory = 请选择《红色警戒 2》正版安装目录
+label-selected-directory-invalid = 所选目录中未找到完整的《红色警戒 2》基础游戏文件。
+label-source-tooltip-description = 可用内容来源：
+button-package-download-panel-retry = 重试
+label-content-prompt-panel-title = 安装游戏内容
+button-content-prompt-panel-advanced = 高级安装
+button-content-prompt-panel-quick = 快速安装
+
 modcontent-installprompt =
     《红色警戒 2》需要原版游戏中的美术和音频资源。
 

@@ -2,9 +2,9 @@ MapFormat: 11
 
 RequiresMod: ra2
 
-Title: NUKE HOUR Training Grounds
+Title: Blank
 
-Author: OpenRA contributors
+Author: Matthias Mailänder
 
 Tileset: TEMPERATE
 
@@ -26,25 +26,8 @@ Players:
 		Name: Creeps
 		NonCombatant: True
 		Faction: Random
-		Enemies: Multi0, Multi1
-	PlayerReference@Multi0:
-		Name: Multi0
-		Playable: True
-		Faction: Random
-		Enemies: Creeps
-	PlayerReference@Multi1:
-		Name: Multi1
-		Playable: True
-		Faction: Random
-		Enemies: Creeps
 
 Actors:
-	Spawn1: mpspawn
-		Location: 30,-10
-		Owner: Neutral
-	Spawn2: mpspawn
-		Location: 155,-45
-		Owner: Neutral
 
 Rules:
 	World:

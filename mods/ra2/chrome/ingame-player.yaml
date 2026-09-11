@@ -109,7 +109,7 @@ Container@PLAYER_WIDGETS:
 									X: (PARENT_WIDTH - 26) / 2
 									Y: 6
 									IgnoreMouseOver: true
-									ImageCollection: ios-commandbar-icons-v2
+									ImageCollection: ios-commandbar-glyphs
 									ImageName: group-1
 								Label@LABEL:
 									Y: 36
@@ -137,7 +137,7 @@ Container@PLAYER_WIDGETS:
 									X: (PARENT_WIDTH - 26) / 2
 									Y: 6
 									IgnoreMouseOver: true
-									ImageCollection: ios-commandbar-icons-v2
+									ImageCollection: ios-commandbar-glyphs
 									ImageName: group-2
 								Label@LABEL:
 									Y: 36
@@ -165,7 +165,7 @@ Container@PLAYER_WIDGETS:
 									X: (PARENT_WIDTH - 26) / 2
 									Y: 6
 									IgnoreMouseOver: true
-									ImageCollection: ios-commandbar-icons-v2
+									ImageCollection: ios-commandbar-glyphs
 									ImageName: group-3
 								Label@LABEL:
 									Y: 36
@@ -193,7 +193,7 @@ Container@PLAYER_WIDGETS:
 									X: (PARENT_WIDTH - 26) / 2
 									Y: 6
 									IgnoreMouseOver: true
-									ImageCollection: ios-commandbar-icons-v2
+									ImageCollection: ios-commandbar-glyphs
 									ImageName: group-4
 								Label@LABEL:
 									Y: 36
@@ -221,7 +221,7 @@ Container@PLAYER_WIDGETS:
 									X: (PARENT_WIDTH - 26) / 2
 									Y: 6
 									IgnoreMouseOver: true
-									ImageCollection: ios-commandbar-icons-v2
+									ImageCollection: ios-commandbar-glyphs
 									ImageName: group-5
 								Label@LABEL:
 									Y: 36
@@ -248,7 +248,7 @@ Container@PLAYER_WIDGETS:
 									X: (PARENT_WIDTH - 26) / 2
 									Y: 6
 									IgnoreMouseOver: true
-									ImageCollection: production-x5-icon
+									ImageCollection: ios-commandbar-glyphs
 									ImageName: production-x5
 								Label@LABEL:
 									Y: 36
@@ -474,7 +474,7 @@ Container@PLAYER_WIDGETS:
 									X: (PARENT_WIDTH - 26) / 2
 									Y: 6
 									IgnoreMouseOver: true
-									ImageCollection: commandbar-icons
+									ImageCollection: ios-commandbar-glyphs
 									ImageName: cycle-base
 								Label@LABEL:
 									Y: 36
@@ -619,7 +619,7 @@ Container@PLAYER_WIDGETS:
 									X: (PARENT_WIDTH - 26) / 2
 									Y: 6
 									IgnoreMouseOver: true
-									ImageCollection: ios-commandbar-icons-v2
+									ImageCollection: ios-commandbar-glyphs
 									ImageName: attack-move
 								Label@LABEL:
 									Y: 36
@@ -765,7 +765,7 @@ Container@PLAYER_WIDGETS:
 									X: (PARENT_WIDTH - 26) / 2
 									Y: 6
 									IgnoreMouseOver: true
-									ImageCollection: ios-commandbar-icons-v2
+									ImageCollection: ios-commandbar-glyphs
 									ImageName: scatter
 								Label@LABEL:
 									Y: 36
@@ -795,7 +795,7 @@ Container@PLAYER_WIDGETS:
 									X: (PARENT_WIDTH - 26) / 2
 									Y: 6
 									IgnoreMouseOver: true
-									ImageCollection: commandbar-icons
+									ImageCollection: ios-commandbar-glyphs
 									ImageName: stop
 								Label@LABEL:
 									Y: 36
@@ -823,7 +823,7 @@ Container@PLAYER_WIDGETS:
 									X: (PARENT_WIDTH - 26) / 2
 									Y: 6
 									IgnoreMouseOver: true
-									ImageCollection: ios-commandbar-icons-v2
+									ImageCollection: ios-commandbar-glyphs
 									ImageName: queue-orders
 								Label@LABEL:
 									Y: 36

@@ -153,7 +153,7 @@ namespace OpenRA.Support
 				SchemaVersion = 1,
 				CreatedUtc = DateTime.UtcNow,
 				Prefix = prefix,
-				Build = Game.ModData?.Manifest.Metadata.Version,
+				Build = Game.ModData?.Manifest.Metadata.DisplayVersionOrVersion,
 				Scenario = ReadScenario(),
 				Summary = PerformanceBenchmarkSummary.Create(performanceSamples),
 				TopCategories = PerformanceCategoryProfiler.Global.SnapshotTop(20),

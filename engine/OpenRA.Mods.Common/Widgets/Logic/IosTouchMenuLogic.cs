@@ -364,7 +364,11 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 			var height = Math.Max(1, panel.Bounds.Height);
 			var layout = IosMultiplayerBrowserLayout.Create(width, height, policy);
 			if (standalone)
+			{
 				SetBounds(panel, "TITLE", layout.Header);
+				SetBounds(panel, "LOCAL_MODE_BUTTON", layout.LocalMode);
+				SetBounds(panel, "ONLINE_MODE_BUTTON", layout.OnlineMode);
+			}
 
 			var table = standalone ? layout.Table : new WidgetBounds(
 				0, 0, layout.Table.Width, Math.Max(0, height - policy.MinimumTarget - policy.Gap));
@@ -450,6 +454,8 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 				SetBounds(panel, "FILTERS_DROPDOWNBUTTON", Offset(layout.Filters, layout.Footer.Y));
 				SetBounds(panel, "RELOAD_BUTTON", Offset(layout.Reload, layout.Footer.Y));
 				SetBounds(panel, "PLAYER_COUNT", Offset(layout.PlayerCount, layout.Footer.Y));
+				SetBounds(panel, "ROOM_CODE_INPUT", Offset(layout.RoomCodeInput, layout.Footer.Y));
+				SetBounds(panel, "ROOM_CODE_BUTTON", Offset(layout.RoomCodeButton, layout.Footer.Y));
 				SetBounds(panel, "DIRECTCONNECT_BUTTON", Offset(layout.DirectConnect, layout.Footer.Y));
 				SetBounds(panel, "CREATE_BUTTON", Offset(layout.CreateButton, layout.Footer.Y));
 				SetBounds(panel, "BACK_BUTTON", Offset(layout.Back, layout.Footer.Y));

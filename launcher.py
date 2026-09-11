@@ -8,6 +8,7 @@
 import glob
 import json
 import os
+import plistlib
 import random
 import re
 import shutil
@@ -17,17 +18,45 @@ import subprocess
 import sys
 import time
 import tkinter as tk
+import webbrowser
 from tkinter import filedialog, messagebox, simpledialog
 
 import ra2_files
 import launcher_i18n as i18n
 
-REPO = os.path.dirname(os.path.abspath(__file__))
+
+def runtime_root(frozen=None, executable=None, meipass=None, source_file=None):
+    """Resolve repository data in source and frozen macOS app layouts."""
+    if frozen is None:
+        frozen = bool(getattr(sys, "frozen", False))
+    if frozen:
+        executable = executable or sys.executable
+        app_resources = os.path.normpath(os.path.join(
+            os.path.dirname(os.path.abspath(executable)), "..", "Resources", "runtime"))
+        if os.path.isdir(app_resources) or executable:
+            return app_resources
+        return os.path.join(meipass or getattr(sys, "_MEIPASS", ""), "runtime")
+    return os.path.dirname(os.path.abspath(source_file or __file__))
+
+
+REPO = runtime_root()
 GAME_SH = os.path.join(REPO, "launch-game.sh")
 BRAND_NAME = "NUKE HOUR"
+BRAND_WEBSITE_URL = "https://nukehour.com"
+STARTUP_NOTICE_TITLE = "使用与发行声明"
+STARTUP_NOTICE_COPY = """NUKE HOUR 是完全独立开发、完全免费且开源的软件项目。
+
+EA 未认可且不支持本产品。本项目与 EA、Apple 或 Google 不存在隶属、赞助、授权或支持关系。
+
+本软件不包含任何第三方零售游戏文件。用户必须从自己合法购买并拥有的正版游戏副本中手动导入兼容文件。界面中出现的游戏或软件名称仅用于说明可兼容导入文件的来源，不代表关联、授权、认可或支持。
+
+本软件完全免费开源。从任何地方付费购买本软件都属于受骗上当；请向作者举报销售者，并向销售渠道申请退款。
+
+请只从 NUKE HOUR 官方网站下载官方授权版本。不要从官方网站以外的任何地方下载安装，以防软件被篡改或植入恶意代码。"""
 GAME_APP = os.path.join(REPO, "NUKE HOUR GAME.app")
 GAME_HOST = os.path.join(GAME_APP, "Contents", "MacOS", "NuclearCrisis")
-SETTINGS_FILE = os.path.expanduser("~/Library/Application Support/OpenRA/settings.yaml")
+SETTINGS_FILE = os.path.join(ra2_files.SUPPORT, "settings.yaml")
+LAUNCH_LOG = os.path.join(ra2_files.SUPPORT, "Logs", "launcher-launch.log")
 ASSETS = os.path.join(REPO, "launcher_assets")
 ENGINE = os.path.join(REPO, "engine")
 BRAND_ICON = os.path.join(REPO, "branding", "NUKE-HOUR-1024.png")
@@ -45,6 +74,90 @@ except ImportError:
     HAS_PIL = False
 
 import ai_profiles as aip
+
+
+def bind_runtime_modules(runtime):
+    ra2_files.REPO = os.path.abspath(os.fspath(runtime))
+
+
+bind_runtime_modules(REPO)
+
+
+def _latest_hostfxr(runtime):
+    hostfxr_root = os.path.join(os.fspath(runtime), "dotnet", "host", "fxr")
+    if not os.path.isdir(hostfxr_root):
+        return None
+    for version in sorted(os.listdir(hostfxr_root), reverse=True):
+        candidate = os.path.join(hostfxr_root, version, "libhostfxr.dylib")
+        if os.path.isfile(candidate):
+            return candidate
+    return None
+
+
+def game_command_for_runtime(runtime, args):
+    runtime = os.path.abspath(os.fspath(runtime))
+    game_app = os.path.join(runtime, "NUKE HOUR GAME.app")
+    game_host = os.path.join(game_app, "Contents", "MacOS", "NuclearCrisis")
+    hostfxr_lib = _latest_hostfxr(runtime)
+    dll = os.path.join(runtime, "engine", "bin", "OpenRA.dll")
+    if os.path.isfile(game_host) and hostfxr_lib and os.path.isfile(dll):
+        return [
+            game_host,
+            hostfxr_lib,
+            dll,
+            f"Engine.LaunchPath={game_host}",
+            "Engine.EngineDir=..",
+            f"Engine.ModSearchPaths=./mods,{os.path.join(runtime, 'mods')}",
+            "Game.Mod=ra2",
+            *args,
+        ]
+    return ["bash", os.path.join(runtime, "launch-game.sh"), *args]
+
+
+def initial_page(requested, content_ready):
+    if requested == "content":
+        return "content"
+    return requested if content_ready else "content"
+
+
+def with_content_manager_return_policy(args):
+    """Mark content-manager cancellation as a return to this launcher."""
+    return [*args, "Game.ContentManagerReturnToLauncher=true"]
+
+
+def support_dir_launch_arg():
+    """Return the shared branded support directory for game/server processes."""
+    return f"Engine.SupportDir={ra2_files.SUPPORT}"
+
+
+def startup_page():
+    return "notice"
+
+
+def notice_brand_link_spans(text, brand=BRAND_NAME):
+    """Return every brand-name range that should link to the official website."""
+    spans = []
+    start = 0
+    while True:
+        start = text.find(brand, start)
+        if start < 0:
+            return tuple(spans)
+        end = start + len(brand)
+        spans.append((start, end))
+        start = end
+
+
+def guarded_page(requested, acknowledged):
+    if acknowledged or requested == startup_page():
+        return requested
+    return startup_page()
+
+
+def skirmish_map_menu_state(labels):
+    """Return OptionMenu values and whether direct skirmish can start."""
+    if labels:
+        return list(labels), True
+    return [_tr("尚无可用地图")], False
 
 
 def _tr(text):
@@ -83,7 +196,13 @@ def language_launch_args(preference, system_tag):
 
 
 def default_player_name(effective_language=None):
-    return i18n.translate("指挥官", effective_language)
+    return BRAND_NAME
+
+
+def migrate_legacy_player_name(name):
+    if name in ("", "Commander", "指挥官"):
+        return BRAND_NAME
+    return name
 
 
 def default_room_name(effective_language=None):
@@ -185,6 +304,107 @@ FONT_BIG = ("PingFang SC", 16, "bold")
 WIN_W, WIN_H = 1000, 700
 SIDEBAR_W = 190
 
+
+def launcher_shell_layout(width=WIN_W, height=WIN_H, sidebar_width=SIDEBAR_W):
+    """Return deterministic root-relative rectangles for the launcher shell."""
+    side_padding = 12
+    footer_height = 18
+    footer_bottom = 10
+    footer_y = height - footer_bottom - footer_height
+    control_width = sidebar_width - side_padding * 2
+    language_height = 34
+
+    return {
+        "content": (sidebar_width, 0, width - sidebar_width, height),
+        "language_switcher": (
+            side_padding,
+            footer_y - 8 - language_height,
+            control_width,
+            language_height,
+        ),
+        "footer": (
+            side_padding,
+            footer_y,
+            control_width,
+            footer_height,
+        ),
+        "version_footer": (
+            width - 196,
+            height - 30,
+            180,
+            18,
+        ),
+    }
+
+
+def notice_page_layout(width=WIN_W - SIDEBAR_W, height=WIN_H):
+    """Return fixed notice rectangles that remain above the version footer."""
+    padding = 30
+    actions_height = 48
+    actions_y = height - 90
+    body_y = 123
+    body_bottom = actions_y - 14
+    return {
+        "title": (padding, 28, width - 2 * padding - 72, 47),
+        "subtitle": (padding, 83, width - 2 * padding - 72, 28),
+        "body": (padding, body_y, width - 2 * padding, body_bottom - body_y),
+        "actions": (padding, actions_y, width - 2 * padding, actions_height),
+    }
+
+
+def language_switcher_layout(width, height):
+    """Return the deterministic rectangles for bilingual switcher controls."""
+    arrow_width = 36
+    gap = 4
+    return {
+        "previous": (0, 0, arrow_width, height),
+        "label": (arrow_width + gap, 0, width - 2 * (arrow_width + gap), height),
+        "next": (width - arrow_width, 0, arrow_width, height),
+    }
+
+
+def language_switch_target(effective_language):
+    """Return the other supported language for the visible toggle."""
+    return "en" if str(effective_language).lower().startswith("zh") else "zh-CN"
+
+
+def language_switch_label(effective_language):
+    """Return the bilingual label for the effective launcher language."""
+    return "简体中文" if str(effective_language).lower().startswith("zh") else "English"
+
+
+def launcher_product_version(root=REPO):
+    root = os.path.abspath(os.fspath(root))
+    version = None
+    build = None
+
+    manifest_path = os.path.join(root, "packaging", "nukehour-version.json")
+    try:
+        with open(manifest_path, encoding="utf-8") as stream:
+            manifest = json.load(stream)
+        version = str(manifest.get("version") or "").strip() or None
+        build = int(manifest["build"])
+    except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError):
+        pass
+
+    if version is None or build is None:
+        plist_path = os.path.join(root, "..", "..", "Info.plist")
+        try:
+            with open(plist_path, "rb") as stream:
+                info = plistlib.load(stream)
+            if version is None:
+                version = str(info.get("CFBundleShortVersionString") or "").strip() or None
+            if build is None:
+                build = int(info["CFBundleVersion"])
+        except (OSError, KeyError, TypeError, ValueError, plistlib.InvalidFileException):
+            pass
+
+    return version or "0.0.0", build if build is not None else 0
+
+
+def launcher_version_text(version, build):
+    return f"{BRAND_NAME} {version} (Build {build})"
+
 # ---------------------------------------------------------------- 设置读取
 
 DEFAULTS = {
@@ -202,7 +422,7 @@ DEFAULTS = {
         "UseClassicMouseStyle": "False", "MouseScroll": "Joystick",
         "UseAlternateScrollButton": "False", "ViewportEdgeScroll": "True",
         "ViewportEdgeScrollStep": "30", "ZoomSpeed": "0.04", "ZoomModifier": "None",
-        "UIScrollSpeed": "50", "LockMouseWindow": "False", "FetchNews": "True",
+        "UIScrollSpeed": "50", "LockMouseWindow": "False",
     },
     "Sound": {
         "Mute": "False", "SoundVolume": "0.5", "MusicVolume": "0.5", "VideoVolume": "0.5",
@@ -210,12 +430,36 @@ DEFAULTS = {
     },
     "Server": {"DiscoverNatDevices": "False"},
     "Debug": {
-        "CheckVersion": "True", "SendSystemInformation": "True",
         "PerfGraph": "False", "PerfText": "False", "DisplayDeveloperSettings": "False",
         "BotDebug": "False", "LuaDebug": "False",
         "EnableDebugCommandsInReplays": "False", "EnableSimulationPerfLogging": "False",
     },
 }
+
+RETIRED_LAUNCHER_SETTINGS = {
+    "Game": frozenset({"FetchNews"}),
+    "Debug": frozenset({"CheckVersion", "SendSystemInformation"}),
+}
+
+
+def strip_retired_launcher_settings(lines):
+    """Remove retired background-service keys from their original sections only."""
+    out = []
+    section = None
+    for line in lines:
+        is_section = (
+            bool(line.strip())
+            and not line.startswith((" ", "\t"))
+            and line.rstrip().endswith(":")
+        )
+        if is_section:
+            section = line.rstrip()[:-1].strip()
+        elif section in RETIRED_LAUNCHER_SETTINGS and ":" in line:
+            key, _separator, _value = line.strip().partition(":")
+            if key.strip() in RETIRED_LAUNCHER_SETTINGS[section]:
+                continue
+        out.append(line)
+    return out
 
 
 def persist_language_preference(preference, settings_file=None):
@@ -268,6 +512,8 @@ def persist_language_preference(preference, settings_file=None):
     else:
         lines.insert(next_section, f"\tLanguage: {preference}")
 
+    lines = strip_retired_launcher_settings(lines)
+
     parent = os.path.dirname(path)
     if parent:
         os.makedirs(parent, exist_ok=True)
@@ -300,9 +546,14 @@ def load_settings():
                 stripped = line.strip()
                 if section in data and ":" in stripped:
                     key, _, val = stripped.partition(":")
-                    data[section][key.strip()] = val.strip()
+                    key = key.strip()
+                    if key not in RETIRED_LAUNCHER_SETTINGS.get(section, ()):
+                        data[section][key] = val.strip()
     except OSError:
         pass
+    data["Player"]["Name"] = migrate_legacy_player_name(
+        data["Player"].get("Name") or ""
+    )
     return data
 
 
@@ -710,6 +961,8 @@ def save_user_keys(bindings):
         if not skip_children or top:
             out.append(line)
 
+    out = strip_retired_launcher_settings(out)
+
     if bindings:
         out.append("Keys:")
         for name in sorted(bindings):
@@ -737,6 +990,8 @@ class Launcher(tk.Tk):
         )
         i18n.set_language(self.effective_language)
         self._net_refresh_after_id = None
+        self.startup_notice_acknowledged = False
+        self.post_notice_page = "home"
 
         self.title(f"{BRAND_NAME}{_tr(' · 启动中枢')}")
         self.configure(bg=BG)
@@ -753,16 +1008,31 @@ class Launcher(tk.Tk):
         self._build_sidebar()
 
         self.content = tk.Frame(self, bg=PANEL)
-        self.content.place(x=SIDEBAR_W + 12, y=12, width=WIN_W - SIDEBAR_W - 24, height=WIN_H - 24)
+        content_x, content_y, content_width, content_height = \
+            launcher_shell_layout()["content"]
+        self.content.place(
+            x=content_x,
+            y=content_y,
+            width=content_width,
+            height=content_height,
+        )
 
         self.pages = {}
         self._build_pages()
+        self._build_language_switcher()
+        self._build_version_footer()
         start_page = "home"
         if "-p" in sys.argv:
             idx = sys.argv.index("-p")
-            if idx + 1 < len(sys.argv) and sys.argv[idx + 1] in self.pages:
+            if (idx + 1 < len(sys.argv)
+                    and sys.argv[idx + 1] in self.pages
+                    and sys.argv[idx + 1] != startup_page()):
                 start_page = sys.argv[idx + 1]
-        self.show_page(start_page)
+        self.post_notice_page = initial_page(
+            start_page,
+            ra2_files.content_status()["healthy"],
+        )
+        self.show_page(startup_page())
 
     # ------------------------------------------------------------ 变量
 
@@ -776,13 +1046,14 @@ class Launcher(tk.Tk):
             return var
 
         v("mode", "menu")
-        self.player_name_is_default = not bool(p.get("Name"))
+        self.player_name_is_default = (
+            p.get("Name") == default_player_name(self.effective_language)
+        )
         v("player_name", p.get("Name") or default_player_name(self.effective_language))
         v("player_color", p.get("Color", "C82020").lstrip("#").upper())
         v("video_mode_label", enum_value(localized_options(VIDEO_MODES), gfx.get("Mode")))
         v("window_size", gfx.get("WindowedSize", "1024,768"))
         v("ui_scale_label", enum_value(localized_options(UI_SCALES), gfx.get("UIScale")))
-        v("language_label", enum_value(localized_options(LANGUAGES), self.language_preference))
         v("vsync", gfx.get("VSync"))
         v("cap_game_fps", gfx.get("CapFramerateToGameFps"))
         v("cursor_label", enum_value(localized_options(CURSOR_SIZES), gfx.get("CursorDouble")))
@@ -817,9 +1088,6 @@ class Launcher(tk.Tk):
         v("lock_mouse", g.get("LockMouseWindow"))
 
         v("nat_discovery", srv.get("DiscoverNatDevices"))
-        v("fetch_news", g.get("FetchNews"))
-        v("check_version", dbg.get("CheckVersion"))
-        v("send_sysinfo", dbg.get("SendSystemInformation"))
         v("perf_graph", dbg.get("PerfGraph"))
         v("perf_text", dbg.get("PerfText"))
         v("dev_settings", dbg.get("DisplayDeveloperSettings"))
@@ -834,7 +1102,6 @@ class Launcher(tk.Tk):
         return {
             "video_mode_label": VIDEO_MODES,
             "ui_scale_label": UI_SCALES,
-            "language_label": LANGUAGES,
             "cursor_label": CURSOR_SIZES,
             "gl_label": GL_PROFILES,
             "viewport_label": VIEWPORTS,
@@ -929,7 +1196,7 @@ class Launcher(tk.Tk):
         self.vars["player_name"].set(switch_localized_default(
             state["vars"]["player_name"],
             state["player_name_is_default"],
-            "指挥官",
+            BRAND_NAME,
             state["old_language"],
             self.effective_language,
         ))
@@ -978,12 +1245,17 @@ class Launcher(tk.Tk):
                 entry.insert(0, value)
             self.net_name_is_default = network["name_is_default"]
 
-    def _change_language(self, selected_label):
-        preference = option_value(
-            localized_options(LANGUAGES, self.effective_language),
-            selected_label,
-        )
+    def _toggle_language(self):
+        try:
+            self._change_language_preference(
+                language_switch_target(self.effective_language))
+        except Exception as exc:
+            messagebox.showerror(_tr("操作失败"), str(exc), parent=self)
+
+    def _change_language_preference(self, preference):
         preference = i18n.normalize_preference(preference)
+        if preference == "System":
+            raise ValueError("The visible language switcher requires an explicit language")
         if preference == self.language_preference:
             return
 
@@ -1008,19 +1280,26 @@ class Launcher(tk.Tk):
 
         self.sidebar.destroy()
         self.content.destroy()
+        self.language_switcher.destroy()
         self.title(f"{BRAND_NAME}{_tr(' · 启动中枢')}")
         self._build_sidebar()
         self.content = tk.Frame(self, bg=PANEL)
+        content_x, content_y, content_width, content_height = \
+            launcher_shell_layout()["content"]
         self.content.place(
-            x=SIDEBAR_W + 12,
-            y=12,
-            width=WIN_W - SIDEBAR_W - 24,
-            height=WIN_H - 24,
+            x=content_x,
+            y=content_y,
+            width=content_width,
+            height=content_height,
         )
         self.pages = {}
         self._build_pages()
+        self._build_language_switcher()
+        if state.get("skirmish"):
+            self._ensure_page_built("skirmish")
         self._restore_ui_state(state)
         self.show_page(current_page)
+        self.version_label.lift()
 
     # ------------------------------------------------------------ 背景与侧栏
 
@@ -1036,6 +1315,7 @@ class Launcher(tk.Tk):
             pass
 
     def _build_sidebar(self):
+        layout = launcher_shell_layout()
         bar = tk.Frame(self, bg=BG)
         self.sidebar = bar
         bar.place(x=0, y=0, width=SIDEBAR_W, height=WIN_H)
@@ -1045,7 +1325,15 @@ class Launcher(tk.Tk):
                 img = Image.open(BRAND_ICON).convert("RGB")
                 img = ImageOps.fit(img, (150, 150), method=Image.LANCZOS)
                 self.emblem_photo = ImageTk.PhotoImage(img)
-                tk.Label(bar, image=self.emblem_photo, bg=BG, bd=0).pack(pady=(22, 4))
+                emblem = tk.Label(
+                    bar,
+                    image=self.emblem_photo,
+                    bg=BG,
+                    bd=0,
+                    cursor="hand2",
+                )
+                emblem.pack(pady=(22, 4))
+                emblem.bind("<Button-1>", self._open_brand_website)
             except OSError:
                 pass
 
@@ -1065,38 +1353,89 @@ class Launcher(tk.Tk):
             btn.bind("<Leave>", lambda _e, b=btn, k=key: self._nav_hover(b, k, False))
             self.nav_buttons[key] = btn
 
-        tk.Label(bar, text=f"{BRAND_NAME} · macOS",
-                 font=FONT_SMALL, bg=BG, fg=DIM).pack(side="bottom", pady=14)
+        footer_x, footer_y, footer_width, footer_height = layout["footer"]
+        tk.Label(
+            bar,
+            text=f"{BRAND_NAME} · macOS",
+            font=FONT_SMALL,
+            bg=BG,
+            fg=DIM,
+        ).place(
+            x=footer_x,
+            y=footer_y,
+            width=footer_width,
+            height=footer_height,
+        )
 
-        language = tk.Frame(bar, bg=BG)
-        language.pack(side="bottom", fill="x", padx=12, pady=(0, 4))
-        tk.Label(language, text=_tr("界面语言"), font=FONT_SMALL, bg=BG, fg=DIM,
-                 anchor="w").pack(fill="x", padx=6)
-        labels = [label for label, _value in localized_options(LANGUAGES)]
-        language_menu = tk.OptionMenu(
-            language,
-            self.vars["language_label"],
-            *labels,
-            command=self._change_language,
-        )
-        language_menu.config(
-            font=FONT_SMALL,
-            bg=BTN,
+    def _build_language_switcher(self):
+        layout = launcher_shell_layout()
+        x, y, width, height = layout["language_switcher"]
+        controls = language_switcher_layout(width, height)
+        frame = tk.Frame(self, bg=BG)
+        self.language_switcher = frame
+        frame.place(x=x, y=y, width=width, height=height)
+
+        button_base = self._control_surface(34, height - 2, "#292b33", "#666977")
+        button_hover = self._control_surface(34, height - 2, "#393c46", GOLD)
+        for key, glyph in (("previous", "‹"), ("next", "›")):
+            bx, by, bw, bh = controls[key]
+            button = tk.Button(
+                frame,
+                text=glyph,
+                command=self._toggle_language,
+                image=button_base,
+                compound="center",
+                font=("PingFang SC", 17, "bold"),
+                bg=BG,
+                fg="#f7f7fa",
+                activebackground=BG,
+                activeforeground="white",
+                relief="flat",
+                bd=0,
+                highlightthickness=1,
+                highlightbackground=BG,
+                highlightcolor=GOLD,
+                cursor="hand2",
+                takefocus=True,
+            )
+            button.bind("<Enter>", lambda _event, widget=button: widget.config(image=button_hover))
+            button.bind("<Leave>", lambda _event, widget=button: widget.config(image=button_base))
+            button.place(x=bx, y=by, width=bw, height=bh)
+
+        lx, ly, lw, lh = controls["label"]
+        label_surface = self._control_surface(
+            lw - 2, lh - 2, "#22242b", "#50535f")
+        tk.Label(
+            frame,
+            text=language_switch_label(self.effective_language),
+            image=label_surface,
+            compound="center",
+            font=("PingFang SC", 11, "bold"),
+            bg=BG,
             fg=FG,
-            activebackground=BTN_HOV,
-            activeforeground=FG,
-            highlightthickness=0,
-            bd=0,
-            anchor="w",
-        )
-        language_menu["menu"].config(
-            bg=BTN,
-            fg=FG,
-            activebackground=ACCENT,
-            activeforeground="white",
+            anchor="center",
+        ).place(x=lx, y=ly, width=lw, height=lh)
+        frame.lift()
+
+    def _open_brand_website(self, _event=None):
+        try:
+            if not webbrowser.open_new_tab(BRAND_WEBSITE_URL):
+                raise RuntimeError("Unable to open the default browser")
+        except Exception as exc:
+            messagebox.showerror(_tr("操作失败"), str(exc), parent=self)
+
+    def _build_version_footer(self):
+        x, y, width, height = launcher_shell_layout()["version_footer"]
+        version, build = launcher_product_version()
+        self.version_label = tk.Label(
+            self,
+            text=launcher_version_text(version, build),
             font=FONT_SMALL,
+            bg=PANEL,
+            fg=DIM,
+            anchor="e",
         )
-        language_menu.pack(fill="x")
+        self.version_label.place(x=x, y=y, width=width, height=height)
 
     def _nav_hover(self, btn, key, enter):
         if key == getattr(self, "current_page", None):
@@ -1107,6 +1446,7 @@ class Launcher(tk.Tk):
 
     def _build_pages(self):
         builders = {
+            "notice": (self._page_notice, False),
             "home": (self._page_home, False),
             "display": (self._page_display, True),
             "audio": (self._page_audio, True),
@@ -1123,14 +1463,34 @@ class Launcher(tk.Tk):
             "skirmish": (self._page_skirmish, True),
             "net": (self._page_net, False),
         }
+        self._page_builders = builders
+        self._built_pages = set()
         self.scroll_canvases = {}
-        for key, (build, scrollable) in builders.items():
-            page = tk.Frame(self.content, bg=PANEL)
-            if scrollable:
-                build(self._scrollable(page, key))
-            else:
-                build(page)
-            self.pages[key] = page
+        for key in builders:
+            self.pages[key] = tk.Frame(self.content, bg=PANEL)
+        for key in builders:
+            if key != "skirmish":
+                self._ensure_page_built(key)
+
+    def _ensure_page_built(self, key):
+        if key in self._built_pages:
+            return
+        build, scrollable = self._page_builders[key]
+        page = self.pages[key]
+        if scrollable:
+            build(self._scrollable(page, key))
+        else:
+            build(page)
+        self._built_pages.add(key)
+
+    def _invalidate_page(self, key):
+        if key not in self._built_pages:
+            return
+        page = self.pages[key]
+        for child in page.winfo_children():
+            child.destroy()
+        self.scroll_canvases.pop(key, None)
+        self._built_pages.remove(key)
 
     def _scrollable(self, page, key):
         """在页面内放置可滚动的内容框架，返回内容父容器。"""
@@ -1149,6 +1509,8 @@ class Launcher(tk.Tk):
         return inner
 
     def show_page(self, key):
+        key = guarded_page(key, self.startup_notice_acknowledged)
+        self._ensure_page_built(key)
         self.current_page = key
         for k, page in self.pages.items():
             page.place_forget()
@@ -1223,12 +1585,24 @@ class Launcher(tk.Tk):
         scale.set(int(float(var.get())))
         scale.pack(side="right", padx=8)
 
-    def _button(self, parent, text, command, accent=False, big=False):
+    def _control_surface(self, width, height, fill, border):
+        """Create an image-backed surface that Aqua cannot recolor."""
+        surface = tk.PhotoImage(master=self, width=width, height=height)
+        surface.put(border, to=(0, 0, width, height))
+        surface.put(fill, to=(2, 2, width - 2, height - 2))
+        self._images.append(surface)
+        return surface
+
+    def _button(self, parent, text, command, accent=False, big=False, enabled=True):
         btn = tk.Label(parent, text=_tr(text), font=FONT_BIG if big else FONT_BTN,
-                       bg=ACCENT if accent else BTN, fg="white",
-                       padx=22, pady=12 if big else 8, cursor="hand2")
+                       bg=ACCENT if accent and enabled else BTN,
+                       fg="white" if enabled else DIM,
+                       padx=22, pady=12 if big else 8,
+                       cursor="hand2" if enabled else "arrow")
         base = ACCENT if accent else BTN
         hover = ACCENT_HOV if accent else BTN_HOV
+        if not enabled:
+            return btn
         btn.bind("<Enter>", lambda _e: btn.config(bg=hover))
         btn.bind("<Leave>", lambda _e: btn.config(bg=base))
         def _run(_e=None):
@@ -1240,7 +1614,113 @@ class Launcher(tk.Tk):
         btn.bind("<Button-1>", _run)
         return btn
 
-    # ------------------------------------------------------------ 页面：开始
+    def _native_button(self, parent, text, command, accent=False):
+        """Create an accessible native button for first-run critical actions."""
+        base = ACCENT if accent else "#343640"
+        hover = ACCENT_HOV if accent else "#464955"
+        border = "#e86a60" if accent else "#676a77"
+        hover_border = "#ff9a90" if accent else GOLD
+        base_image = self._control_surface(148, 42, base, border)
+        hover_image = self._control_surface(148, 42, hover, hover_border)
+
+        def _run():
+            try:
+                command()
+            except Exception as exc:
+                messagebox.showerror(_tr("操作失败"), str(exc), parent=self)
+
+        btn = tk.Button(
+            parent,
+            text=_tr(text),
+            command=_run,
+            image=base_image,
+            compound="center",
+            font=("PingFang SC", 12, "bold"),
+            bg=PANEL,
+            fg="#f7f7fa",
+            activebackground=PANEL,
+            activeforeground="white",
+            relief="flat",
+            bd=0,
+            highlightthickness=2,
+            highlightbackground=PANEL,
+            highlightcolor=GOLD,
+            padx=0,
+            pady=0,
+            cursor="hand2",
+            takefocus=True,
+        )
+        btn.bind("<Enter>", lambda _e: btn.config(image=hover_image))
+        btn.bind("<Leave>", lambda _e: btn.config(image=base_image))
+        return btn
+
+    # ------------------------------------------------------------ 页面：声明 / 开始
+
+    def _page_notice(self, page):
+        layout = notice_page_layout()
+        title_x, title_y, title_width, title_height = layout["title"]
+        tk.Label(
+            page,
+            text=_tr(STARTUP_NOTICE_TITLE),
+            font=("PingFang SC", 22, "bold"),
+            bg=PANEL,
+            fg=FG,
+            anchor="w",
+        ).place(x=title_x, y=title_y, width=title_width, height=title_height)
+
+        subtitle_x, subtitle_y, subtitle_width, subtitle_height = layout["subtitle"]
+        tk.Label(
+            page,
+            text=_tr("请在继续前阅读以下重要信息"),
+            font=FONT_LABEL,
+            bg=PANEL,
+            fg=GOLD,
+            anchor="w",
+        ).place(
+            x=subtitle_x,
+            y=subtitle_y,
+            width=subtitle_width,
+            height=subtitle_height,
+        )
+
+        actions = tk.Frame(page, bg=PANEL)
+        actions_x, actions_y, actions_width, actions_height = layout["actions"]
+        actions.place(
+            x=actions_x,
+            y=actions_y,
+            width=actions_width,
+            height=actions_height,
+        )
+        self._native_button(actions, "官方网站", self._open_brand_website).pack(side="left")
+        self._native_button(actions, "同意并继续", self._accept_startup_notice,
+                            accent=True).pack(side="right")
+
+        notice_body = tk.Frame(page, bg=CARD, highlightbackground=CARD_EDGE,
+                               highlightthickness=1)
+        body_x, body_y, body_width, body_height = layout["body"]
+        notice_body.place(x=body_x, y=body_y, width=body_width, height=body_height)
+        scrollbar = tk.Scrollbar(notice_body, orient="vertical")
+        copy = tk.Text(notice_body, wrap="word", font=FONT_LABEL, bg=CARD, fg=FG,
+                       bd=0, highlightthickness=0, padx=18, pady=16,
+                       yscrollcommand=scrollbar.set, cursor="arrow")
+        scrollbar.config(command=copy.yview)
+        scrollbar.pack(side="right", fill="y")
+        copy.pack(side="left", fill="both", expand=True)
+        localized_notice = _tr(STARTUP_NOTICE_COPY)
+        copy.insert("1.0", localized_notice)
+        for start, end in notice_brand_link_spans(localized_notice):
+            copy.tag_add("brand_website_link", f"1.0+{start}c", f"1.0+{end}c")
+        copy.tag_configure("brand_website_link", foreground=GOLD, underline=True)
+        copy.tag_bind("brand_website_link", "<Enter>",
+                      lambda _e: copy.config(cursor="hand2"))
+        copy.tag_bind("brand_website_link", "<Leave>",
+                      lambda _e: copy.config(cursor="arrow"))
+        copy.tag_bind("brand_website_link", "<Button-1>", self._open_brand_website)
+        copy.config(state="disabled")
+
+    def _accept_startup_notice(self):
+        self.startup_notice_acknowledged = True
+        self.show_page(self.post_notice_page)
 
     def _page_home(self, page):
         tk.Label(page, text=_tr("开始游戏"), font=("PingFang SC", 22, "bold"),
@@ -1263,8 +1743,6 @@ class Launcher(tk.Tk):
                  font=FONT_SMALL, bg=PANEL, fg=DIM).pack(anchor="w", padx=24, pady=(2, 0))
         self.home_status = tk.Label(page, text="", font=FONT_SMALL, bg=PANEL, fg=GOLD)
         self.home_status.pack(anchor="w", padx=24, pady=(10, 0))
-        tk.Label(page, text=f"{BRAND_NAME} {self._engine_version()} · RA2",
-                 font=FONT_SMALL, bg=PANEL, fg=DIM).pack(side="bottom", anchor="w", padx=24, pady=16)
 
     def _goto_saves(self):
         self._saves_refresh()
@@ -1751,13 +2229,6 @@ class Launcher(tk.Tk):
                     "联机开房时自动在路由器上打开端口")
         tk.Frame(net, bg=CARD, height=6).pack()
 
-        online = self._card(page, "在线服务")
-        self._check(online, "获取社区新闻", "fetch_news")
-        self._check(online, "自动检查新版本", "check_version")
-        self._check(online, "发送匿名系统信息", "send_sysinfo",
-                    "帮助开发者了解硬件与系统环境，不含个人隐私")
-        tk.Frame(online, bg=CARD, height=6).pack()
-
         perf = self._card(page, "性能调试")
         self._check(perf, "显示性能图表", "perf_graph")
         self._check(perf, "显示性能文本", "perf_text")
@@ -1850,8 +2321,11 @@ class Launcher(tk.Tk):
     def _toolbar(self, page, buttons):
         bar = tk.Frame(page, bg=PANEL)
         bar.pack(fill="x", padx=18, pady=6)
-        for i, (text, cmd) in enumerate(buttons):
-            self._button(bar, text, cmd).pack(side="left", padx=(0 if i == 0 else 6, 0))
+        for i, button in enumerate(buttons):
+            text, cmd = button[:2]
+            enabled = button[2] if len(button) > 2 else True
+            self._button(bar, text, cmd, enabled=enabled).pack(
+                side="left", padx=(0 if i == 0 else 6, 0))
         return bar
 
     def _empty_hint(self, parent, text):
@@ -2040,6 +2514,7 @@ class Launcher(tk.Tk):
             return
         try:
             dst = ra2_files.import_map(src)
+            self._invalidate_page("skirmish")
             messagebox.showinfo(
                 _tr("导入成功"),
                 _trf("已导入到：\n{dst}\n\n重启游戏后即可在地图列表中使用。", dst=dst),
@@ -2052,8 +2527,10 @@ class Launcher(tk.Tk):
 
     def _page_content(self, page):
         self._sub_header(page, "内容管理",
-                         "游戏内容资产（原版 MIX 封包）的安装状态；核心文件缺失时游戏将无法启动")
-        self._toolbar(page, [("刷新", self._content_refresh),
+                         "从你合法持有的游戏目录、光盘或 MIX 文件离线导入；文件不会上传")
+        self._toolbar(page, [("导入游戏目录…", self._import_retail_folder),
+                             ("选择 MIX / 地图…", self._import_retail_files),
+                             ("刷新", self._content_refresh),
                              ("打开内容目录", lambda: ra2_files.open_dir(ra2_files.content_dir()))])
         self.content_box = tk.Frame(page, bg=PANEL)
         self.content_box.pack(fill="both", expand=True)
@@ -2078,6 +2555,15 @@ class Launcher(tk.Tk):
             directory=st["dir"], count=st["count"], total_size=st["total_size"]),
                  font=FONT_SMALL, bg=CARD, fg=DIM, anchor="w",
                  justify="left").pack(fill="x", padx=12, pady=(2, 8))
+        capabilities = st.get("capabilities", {})
+        capability_text = " · ".join((
+            _tr("基础游戏") + (" ✓" if capabilities.get("base_game") else " —"),
+            _tr("音乐") + (" ✓" if capabilities.get("music") else " —"),
+            _tr("尤里的复仇") + (" ✓" if capabilities.get("yuris_revenge") else " —"),
+            _tr("地图") + (" ✓" if capabilities.get("maps") else " —"),
+        ))
+        tk.Label(card, text=capability_text, font=FONT_SMALL, bg=CARD, fg=GOLD,
+                 anchor="w").pack(fill="x", padx=12, pady=(0, 8))
         for f in st["files"]:
             row = tk.Frame(self.content_box, bg=CARD, highlightbackground=CARD_EDGE,
                            highlightthickness=1)
@@ -2086,6 +2572,43 @@ class Launcher(tk.Tk):
                      anchor="w").pack(side="left", padx=12, pady=6)
             tk.Label(row, text=f["size"], font=FONT_LABEL, bg=CARD, fg=GOLD,
                      anchor="e").pack(side="right", padx=12)
+
+    def _import_retail_folder(self):
+        source = filedialog.askdirectory(title=_tr("选择游戏目录或已挂载光盘"))
+        if source:
+            self._import_retail_sources([source])
+
+    def _import_retail_files(self):
+        sources = filedialog.askopenfilenames(
+            title=_tr("选择零售内容文件"),
+            filetypes=[
+                (_tr("零售内容与地图"), "*.mix *.bag *.idx *.map *.mpr *.yrm *.oramap"),
+                (_tr("所有文件"), "*"),
+            ],
+        )
+        if sources:
+            self._import_retail_sources(sources)
+
+    def _import_retail_sources(self, sources):
+        try:
+            status = ra2_files.import_retail_content(sources)
+        except (OSError, ra2_files.RetailImportError) as exc:
+            messagebox.showerror(_tr("导入失败"), str(exc), parent=self)
+            return
+        self._content_refresh()
+        self._invalidate_page("skirmish")
+        if status["healthy"]:
+            messagebox.showinfo(
+                _tr("导入成功"),
+                _tr("基础内容已就绪，现在可以开始游戏。"),
+                parent=self,
+            )
+        else:
+            messagebox.showwarning(
+                _tr("仍缺少核心文件"),
+                _trf("还需要：{files}", files="、".join(status["missing_core"])),
+                parent=self,
+            )
 
     # ---- 制作名单 ----
 
@@ -2108,10 +2631,15 @@ class Launcher(tk.Tk):
     def _page_skirmish(self, page):
         self._sub_header(page, "遭遇战开局",
                          "选好地图、规则与电脑对手后直接开局，跳过游戏内大厅；AI 人格来自「AI 配置」页")
-        self._toolbar(page, [("开始游戏", self._skirmish_start)])
 
         self.sk_maps = [m for m in ra2_files.list_maps()[0] if m["ok"]] + \
                        [m for m in ra2_files.list_maps()[1] if m["ok"]]
+        labels = [self._sk_map_label(m) for m in self.sk_maps]
+        menu_values, self.skirmish_ready = skirmish_map_menu_state(labels)
+        self._toolbar(
+            page,
+            [("开始游戏", self._skirmish_start, self.skirmish_ready)],
+        )
         saved = self._sk_load()
 
         self.sk_map_var = tk.StringVar(value="")
@@ -2129,7 +2657,6 @@ class Launcher(tk.Tk):
 
         rules = self._card(page, "战场与规则")
         row = self._row(rules, "选择地图")
-        labels = [self._sk_map_label(m) for m in self.sk_maps]
         saved_map = saved.get("map")
         selected_map = next(
             (
@@ -2137,16 +2664,29 @@ class Launcher(tk.Tk):
                 for item in self.sk_maps
                 if self._saved_map_matches(item, saved_map)
             ),
-            labels[0] if labels else "",
+            menu_values[0],
         )
         self.sk_map_var.set(selected_map)
-        om = tk.OptionMenu(row, self.sk_map_var, *labels,
+        om = tk.OptionMenu(row, self.sk_map_var, menu_values[0], *menu_values[1:],
                            command=lambda _v: self._sk_clamp())
         om.config(font=FONT_LABEL, bg=BTN, fg=FG, activebackground=BTN_HOV,
                   activeforeground=FG, highlightthickness=0, bd=0, width=30, anchor="w")
         om["menu"].config(bg=BTN, fg=FG, activebackground=ACCENT,
                           activeforeground="white", font=FONT_LABEL)
+        if not self.skirmish_ready:
+            om.config(state="disabled", disabledforeground=DIM)
         om.pack(side="left", padx=4)
+        if not self.skirmish_ready:
+            tk.Label(
+                rules,
+                text=_tr("当前没有可用地图。请先在“地图管理”或“内容管理”中导入合法地图。"),
+                font=FONT_SMALL,
+                bg=CARD,
+                fg=DIM,
+                wraplength=500,
+                justify="left",
+                anchor="w",
+            ).pack(fill="x", padx=14, pady=(2, 6))
         row = self._row(rules, "初始资金")
         self._combo(row, self.sk_cash_var, SKIRMISH_CASH)
         row = self._row(rules, "游戏速度")
@@ -2188,7 +2728,14 @@ class Launcher(tk.Tk):
 
         bar = tk.Frame(page, bg=PANEL)
         bar.pack(fill="x", pady=12)
-        self._button(bar, "开 始 游 戏", self._skirmish_start, accent=True, big=True).pack()
+        self._button(
+            bar,
+            "开 始 游 戏",
+            self._skirmish_start,
+            accent=True,
+            big=True,
+            enabled=self.skirmish_ready,
+        ).pack()
 
     def _sk_profiles_options(self):
         try:
@@ -2458,9 +3005,9 @@ class Launcher(tk.Tk):
         env["MOD_SEARCH_PATHS"] = MAC_MOD_SEARCH_PATHS
         args = [dotnet, "bin/OpenRA.Server.dll", "Engine.EngineDir=..", "Game.Mod=ra2",
                 f"Server.Name={name}", f"Server.ListenPort={port}",
-                "Server.AdvertiseOnline=False", "Server.RequireAuthentication=False",
+				"Server.RequireAuthentication=False",
                 "Server.EnableSingleplayer=True", "Server.EnableLintChecks=False",
-                f"Engine.SupportDir={ra2_files.SUPPORT}"]
+                support_dir_launch_arg()]
         try:
             with open(SERVER_LOG, "ab") as log:
                 proc = subprocess.Popen(args, cwd=ENGINE, env=env,
@@ -2550,7 +3097,12 @@ class Launcher(tk.Tk):
             filters.append("Transients")
         filter_str = ",".join(filters) if filters else "None"
 
-        name = get("player_name") or default_player_name(self.effective_language)
+        player_name = get("player_name")
+        name = (
+            migrate_legacy_player_name(player_name)
+            if player_name
+            else default_player_name(self.effective_language)
+        )
 
         size = get("window_size")
         parts = size.replace("x", ",").replace("X", ",").split(",")
@@ -2564,6 +3116,7 @@ class Launcher(tk.Tk):
             ui_scale = self._auto_ui_scale()
 
         args = [
+            support_dir_launch_arg(),
             f"Player.Name={name}",
             f"Player.Color={get('player_color')}",
             *language_launch_args(self.language_preference, self.system_language_tag),
@@ -2606,9 +3159,6 @@ class Launcher(tk.Tk):
             f"Game.ZoomModifier={option_value(localized_options(ZOOM_MODIFIERS), get('zoom_modifier_label'))}",
             f"Game.LockMouseWindow={get('lock_mouse')}",
             f"Server.DiscoverNatDevices={get('nat_discovery')}",
-            f"Game.FetchNews={get('fetch_news')}",
-            f"Debug.CheckVersion={get('check_version')}",
-            f"Debug.SendSystemInformation={get('send_sysinfo')}",
             f"Debug.PerfGraph={get('perf_graph')}",
             f"Debug.PerfText={get('perf_text')}",
         ]
@@ -2616,7 +3166,7 @@ class Launcher(tk.Tk):
         mode = launch_into if launch_into else get("mode")
         if mode and mode != "menu":
             args.append(f"Game.LaunchInto={mode}")
-        return args
+        return with_content_manager_return_policy(args)
 
     def game_pids(self):
         """Return PIDs of a running RA2 game (apphost or legacy dotnet launch)."""
@@ -2653,6 +3203,17 @@ class Launcher(tk.Tk):
                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     def launch(self, launch_into):
+        readiness = ra2_files.content_status()
+        if not readiness["healthy"]:
+            missing = "、".join(readiness["missing_core"])
+            self._set_launch_status(_trf("缺少核心文件：{files}", files=missing), error=True)
+            self.show_page("content")
+            messagebox.showwarning(
+                _tr("需要导入游戏内容"),
+                _trf("请先导入你合法持有的游戏文件：{files}", files=missing),
+                parent=self,
+            )
+            return
         try:
             self._launch_impl(launch_into)
         except Exception as exc:
@@ -2662,6 +3223,10 @@ class Launcher(tk.Tk):
 
     def _game_command(self, args):
         """Prefer the branded macOS apphost so Dock shows the game icon, not dotnet."""
+        embedded = game_command_for_runtime(REPO, args)
+        if embedded[0] != "bash":
+            return embedded
+
         hostfxr_lib = None
         hostfxr = "/usr/local/share/dotnet/host/fxr"
         if os.path.isdir(hostfxr):
@@ -2672,17 +3237,10 @@ class Launcher(tk.Tk):
                     break
         if os.path.isfile(GAME_HOST) and hostfxr_lib:
             dll = os.path.join(REPO, "engine", "bin", "OpenRA.dll")
-            return [
-                GAME_HOST,
-                hostfxr_lib,
-                dll,
-                f"Engine.LaunchPath={GAME_HOST}",
-                "Engine.EngineDir=..",
-                f"Engine.ModSearchPaths={MAC_MOD_SEARCH_PATHS}",
-                "Game.Mod=ra2",
-                *args,
-            ]
-        return ["bash", GAME_SH, *args]
+            return [GAME_HOST, hostfxr_lib, dll, f"Engine.LaunchPath={GAME_HOST}",
+                    "Engine.EngineDir=..", f"Engine.ModSearchPaths={MAC_MOD_SEARCH_PATHS}",
+                    "Game.Mod=ra2", *args]
+        return embedded
 
     def _launch_impl(self, launch_into):
         pids = self.game_pids()
@@ -2716,7 +3274,9 @@ class Launcher(tk.Tk):
         env.setdefault("DOTNET_ROLL_FORWARD", "Major")
         # GUI-launched apps inherit a minimal PATH; ensure the official .NET
         # install and Homebrew are visible to launch-game.sh.
+        embedded_dotnet_root = os.path.join(REPO, "dotnet")
         path_parts = [
+            embedded_dotnet_root,
             "/usr/local/share/dotnet",
             "/opt/homebrew/bin",
             "/usr/local/bin",
@@ -2727,8 +3287,14 @@ class Launcher(tk.Tk):
         ]
         existing = env.get("PATH", "")
         env["PATH"] = ":".join(path_parts + ([existing] if existing else []))
-        env.setdefault("DOTNET_ROOT", "/usr/local/share/dotnet")
-        if not any(os.path.exists(os.path.join(p, "dotnet")) for p in path_parts):
+        if os.path.isfile(os.path.join(embedded_dotnet_root, "dotnet")):
+            env["DOTNET_ROOT"] = embedded_dotnet_root
+        else:
+            env.setdefault("DOTNET_ROOT", "/usr/local/share/dotnet")
+        cmd = self._game_command(args)
+        has_embedded_host = cmd[0] != "bash"
+        if not has_embedded_host and not any(
+                os.path.exists(os.path.join(p, "dotnet")) for p in path_parts):
             messagebox.showerror(
                 _tr("缺少 .NET"),
                 _tr("未找到 dotnet。请安装 .NET 6/8 Runtime 后重试。\n"
@@ -2736,29 +3302,42 @@ class Launcher(tk.Tk):
                 parent=self)
             self._set_launch_status(_tr("启动失败：未找到 dotnet"), error=True)
             return
-        log_dir = os.path.expanduser("~/Library/Application Support/OpenRA/Logs")
+        log_dir = os.path.dirname(LAUNCH_LOG)
         os.makedirs(log_dir, exist_ok=True)
-        log_path = os.path.join(log_dir, "launcher-launch.log")
+        log_path = LAUNCH_LOG
         self._set_launch_status(_tr("正在启动游戏…"))
         self.update_idletasks()
         try:
             with open(log_path, "w", encoding="utf-8") as logf:
-                cmd = self._game_command(args)
                 logf.write("argv: " + " ".join(cmd) + "\n\n")
                 logf.write("PATH=" + env["PATH"] + "\n\n")
                 logf.flush()
                 # cwd=engine so Engine.EngineDir=.. and ./mods resolve like launch-game.sh
-                cwd = os.path.join(REPO, "engine") if cmd[0] == GAME_HOST else REPO
-                subprocess.Popen(cmd, cwd=cwd,
-                                 stdout=logf, stderr=subprocess.STDOUT,
-                                 start_new_session=True, env=env)
+                cwd = os.path.join(REPO, "engine") if cmd[0] != "bash" else REPO
+                self._game_process = subprocess.Popen(
+                    cmd, cwd=cwd, stdout=logf, stderr=subprocess.STDOUT,
+                    start_new_session=True, env=env)
         except OSError as exc:
             self._set_launch_status(_trf("启动失败：{exc}", exc=exc), error=True)
             messagebox.showerror(_tr("启动失败"), str(exc), parent=self)
             return
 
-        self._set_launch_status(_tr("游戏已启动，窗口即将关闭…"))
-        self.after(800, self.destroy)
+        self._set_launch_status(_tr("游戏已启动"))
+        self.withdraw()
+        self.after(500, self._watch_game_process)
+
+    def _watch_game_process(self):
+        process = getattr(self, "_game_process", None)
+        if process is not None and process.poll() is None:
+            self.after(500, self._watch_game_process)
+            return
+
+        self._game_process = None
+        self.deiconify()
+        self.lift()
+        self.focus_force()
+        self.show_page("home")
+        self._set_launch_status(_tr("已返回启动器"))
 
 
 def main():
@@ -2768,7 +3347,16 @@ def main():
             _trf("未找到游戏启动脚本：\n{game_sh}", game_sh=GAME_SH),
         )
         sys.exit(1)
+    try:
+        ra2_files.migrate_legacy_support()
+    except (OSError, ValueError) as exc:
+        messagebox.showerror(
+            _tr("操作失败"),
+            f"Unable to migrate NUKE HOUR user data:\n{exc}",
+        )
+        return 2
     Launcher().mainloop()
+    return 0
 
 
 if __name__ == "__main__":

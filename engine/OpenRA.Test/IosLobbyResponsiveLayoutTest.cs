@@ -1768,13 +1768,13 @@ namespace OpenRA.Test
 		}
 
 		static void ApplyIosPlayerRowLayout(
-			Widget row, IosLobbyLayout layout, IosMenuLayoutPolicy policy)
+			Widget row, IosLobbyLayout layout, IosMenuLayoutPolicy policy, bool isSkirmish = false)
 		{
 			var method = typeof(LobbyLogic).GetMethod(
 				"LayoutIosPlayerRow", BindingFlags.Static | BindingFlags.NonPublic);
 			Assert.That(method, Is.Not.Null,
 				"The live lobby row must share the tested iOS status-cell layout.");
-			method!.Invoke(null, new object[] { row, layout, policy });
+			method!.Invoke(null, new object[] { row, layout, policy, isSkirmish });
 		}
 
 		static TestCaseData Device(

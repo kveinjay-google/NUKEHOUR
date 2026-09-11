@@ -17,16 +17,6 @@ using OpenRA.Primitives;
 
 namespace OpenRA.Network
 {
-	public enum GameServerCompatibilityReason
-	{
-		Compatible = 0,
-		ModOrVersionMismatch = 1,
-		RuntimeIdentityMissing = 2,
-		RuntimeIdentityMalformed = 3,
-		RuntimeProfileMismatch = 4,
-		RuntimeContractMismatch = 5,
-	}
-
 	public class GameClient
 	{
 		public readonly string Name;
@@ -63,8 +53,7 @@ namespace OpenRA.Network
 			"Name", "Address",
 
 			// Mod information
-			"Mod", "Version", "RuntimeProfile", "RuntimeContract",
-			"ModTitle", "ModWebsite", "ModIcon32",
+			"Mod", "Version", "ModTitle", "ModWebsite", "ModIcon32",
 
 			// Current server state
 			"Map", "State", "MaxPlayers", "Protected", "Authentication", "DisabledSpawnPoints"
@@ -98,12 +87,6 @@ namespace OpenRA.Network
 
 		/// <summary>Mod Version.</summary>
 		public readonly string Version = "";
-
-		/// <summary>Optional fixed runtime profile advertised by profiled builds.</summary>
-		public readonly string RuntimeProfile = null;
-
-		/// <summary>Optional runtime contract digest advertised by profiled builds.</summary>
-		public readonly string RuntimeContract = null;
 
 		/// <summary>Human-readable mod title.</summary>
 		public readonly string ModTitle = "";
@@ -145,14 +128,19 @@ namespace OpenRA.Network
 		[FieldLoader.Ignore]
 		public readonly bool IsCompatible = false;
 
-		/// <summary>Closed reason why this server cannot be joined from the active runtime.</summary>
-		[FieldLoader.Ignore]
-		public readonly GameServerCompatibilityReason CompatibilityReason =
-			GameServerCompatibilityReason.Compatible;
-
 		/// <summary>Can we join this server (after switching mods if required)? Only defined if GameServer is parsed from yaml.</summary>
 		[FieldLoader.Ignore]
 		public readonly bool IsJoinable = false;
+
+		/// <summary>Validated public metadata for rooms obtained from the NUKE HOUR Online Lobby.</summary>
+		[FieldLoader.Ignore]
+		public readonly OnlineRoom OnlineRoom = null;
+
+		[FieldLoader.Ignore]
+		public readonly OnlineRoomCompatibilityReason OnlineCompatibilityReason = OnlineRoomCompatibilityReason.Compatible;
+
+		public bool IsOnlineRoom => OnlineRoom != null;
+		public string RoomCode => OnlineRoom?.RoomCode;
 
 		[FieldLoader.LoadUsing(nameof(LoadClients))]
 		public readonly GameClient[] Clients;
@@ -170,40 +158,6 @@ namespace OpenRA.Network
 			return externalRegistrationAvailable ||
 				(string.Equals(advertisedMod, activeMod, StringComparison.Ordinal) &&
 					string.Equals(advertisedVersion, activeVersion, StringComparison.Ordinal));
-		}
-
-		public static GameServerCompatibilityReason AdvertisedCompatibility(
-			string advertisedMod,
-			string advertisedVersion,
-			string advertisedRuntimeProfile,
-			string advertisedRuntimeContract,
-			string activeMod,
-			string activeVersion,
-			RuntimeContractIdentity activeRuntimeContract,
-			bool externalRegistrationAvailable)
-		{
-			var exactMod = string.Equals(advertisedMod, activeMod, StringComparison.Ordinal) &&
-				string.Equals(advertisedVersion, activeVersion, StringComparison.Ordinal);
-			if (!exactMod)
-				return externalRegistrationAvailable
-					? GameServerCompatibilityReason.Compatible
-					: GameServerCompatibilityReason.ModOrVersionMismatch;
-
-			return RuntimeContractHandshake.Compare(
-				activeRuntimeContract, advertisedRuntimeProfile, advertisedRuntimeContract) switch
-			{
-				RuntimeContractCompatibilityReason.Compatible =>
-					GameServerCompatibilityReason.Compatible,
-				RuntimeContractCompatibilityReason.MissingIdentity =>
-					GameServerCompatibilityReason.RuntimeIdentityMissing,
-				RuntimeContractCompatibilityReason.MalformedIdentity =>
-					GameServerCompatibilityReason.RuntimeIdentityMalformed,
-				RuntimeContractCompatibilityReason.ProfileMismatch =>
-					GameServerCompatibilityReason.RuntimeProfileMismatch,
-				RuntimeContractCompatibilityReason.ContractMismatch =>
-					GameServerCompatibilityReason.RuntimeContractMismatch,
-				_ => GameServerCompatibilityReason.RuntimeIdentityMalformed,
-			};
 		}
 
 		static object LoadClients(MiniYaml yaml)
@@ -245,12 +199,10 @@ namespace OpenRA.Network
 			var hasCompatibleExternalRegistration =
 				Game.ExternalMods.TryGetValue(externalKey, out var external) && external.Version == Version;
 			var activeManifest = Game.ModData.Manifest;
-			CompatibilityReason = AdvertisedCompatibility(
-				Mod, Version, RuntimeProfile, RuntimeContract,
-				activeManifest.Id, activeManifest.Metadata.Version,
-				Game.ModData.RuntimeContract,
+			IsCompatible = IsAdvertisedModCompatible(
+				Mod, Version,
+				activeManifest.Id, activeManifest.Metadata.CompatibilityOrVersion,
 				hasCompatibleExternalRegistration);
-			IsCompatible = CompatibilityReason == GameServerCompatibilityReason.Compatible;
 
 			// Games advertised using the old API used local mod metadata
 			if (string.IsNullOrEmpty(ModTitle))
@@ -285,6 +237,30 @@ namespace OpenRA.Network
 			IsJoinable = IsCompatible && State == 1 && mapAvailable;
 		}
 
+		public GameServer(OnlineRoom room, OnlineRoomCompatibilityIdentity localIdentity)
+		{
+			ArgumentNullException.ThrowIfNull(room);
+			ArgumentNullException.ThrowIfNull(localIdentity);
+			OnlineRoom = room;
+			OnlineCompatibilityReason = OnlineRoomCompatibility.Precheck(room, localIdentity);
+			Name = room.ServerName;
+			Address = room.Endpoint;
+			Port = room.ServerPort;
+			State = room.Status == "WAITING" ? 1 : 2;
+			MaxPlayers = room.MaxPlayers;
+			Map = room.Map;
+			Mod = room.Mod;
+			Version = room.ModVersion;
+			ModTitle = room.Mod;
+			Location = room.Region;
+			Protected = room.HasPassword;
+			Players = room.Players;
+			Clients = Array.Empty<GameClient>();
+			IsCompatible = OnlineCompatibilityReason == OnlineRoomCompatibilityReason.Compatible;
+			var mapAvailable = Game.Settings.Game.AllowDownloading || Game.ModData.MapCache[Map].Status == MapStatus.Available;
+			IsJoinable = IsCompatible && room.IsJoinable && mapAvailable;
+		}
+
 		public GameServer(Server.Server server)
 		{
 			var manifest = server.ModData.Manifest;
@@ -297,9 +273,7 @@ namespace OpenRA.Network
 			MaxPlayers = server.LobbyInfo.Slots.Count(s => !s.Value.Closed) - server.LobbyInfo.Clients.Count(c1 => c1.Bot != null);
 			Map = server.Map.Uid;
 			Mod = manifest.Id;
-			Version = manifest.Metadata.Version;
-			RuntimeContractHandshake.GetFields(
-				server.ModData.RuntimeContract, out RuntimeProfile, out RuntimeContract);
+			Version = manifest.Metadata.CompatibilityOrVersion;
 			ModTitle = manifest.Metadata.TitleTranslated;
 			ModWebsite = manifest.Metadata.Website;
 			ModIcon32 = manifest.Metadata.WebIcon32;
@@ -313,13 +287,7 @@ namespace OpenRA.Network
 		{
 			var root = new List<MiniYamlNode>() { new("Protocol", ProtocolVersion.ToStringInvariant()) };
 			foreach (var field in SerializeFields)
-			{
-				if (RuntimeProfile == null && RuntimeContract == null &&
-					(field == nameof(RuntimeProfile) || field == nameof(RuntimeContract)))
-					continue;
-
 				root.Add(FieldSaver.SaveField(this, field));
-			}
 
 			if (lanGame)
 			{

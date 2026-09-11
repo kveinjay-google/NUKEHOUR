@@ -9,7 +9,6 @@ import plistlib
 import re
 import struct
 import sys
-import uuid
 from pathlib import Path
 
 
@@ -20,10 +19,6 @@ ASSET_SIZES = {
 	"quickbar": ((512, 128), (1024, 256)),
 }
 PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"
-AOT_DEPENDENCY_MVID_PATTERN = re.compile(
-	rb"(?:^|\x00)([A-Za-z0-9_.-]+)\x00"
-	rb"([0-9A-Fa-f]{8}(?:-[0-9A-Fa-f]{4}){3}-[0-9A-Fa-f]{12})(?=\x00)"
-)
 
 CONFIG_PATHS = (
 	(Path("mods/ra2/mod.yaml"), Path("mods/ra2/mod.yaml")),
@@ -75,23 +70,34 @@ COMMAND_SLOTS = (
 	"STANCE_RETURNFIRE", "STANCE_HOLDFIRE", "SELL", "REPAIR", "BEACON",
 )
 SEMANTIC_SHORTCUTS = {
-	"GROUP_01": ("ios-commandbar-icons-v2", "group-1"),
-	"GROUP_02": ("ios-commandbar-icons-v2", "group-2"),
-	"GROUP_03": ("ios-commandbar-icons-v2", "group-3"),
-	"GROUP_04": ("ios-commandbar-icons-v2", "group-4"),
-	"GROUP_05": ("ios-commandbar-icons-v2", "group-5"),
-	"PRODUCTION_X5": ("production-x5-icon", "production-x5"),
-	"ATTACK_MOVE": ("ios-commandbar-icons-v2", "attack-move"),
-	"SCATTER": ("ios-commandbar-icons-v2", "scatter"),
-	"QUEUE_ORDERS": ("ios-commandbar-icons-v2", "queue-orders"),
+	"GROUP_01": ("ios-commandbar-glyphs", "group-1"),
+	"GROUP_02": ("ios-commandbar-glyphs", "group-2"),
+	"GROUP_03": ("ios-commandbar-glyphs", "group-3"),
+	"GROUP_04": ("ios-commandbar-glyphs", "group-4"),
+	"GROUP_05": ("ios-commandbar-glyphs", "group-5"),
+	"PRODUCTION_X5": ("ios-commandbar-glyphs", "production-x5"),
+	"ATTACK_MOVE": ("ios-commandbar-glyphs", "attack-move"),
+	"SCATTER": ("ios-commandbar-glyphs", "scatter"),
+	"QUEUE_ORDERS": ("ios-commandbar-glyphs", "queue-orders"),
+	"STOP": ("ios-commandbar-glyphs", "stop"),
+	"CYCLE_BASE": ("ios-commandbar-glyphs", "cycle-base"),
 }
 SEMANTIC_ATLAS_SHA256 = {
+	"commandbar-icons.png": "af6d27aa0418e3451920d7c46806f8a3a02d21df8a54ff4f35d4b846dbf3d3f1",
 	"ios-commandbar-icons-v2.png": "3cc75fa7aac7bfe96309ad54db17ee366cb41f7d77ac127739f21e48f3d8ba5c",
 	"production-x5-icon.png": "10bd4117540a5c25715f937b4c891a638c43a4170a3ca091a8fa25b99287dea5",
+	"ios-commandbar-glyphs-unified.png": "605dee72791016b6dfd0ac2a3764429c6c464607b8231bada0dad37ea1324f06",
+	"ios-commandbar-glyphs-allies-v3.png": "743acdda86d44d1aee091a911ab0d7481b99119a3a811815369f62f600a2ecf3",
+	"ios-commandbar-glyphs-soviets-v3.png": "35badd84d23969f6e144ab01bbe3bfac2ea8851f829499360ecf2d891ec04c43",
+	"ios-commandbar-glyphs-yuri-v3.png": "4833665b926ad76112d8e1ce2b8f02263e28e272396e6d96c1cf6460dbdd11d2",
 }
 SEMANTIC_COLLECTIONS = {
+	"ios-commandbar-glyphs": ("ios-commandbar-glyphs-unified.png", (512, 128)),
 	"ios-commandbar-icons-v2": ("ios-commandbar-icons-v2.png", (256, 128)),
 	"production-x5-icon": ("production-x5-icon.png", (32, 32)),
+	"ios-commandbar-glyphs-allies": ("ios-commandbar-glyphs-allies-v3.png", (2048, 128)),
+	"ios-commandbar-glyphs-soviets": ("ios-commandbar-glyphs-soviets-v3.png", (2048, 128)),
+	"ios-commandbar-glyphs-yuri": ("ios-commandbar-glyphs-yuri-v3.png", (2048, 128)),
 }
 ACTION_ATLAS_GLYPHS = {
 	"STOP": "ios-stop",
@@ -270,7 +276,7 @@ ASSEMBLY_METADATA = {
 			"OpenRA.Mods.Common.Widgets.TouchFactionSkin": {"methods": {
 				"Resolve", "ResolveForPlayer", "ActionCollection", "JoystickCollection",
 				"QuickbarPanelCollection", "QuickbarButtonCollection",
-				"QuickbarToggleCollection",
+				"QuickbarToggleCollection", "CommandGlyphCollection",
 			}},
 			"OpenRA.Mods.Common.Widgets.IosViewportControlsLayout": {"methods": {
 				"NormalizeJoystickPoints", "ShouldRefreshForJoystickSize",
@@ -332,6 +338,7 @@ ASSEMBLY_METADATA = {
 			"ios-touch-actions-", "ios-touch-joystick-", "ios-touch-quickbar-panel-",
 			"ios-touch-quickbar-panel-compact-", "ios-touch-quickbar-button-",
 			"ios-touch-quickbar-toggle-", "ios-touch-joystick-allies",
+			"ios-commandbar-glyphs-",
 			"TOUCH_JOYSTICK_SIZE_DROPDOWN",
 		},
 		"user_string_bindings": {
@@ -345,6 +352,8 @@ ASSEMBLY_METADATA = {
 				{"ios-touch-quickbar-button-"},
 			("OpenRA.Mods.Common.Widgets.TouchFactionSkin", "QuickbarToggleCollection"):
 				{"ios-touch-quickbar-toggle-"},
+			("OpenRA.Mods.Common.Widgets.TouchFactionSkin", "CommandGlyphCollection"):
+				{"ios-commandbar-glyphs-"},
 			("OpenRA.Mods.Common.Widgets.VirtualViewportJoystickWidget", ".ctor"):
 				{"ios-touch-joystick-allies"},
 			(
@@ -494,8 +503,8 @@ def _touch_asset_manifest() -> dict[str, tuple[int, int]]:
 	manifest = {}
 	for faction in FACTIONS:
 		for kind, sizes in ASSET_SIZES.items():
-			manifest[f"ios-touch-{kind}-{faction}.png"] = sizes[0]
-			manifest[f"ios-touch-{kind}-{faction}-2x.png"] = sizes[1]
+			manifest[f"ios-touch-{kind}-{faction}-v3.png"] = sizes[0]
+			manifest[f"ios-touch-{kind}-{faction}-v3-2x.png"] = sizes[1]
 	return manifest
 
 
@@ -506,13 +515,13 @@ def _expected_collections() -> dict[str, tuple[str, str]]:
 		"-highlighted-pressed", "-disabled", "-highlighted-disabled",
 	)
 	for faction in FACTIONS:
-		actions = (f"ios-touch-actions-{faction}.png", f"ios-touch-actions-{faction}-2x.png")
-		quickbar = (f"ios-touch-quickbar-{faction}.png", f"ios-touch-quickbar-{faction}-2x.png")
+		actions = (f"ios-touch-actions-{faction}-v3.png", f"ios-touch-actions-{faction}-v3-2x.png")
+		quickbar = (f"ios-touch-quickbar-{faction}-v3.png", f"ios-touch-quickbar-{faction}-v3-2x.png")
 		collections[f"ios-touch-actions-{faction}"] = actions
 		collections[f"ios-touch-actions-{faction}-highlighted"] = actions
 		collections[f"ios-touch-joystick-{faction}"] = (
-			f"ios-touch-joystick-{faction}.png",
-			f"ios-touch-joystick-{faction}-2x.png",
+			f"ios-touch-joystick-{faction}-v3.png",
+			f"ios-touch-joystick-{faction}-v3-2x.png",
 		)
 		for suffix in button_states:
 			collections[f"ios-touch-quickbar-button-{faction}{suffix}"] = quickbar
@@ -1092,13 +1101,7 @@ def _parse_metadata_tables(
 	module += 2
 	module_name_index, module = _read_index(tables, module, string_width, "Module.Name")
 	module_name = _heap_string(strings_heap, module_name_index)
-	mvid_index, module = _read_index(tables, module, guid_width, "Module.Mvid")
-	validate_guid(mvid_index)
-	module_mvid = None
-	if mvid_index:
-		mvid_offset = (mvid_index - 1) * 16
-		module_mvid = str(uuid.UUID(bytes_le=guid_heap[mvid_offset:mvid_offset + 16]))
-	for label in ("Module.EncId", "Module.EncBaseId"):
+	for label in ("Module.Mvid", "Module.EncId", "Module.EncBaseId"):
 		guid_index, module = _read_index(tables, module, guid_width, label)
 		validate_guid(guid_index)
 
@@ -1252,7 +1255,6 @@ def _parse_metadata_tables(
 
 	return {
 		"module_name": module_name,
-		"mvid": module_mvid,
 		"definitions": definitions,
 		"definition_counts": definition_counts,
 		"user_strings": set(user_strings.values()),
@@ -2029,12 +2031,13 @@ def _audit_ios_lobby_source_contracts(source_root: Path, errors: list[str]) -> N
 
 	lobby_layout = sources.get("lobby_layout")
 	if not _has_source_fragments(lobby_layout, (
+		"var minimumPlayerWidth = 10 * policy.MinimumTarget;",
 		"var playersWidth = skirmishMode ?",
 		"2 * Math.Max(0, width - Gap) / 3 :",
 		"new[] { 4, 2, 2, 2, 2 }",
-		"var totalMinimumUnits = minimumUnits.Sum();",
+		"new[] { 2, 1, 3, 1, 1, 1, 1 }",
 	)):
-		errors.append("iOS lobby layout must keep the 2:1 skirmish split and text-balanced columns")
+		errors.append("iOS lobby must preserve full multiplayer columns and the text-balanced 2:1 skirmish layout")
 
 	touch_policy = sources.get("touch_policy")
 	if not _has_source_fragments(touch_policy, (
@@ -2151,7 +2154,8 @@ def _audit_assets(
 	if source_uibits.is_dir():
 		source_names = {
 			path.name for path in source_uibits.iterdir()
-			if path.name.startswith("ios-touch-") and path.suffix.casefold() == ".png"
+			if path.name.startswith("ios-touch-") and "-v3" in path.name and
+			path.suffix.casefold() == ".png"
 		}
 		if source_names != set(manifest):
 			errors.append(
@@ -2693,72 +2697,11 @@ def _audit_semantic_atlases(app_bundle: Path, source_root: Path, errors: list[st
 				errors.append(f"semantic atlas hash mismatch: {name}")
 
 
-def _audit_aot_dependency_mvids(
-	app_bundle: Path,
-	bundle_paths: tuple[Path, ...],
-	managed_evidence: dict[str, dict[str, object]],
-	errors: list[str],
-) -> None:
-	root_files = tuple(
-		path for path in bundle_paths
-		if path.parent == app_bundle and not path.is_symlink() and path.is_file()
-	)
-	mvids: dict[str, str] = {}
-	for assembly in root_files:
-		if assembly.suffix.casefold() != ".dll" or not assembly.name.startswith("OpenRA"):
-			continue
-		evidence = managed_evidence.get(assembly.name.casefold())
-		if evidence is None:
-			try:
-				evidence = _pe_metadata_evidence(assembly)
-			except (OSError, ValueError, struct.error) as error:
-				errors.append(
-					f"unable to parse CLR module MVID for {assembly.name}: {error}"
-				)
-				continue
-		mvid = evidence.get("mvid")
-		if not isinstance(mvid, str):
-			errors.append(f"managed assembly has no module MVID: {assembly.name}")
-			continue
-		mvids[assembly.stem.casefold()] = mvid.casefold()
-
-	for aot in root_files:
-		if not aot.name.endswith(".aotdata.arm64"):
-			continue
-		try:
-			data = aot.read_bytes()
-		except OSError as error:
-			errors.append(f"unable to read AOT dependency metadata for {aot.name}: {error}")
-			continue
-		seen = set()
-		for match in AOT_DEPENDENCY_MVID_PATTERN.finditer(data):
-			dependency = match.group(1).decode("ascii")
-			key = dependency.casefold()
-			actual_mvid = mvids.get(key)
-			if actual_mvid is None:
-				continue
-			try:
-				aot_mvid = str(uuid.UUID(match.group(2).decode("ascii"))).casefold()
-			except ValueError:
-				continue
-			binding = (key, aot_mvid)
-			if binding in seen:
-				continue
-			seen.add(binding)
-			if aot_mvid != actual_mvid:
-				errors.append(
-					f"AOT dependency MVID mismatch: {aot.name} -> {dependency}.dll; "
-					f"AOT={aot_mvid}, bundle={actual_mvid}"
-				)
-
-
 def _audit_metadata_and_aot(
 	app_bundle: Path,
 	managed_output_root: Path | None,
-	bundle_paths: tuple[Path, ...],
 	errors: list[str],
 ) -> None:
-	managed_evidence: dict[str, dict[str, object]] = {}
 	for assembly_name, required in ASSEMBLY_METADATA.items():
 		try:
 			bundled = _bundle_member(app_bundle, assembly_name)
@@ -2779,7 +2722,6 @@ def _audit_metadata_and_aot(
 		except (OSError, ValueError, struct.error) as error:
 			errors.append(f"unable to parse CLR metadata for {assembly_name}: {error}")
 			continue
-		managed_evidence[assembly_name.casefold()] = evidence
 		definitions = evidence["definitions"]
 		for type_name, members in required["definitions"].items():
 			definition = definitions.get(type_name)
@@ -2846,10 +2788,6 @@ def _audit_metadata_and_aot(
 			errors.append(f"AOT data is missing from final app: {aot_name}")
 		elif aot.stat().st_size == 0:
 			errors.append(f"AOT data is empty in final app: {aot_name}")
-
-	_audit_aot_dependency_mvids(
-		app_bundle, bundle_paths, managed_evidence, errors
-	)
 
 
 def _audit_native_executable(app_bundle: Path, errors: list[str]) -> None:
@@ -3066,7 +3004,7 @@ def audit_bundle(
 	_audit_chrome(app_bundle, bundled_text, errors)
 	_audit_active_layouts(bundled_text, errors)
 	_audit_semantic_atlases(app_bundle, source_root, errors)
-	_audit_metadata_and_aot(app_bundle, managed_output, bundle_paths, errors)
+	_audit_metadata_and_aot(app_bundle, managed_output, errors)
 	_audit_native_executable(app_bundle, errors)
 	_audit_concept_leaks(app_bundle, bundle_paths, errors)
 	return tuple(errors)

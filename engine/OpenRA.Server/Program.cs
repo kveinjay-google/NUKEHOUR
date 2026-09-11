@@ -10,10 +10,13 @@
 #endregion
 
 using System;
-using System.Collections.Generic;
+using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-using System.Net;
+using System.Linq;
+using System.Net.Http;
+using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading;
 using OpenRA.Network;
 
@@ -52,6 +55,8 @@ namespace OpenRA.Server
 			if (!string.IsNullOrEmpty(supportDirArg))
 				Platform.OverrideSupportDir(supportDirArg);
 
+			Game.InitializeEngineVersion();
+
 			Log.AddChannel("debug", "dedicated-debug.log", true);
 			Log.AddChannel("perf", "dedicated-perf.log", true);
 			Log.AddChannel("server", "dedicated-server.log", true);
@@ -85,32 +90,175 @@ namespace OpenRA.Server
 
 			var mods = new InstalledMods(modSearchPaths, explicitModPaths);
 
-			WriteLineWithTimeStamp($"Starting dedicated server for mod: {modID}");
-			while (true)
+			if (settings.MaxPlayers < 1 || settings.MaxPlayers > 64)
+				throw new ArgumentOutOfRangeException(nameof(settings.MaxPlayers), "Server.MaxPlayers must be between 1 and 64.");
+			if (settings.IdleTimeoutSeconds < 0)
+				throw new ArgumentOutOfRangeException(nameof(settings.IdleTimeoutSeconds), "Server.IdleTimeoutSeconds cannot be negative.");
+			var onlineLobbyRegistrationCredential = Environment.GetEnvironmentVariable(
+				OnlineLobbyRegistrationPolicy.CredentialEnvironmentVariable);
+			OnlineLobbyRegistrationPolicy.Validate(settings, onlineLobbyRegistrationCredential);
+
+			var endpoints = DedicatedServerRuntimePolicy.ResolveEndpoints(settings.ListenAddress, settings.ListenPort).ToList();
+			var stopRequested = 0;
+			Console.CancelKeyPress += (_, eventArgs) =>
 			{
-				// HACK: The engine code *still* assumes that Game.ModData is set
-				var modData = Game.ModData = new ModData(mods[modID], mods);
-				modData.MapCache.LoadPreviewImages = false; // PERF: Server doesn't need previews, save memory by not loading them.
-				modData.MapCache.LoadMaps();
-
-				var endpoints = new List<IPEndPoint> { new(IPAddress.IPv6Any, settings.ListenPort), new(IPAddress.Any, settings.ListenPort) };
-				var server = new Server(endpoints, settings, modData, ServerType.Dedicated);
-
-				GC.Collect();
-				while (true)
+				eventArgs.Cancel = true;
+				Interlocked.Exchange(ref stopRequested, 1);
+			};
+			using var terminateRegistration = PosixSignalRegistration.Create(
+				PosixSignal.SIGTERM,
+				context =>
 				{
-					Thread.Sleep(1000);
-					if (server.State == ServerState.GameStarted && server.Conns.Count < 1)
-					{
-						WriteLineWithTimeStamp("No one is playing, shutting down...");
-						server.Shutdown();
-						break;
-					}
+					context.Cancel = true;
+					Interlocked.Exchange(ref stopRequested, 1);
+				});
+
+			WriteLineWithTimeStamp($"Starting NUKE HOUR dedicated server for mod: {modID}");
+			// HACK: The engine code still assumes that Game.ModData is set.
+			using var modData = Game.ModData = new ModData(mods[modID], mods, dedicatedServer: true);
+			modData.MapCache.LoadPreviewImages = false;
+			modData.MapCache.LoadMaps();
+			WriteLineWithTimeStamp($"Runtime profile: {modData.RuntimeProfile.Serialize()}");
+			WriteLineWithTimeStamp($"Runtime contract: {modData.RuntimeContract.Serialize()}");
+			WriteLineWithTimeStamp($"Protocols: transport={ProtocolVersion.Handshake}; schema={ProtocolVersion.HandshakeSchema}; orders={ProtocolVersion.Orders}");
+
+			WriteStatus(settings, modData, DedicatedServerOperationalState.Starting, 0, settings.Map);
+			var server = new Server(endpoints, settings, modData, ServerType.Dedicated);
+			WriteLineWithTimeStamp($"Listening on {settings.ListenAddress}:{settings.ListenPort}; map={server.LobbyInfo.GlobalSettings.Map}");
+			using var lobbyRegistration = CreateOnlineLobbyRegistration(
+				settings, onlineLobbyRegistrationCredential);
+
+			GC.Collect();
+			var gameStarted = false;
+			var emptySince = Stopwatch.GetTimestamp();
+			var lastState = DedicatedServerOperationalState.Starting;
+			var nextLobbyUpdate = 0L;
+			while (server.State != ServerState.ShuttingDown)
+			{
+				Thread.Sleep(250);
+				var validatedClients = server.ValidatedConnectionCount;
+				if (validatedClients > 0)
+					emptySince = Stopwatch.GetTimestamp();
+				if (server.State == ServerState.GameStarted)
+					gameStarted = true;
+
+				var state = DedicatedServerRuntimePolicy.ResolveState(server.State, gameStarted, validatedClients);
+				if (state != lastState)
+				{
+					WriteLineWithTimeStamp($"Lifecycle: {state}");
+					lastState = state;
 				}
 
-				modData.Dispose();
-				WriteLineWithTimeStamp("Starting a new server instance...");
+				WriteStatus(settings, modData, state, validatedClients, server.LobbyInfo.GlobalSettings.Map);
+				var now = Stopwatch.GetTimestamp();
+				if (lobbyRegistration != null && now >= nextLobbyUpdate)
+				{
+					var snapshot = CreateOnlineLobbySnapshot(
+						settings, modData, state, server.LobbyInfo.GlobalSettings.Map, validatedClients);
+					if (!lobbyRegistration.TryUpdateAsync(snapshot, CancellationToken.None).GetAwaiter().GetResult())
+						WriteLineWithTimeStamp($"Online Lobby update unavailable: {lobbyRegistration.LastErrorCode}.");
+					nextLobbyUpdate = now + settings.OnlineLobbyHeartbeatSeconds * Stopwatch.Frequency;
+				}
+				var terminationRequested = Volatile.Read(ref stopRequested) != 0;
+				if (terminationRequested || DedicatedServerRuntimePolicy.ShouldExit(
+					server.State, gameStarted, validatedClients,
+					DedicatedServerRuntimePolicy.ElapsedSince(
+						emptySince, Stopwatch.GetTimestamp(), Stopwatch.Frequency),
+					settings.IdleTimeoutSeconds))
+				{
+					var reason = terminationRequested ? "termination requested" : gameStarted
+						? "completed room is empty" : "empty lobby idle timeout";
+					WriteLineWithTimeStamp($"Stopping dedicated server: {reason}.");
+					WriteStatus(settings, modData,
+						gameStarted ? DedicatedServerOperationalState.GameFinished : DedicatedServerOperationalState.Stopping,
+						validatedClients, server.LobbyInfo.GlobalSettings.Map);
+					server.Shutdown();
+				}
 			}
+
+			if (!server.WaitForShutdown(TimeSpan.FromSeconds(30)))
+				throw new TimeoutException("Dedicated server cleanup did not complete within 30 seconds.");
+
+			if (lobbyRegistration != null)
+				try
+				{
+					using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+					lobbyRegistration.UnregisterAsync(timeout.Token).GetAwaiter().GetResult();
+				}
+				catch
+				{
+					WriteLineWithTimeStamp("Online Lobby unregister was unavailable; the room will expire automatically.");
+				}
+
+			WriteStatus(settings, modData, DedicatedServerOperationalState.Stopped, 0, server.LobbyInfo.GlobalSettings.Map);
+			WriteLineWithTimeStamp("Dedicated server stopped cleanly.");
+		}
+
+		static OnlineLobbyRegistrationClient CreateOnlineLobbyRegistration(
+			ServerSettings settings, string registrationCredential)
+		{
+			if (string.IsNullOrWhiteSpace(settings.OnlineLobbyUrl))
+				return null;
+
+			return new OnlineLobbyRegistrationClient(
+				new HttpClient { Timeout = TimeSpan.FromSeconds(5) },
+				OnlineLobbyRegistrationPolicy.ParseBaseUri(settings.OnlineLobbyUrl),
+				registrationCredential,
+				settings.OnlineLobbyServerId);
+		}
+
+		static OnlineLobbyRoomSnapshot CreateOnlineLobbySnapshot(
+			ServerSettings settings,
+			ModData modData,
+			DedicatedServerOperationalState state,
+			string map,
+			int validatedClients)
+		{
+			var publicPort = settings.OnlineLobbyPublicPort == 0
+				? settings.ListenPort : settings.OnlineLobbyPublicPort;
+			return new OnlineLobbyRoomSnapshot(
+				settings.OnlineLobbyPublicEndpoint,
+				publicPort,
+				settings.Name,
+				settings.OnlineLobbyRegion,
+				state,
+				map,
+				modData.Manifest.Id,
+				modData.Manifest.Metadata.CompatibilityOrVersion,
+				validatedClients,
+				settings.MaxPlayers,
+				!string.IsNullOrEmpty(settings.Password),
+				OnlineLobbyRegistrationPolicy.ShouldPublish(state),
+				Game.EngineVersion ?? "Unknown",
+				ProtocolVersion.HandshakeSchema,
+				ProtocolVersion.Orders,
+				modData.RuntimeContract.ResourceCapability);
+		}
+
+		static void WriteStatus(
+			ServerSettings settings,
+			ModData modData,
+			DedicatedServerOperationalState state,
+			int validatedClients,
+			string map)
+		{
+			if (string.IsNullOrWhiteSpace(settings.StatusFile))
+				return;
+
+			var statusPath = Path.IsPathRooted(settings.StatusFile)
+				? settings.StatusFile : Path.Combine(Platform.SupportDir, settings.StatusFile);
+			var directory = Path.GetDirectoryName(statusPath);
+			if (!string.IsNullOrEmpty(directory))
+				Directory.CreateDirectory(directory);
+
+			var document = DedicatedServerStatusDocument.Serialize(
+				state, modData.RuntimeProfile.BuildVersion,
+				Game.EngineVersion ?? "Unknown", modData.Manifest.Id,
+				modData.RuntimeProfile.Platform, settings.ListenAddress,
+				settings.ListenPort, map, validatedClients);
+			var temporaryPath = statusPath + ".tmp";
+			File.WriteAllText(temporaryPath, document + Environment.NewLine, new UTF8Encoding(false));
+			File.Move(temporaryPath, statusPath, true);
 		}
 
 		static void WriteLineWithTimeStamp(string line)

@@ -7,6 +7,7 @@ using System.IO;
 using OpenRA;
 using OpenRA.Mods.Cnc.FileSystem;
 using OpenRA.Mods.Common.FileSystem;
+using OpenRA.Mods.RA2.Content;
 using OpenRA.Network;
 using OpenRA.Support;
 using UIKit;
@@ -17,7 +18,9 @@ namespace OpenRA.iOS;
 public sealed class AppDelegate : UIApplicationDelegate
 {
     public override UIWindow? Window { get; set; }
+#if PUBLIC_CLEAN
 	IosContentImportCoordinator? contentImportCoordinator;
+#endif
 	UnhandledExceptionEventHandler? unhandledExceptionHandler;
 
     public override bool FinishedLaunching(UIApplication application, NSDictionary? launchOptions)
@@ -70,6 +73,10 @@ public sealed class AppDelegate : UIApplicationDelegate
 		{
 			try
 			{
+				#if PUBLIC_CLEAN
+				RuntimeShellmapInstaller.EnsureInstalled(supportPath);
+				#endif
+				IosLaunchPreflight.EnsureComplete(bundlePath);
 				var sceneSize = rootViewController.View!.Bounds.Size;
 				var width = Math.Max(1, (int)Math.Round(sceneSize.Width));
 				var height = Math.Max(1, (int)Math.Round(sceneSize.Height));
@@ -115,15 +122,20 @@ public sealed class AppDelegate : UIApplicationDelegate
 				Console.WriteLine($"OpenRA iOS startup failed: {e}");
 				ExceptionHandler.HandleFatalError(e);
 				IosSmokeTestJournal.RecordFailure(e);
+				Window?.MakeKeyAndVisible();
 				rootViewController.ShowStartupFailure(e.ToString());
 			}
 		}
 
 		rootViewController.StartInLandscape(() =>
 		{
+#if PUBLIC_CLEAN
 			contentImportCoordinator = new IosContentImportCoordinator(
-				rootViewController, bundlePath, supportPath, StartGame, nativeStrings);
+				rootViewController, supportPath, StartGame, nativeStrings);
 			contentImportCoordinator.Start();
+#else
+			StartGame();
+#endif
 		});
 
         return true;

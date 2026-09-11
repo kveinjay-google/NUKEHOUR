@@ -1,0 +1,159 @@
+diff -ruN a/OpenRA.Mods.Common/Widgets/Logic/MainMenuLogic.cs b/OpenRA.Mods.Common/Widgets/Logic/MainMenuLogic.cs
+--- a/OpenRA.Mods.Common/Widgets/Logic/MainMenuLogic.cs	2026-09-11 03:30:06
++++ b/OpenRA.Mods.Common/Widgets/Logic/MainMenuLogic.cs	2026-09-11 03:29:39
+@@ -196,6 +196,7 @@
+ 
+ 			if (contentButton != null)
+ 			{
++				contentButton.Visible = !Platform.IsIOS;
+ 				contentButton.Disabled = contentInstaller == null;
+ 				contentButton.OnClick = () =>
+ 				{
+@@ -229,8 +230,10 @@
+ 			languageDropdown = mainMenu.GetOrNull<DropDownButtonWidget>("LANGUAGE_DROPDOWN");
+ 			if (languageDropdown != null)
+ 			{
+-				languageDropdown.GetText = () => LanguageSelectionPolicy.GetDisplayName(
+-					Game.Settings.Game.Language, FluentProvider.CurrentLanguage);
++				languageDropdown.GetText = () => Platform.IsIOS ?
++					GetIosLanguageDisplayName(Game.Settings.Game.Language, FluentProvider.CurrentLanguage) :
++					LanguageSelectionPolicy.GetDisplayName(
++						Game.Settings.Game.Language, FluentProvider.CurrentLanguage);
+ 				languageDropdown.OnMouseDown = _ => ShowLanguageDropdown(languageDropdown);
+ 			}
+ 
+@@ -238,7 +241,7 @@
+ 			if (languageDropdown != null)
+ 				controls.Add(languageDropdown);
+ 
+-			if (contentButton != null)
++			if (contentButton != null && contentButton.Visible)
+ 				controls.Add(contentButton);
+ 
+ 			if (aboutButton != null)
+@@ -253,7 +256,7 @@
+ 				controls.Add(quitButton);
+ 			mainMenuControls = controls.ToArray();
+ 			iosMainMenuLayoutEnabled = languageDropdown != null && contentButton != null &&
+-				mainMenuControls.Length == 5;
++				mainMenuControls.Length == 4;
+ 			ApplyIosMainMenuLayout();
+ 
+ 			// Singleplayer menu
+@@ -405,6 +408,16 @@
+ 			return requiresReload;
+ 		}
+ 
++		public static string GetIosLanguageDisplayName(string preference, string uiLanguage)
++		{
++			if (LanguageSelectionPolicy.NormalizePreference(preference) ==
++				LanguageSelectionPolicy.SystemPreference)
++				return LanguageSelectionPolicy.Resolve(preference, uiLanguage) ==
++					LanguageSelectionPolicy.SimplifiedChinese ? "自动" : "Auto";
++
++			return LanguageSelectionPolicy.GetDisplayName(preference, uiLanguage);
++		}
++
+ 		void ShowLanguageDropdown(DropDownButtonWidget dropdown)
+ 		{
+ 			var preferences = LanguageSelectionPolicy.SupportedPreferences;
+@@ -426,7 +439,8 @@
+ 							() => Game.RunAfterTick(() => Game.InitializeMod(currentMod, new Arguments())));
+ 					});
+ 
+-				item.Get<LabelWidget>("LABEL").GetText = () =>
++				item.Get<LabelWidget>("LABEL").GetText = () => Platform.IsIOS ?
++					GetIosLanguageDisplayName(normalizedPreference, FluentProvider.CurrentLanguage) :
+ 					LanguageSelectionPolicy.GetDisplayName(normalizedPreference, FluentProvider.CurrentLanguage);
+ 				return item;
+ 			}
+diff -ruN a/OpenRA.Test/IosMainMenuQuitPolicyTest.cs b/OpenRA.Test/IosMainMenuQuitPolicyTest.cs
+--- a/OpenRA.Test/IosMainMenuQuitPolicyTest.cs	2026-09-11 03:32:03
++++ b/OpenRA.Test/IosMainMenuQuitPolicyTest.cs	2026-09-11 03:31:57
+@@ -31,7 +31,7 @@
+ 
+ 			StringAssert.Contains("quitButton.Visible = !Platform.IsIOS", mainMenu);
+ 			StringAssert.Contains("if (quitButton.Visible)", mainMenu);
+-			StringAssert.Contains("mainMenuControls.Length == 5", mainMenu);
++			StringAssert.Contains("mainMenuControls.Length == 4", mainMenu);
+ 		}
+ 	}
+ }
+diff -ruN a/OpenRA.Test/IosMenuLayoutPolicyTest.cs b/OpenRA.Test/IosMenuLayoutPolicyTest.cs
+--- a/OpenRA.Test/IosMenuLayoutPolicyTest.cs	2026-09-11 03:30:06
++++ b/OpenRA.Test/IosMenuLayoutPolicyTest.cs	2026-09-11 03:29:39
+@@ -130,7 +130,7 @@
+ 
+ 		[TestCase(1558, 720, 844, 390, 47, 0, 47, 21)]
+ 		[TestCase(1180, 820, 1180, 820, 0, 0, 0, 20)]
+-		public void IosMainMenuRedistributesFiveControlsAcrossTheOriginalPanelFootprint(
++		public void IosMainMenuRedistributesFourControlsAcrossTheOriginalPanelFootprint(
+ 			int effectiveWidth, int effectiveHeight, int nativeWidth, int nativeHeight,
+ 			double safeLeft, double safeTop, double safeRight, double safeBottom)
+ 		{
+@@ -138,23 +138,35 @@
+ 				Snapshot(effectiveWidth, effectiveHeight, nativeWidth, nativeHeight,
+ 					safeLeft, safeTop, safeRight, safeBottom));
+ 			var six = IosMainMenuLayout.Create(policy, 6);
+-			var five = IosMainMenuLayout.Create(policy, 5);
++			var four = IosMainMenuLayout.Create(policy, 4);
+ 
+ 			Assert.Multiple(() =>
+ 			{
+-				Assert.That(five.Panel, Is.EqualTo(six.Panel),
+-					"Removing Quit must not collapse the established main-menu frame.");
+-				Assert.That(five.Controls, Has.Length.EqualTo(5));
+-				Assert.That(five.Controls.Select(control => control.Height), Has.All.GreaterThan(six.Controls[0].Height),
++				Assert.That(four.Panel, Is.EqualTo(six.Panel),
++					"Removing Quit and Content must not collapse the established main-menu frame.");
++				Assert.That(four.Controls, Has.Length.EqualTo(4));
++				Assert.That(four.Controls.Select(control => control.Height), Has.All.GreaterThan(six.Controls[0].Height),
+ 					"The remaining buttons should grow instead of leaving an empty sixth row.");
+-				Assert.That(five.Controls[0].Y, Is.EqualTo(six.Controls[0].Y));
+-				Assert.That(five.Controls[^1].Bottom, Is.EqualTo(six.Controls[^1].Bottom));
++				Assert.That(four.Controls.Max(control => control.Height) -
++					four.Controls.Min(control => control.Height), Is.LessThanOrEqualTo(1));
++				Assert.That(four.Controls[0].Y, Is.EqualTo(six.Controls[0].Y));
++				Assert.That(four.Controls[^1].Bottom, Is.EqualTo(six.Controls[^1].Bottom));
+ 			});
+ 
+-			for (var i = 1; i < five.Controls.Length; i++)
+-				Assert.That(five.Controls[i - 1].Bottom, Is.LessThanOrEqualTo(five.Controls[i].Y));
++			for (var i = 1; i < four.Controls.Length; i++)
++				Assert.That(four.Controls[i].Y - four.Controls[i - 1].Bottom, Is.EqualTo(policy.Gap));
+ 		}
+ 
++		[TestCase("System", "zh-CN", "自动")]
++		[TestCase("system", "en", "Auto")]
++		[TestCase("zh-CN", "en", "简体中文")]
++		[TestCase("en", "zh-CN", "English")]
++		public void IosMainMenuUsesCompactLanguageNames(
++			string preference, string uiLanguage, string expected)
++		{
++			Assert.That(MainMenuLogic.GetIosLanguageDisplayName(preference, uiLanguage), Is.EqualTo(expected));
++		}
++
+ 		[Test]
+ 		public void IosMainMenuMeasuredLanguageLabelsFitTheButtonAndGenericPopupOnEveryDevice()
+ 		{
+@@ -210,6 +222,8 @@
+ 			Assert.That(source, Does.Contain("IosTouchWidgetPolicy.RelativeToRoot"));
+ 			Assert.That(source, Does.Contain("mainMenu.Parent.RenderOrigin"));
+ 			Assert.That(source, Does.Contain("languageDropdown.RemovePanel();"));
++			Assert.That(source, Does.Contain("contentButton.Visible = !Platform.IsIOS;"));
++			Assert.That(source, Does.Contain("if (contentButton != null && contentButton.Visible)"));
+ 			Assert.That(source, Does.Not.Contain("menus.Bounds ="));
+ 			Assert.That(source, Does.Contain("public override void Tick()"));
+ 			var yaml = File.ReadAllText(Path.Combine(RepositoryRoot(), "mods", "ra2", "chrome", "mainmenu.yaml"));
+diff -ruN a/OpenRA.Test/NukeHourBrandingTest.cs b/OpenRA.Test/NukeHourBrandingTest.cs
+--- a/OpenRA.Test/NukeHourBrandingTest.cs	2026-09-11 03:32:03
++++ b/OpenRA.Test/NukeHourBrandingTest.cs	2026-09-11 03:31:57
+@@ -161,7 +161,7 @@
+ 				Is.LessThan(source.IndexOf("controls.Add(quitButton);", StringComparison.Ordinal)));
+ 			Assert.That(source, Does.Contain("quitButton.Bounds.Y = aboutButton.Bounds.Y;"));
+ 			Assert.That(source, Does.Contain("quitButton.Visible = !Platform.IsIOS"));
+-			Assert.That(source, Does.Contain("mainMenuControls.Length == 5"));
++			Assert.That(source, Does.Contain("mainMenuControls.Length == 4"));
+ 
+ 			var methodStart = source.IndexOf("void OpenAboutPanel()", StringComparison.Ordinal);
+ 			Assert.That(methodStart, Is.GreaterThanOrEqualTo(0));

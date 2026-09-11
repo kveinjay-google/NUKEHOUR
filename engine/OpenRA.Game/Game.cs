@@ -11,18 +11,13 @@
 
 using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
 using System.Runtime;
-using System.Runtime.CompilerServices;
-using System.Runtime.ExceptionServices;
 using System.Threading;
-using System.Threading.Tasks;
-using OpenRA.FileFormats;
 using OpenRA.Graphics;
 using OpenRA.Network;
 using OpenRA.Primitives;
@@ -40,10 +35,8 @@ namespace OpenRA
 
 		[FluentReference("filename")]
 		const string SavedScreenshot = "notification-saved-screenshot";
-		const int RenderAuditRequestCheckInterval = 250;
 
 		public const int TimestepJankThreshold = 250; // Don't catch up for delays larger than 250ms
-		internal const int LifecycleDispatchBatch = 64;
 
 		public static InstalledMods Mods { get; private set; }
 		public static ExternalMods ExternalMods { get; private set; }
@@ -52,19 +45,10 @@ namespace OpenRA
 		public static Settings Settings;
 		public static CursorManager Cursor;
 		public static bool HideCursor;
+		public static bool ContentManagerReturnToLauncher { get; private set; }
 
 		static WorldRenderer worldRenderer;
 		static string modLaunchWrapper;
-		static OwnedEngineStartupState activeStartup;
-		static int startupAdmission;
-		static readonly ConditionalWeakTable<ReplayConnection, ReplaySourcePathHolder> ReplaySourcePaths = new();
-		internal static Func<string, bool> ReplaySnapshotDeleteOverride;
-
-		sealed class ReplaySourcePathHolder
-		{
-			public string SourcePath;
-			public string SnapshotPath;
-		}
 
 		internal static OrderManager OrderManager;
 		static Server.Server server;
@@ -79,9 +63,6 @@ namespace OpenRA
 		public static LocalPlayerProfile LocalPlayerProfile;
 
 		static bool takeScreenshot = false;
-		static readonly bool RenderAuditEnabled =
-			bool.TryParse(Environment.GetEnvironmentVariable("OPENRA_IOS_RENDER_AUDIT"), out var renderAuditEnabled) && renderAuditEnabled;
-		static long nextRenderAuditRequestCheckAt;
 		static Benchmark benchmark = null;
 
 		public static event Action OnShellmapLoaded = () => { };
@@ -121,213 +102,14 @@ namespace OpenRA
 			// A matching check in World.Dispose (which is called by WorldRenderer.Dispose) makes sure that we dispose
 			// the shellmap's OM when a lobby game actually starts.
 			if (OrderManager?.World == null || OrderManager.World.Type != WorldType.Shellmap)
-			{
-				ReleaseReplaySnapshot(OrderManager?.Connection as ReplayConnection);
 				OrderManager?.Dispose();
-			}
 
 			OrderManager = om;
 		}
 
 		public static void JoinReplay(string replayFile)
 		{
-			ReplayConnection replayConnection = null;
-			try
-			{
-				var activeRuntimeContract = ModData.RuntimeContract;
-				if (activeRuntimeContract.IsLegacy)
-				{
-					var metadata = ReplayMetadata.Read(replayFile);
-					if (metadata?.GameInfo == null)
-						throw new InvalidDataException("The replay metadata is missing or invalid.");
-
-					ThrowIfRuntimeContractIncompatible(
-						activeRuntimeContract,
-						metadata.GameInfo.RuntimeProfile,
-						metadata.GameInfo.RuntimeContract,
-						"metadata");
-					replayConnection = new ReplayConnection(replayFile);
-					ValidateReplayLobby(replayConnection, activeRuntimeContract);
-				}
-				else
-				{
-					var replayBytes = File.ReadAllBytes(replayFile);
-					replayConnection = CreateCompatibleReplayConnection(
-						replayBytes, activeRuntimeContract);
-				}
-
-				RememberReplaySourcePath(replayConnection, replayFile);
-
-				var orderManager = new OrderManager(replayConnection);
-				replayConnection = null;
-				try
-				{
-					JoinInner(orderManager);
-				}
-				catch
-				{
-					ReleaseReplaySnapshot(orderManager.Connection as ReplayConnection);
-					orderManager.Dispose();
-					throw;
-				}
-			}
-			finally
-			{
-				if (replayConnection != null)
-				{
-					ReleaseReplaySnapshot(replayConnection);
-					((IDisposable)replayConnection).Dispose();
-				}
-			}
-		}
-
-		internal static void RememberReplaySourcePath(
-			ReplayConnection replayConnection, string sourcePath)
-		{
-			if (replayConnection == null)
-				throw new ArgumentNullException(nameof(replayConnection));
-			if (sourcePath == null)
-				throw new ArgumentNullException(nameof(sourcePath));
-
-			var holder = ReplaySourcePaths.GetValue(
-				replayConnection, _ => new ReplaySourcePathHolder());
-			lock (holder)
-				holder.SourcePath = sourcePath;
-		}
-
-		internal static string ReplaySourcePath(ReplayConnection replayConnection)
-		{
-			if (replayConnection == null)
-				return null;
-
-			if (!ReplaySourcePaths.TryGetValue(replayConnection, out var replaySourcePath))
-				return replayConnection.Filename;
-
-			lock (replaySourcePath)
-				return replaySourcePath.SourcePath ?? replayConnection.Filename;
-		}
-
-		static void RememberReplaySnapshotPath(
-			ReplayConnection replayConnection, string snapshotPath)
-		{
-			var holder = ReplaySourcePaths.GetValue(
-				replayConnection, _ => new ReplaySourcePathHolder());
-			lock (holder)
-				holder.SnapshotPath = snapshotPath;
-		}
-
-		internal static void ReleaseReplaySnapshot(ReplayConnection replayConnection)
-		{
-			if (replayConnection == null ||
-				!ReplaySourcePaths.TryGetValue(replayConnection, out var holder))
-				return;
-
-			lock (holder)
-			{
-				if (holder.SnapshotPath != null && TryDeleteReplaySnapshot(holder.SnapshotPath))
-					holder.SnapshotPath = null;
-			}
-		}
-
-		internal static ReplayConnection CreateCompatibleReplayConnection(
-			byte[] replayBytes, RuntimeContractIdentity activeRuntimeContract)
-		{
-			if (replayBytes == null)
-				throw new ArgumentNullException(nameof(replayBytes));
-
-			var snapshotPath = Path.Combine(
-				Path.GetTempPath(), $"openra-replay-{Guid.NewGuid():N}.orarep");
-			var snapshotCreated = false;
-			try
-			{
-				using (var snapshot = new FileStream(
-					snapshotPath, FileMode.CreateNew, FileAccess.Write, FileShare.Read))
-				{
-					snapshotCreated = true;
-					snapshot.Write(replayBytes, 0, replayBytes.Length);
-				}
-
-				var metadata = ReplayMetadata.Read(snapshotPath);
-				if (metadata?.GameInfo == null)
-					throw new InvalidDataException("The replay metadata is missing or invalid.");
-
-				ThrowIfRuntimeContractIncompatible(
-					activeRuntimeContract,
-					metadata.GameInfo.RuntimeProfile,
-					metadata.GameInfo.RuntimeContract,
-					"metadata");
-
-				ReplayConnection replayConnection = null;
-				try
-				{
-					replayConnection = new ReplayConnection(snapshotPath);
-					if (replayConnection.LobbyInfo?.GlobalSettings == null)
-						throw new InvalidDataException("The replay lobby metadata is missing or invalid.");
-
-					ValidateReplayLobby(replayConnection, activeRuntimeContract);
-
-					var compatibleReplayConnection = replayConnection;
-					replayConnection = null;
-					RememberReplaySnapshotPath(compatibleReplayConnection, snapshotPath);
-					snapshotCreated = false;
-					return compatibleReplayConnection;
-				}
-				finally
-				{
-					if (replayConnection != null)
-						((IDisposable)replayConnection).Dispose();
-				}
-			}
-			finally
-			{
-				if (snapshotCreated)
-					TryDeleteReplaySnapshot(snapshotPath);
-			}
-		}
-
-		static void ValidateReplayLobby(
-			ReplayConnection replayConnection,
-			RuntimeContractIdentity activeRuntimeContract)
-		{
-			if (replayConnection.LobbyInfo?.GlobalSettings == null)
-				throw new InvalidDataException("The replay lobby metadata is missing or invalid.");
-
-			ThrowIfRuntimeContractIncompatible(
-				activeRuntimeContract,
-				replayConnection.LobbyInfo.GlobalSettings.RuntimeProfile,
-				replayConnection.LobbyInfo.GlobalSettings.RuntimeContract,
-				"lobby");
-		}
-
-		static void ThrowIfRuntimeContractIncompatible(
-			RuntimeContractIdentity activeRuntimeContract,
-			string storedProfile, string storedContract, string source)
-		{
-			var compatibility = RuntimeContractStorage.Compatibility(
-				activeRuntimeContract, storedProfile, storedContract);
-			if (compatibility != RuntimeContractCompatibilityReason.Compatible)
-				throw new RuntimeContractCompatibilityException(
-					compatibility,
-					$"The replay {source} runtime identity is incompatible ({compatibility}).");
-		}
-
-		static bool TryDeleteReplaySnapshot(string snapshotPath)
-		{
-			var deleteOverride = ReplaySnapshotDeleteOverride;
-			if (deleteOverride != null)
-				return deleteOverride(snapshotPath);
-
-			try
-			{
-				File.Delete(snapshotPath);
-				return true;
-			}
-			catch (Exception ex) when (
-				ex is ArgumentException or IOException or UnauthorizedAccessException or NotSupportedException)
-			{
-				Log.Write("debug", ex.ToString());
-				return false;
-			}
+			JoinInner(new OrderManager(new ReplayConnection(replayFile)));
 		}
 
 		static void JoinLocal()
@@ -409,7 +191,6 @@ namespace OpenRA
 		{
 			HangDiagnostics.Record("loading.start-game.enter");
 			using var startGameTrace = DiagnosticTrace.Scope(DiagnosticSubsystem.Loading, "Game.StartGame");
-
 			// Dispose of the old world before creating a new one.
 			using (DiagnosticTrace.Scope(DiagnosticSubsystem.Loading, "DisposeOldWorld"))
 				worldRenderer?.Dispose();
@@ -496,8 +277,7 @@ namespace OpenRA
 		public static void RestartGame()
 		{
 			var replay = OrderManager.Connection as ReplayConnection;
-			var replayName = ReplaySourcePath(replay);
-			ReleaseReplaySnapshot(replay);
+			var replayName = replay?.Filename;
 			var lobbyInfo = OrderManager.LobbyInfo;
 
 			// Reseed the RNG so this isn't an exact repeat of the last game
@@ -566,218 +346,68 @@ namespace OpenRA
 			Settings = new Settings(Path.Combine(Platform.SupportDir, "settings.yaml"), args);
 		}
 
-		static void InitializeSettings(
-			Arguments args, string modId,
-			RuntimeContractIdentity runtimeContract)
+		public static string ReadEngineVersion(string engineDirectory)
 		{
-			var globalSettingsFile = Path.Combine(Platform.SupportDir, "settings.yaml");
-			var serverSettingsFile = RuntimeContractStorage.ServerSettingsPath(
-				Platform.SupportDir, modId, runtimeContract);
-			Settings = new Settings(globalSettingsFile, serverSettingsFile, args);
+			try
+			{
+				var version = File.ReadAllText(Path.Combine(engineDirectory, "VERSION")).Trim();
+				return string.IsNullOrEmpty(version) ? "Unknown" : version;
+			}
+			catch
+			{
+				return "Unknown";
+			}
+		}
+
+		public static void InitializeEngineVersion()
+		{
+			EngineVersion = ReadEngineVersion(Platform.EngineDir);
 		}
 
 		public static RunStatus InitializeAndRun(string[] args)
 		{
-			if (!TryAcquireStartupAdmission())
-				throw new InvalidOperationException("A game startup owner is already active.");
+			Initialize(new Arguments(args));
+			IosSmokeTestJournal.RecordStart();
 
-			OwnedEngineStartupState ownedStartup = null;
-			ExceptionDispatchInfo firstFailure = null;
-			var result = default(RunStatus);
-			var runCompleted = false;
-			try
-			{
-				Initialize(new Arguments(args));
-				ownedStartup = Volatile.Read(ref activeStartup) ??
-					throw new InvalidOperationException("Legacy startup did not publish its owned state.");
-				if (!ownedStartup.RuntimeContract.IsLegacy)
-					throw new InvalidOperationException("The public startup entry requires a Legacy owner.");
-
-				IosSmokeTestJournal.RecordStart();
-
-				// Proactively collect memory during loading to reduce peak memory.
-				if (LoadMemoryPolicy.ShouldForceCollection(OperatingSystem.IsIOS()))
-					GC.Collect();
-
-				result = RunProfiled();
-				runCompleted = true;
-			}
-			catch (Exception exception)
-			{
-				firstFailure = ExceptionDispatchInfo.Capture(exception);
-			}
-			finally
-			{
-				try
-				{
-					if (ownedStartup != null)
-					{
-						var cleanupFailure = CleanupProfiledStartup(ownedStartup, runCompleted);
-						firstFailure ??= cleanupFailure;
-					}
-				}
-				finally { ReleaseStartupAdmission(); }
-			}
-
-			firstFailure?.Throw();
-			return result;
+			// Proactively collect memory during loading to reduce peak memory.
+			if (LoadMemoryPolicy.ShouldForceCollection(OperatingSystem.IsIOS()))
+				GC.Collect();
+			return Run();
 		}
 
 		static void Initialize(Arguments args)
 		{
-			OwnedEngineStartupState legacyStartup = null;
-			ExceptionDispatchInfo firstFailure = null;
-			try { Initialize(args, null, out legacyStartup); }
-			catch (Exception exception)
-			{
-				firstFailure = ExceptionDispatchInfo.Capture(exception);
-			}
-			finally
-			{
-				if (firstFailure != null && legacyStartup != null)
-				{
-					var cleanupFailure = CleanupProfiledStartup(legacyStartup, notifyQuit: false);
-					firstFailure ??= cleanupFailure;
-				}
-			}
+			ContentManagerReturnToLauncher = string.Equals(
+				args.GetValue("Game.ContentManagerReturnToLauncher", "false"),
+				"true", StringComparison.OrdinalIgnoreCase);
 
-			firstFailure?.Throw();
-		}
+			var engineDirArg = args.GetValue("Engine.EngineDir", null);
+			if (!string.IsNullOrEmpty(engineDirArg))
+				Platform.OverrideEngineDir(engineDirArg);
 
-		static void Initialize(Arguments args, OwnedEngineStartupState startup)
-		{
-			Initialize(args, startup, out _);
-		}
-
-		static OwnedEngineStartupState CreateLegacyStartupState(
-			Arguments args, string modID,
-			IEnumerable<string> modSearchPaths,
-			IEnumerable<string> explicitModPaths)
-		{
-			using var options = ModDataConstructionOptions.CreateTrustedDesktopDefault(
-				ModDataSettingsSnapshot.Capture(Settings));
-			OwnedModDataConstructionState construction = null;
-			EngineStartupState startup = null;
-			try
-			{
-				construction = options.TakeOwnership();
-				startup = new EngineStartupState(
-					new EngineBootstrapConfiguration(
-						Platform.EngineDir,
-						Platform.SupportDir,
-						ImmutableArray.CreateRange(modSearchPaths),
-						ImmutableArray.CreateRange(explicitModPaths),
-						args),
-					TrustedManifestSelection.Default(modID),
-					RuntimeContractIdentity.Legacy,
-					construction);
-				construction = null;
-
-				var ownedStartup = startup.TakeOwnership();
-				startup = null;
-				return ownedStartup;
-			}
-			finally
-			{
-				startup?.Dispose();
-				construction?.Dispose();
-			}
-		}
-
-		static void Initialize(
-			Arguments args, OwnedEngineStartupState startup,
-			out OwnedEngineStartupState legacyStartup)
-		{
-			legacyStartup = null;
-			if (startup == null)
-			{
-				var engineDirArg = args.GetValue("Engine.EngineDir", null);
-				if (!string.IsNullOrEmpty(engineDirArg))
-					Platform.OverrideEngineDir(engineDirArg);
-
-				var supportDirArg = args.GetValue("Engine.SupportDir", null);
-				if (!string.IsNullOrEmpty(supportDirArg))
-					Platform.OverrideSupportDir(supportDirArg);
-			}
-			else
-				Platform.ConfigureDirectories(
-					startup.Configuration.EngineDir, startup.Configuration.SupportDir);
+			var supportDirArg = args.GetValue("Engine.SupportDir", null);
+			if (!string.IsNullOrEmpty(supportDirArg))
+				Platform.OverrideSupportDir(supportDirArg);
 
 			Console.WriteLine($"Platform is {Platform.CurrentPlatform} ({Platform.CurrentArchitecture})");
 
 			// Load the engine version as early as possible so it can be written to exception logs
-			try
-			{
-				EngineVersion = File.ReadAllText(Path.Combine(Platform.EngineDir, "VERSION")).Trim();
-			}
-			catch { }
-
-			if (string.IsNullOrEmpty(EngineVersion))
-				EngineVersion = "Unknown";
+			InitializeEngineVersion();
 
 			Console.WriteLine($"Engine version is {EngineVersion}");
 			Console.WriteLine($"Runtime: {Platform.RuntimeVersion}");
 
 			// Special case handling of Game.Mod argument: if it matches a real filesystem path
 			// then we use this to override the mod search path, and replace it with the mod id
-			var modID = startup?.Selection.ModId ?? args.GetValue("Game.Mod", null);
-			IEnumerable<string> explicitModPaths = startup != null ?
-				startup.Configuration.ExplicitModPaths : Array.Empty<string>();
-			if (startup == null && modID != null && (File.Exists(modID) || Directory.Exists(modID)))
+			var modID = args.GetValue("Game.Mod", null);
+			var explicitModPaths = Array.Empty<string>();
+			if (modID != null && (File.Exists(modID) || Directory.Exists(modID)))
 			{
 				explicitModPaths = new[] { modID };
 				modID = Path.GetFileNameWithoutExtension(modID);
 			}
 
-			var modSearchArg = args.GetValue("Engine.ModSearchPaths", null);
-			IEnumerable<string> modSearchPaths = startup != null ?
-				startup.Configuration.ModSearchPaths :
-				modSearchArg != null ?
-					FieldLoader.GetValue<string[]>("Engine.ModsPath", modSearchArg) :
-					new[] { Path.Combine(Platform.EngineDir, "mods") };
-
-			if (startup == null || startup.RuntimeContract.IsLegacy)
-				InitializeSettings(args);
-			else
-				InitializeSettings(args, modID, startup.RuntimeContract);
-			if (startup == null)
-			{
-				if (string.IsNullOrEmpty(modID))
-					throw new InvalidOperationException("Game.Mod argument missing.");
-
-				var candidate = CreateLegacyStartupState(
-					args, modID, modSearchPaths, explicitModPaths);
-				if (Interlocked.CompareExchange(ref activeStartup, candidate, null) != null)
-				{
-					var collision = ExceptionDispatchInfo.Capture(
-						new InvalidOperationException("A game startup owner is already active."));
-					try { candidate.Dispose(); }
-					catch { }
-					collision.Throw();
-				}
-
-				legacyStartup = candidate;
-				startup = candidate;
-			}
-
-			if (startup != null)
-			{
-				var construction = startup.Construction ??
-					throw new ObjectDisposedException(nameof(OwnedEngineStartupState));
-				if (construction.FluentMode != FluentInitializationMode.PublishGlobal ||
-					construction.RenderingMode != ModDataRenderingMode.Game)
-					throw new InvalidOperationException(
-						"Game startup requires publish-global rendered construction state.");
-
-				var snapshot = construction.Settings;
-				if (Settings.Game.Language != snapshot.Language ||
-					Settings.SystemLanguageTag != snapshot.SystemLanguageTag ||
-					Settings.Graphics.SheetSize != snapshot.GraphicsSheetSize)
-					throw new InvalidOperationException(
-						"Game startup settings differ from the sealed pre-game snapshot.");
-
-				Settings.Keys = snapshot.TakePublishGlobalHotkeys();
-			}
+			InitializeSettings(args);
 
 			Log.AddChannel("perf", "perf.log");
 			Log.AddChannel("debug", "debug.log");
@@ -847,6 +477,11 @@ namespace OpenRA
 
 			Nat.Initialize();
 
+			var modSearchArg = args.GetValue("Engine.ModSearchPaths", null);
+			var modSearchPaths = modSearchArg != null ?
+				FieldLoader.GetValue<string[]>("Engine.ModsPath", modSearchArg) :
+				new[] { Path.Combine(Platform.EngineDir, "mods") };
+
 			Mods = new InstalledMods(modSearchPaths, explicitModPaths);
 			Console.WriteLine("Internal mods:");
 			foreach (var mod in Mods)
@@ -880,82 +515,6 @@ namespace OpenRA
 			InitializeMod(modID, args);
 		}
 
-		internal static RunStatus InitializeAndRun(EngineStartupState startup)
-		{
-			if (startup == null)
-				throw new ArgumentNullException(nameof(startup));
-
-			var ownedStartup = startup.TakeOwnership();
-			ExceptionDispatchInfo firstFailure = null;
-			var result = default(RunStatus);
-			var runCompleted = false;
-			var ownsActiveSlot = false;
-			var ownsStartupAdmission = false;
-			try
-			{
-				if (!TryAcquireStartupAdmission())
-					throw new InvalidOperationException("A game startup owner is already active.");
-				ownsStartupAdmission = true;
-				if (Interlocked.CompareExchange(ref activeStartup, ownedStartup, null) != null)
-					throw new InvalidOperationException("A game startup owner is already active.");
-				ownsActiveSlot = true;
-				Initialize(ownedStartup.Configuration.Arguments, ownedStartup);
-				IosSmokeTestJournal.RecordStart();
-
-				if (LoadMemoryPolicy.ShouldForceCollection(OperatingSystem.IsIOS()))
-					GC.Collect();
-
-				result = RunProfiled();
-				runCompleted = true;
-			}
-			catch (Exception exception)
-			{
-				firstFailure = ExceptionDispatchInfo.Capture(exception);
-			}
-			finally
-			{
-				try
-				{
-					if (ownsActiveSlot)
-					{
-						var cleanupFailure = CleanupProfiledStartup(ownedStartup, runCompleted);
-						firstFailure ??= cleanupFailure;
-					}
-					else
-						try { ownedStartup.Dispose(); }
-						catch (Exception exception)
-						{
-							firstFailure ??= ExceptionDispatchInfo.Capture(exception);
-						}
-				}
-				finally
-				{
-					if (ownsStartupAdmission)
-						ReleaseStartupAdmission();
-				}
-			}
-
-			firstFailure?.Throw();
-			return result;
-		}
-
-		static bool TryAcquireStartupAdmission()
-		{
-			if (Interlocked.CompareExchange(ref startupAdmission, 1, 0) != 0)
-				return false;
-
-			if (Volatile.Read(ref activeStartup) == null)
-				return true;
-
-			Volatile.Write(ref startupAdmission, 0);
-			return false;
-		}
-
-		static void ReleaseStartupAdmission()
-		{
-			Volatile.Write(ref startupAdmission, 0);
-		}
-
 		public static IPlatform CreatePlatform(string platformName)
 		{
 			if (PlatformFactoryOverride != null)
@@ -979,116 +538,29 @@ namespace OpenRA
 			return (IPlatform)platformType.GetConstructor(Type.EmptyTypes).Invoke(null);
 		}
 
-		static ExceptionDispatchInfo TeardownCurrentModEpoch()
-		{
-			ExceptionDispatchInfo firstFailure = null;
-			void Cleanup(Action action)
-			{
-				try { action(); }
-				catch (Exception exception)
-				{
-					firstFailure ??= ExceptionDispatchInfo.Capture(exception);
-				}
-			}
-
-			Cleanup(Ui.ResetAll);
-
-			var ownedCursor = Cursor;
-			Cursor = null;
-			if (ownedCursor != null)
-				Cleanup(ownedCursor.Dispose);
-			LocalPlayerProfile = null;
-
-			var ownedWorldRenderer = worldRenderer;
-			worldRenderer = null;
-			if (ownedWorldRenderer != null)
-				Cleanup(ownedWorldRenderer.Dispose);
-
-			var ownedServer = server;
-			server = null;
-			if (ownedServer != null)
-				Cleanup(ownedServer.Shutdown);
-
-			var ownedOrderManager = OrderManager;
-			OrderManager = null;
-			if (ownedOrderManager != null)
-			{
-				Cleanup(() => ReleaseReplaySnapshot(
-					ownedOrderManager.Connection as ReplayConnection));
-				Cleanup(ownedOrderManager.Dispose);
-			}
-
-			var ownedModData = ModData;
-			if (ownedModData != null)
-			{
-				var lifecycleLane = ownedModData.LifecycleDispatchLane;
-				if (lifecycleLane is IGameLifecycleDispatchWaiter)
-					Cleanup(() => ownedModData.DrainActivationsAndUnbind(
-						fence => DrainLifecycleDispatchUntil(lifecycleLane, fence)));
-
-				Cleanup(ownedModData.Dispose);
-				if (lifecycleLane is IDisposable disposableLane)
-					Cleanup(disposableLane.Dispose);
-			}
-
-			ModData = null;
-			return firstFailure;
-		}
-
-		static ModData CreateModDataEpoch(string mod)
-		{
-			var startup = activeStartup;
-			if (startup == null)
-				return new ModData(Mods[mod], Mods, true);
-
-			var selection = startup.Selection;
-			if (!string.Equals(mod, selection.ModId, StringComparison.Ordinal))
-				throw new InvalidOperationException(
-					"Profiled startup cannot switch away from its trusted manifest selection.");
-
-			var construction = startup.Construction ??
-				throw new ObjectDisposedException(nameof(OwnedEngineStartupState));
-			var lifecycleLane = new GameLifecycleDispatchLane();
-			try
-			{
-				var manifest = Mods.OpenManifest(selection);
-				return new ModData(
-					manifest, Mods, selection, startup.RuntimeContract,
-					construction, lifecycleLane, useLoadScreen: true,
-					ownsManifestPackage: true, ownsProvider: false);
-			}
-			catch
-			{
-				try { lifecycleLane.Dispose(); }
-				catch { }
-				throw;
-			}
-		}
-
-		static Arguments ModEpochArguments(Arguments fallback)
-		{
-			if (fallback == null)
-				throw new ArgumentNullException(nameof(fallback));
-
-			return activeStartup?.Configuration.Arguments ?? fallback;
-		}
-
 		public static void InitializeMod(string mod, Arguments args)
 		{
-			if (activeStartup != null &&
-				!string.Equals(mod, activeStartup.Selection.ModId, StringComparison.Ordinal))
-				throw new InvalidOperationException(
-					"Profiled startup cannot switch away from its trusted manifest selection.");
-			var epochArgs = ModEpochArguments(args);
-
 			// Clear static state if we have switched mods
 			LobbyInfoChanged = () => { };
 			ConnectionStateChanged = (om, p, conn) => { };
 			BeforeGameStart = () => { };
 			OnRemoteDirectConnect = endpoint => { };
-
-			TeardownCurrentModEpoch()?.Throw();
 			delayedActions = new ActionQueue();
+
+			Ui.ResetAll();
+
+			worldRenderer?.Dispose();
+			worldRenderer = null;
+			server?.Shutdown();
+			OrderManager?.Dispose();
+
+			if (ModData != null)
+			{
+				ModData.ModFiles.UnmountAll();
+				ModData.Dispose();
+			}
+
+			ModData = null;
 
 			if (mod == null)
 				throw new InvalidOperationException("Game.Mod argument missing.");
@@ -1100,7 +572,7 @@ namespace OpenRA
 
 			Sound.StopVideo();
 
-			ModData = CreateModDataEpoch(mod);
+			ModData = new ModData(Mods[mod], Mods, true);
 
 			LocalPlayerProfile = new LocalPlayerProfile(Path.Combine(Platform.SupportDir, Settings.Game.AuthProfile), ModData.Manifest.Get<PlayerDatabase>());
 
@@ -1132,7 +604,7 @@ namespace OpenRA
 
 			JoinLocal();
 
-			ModData.LoadScreen.StartGame(epochArgs);
+			ModData.LoadScreen.StartGame(args);
 		}
 
 		public static void LoadEditor(string mapUid)
@@ -1220,36 +692,6 @@ namespace OpenRA
 			}
 		}
 
-		static void CaptureRequestedRenderAuditFrame()
-		{
-			if (!RenderAuditEnabled || RunTime < nextRenderAuditRequestCheckAt)
-				return;
-
-			nextRenderAuditRequestCheckAt = RunTime + RenderAuditRequestCheckInterval;
-			var directory = Path.Combine(Platform.SupportDir, "RenderAudit");
-			var requestDirectory = Path.Combine(directory, "requests");
-			if (File.Exists(requestDirectory))
-			{
-				try { File.Delete(requestDirectory); }
-				catch (IOException) { return; }
-			}
-
-			Directory.CreateDirectory(requestDirectory);
-			var requestPath = Directory.EnumerateFiles(requestDirectory, "*.request")
-				.OrderBy(path => path, StringComparer.Ordinal)
-				.FirstOrDefault();
-			if (requestPath == null)
-				return;
-
-			try { File.Delete(requestPath); }
-			catch (IOException) { return; }
-
-			var requestId = Path.GetFileNameWithoutExtension(requestPath);
-			var path = Path.Combine(directory, $"render-{requestId}.png");
-			Log.Write("debug", "Capturing requested render audit screenshot " + path);
-			Renderer.SaveScreenshot(path);
-		}
-
 		static void InnerLogicTick(OrderManager orderManager)
 		{
 			HangDiagnostics.Record("logic.inner.enter");
@@ -1316,7 +758,6 @@ namespace OpenRA
 		static void LogicTick()
 		{
 			HangDiagnostics.Record("logic.tick.enter");
-			PumpLifecycleDispatch(ModData?.LifecycleDispatchLane);
 			PerformDelayedActions();
 
 			if (OrderManager.Connection is NetworkConnection nc && nc.ConnectionState != lastConnectionState)
@@ -1334,87 +775,6 @@ namespace OpenRA
 		public static void PerformDelayedActions()
 		{
 			delayedActions.PerformActions(RunTime);
-		}
-
-		internal static void PumpLifecycleDispatch(IGameLifecycleDispatchLane lane)
-		{
-			if (lane == null)
-				return;
-			if (!lane.IsCurrentThread)
-				throw new InvalidOperationException("Lifecycle work must run on its owning game thread.");
-
-			lane.PumpAvailable(LifecycleDispatchBatch);
-		}
-
-		internal static void DrainLifecycleDispatchUntil(
-			IGameLifecycleDispatchLane lane, Task fence)
-		{
-			if (lane == null)
-				throw new ArgumentNullException(nameof(lane));
-			if (fence == null)
-				throw new ArgumentNullException(nameof(fence));
-			if (!lane.IsCurrentThread)
-				throw new InvalidOperationException("Lifecycle work must drain on its owning game thread.");
-			if (lane is not IGameLifecycleDispatchWaiter waiter)
-				throw new InvalidOperationException("The lifecycle lane does not support drain waiting.");
-
-			ExceptionDispatchInfo firstFailure = null;
-			void CaptureFirst(Exception exception)
-			{
-				firstFailure ??= ExceptionDispatchInfo.Capture(exception);
-			}
-
-			while (true)
-			{
-				var processed = 0;
-				try { processed = lane.PumpAvailable(LifecycleDispatchBatch); }
-				catch (Exception exception) { CaptureFirst(exception); }
-
-				bool closed;
-				bool quiescent;
-				try
-				{
-					closed = waiter.IsClosed;
-					quiescent = waiter.IsQuiescent;
-				}
-				catch (Exception exception)
-				{
-					CaptureFirst(exception);
-					break;
-				}
-
-				if (closed)
-				{
-					CaptureFirst(new ObjectDisposedException("lifecycle dispatch lane"));
-					break;
-				}
-
-				if (fence.IsCompleted && quiescent)
-					break;
-				if (processed == 0 && quiescent)
-				{
-					IGameLifecycleDispatchWaitRegistration registration = null;
-					try
-					{
-						registration = waiter.RegisterWait(fence);
-						registration.Wait();
-					}
-					catch (Exception exception) { CaptureFirst(exception); }
-					finally
-					{
-						if (registration != null)
-							try { registration.Dispose(); }
-							catch (Exception exception) { CaptureFirst(exception); }
-					}
-				}
-			}
-
-			if (fence.IsFaulted)
-				CaptureFirst(fence.Exception.InnerExceptions[0]);
-			else if (fence.IsCanceled)
-				CaptureFirst(new TaskCanceledException(fence));
-
-			firstFailure?.Throw();
 		}
 
 		public static void TakeScreenshot()
@@ -1506,9 +866,6 @@ namespace OpenRA
 					takeScreenshot = false;
 					TakeScreenshotInner();
 				}
-
-				if (worldRenderer != null && !worldRenderer.World.IsLoadingGameSave)
-					CaptureRequestedRenderAuditFrame();
 			}
 
 			PerfHistory.Items["render"].Tick();
@@ -1665,9 +1022,7 @@ namespace OpenRA
 			finally
 			{
 				HangDiagnostics.Stop();
-
 				// Ensure that the active replay is properly saved
-				ReleaseReplaySnapshot(OrderManager?.Connection as ReplayConnection);
 				OrderManager?.Dispose();
 			}
 
@@ -1684,101 +1039,34 @@ namespace OpenRA
 			return state;
 		}
 
-		static RunStatus RunProfiled()
-		{
-			if (Settings.Graphics.MaxFramerate < 1)
-			{
-				Settings.Graphics.MaxFramerate = new GraphicSettings().MaxFramerate;
-				Settings.Graphics.CapFramerate = false;
-			}
-
-			Loop();
-			return state;
-		}
-
-		static ExceptionDispatchInfo CleanupProfiledStartup(
-			OwnedEngineStartupState startup, bool notifyQuit)
-		{
-			ExceptionDispatchInfo firstFailure = null;
-			void Capture(ExceptionDispatchInfo failure)
-			{
-				firstFailure ??= failure;
-			}
-
-			void Cleanup(Action action)
-			{
-				try { action(); }
-				catch (Exception exception)
-				{
-					firstFailure ??= ExceptionDispatchInfo.Capture(exception);
-				}
-			}
-
-			Cleanup(HangDiagnostics.Stop);
-
-			var ownedCursor = Cursor;
-			Cursor = null;
-			if (ownedCursor != null)
-				Cleanup(ownedCursor.Dispose);
-
-			Capture(TeardownCurrentModEpoch());
-
-			var ownedMods = Mods;
-			Mods = null;
-			if (ownedMods != null)
-				Cleanup(ownedMods.Dispose);
-
-			Cleanup(startup.Dispose);
-
-			Cleanup(ChromeProvider.Deinitialize);
-
-			var ownedSound = Sound;
-			Sound = null;
-			if (ownedSound != null)
-				Cleanup(ownedSound.Dispose);
-
-			var ownedHaptics = Haptics;
-			Haptics = null;
-			if (ownedHaptics != null)
-				Cleanup(ownedHaptics.Dispose);
-
-			var ownedRenderer = Renderer;
-			Renderer = null;
-			if (ownedRenderer != null)
-				Cleanup(ownedRenderer.Dispose);
-
-			if (notifyQuit)
-				Cleanup(OnQuit);
-
-			Interlocked.CompareExchange(ref activeStartup, null, startup);
-
-			return firstFailure;
-		}
-
 		public static void Exit()
 		{
 			state = RunStatus.Success;
 		}
 
-		public static void Disconnect()
+		public static void ClearContentManagerReturnToLauncher()
 		{
-			ExceptionDispatchInfo firstFailure = null;
-			void Cleanup(Action action)
+			ContentManagerReturnToLauncher = false;
+		}
+
+		public static void ReturnFromContentManager(string mod)
+		{
+			if (ContentManagerReturnToLauncher)
 			{
-				try { action(); }
-				catch (Exception exception)
-				{
-					firstFailure ??= ExceptionDispatchInfo.Capture(exception);
-				}
+				Exit();
+				return;
 			}
 
-			Cleanup(() => ReleaseReplaySnapshot(
-				OrderManager.Connection as ReplayConnection));
-			Cleanup(() => OrderManager.World?.TraitDict.PrintReport());
-			Cleanup(() => OrderManager.Dispose());
-			Cleanup(CloseServer);
-			Cleanup(JoinLocal);
-			firstFailure?.Throw();
+			RunAfterTick(() => InitializeMod(mod, new Arguments()));
+		}
+
+		public static void Disconnect()
+		{
+			OrderManager.World?.TraitDict.PrintReport();
+
+			OrderManager.Dispose();
+			CloseServer();
+			JoinLocal();
 		}
 
 		public static void CloseServer()
@@ -1807,9 +1095,8 @@ namespace OpenRA
 		{
 			var settings = new ServerSettings()
 			{
-				Name = "Skirmish Game",
-				Map = map,
-				AdvertiseOnline = false
+				Name = ModData.Manifest.Metadata.TitleTranslated,
+				Map = map
 			};
 
 			// Always connect to local games using the same loopback connection

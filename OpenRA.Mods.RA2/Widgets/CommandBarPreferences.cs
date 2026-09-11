@@ -160,26 +160,21 @@ namespace OpenRA.Mods.RA2.Widgets
 		public static TouchCommandBarSlotLayout Create(
 			IosScreenSnapshot snapshot, string id, bool expanded)
 		{
-			var required = CommandBarLayoutPolicy.IsRequiredTouchId(id, true);
-			var height = snapshot.LogicalPoints(expanded ? 52 : 44);
-			var width = required ? snapshot.LogicalPoints(56) :
-				expanded ? CommandBarCatalog.Get(id).Width : 44;
-			var showLabel = expanded || required;
-			var labelHeight = snapshot.LogicalPoints(14);
-			var bottomInset = snapshot.LogicalPoints(2);
-			var iconSize = required ? snapshot.LogicalPoints(26) : 26;
-			var label = showLabel
-				? new Rectangle(0, height - bottomInset - labelHeight, width, labelHeight)
-				: Rectangle.Empty;
-			var iconBottom = showLabel ? label.Top : height;
+			// These dimensions match the authored 1x/2x nine-slice chrome. Scaling the
+			// widget bounds by the UIKit-to-canvas ratio makes the panel center tile,
+			// which appears as duplicated borders and phantom rows on Retina phones.
+			var height = expanded ? 52 : 44;
+			var width = expanded ? CommandBarCatalog.Get(id).Width : 44;
+			const bool ShowLabel = false;
+			var iconSize = expanded ? 34 : 32;
 			var icon = new Rectangle(
 				(width - iconSize) / 2,
-				Math.Max(0, (iconBottom - iconSize) / 2),
+				Math.Max(0, (height - iconSize) / 2),
 				iconSize,
 				iconSize);
 			return new TouchCommandBarSlotLayout(
-				new Size(width, height), icon, label,
-				required ? "IosTouchLabel" : "TinyBold", showLabel);
+				new Size(width, height), icon, Rectangle.Empty,
+				"TinyBold", ShowLabel);
 		}
 
 		public static Rectangle PlaceBar(IosScreenSnapshot snapshot, Size size)

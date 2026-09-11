@@ -52,8 +52,6 @@ namespace OpenRA.Mods.Cnc.Traits
 		static readonly float[] FlipMtx = Util.ScaleMatrix(1, -1, 1);
 		static readonly float[] ShadowScaleFlipMtx = Util.ScaleMatrix(2, -2, 2);
 		static readonly float[] GroundNormal = { 0, 0, 1, 1 };
-		static readonly bool VoxelRenderAuditEnabled =
-			bool.TryParse(Environment.GetEnvironmentVariable("OPENRA_IOS_VOXEL_RENDER_AUDIT"), out var enabled) && enabled;
 
 		readonly Renderer renderer;
 		readonly IShader shader;
@@ -66,7 +64,6 @@ namespace OpenRA.Mods.Cnc.Traits
 
 		SheetBuilder sheetBuilderForFrame;
 		bool isInFrame;
-		bool voxelRenderAuditWritten;
 
 		public void SetPalette(HardwarePalette palette)
 		{
@@ -357,21 +354,6 @@ namespace OpenRA.Mods.Cnc.Traits
 
 			if (fbo != null)
 				DisableFrameBuffer(fbo);
-
-			if (VoxelRenderAuditEnabled && !voxelRenderAuditWritten)
-			{
-				var opaquePixels = 0;
-				foreach (var sheet in doRender.Select(render => render.Sheet).Distinct())
-				{
-					var pixels = sheet.GetData();
-					for (var i = 3; i < pixels.Length; i += 4)
-						if (pixels[i] != 0)
-							opaquePixels++;
-				}
-
-				Log.Write("debug", $"Voxel render audit: {opaquePixels} opaque pixels.");
-				voxelRenderAuditWritten = true;
-			}
 
 			doRender.Clear();
 		}

@@ -12,28 +12,12 @@
 using System;
 using System.Globalization;
 using OpenRA.Network;
-using OpenRA.Primitives;
 using OpenRA.Widgets;
 
 namespace OpenRA.Mods.Common.Widgets.Logic
 {
 	public class ServerCreationLogic : ChromeLogic
 	{
-		[FluentReference]
-		const string InternetServerNatA = "label-internet-server-nat-A";
-
-		[FluentReference]
-		const string InternetServerNatBenabled = "label-internet-server-nat-B-enabled";
-
-		[FluentReference]
-		const string InternetServerNatBnotSupported = "label-internet-server-nat-B-not-supported";
-
-		[FluentReference]
-		const string InternetServerNatBdisabled = "label-internet-server-nat-B-disabled";
-
-		[FluentReference]
-		const string InternetServerNatC = "label-internet-server-nat-C";
-
 		[FluentReference]
 		const string LocalServer = "label-local-server";
 
@@ -58,7 +42,6 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 		readonly Action onCreate;
 		readonly Action onExit;
 		MapPreview map = MapCache.UnknownMap;
-		bool advertiseOnline;
 
 		[ObjectCreator.UseCtor]
 		public ServerCreationLogic(Widget widget, ModData modData, Action onExit, Action openLobby)
@@ -119,16 +102,6 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 
 			panel.Get<TextFieldWidget>("LISTEN_PORT").Text = settings.Server.ListenPort.ToString(NumberFormatInfo.CurrentInfo);
 
-			advertiseOnline = Game.Settings.Server.AdvertiseOnline;
-
-			var advertiseCheckbox = panel.Get<CheckboxWidget>("ADVERTISE_CHECKBOX");
-			advertiseCheckbox.IsChecked = () => advertiseOnline;
-			advertiseCheckbox.OnClick = () =>
-			{
-				advertiseOnline ^= true;
-				BuildNotices();
-			};
-
 			var passwordField = panel.GetOrNull<PasswordFieldWidget>("PASSWORD");
 			if (passwordField != null)
 				passwordField.Text = Game.Settings.Server.Password;
@@ -139,26 +112,15 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 
 			var noticesNoUPnP = panel.GetOrNull("NOTICES_NO_UPNP");
 			if (noticesNoUPnP != null)
-			{
-				noticesNoUPnP.IsVisible = () => advertiseOnline &&
-					(Nat.Status == NatStatus.NotSupported || Nat.Status == NatStatus.Disabled);
-
-				var settingsA = noticesNoUPnP.GetOrNull("SETTINGS_A");
-				if (settingsA != null)
-					settingsA.IsVisible = () => Nat.Status == NatStatus.Disabled;
-
-				var settingsB = noticesNoUPnP.GetOrNull("SETTINGS_B");
-				if (settingsB != null)
-					settingsB.IsVisible = () => Nat.Status == NatStatus.Disabled;
-			}
+				noticesNoUPnP.IsVisible = () => false;
 
 			var noticesUPnP = panel.GetOrNull("NOTICES_UPNP");
 			if (noticesUPnP != null)
-				noticesUPnP.IsVisible = () => advertiseOnline && Nat.Status == NatStatus.Enabled;
+				noticesUPnP.IsVisible = () => false;
 
 			var noticesLAN = panel.GetOrNull("NOTICES_LAN");
 			if (noticesLAN != null)
-				noticesLAN.IsVisible = () => !advertiseOnline;
+				noticesLAN.IsVisible = () => true;
 
 			BuildNotices();
 		}
@@ -168,41 +130,10 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 			if (noticesLabelA == null || noticesLabelB == null || noticesLabelC == null)
 				return;
 
-			if (advertiseOnline)
-			{
-				var noticesLabelAText = FluentProvider.GetMessage(InternetServerNatA) + " ";
-				noticesLabelA.GetText = () => noticesLabelAText;
-				var aWidth = Game.Renderer.Fonts[noticesLabelA.Font].Measure(noticesLabelAText).X;
-				noticesLabelA.Bounds.Width = aWidth;
-
-				var noticesLabelBText =
-					Nat.Status == NatStatus.Enabled ? FluentProvider.GetMessage(InternetServerNatBenabled) :
-					Nat.Status == NatStatus.NotSupported ? FluentProvider.GetMessage(InternetServerNatBnotSupported) :
-					FluentProvider.GetMessage(InternetServerNatBdisabled);
-				noticesLabelB.GetText = () => noticesLabelBText;
-
-				noticesLabelB.TextColor =
-					Nat.Status == NatStatus.Enabled ? ChromeMetrics.Get<Color>("NoticeSuccessColor") :
-					Nat.Status == NatStatus.NotSupported ? ChromeMetrics.Get<Color>("NoticeErrorColor") :
-					ChromeMetrics.Get<Color>("NoticeInfoColor");
-
-				var bWidth = Game.Renderer.Fonts[noticesLabelB.Font].Measure(noticesLabelBText).X;
-				noticesLabelB.Bounds.X = noticesLabelA.Bounds.Right;
-				noticesLabelB.Bounds.Width = bWidth;
-				noticesLabelB.Visible = true;
-
-				var noticesLabelCText = FluentProvider.GetMessage(InternetServerNatC);
-				noticesLabelC.GetText = () => noticesLabelCText;
-				noticesLabelC.Bounds.X = noticesLabelB.Bounds.Right;
-				noticesLabelC.Visible = true;
-			}
-			else
-			{
-				var noticesLabelAText = FluentProvider.GetMessage(LocalServer);
-				noticesLabelA.GetText = () => noticesLabelAText;
-				noticesLabelB.Visible = false;
-				noticesLabelC.Visible = false;
-			}
+			var noticesLabelAText = FluentProvider.GetMessage(LocalServer);
+			noticesLabelA.GetText = () => noticesLabelAText;
+			noticesLabelB.Visible = false;
+			noticesLabelC.Visible = false;
 
 			IosTouchMenuLogic.RefreshServerNoticeHeader(panel);
 		}
@@ -223,7 +154,6 @@ namespace OpenRA.Mods.Common.Widgets.Logic
 			// Save new settings.
 			Game.Settings.Server.Name = name;
 			Game.Settings.Server.ListenPort = listenPort;
-			Game.Settings.Server.AdvertiseOnline = advertiseOnline;
 			Game.Settings.Server.Map = map.Uid;
 			Game.Settings.Server.Password = password;
 			Game.Settings.Save();
