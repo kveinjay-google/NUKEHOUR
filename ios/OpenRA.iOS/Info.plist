@@ -20,7 +20,7 @@
   <key>CFBundleShortVersionString</key>
   <string>1.0</string>
   <key>CFBundleVersion</key>
-	<string>17</string>
+	<string>18</string>
   <key>XSAppIconAssets</key>
   <string>Assets.xcassets/AppIcon.appiconset</string>
   <key>UIDeviceFamily</key>
@@ -32,6 +32,8 @@
   <true/>
   <key>NSLocalNetworkUsageDescription</key>
   <string>用于发现并连接同一局域网、个人热点或附近设备上的多人游戏。</string>
+  <key>NSBluetoothAlwaysUsageDescription</key>
+  <string>NUKE HOUR uses Bluetooth to connect to supported wireless game controllers.</string>
   <key>NSBonjourServices</key>
   <array>
     <string>_openra-ra2._tcp</string>

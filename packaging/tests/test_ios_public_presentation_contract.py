@@ -70,6 +70,29 @@ class IosPublicPresentationContractTest(unittest.TestCase):
 
         self.assertIn("-t:Rebuild", script)
 
+    def test_public_build_strips_unused_ios_sdk_privacy_bindings(self):
+        project = PROJECT.read_text(encoding="utf-8")
+        info_plist = (ROOT / "ios" / "OpenRA.iOS" / "Info.plist").read_text(
+            encoding="utf-8")
+
+        self.assertIn("<MtouchLink>SdkOnly</MtouchLink>", project)
+        self.assertNotIn("<MtouchLink>None</MtouchLink>", project)
+        frameworks = " ".join(
+            line for line in project.splitlines() if "<Frameworks>" in line)
+        self.assertIn("CoreBluetooth", frameworks)
+        self.assertIn("CoreMotion", frameworks)
+        self.assertIn("<key>NSBluetoothAlwaysUsageDescription</key>", info_plist)
+        for unused_key in (
+            "NSLocationAlwaysAndWhenInUseUsageDescription",
+            "NSLocationWhenInUseUsageDescription",
+            "NSSiriUsageDescription",
+            "NSContactsUsageDescription",
+            "NSMicrophoneUsageDescription",
+            "NSAppleMusicUsageDescription",
+            "NSCalendarsUsageDescription",
+        ):
+            self.assertNotIn(f"<key>{unused_key}</key>", info_plist)
+
     def test_public_ipa_packaging_does_not_emit_macos_metadata_entries(self):
         script = (ROOT / "ios" / "scripts" / "build-public-clean.sh").read_text(
             encoding="utf-8")
@@ -110,7 +133,7 @@ class IosPublicPresentationContractTest(unittest.TestCase):
             content.get("Exclude"),
         )
 
-    def test_candidate_build_is_newer_than_failed_build_6(self):
+    def test_candidate_build_is_newer_than_rejected_build_17(self):
         project_build = int(self.project.findtext("PropertyGroup/ApplicationVersion"))
         plist = ElementTree.parse(ROOT / "ios" / "OpenRA.iOS" / "Info.plist").getroot()
         values = list(plist.find("dict"))
@@ -119,7 +142,7 @@ class IosPublicPresentationContractTest(unittest.TestCase):
             for index, element in enumerate(values)
             if element.tag == "key" and element.text == "CFBundleVersion")
 
-        self.assertGreater(project_build, 6)
+        self.assertGreater(project_build, 17)
         self.assertEqual(str(project_build), plist_build)
 
 

@@ -26,13 +26,20 @@ EXPECTED_PERMISSION_BYTES = {
     "en.lproj": (
         b'"NSLocalNetworkUsageDescription" = "Used to discover and connect to '
         b'multiplayer games on the same local network, personal hotspot, or nearby devices.";\n'
+        b'"NSBluetoothAlwaysUsageDescription" = "NUKE HOUR uses Bluetooth to connect '
+        b'to supported wireless game controllers.";\n'
     ),
     "zh-Hans.lproj": (
         '"NSLocalNetworkUsageDescription" = '
         '"用于发现并连接同一局域网、个人热点或附近设备上的多人游戏。";\n'
+        '"NSBluetoothAlwaysUsageDescription" = '
+        '"NUKE HOUR 使用蓝牙连接受支持的无线游戏手柄。";\n'
     ).encode("utf-8"),
 }
 EXPECTED_FALLBACK_PERMISSION = "用于发现并连接同一局域网、个人热点或附近设备上的多人游戏。"
+EXPECTED_BLUETOOTH_PERMISSION = (
+    "NUKE HOUR uses Bluetooth to connect to supported wireless game controllers."
+)
 EXPECTED_BONJOUR_SERVICES = ["_openra-ra2._tcp"]
 EXPECTED_ICON_NAME = "AppIcon"
 EXPECTED_PHONE_ICONS = {
@@ -98,6 +105,9 @@ def _audit_plist(app_bundle: Path) -> None:
     _require_plist_value(plist, "CFBundleLocalizations", EXPECTED_LOCALIZATIONS)
     _require_plist_value(
         plist, "NSLocalNetworkUsageDescription", EXPECTED_FALLBACK_PERMISSION
+    )
+    _require_plist_value(
+        plist, "NSBluetoothAlwaysUsageDescription", EXPECTED_BLUETOOTH_PERMISSION
     )
     _require_plist_value(plist, "NSBonjourServices", EXPECTED_BONJOUR_SERVICES)
 

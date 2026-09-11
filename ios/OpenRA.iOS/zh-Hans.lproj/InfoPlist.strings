@@ -1,1 +1,2 @@
 "NSLocalNetworkUsageDescription" = "用于发现并连接同一局域网、个人热点或附近设备上的多人游戏。";
+"NSBluetoothAlwaysUsageDescription" = "NUKE HOUR 使用蓝牙连接受支持的无线游戏手柄。";

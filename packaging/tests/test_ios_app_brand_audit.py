@@ -22,6 +22,9 @@ ENGLISH_PERMISSION = (
     "network, personal hotspot, or nearby devices."
 )
 CHINESE_PERMISSION = "用于发现并连接同一局域网、个人热点或附近设备上的多人游戏。"
+BLUETOOTH_PERMISSION = (
+    "NUKE HOUR uses Bluetooth to connect to supported wireless game controllers."
+)
 
 
 def file_inventory(root: Path) -> dict[str, str]:
@@ -93,6 +96,7 @@ class IosAppBrandAuditTest(unittest.TestCase):
             "CFBundleDevelopmentRegion": "en",
             "CFBundleLocalizations": ["en", "zh-Hans"],
             "NSLocalNetworkUsageDescription": CHINESE_PERMISSION,
+            "NSBluetoothAlwaysUsageDescription": BLUETOOTH_PERMISSION,
             "NSBonjourServices": ["_openra-ra2._tcp"],
             "CFBundleIcons": {
                 "CFBundlePrimaryIcon": {

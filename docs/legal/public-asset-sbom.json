@@ -3,16 +3,16 @@
   "files": [
     {
       "path": "ios/OpenRA.iOS/en.lproj/InfoPlist.strings",
-      "sha256": "fb67a2796e368e1be7e9a21672877f49191d87532dc9cf4da126923879766a13",
-      "size": 152,
+      "sha256": "790314bd10098dc9d9ab4b2fd429c29314e367eabd71120fe33d749ada4b8f1e",
+      "size": 269,
       "category": "project-original",
       "license": "Project original",
       "public": true
     },
     {
       "path": "ios/OpenRA.iOS/zh-Hans.lproj/InfoPlist.strings",
-      "sha256": "d14cf869fd49b8459cd87cb5d882f2e7882bd6f4bf851171957821d605559db1",
-      "size": 126,
+      "sha256": "a3910b0fb68127c1b02fd440f20d15ed2b099904780fd8442f4528d495998027",
+      "size": 229,
       "category": "project-original",
       "license": "Project original",
       "public": true

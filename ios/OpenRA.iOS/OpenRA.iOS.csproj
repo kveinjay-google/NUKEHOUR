@@ -7,7 +7,7 @@
     <IpaPackageName>NUKE HOUR.ipa</IpaPackageName>
     <ApplicationId>com.openra.ipad.personal</ApplicationId>
     <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
-    <ApplicationVersion>17</ApplicationVersion>
+    <ApplicationVersion>18</ApplicationVersion>
     <TargetedDeviceFamily>1,2</TargetedDeviceFamily>
     <DevelopmentTeam>267KQ4A3N4</DevelopmentTeam>
     <TargetPlatform>ios</TargetPlatform>
@@ -20,7 +20,7 @@
     <!-- OpenRA discovers mod loader and actor types through reflection. Keep
          their constructors available to the iOS AOT compiler. -->
     <EnableAssemblyILStripping>false</EnableAssemblyILStripping>
-    <MtouchLink>None</MtouchLink>
+    <MtouchLink>SdkOnly</MtouchLink>
     <UseMonoRuntime>true</UseMonoRuntime>
     <MtouchInterpreter></MtouchInterpreter>
     <GeneratedAotRegistryFile>$(MSBuildProjectDirectory)/GeneratedAotObjectRegistry.g.cs</GeneratedAotRegistryFile>

@@ -137,9 +137,11 @@ namespace OpenRA.Test
 			var englishPath = Path.Combine(iosDirectory, "en.lproj", "InfoPlist.strings");
 			var chinesePath = Path.Combine(iosDirectory, "zh-Hans.lproj", "InfoPlist.strings");
 			Assert.That(File.ReadAllText(englishPath), Is.EqualTo(
-				"\"NSLocalNetworkUsageDescription\" = \"Used to discover and connect to multiplayer games on the same local network, personal hotspot, or nearby devices.\";\n"));
+				"\"NSLocalNetworkUsageDescription\" = \"Used to discover and connect to multiplayer games on the same local network, personal hotspot, or nearby devices.\";\n" +
+				"\"NSBluetoothAlwaysUsageDescription\" = \"NUKE HOUR uses Bluetooth to connect to supported wireless game controllers.\";\n"));
 			Assert.That(File.ReadAllText(chinesePath), Is.EqualTo(
-				"\"NSLocalNetworkUsageDescription\" = \"用于发现并连接同一局域网、个人热点或附近设备上的多人游戏。\";\n"));
+				"\"NSLocalNetworkUsageDescription\" = \"用于发现并连接同一局域网、个人热点或附近设备上的多人游戏。\";\n" +
+				"\"NSBluetoothAlwaysUsageDescription\" = \"NUKE HOUR 使用蓝牙连接受支持的无线游戏手柄。\";\n"));
 
 			using var manifest = JsonDocument.Parse(File.ReadAllText(
 				Path.Combine(root, "packaging", "public-content-manifest.json")));
