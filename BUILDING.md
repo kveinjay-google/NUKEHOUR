@@ -1,7 +1,11 @@
-# Building the Build 4 Archival Source
+# Building NUKE HOUR from source
 
-This is the source archive corresponding to NukeHour iOS Build 4, not the
-current development version. The historical build used:
+The public `main` branch contains the iOS/iPadOS 1.0 Build 18 source snapshot.
+It is separate from current development builds. The original Build 4 archive
+is preserved on `archive/ios-build-4` and the `ios-build-4` tag.
+
+The archived Build 4 toolchain below is retained as a reproducibility reference;
+it is not a fresh verification of Build 18 against current Xcode:
 
 - .NET SDK 8.0.423
 - Microsoft.iOS workload 18.0.8319
