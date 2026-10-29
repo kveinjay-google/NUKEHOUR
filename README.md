@@ -72,6 +72,12 @@ Explore the iOS host, engine changes and multiplayer documentation:
 
 The public repository is an audited source snapshot. Its version should not be used to infer the availability or validation status of a newer app build. Historical Build 4 source remains on the `archive/ios-build-4` branch and `ios-build-4` tag.
 
+## Support development
+
+Enjoy commanding on iPhone and iPad? Support NUKE HOUR’s continued development with an optional contribution on Ko-fi. Thank you for helping the project move forward.
+
+[![Support NUKE HOUR on Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/G7T826L4A1)
+
 ## Support & feedback
 
 Found a problem? [Open an issue](https://github.com/kveinjay-google/NUKEHOUR/issues/new) with your device model, iOS/iPadOS version, NUKE HOUR build, game mode and steps to reproduce it. For multiplayer issues, include the other clients’ versions. Remove personal information before attaching logs or screenshots.
